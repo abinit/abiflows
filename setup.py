@@ -78,7 +78,7 @@ def find_scripts():
     """Find abipy scripts."""
     scripts = []
     # All python files in abipy/scripts
-    pyfiles = glob(os.path.join('abiflow', 'scripts', "*.py"))
+    pyfiles = glob(os.path.join('abiflows', 'scripts', "*.py"))
     scripts.extend(pyfiles)
     return scripts
 
@@ -111,17 +111,19 @@ def cleanup():
 # Note setup install will download them from Pypi if they are not available.
 install_requires = [
     "six",
-    "pymongo",
     "prettytable",
+    "numpy",
+    "python-daemon",
+    "pymongo",
+    "mongoengine",
+    "flask",
+    "flask-mongoengine",
+    #"abipy",
     #"apscheduler==2.1.0",
-    #"numpy"
     #"pydispatcher>=2.0.3",
     #"pyyaml>=3.11",
-    #"scipy>=0.10",
     #"pandas",
     #"netCDF4",
-    #"pymatgen>=3.0.8",
-    #"wxmplot",
     #"html2text",
     #"pigments",
     #"jinja2",    
