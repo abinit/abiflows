@@ -339,6 +339,7 @@ class MongoFlow(MongoNode):
         new = cls.from_node(flow)
         new.works = [MongoWork.from_work(work) for work in flow]
         new.outfiles = MongoFiles.from_node(flow)
+        #new.assimilated = flow.mongo_assimilate()
         return new
 
     def __getitem__(self, name):

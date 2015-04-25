@@ -6,9 +6,12 @@ import os
 import six
 import time
 import shutil
+import json
 
 from datetime import datetime
 from tempfile import mkstemp
+from monty.collections import AttrDict
+from monty.io import FileLock
 from mongoengine import *
 from mongoengine import connect
 from abipy import abilab
@@ -60,8 +63,7 @@ class FlowEntry(Document):
 
     @classmethod
     def from_flow(cls, flow, priority="normal", flow_info=None):
-        #info = flow.get_mongo_info()
-        info = {}
+        info = flow.get_mongo_info()
         if flow_info is not None:
             info.update(flow_info)
         
@@ -124,7 +126,11 @@ class MongoLogger(object):
 
 class MongoFlowScheduler(object):
 
+    YAML_FILE = "mongo_scheduler.yml"
+    USER_CONFIG_DIR = os.path.join(os.getenv("HOME"), ".abinit", "abipy")
+
     db_name = "abiflows"
+    pid_path = os.path.join(os.getenv("HOME"), ".abinit", "abipy", "mongo_scheduler.pid")
 
     def __init__(self, **kwargs):
         """
@@ -140,7 +146,7 @@ class MongoFlowScheduler(object):
             validate:
             logmode:
         """
-        #host, port
+        #TODO: host, port
         from mongoengine import connect
         connect(self.db_name)
 
@@ -165,66 +171,141 @@ class MongoFlowScheduler(object):
         if kwargs:
             raise ValueError("Unknown options:\n%s" % list(kwargs.keys()))
 
+        self.check_and_write_pid_file()
         self.logger.info("hello")
 
     @classmethod
+    def from_user_config(cls):
+        """
+        Initialize the :class:`MongoFlowScheduler` from the YAML file 'mongo_launcher.yaml'.
+        Search first in the working directory and then in the abipy configuration directory.
+
+        Raises:
+            RuntimeError if file is not found.
+        """
+        # Try in the current directory then in user configuration directory.
+        path = os.path.join(os.getcwd(), cls.YAML_FILE)
+        if not os.path.exists(path):
+            path = os.path.join(cls.USER_CONFIG_DIR, cls.YAML_FILE)
+
+        if not os.path.exists(path):
+            raise RuntimeError("Cannot locate %s neither in current directory nor in %s" % (cls.YAML_FILE, path))
+
+        return cls.from_file(path)
+
+    @classmethod
     def from_file(cls, filepath):
-        import yaml
-        with open(filepath, "rt") as fh:
-           return cls(**yaml.load(fh))
+        try:
+            import yaml
+            with open(filepath, "rt") as fh:
+               return cls(**yaml.load(fh))
+
+        except Exception as exc:
+            raise ValueError("Error while reading MongoFlowLauncher parameters from file %s\nException: %s" % 
+                (filepath, exc))
+
+    def check_and_write_pid_file(self):
+        """
+        This function checks if we already have a running instance of :class:`MongoFlowScheduler`.
+        Raises: RuntimeError if the pid file of the scheduler exists.
+        """
+        if os.path.exists(self.pid_path): 
+            raise RuntimeError("""\n\
+                pid_path
+                %s
+                already exists. There are two possibilities:
+
+                   1) There's an another instance of MongoFlowScheduler running
+                   2) The previous scheduler didn't exit in a clean way
+
+                To solve case 1:
+                   Kill the previous scheduler (use 'kill pid' where pid is the number reported in the file)
+                   Then you can restart the new scheduler.
+
+                To solve case 2:
+                   Remove the pid_path and restart the scheduler.
+
+                Exiting""" % self.pid_path)
+
+        # Make dir and file if not present.
+        if not os.path.exists(os.path.dirname(self.pid_path)):
+            os.makedirs(os.path.dirname(self.pid_path))
+
+        d = dict(
+            pid=os.getpid(),
+            #host=self.host,
+            #port=self.port,
+            #"db_name"=self.db_name
+        )
+
+        with FileLock(self.pid_path):
+            with open(self.pid_path, "wt") as fh:
+                json.dump(d, fh)
 
     #def __str__(self):
     #def drop_database()
 
+    def shutdown(self):
+        try:
+            os.remove(self.pid_path)
+        except IOError:
+            pass
+        import sys
+        sys.exit(1)
+
     def sleep(self):
         time.sleep(self.sleep_time)
 
-    def check_all(self):
+    def update_entry(self, entry, flow=None):
+        if flow is None:
+            flow = entry.pickle_load()
+                                                       
+        flow.check_status()
+        entry.status = str(flow.status)
+                                                       
+        if flow.status == flow.S_OK:
+            return self.move_to_completed(entry, flow)
+                                                       
+        entry.save(validate=self.validate)
+
+    def update_entries(self):
         for entry in FlowEntry.objects:
             self.update_entry(entry)
 
     def select(self):
         return [(e, e.pickle_load()) for e in FlowEntry.objects]
 
-    def find_qcriticals(self):
-        return [(e, e.pickle_load()) for e in FlowEntry.objects(status="QCritical")]
+    #def find_qcriticals(self):
+    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="QCritical")]
 
-    def find_abicriticals(self):
-        return [(e, e.pickle_load()) for e in FlowEntry.objects(status="AbiCritical")]
+    #def find_abicriticals(self):
+    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="AbiCritical")]
+
+    #def restart_unconverged(self):
 
     def fix_queue_critical(self):
-        for entry, flow in self.find_qcriticals():
+        for entry in FlowEntry.objects(status="QCritical"):
+            flow = entry.pickle_load()
             if self.fix_qcritical:
                 flow.fix_queue_critical()
                 self.update_entry(entry, flow=flow)
             else:
-                entry.move_to_errored(flow)
+                self.move_to_errored(entry, flow)
 
     def fix_abicritical(self):
-        for entry, flow in self.find_abicriticals():
+        for entry in FlowEntry.objects(status="AbiCritical"):
+            flow = entry.pickle_load()
             flow.fix_abicritical()
             self.update_entry(entry, flow=flow)
 
-    def update_entry(self, entry, flow=None):
-        if flow is None:
-            flow = entry.pickle_load()
-
-        flow.check_status()
-        entry.status = str(flow.status)
-
-        if flow.status == flow.S_OK:
-            return self.move_to_completed(entry, flow)
-
-        entry.save(validate=self.validate)
-
     def move_to_completed(self, entry, flow):
+        """Move this entry to the completed_flows collection."""
         entry.delete()
         entry.bkp_pickle.delete()
 
         entry.switch_collection("completed_flows")
         entry.save(validate=self.validate)
 
-        # Move this entry to the ok_flows collection.
         # TODO: Handle possible errors 
         doc = MongoFlow.from_flow(flow)
         doc.save(validate=self.validate)
@@ -236,12 +317,12 @@ class MongoFlowScheduler(object):
                 pass
 
     def move_to_errored(self, entry, flow):
+        """Move this entry to the errored_flows collection"""
         # TODO: options to handle the storage of errored flows.
         entry.delete()
         entry.switch_collection("errored_flows")
         entry.save(validate=self.validate)
 
-        # Move this entry to the ok_flows collection.
         doc = MongoFlow.from_flow(flow)
         doc.switch_collection("errored_flows")
         doc.save(validate=self.validate)
@@ -293,10 +374,10 @@ class MongoFlowScheduler(object):
             self.logger.info("No FlowEntries, will sleep for %s" % self.sleep_time)
             #self.sleep()
 
-        self.check_all()
-
+        self.update_entries()
         self.fix_queue_critical()
         self.fix_abicritical()
+
         self.rapidfire()
 
         return FlowEntry.objects.count()
