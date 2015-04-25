@@ -14,14 +14,13 @@ from mongoengine import connect
 from abipy import abilab
 from .models import MongoFlow
 
-import logging
-logger = logging.getLogger(__name__)
-
 
 class FlowUploader(object):
 
+    db_name = "abiflows"
+
     def __init__(self, **kwargs):
-        connect(db="abiflows")
+        connect(db=self.db_name)
         self.node_ids = set()
 
     def upload(self, flow, priority="normal", flow_info=None):
@@ -35,8 +34,8 @@ class FlowUploader(object):
             assert not os.path.exists(workdir)
             flow.allocate(workdir=workdir)
 
-        entry = FlowEntry.from_flow(flow, priority=priority, info=flow_info)
-        entry.save()
+        entry = FlowEntry.from_flow(flow, priority=priority, flow_info=flow_info)
+        entry.save(validate=True)
 
         flow.build_and_pickle_dump()
 
@@ -83,79 +82,49 @@ class FlowEntry(Document):
     def pickle_load(self):
         return abilab.Flow.pickle_load(self.workdir)
 
-    def rollback(self):
-        if os.path.exists(self.workdir)
-            shutil.rmtree(self.workdir, ignore_errors=False, onerror=None)
-        
-        _, filepath = mkstemp(suffix='.pickle', text=False)
-        with open(filepath , "wb") as fh:
-            fh.write(self.bkp_pickle.read())
-
-        flow = abilab.Flow.pickle_load(filepath)
-
-        new = FlowEntry.from_flow(flow, priority=self.priority, info=self.info)
-        self.delete()
-        #self = new
-        return new
-
-    def update(self, flow=None):
-        if flow is None:
-            flow = self.pickle_load()
-
-        flow.check_status()
-        self.status = str(flow.status)
-
-        if flow.status == flow.S_OK:
-            return self.move_to_completed(flow)
-
-        self.save()
-
-    def move_to_completed(self, flow):
-        self.delete()
-        self.bkp_pickle.delete()
-
-        self.switch_collection("completed_flows")
-        self.save()
-
-        # Move this entry to the ok_flows collection.
-        # TODO: Handle possible errors 
-        doc = MongoFlow.from_flow(flow)
-        doc.save()
-        flow.rmtree()
-
-    def move_to_errored(self, flow):
-        # TODO: options to handle the storage of errored flows.
-        self.delete()
-        self.switch_collection("errored_flows")
-        self.save()
-
-        # Move this entry to the ok_flows collection.
-        #doc = MongoFlow.from_flow(flow)
-        #doc.switch_collection("errored_flows")
-        #doc.save()
-        #flow.rmtree()
-
-    def rapidfire(self, flow):
-        try:
-            flow.rapidfire()
-        except:
-            raise
-            # Move this entry to the errored_flows collection.
-            #self.move_to_errored(flow)
-
-        self.last_scheduled = datetime.now()
-        self.num_scheduled += 1
-        flow.check_status()
-        self.status = str(flow.status)
-
-        if flow.status == flow.S_OK:
-            return self.move_to_completed(flow)
-
-        flow.pickle_dump()
-        self.save()
 
 
-class Scheduler(object):
+class LogRecord(Document):
+    """Capped collection used for logging"""
+    meta = {'max_documents': 1000, 'max_size': 2000000}
+
+    level = StringField(required=True)
+    created = DateTimeField(required=True)
+    msg = StringField(required=True)
+
+
+class MongoLogger(object):
+    """Logger-like object that saves log messages in a MongoDb Capped collection."""
+
+    def reset(self):
+        LogRecord.drop_collection()
+
+    def info(self, msg, *args):
+        """Log 'msg % args' with the info severity level"""
+        self._log("INFO", msg, args)
+                                                                
+    def warning(self, msg, *args):
+        """Log 'msg % args' with the warning severity level"""
+        self._log("WARNING", msg, args)
+                                                                
+    def critical(self, msg, *args):
+        """Log 'msg % args' with the critical severity level"""
+        self._log("CRITICAL", msg, args)
+                                                                 
+    def _log(self, level, msg, args):
+        if args:
+            try:
+                msg = msg % args
+            except:
+                msg += str(self.args)
+
+        log = LogRecord(level=level, msg=msg, created=datetime.now())
+        log.save(validate=False)
+
+
+class MongoFlowScheduler(object):
+
+    db_name = "abiflows"
 
     def __init__(self, **kwargs):
         """
@@ -167,13 +136,16 @@ class Scheduler(object):
             sleep_time
             rm_completed_flows
             rm_errored_flows
-            fix_qcritcal
+            fix_qcritical
+            validate:
+            logmode:
         """
+        #host, port
         from mongoengine import connect
-        connect('abiflows')
+        connect(self.db_name)
 
-        #self.db = db
-        #self.workdir = os.path.abspath(workdir)
+        workdir = "/tmp"
+        self.workdir = os.path.abspath(workdir)
         self.max_njobs_inqueue = kwargs.pop("max_njobs_inqueue", 200)
         self.max_cores = kwargs.pop("max_cores", 1000)
         self.sleep_time = kwargs.pop("sleep_time", 5)
@@ -181,22 +153,38 @@ class Scheduler(object):
         self.rm_completed_flows = bool(kwargs.pop("rm_completed_flows", True))
         self.rm_errored_flows = bool(kwargs.pop("rm_errored_flows", True))
         self.fix_qcritical = bool(kwargs.pop("fix_qcritical", True))
+        self.validate = bool(kwargs.pop("validate", True))
+
+        if kwargs.pop("logmode", "mongodb") == "mongodb":
+            self.logger = MongoLogger()
+            self.logger.reset()
+        else:
+            import logging
+            self.logger = logging.getLogger(__name__)
 
         if kwargs:
-            print("Unknown options:\n%s" % list(kwargs.keys()))
+            raise ValueError("Unknown options:\n%s" % list(kwargs.keys()))
 
-    #@classmethod
-    #def from_file(cls, filepath):
-    #    import yaml
-    #    with open(filepath, "rt") as fh:
-    #       return cls(**yaml.load(fh))
+        self.logger.info("hello")
+
+    @classmethod
+    def from_file(cls, filepath):
+        import yaml
+        with open(filepath, "rt") as fh:
+           return cls(**yaml.load(fh))
+
+    #def __str__(self):
+    #def drop_database()
 
     def sleep(self):
         time.sleep(self.sleep_time)
 
     def check_all(self):
         for entry in FlowEntry.objects:
-            entry.update()
+            self.update_entry(entry)
+
+    def select(self):
+        return [(e, e.pickle_load()) for e in FlowEntry.objects]
 
     def find_qcriticals(self):
         return [(e, e.pickle_load()) for e in FlowEntry.objects(status="QCritical")]
@@ -204,33 +192,116 @@ class Scheduler(object):
     def find_abicriticals(self):
         return [(e, e.pickle_load()) for e in FlowEntry.objects(status="AbiCritical")]
 
-    def select(self):
-        return [(e, e.pickle_load()) for e in FlowEntry.objects]
+    def fix_queue_critical(self):
+        for entry, flow in self.find_qcriticals():
+            if self.fix_qcritical:
+                flow.fix_queue_critical()
+                self.update_entry(entry, flow=flow)
+            else:
+                entry.move_to_errored(flow)
 
-    def serve_forever(self):
-        while True:
-            if self.run() == 0:
-                return print("All flows completed")
+    def fix_abicritical(self):
+        for entry, flow in self.find_abicriticals():
+            flow.fix_abicritical()
+            self.update_entry(entry, flow=flow)
+
+    def update_entry(self, entry, flow=None):
+        if flow is None:
+            flow = entry.pickle_load()
+
+        flow.check_status()
+        entry.status = str(flow.status)
+
+        if flow.status == flow.S_OK:
+            return self.move_to_completed(entry, flow)
+
+        entry.save(validate=self.validate)
+
+    def move_to_completed(self, entry, flow):
+        entry.delete()
+        entry.bkp_pickle.delete()
+
+        entry.switch_collection("completed_flows")
+        entry.save(validate=self.validate)
+
+        # Move this entry to the ok_flows collection.
+        # TODO: Handle possible errors 
+        doc = MongoFlow.from_flow(flow)
+        doc.save(validate=self.validate)
+
+        if self.rm_completed_flows:
+            try:
+                flow.rmtree()
+            except IOError:
+                pass
+
+    def move_to_errored(self, entry, flow):
+        # TODO: options to handle the storage of errored flows.
+        entry.delete()
+        entry.switch_collection("errored_flows")
+        entry.save(validate=self.validate)
+
+        # Move this entry to the ok_flows collection.
+        doc = MongoFlow.from_flow(flow)
+        doc.switch_collection("errored_flows")
+        doc.save(validate=self.validate)
+
+        if self.rm_errored_flows:
+            try:
+                flow.rmtree()
+            except IOError:
+                pass
+
+    def rapidfire(self):
+        # TODO: restart
+        for entry, flow in self.select():
+            entry.last_scheduled = datetime.now()
+            entry.num_scheduled += 1
+            try:
+                flow.rapidfire()
+            except Exception as exc:
+                # Move this entry to the errored_flows collection.
+                self.move_to_errored(entry, flow)
+
+            flow.check_status()
+            entry.status = str(flow.status)
+                                                                   
+            if flow.status == flow.S_OK:
+                self.move_to_completed(entry, flow)
+            else:
+                flow.pickle_dump()
+                entry.save(validate=self.validate)
+
+    def rollback_entry(self, entry):
+        if os.path.exists(entry.workdir):
+            shutil.rmtree(entry.workdir, ignore_errors=False, onerror=None)
+        
+        _, filepath = mkstemp(suffix='.pickle', text=False)
+        with open(filepath , "wb") as fh:
+            fh.write(entry.bkp_pickle.read())
+                                                                                
+        flow = abilab.Flow.pickle_load(filepath)
+                                                                                
+        new_entry = FlowEntry.from_flow(flow, priority=entry.priority, flow_info=entry.info)
+        entry.delete()
+
+        new_entry.save(validate=self.validate)
+        return new_entry
 
     def run(self):
         if FlowEntry.objects.count() == 0:
-            logger.info("No FlowEntries, will sleep for %s" % self.sleep_time)
+            self.logger.info("No FlowEntries, will sleep for %s" % self.sleep_time)
             #self.sleep()
 
         self.check_all()
 
-        for entry, flow in self.find_qcriticals():
-            if self.fix_qcritical:
-                flow.fix_qcritical()
-                entry.update(flow=flow)
-            else:
-                entry.move_to_errored(flow)
-
-        for entry, flow in self.find_abicriticals():
-            flow.fix_abicritical()
-            entry.update(flow=flow)
-
-        for entry, flow in self.select():
-            entry.rapidfire(flow)
+        self.fix_queue_critical()
+        self.fix_abicritical()
+        self.rapidfire()
 
         return FlowEntry.objects.count()
+
+    def start(self):
+        while True:
+            if self.run() == 0:
+                return print("All flows completed")

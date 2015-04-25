@@ -175,7 +175,10 @@ class MongoTaskResults(EmbeddedDocument):
 
 class MongoNode(Document):
 
-    meta = {'allow_inheritance': True}
+    meta = {
+        'allow_inheritance': True,
+        "collection": "flowdata",
+    }
     #meta = {'meta': True}
 
     node_id = LongField(required=True)
@@ -325,10 +328,10 @@ class MongoFlow(MongoNode):
     #: Output files produced by the flow.
     outfiles = EmbeddedDocumentField(MongoFiles)
 
-    meta = {
-        "collection": "flowdata",
-        #"indexes": ["status", "priority", "created"],
-    }
+    #meta = {
+    #    "collection": "flowdata",
+    #    #"indexes": ["status", "priority", "created"],
+    #}
 
     @classmethod
     def from_flow(cls, flow):
