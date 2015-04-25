@@ -4,11 +4,13 @@ from __future__ import print_function, division, unicode_literals
 
 import os
 import six
-from abipy import abilab
+import collections
 
+from abipy import abilab
+from monty.json import MontyDecoder
 from mongoengine import *
 from mongoengine.fields import GridFSProxy
-
+from mongoengine.base.datastructures import BaseDict
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ class AbiGridFSProxy(GridFSProxy):
     def abiopen(self):
         """Dump the gridfs data to a temporary file and use `abiopen` to open the file."""
         from tempfile import mkstemp
-        _, filepath = mkstemp(suffix='.' + self.abiext, text=True if self.abiext == "t" else False)
+        _, filepath = mkstemp(suffix='.' + self.abiext, text=self.abiform == "t")
 
         with open(filepath , "w" + self.abiform) as fh:
             fh.write(self.read())
@@ -40,15 +42,22 @@ class AbiFileField(FileField):
 
         super(AbiFileField, self).__init__(**kwargs)
 
-    def get_proxy_obj(self, **kwargs):
+    def _monkey_patch_proxy(self, proxy):
         """
-        Monkey path the proxy adding `abiext` and `abiform`.
+        Monkey patch the proxy adding `abiext` and `abiform`.
         so that we know how to open the file in `abiopen`.
         """
-        proxy = super(AbiFileField, self).get_proxy_obj(**kwargs)
-        proxy.abiext = self.abiext
-        proxy.abiform = self.abiform
+        proxy.abiext, proxy.abiform = self.abiext, self.abiform
         return proxy
+
+    def get_proxy_obj(self, **kwargs):
+        proxy = super(AbiFileField, self).get_proxy_obj(**kwargs)
+        return self._monkey_patch_proxy(proxy)
+
+    def to_python(self, value):
+        if value is not None:
+            proxy = super(AbiFileField, self).to_python(value)
+            return self._monkey_patch_proxy(proxy)
 
 
 class MongoFiles(EmbeddedDocument):
@@ -86,27 +95,71 @@ class MongoFiles(EmbeddedDocument):
         # Special treatment of the main output 
         # (the file is not located in node.outdir)
         if hasattr(node, "output_file"):
-            print("out")
+            #print("in out")
             new.output_file.put(node.output_file.read())
 
         return new
+
+    def delete(self):
+        """Delete gridFs files"""
+        for field in self._fields.values():
+            if not isinstance(field, AbiFileField): continue
+            value = getattr(self, field.name)
+            if hasattr(value, "delete"):
+                print("Deleting %s" % field.name)
+                value.delete()
+
+
+class MSONDict(BaseDict):
+    def to_mgobj(self):
+        return MontyDecoder().process_decoded(self)
+
+
+class MSONField(DictField):
+
+    def __get__(self, instance, owner):
+        """Descriptor for retrieving a value from a field in a document.
+        """
+        value = super(MSONField, self).__get__(instance, owner)
+        if isinstance(value, BaseDict):
+            value.__class__ = MSONDict
+        
+        print("value:", type(value))
+        return value
+
+    #def to_python(self, value):
+    #    #print("to value:", type(value))
+    #    if isinstance(value, collections.Mapping) and "@module" in value:
+    #        value = MontyDecoder().process_decoded(value)
+    #    else:
+    #        value = super(MSONField, self).to_python(value)
+
+    #    print("to value:", type(value))
+    #    return value
+
+    #def to_mongo(self, value):
+    #    #print(value.as_dict())
+    #    return value.as_dict()
 
 
 class MongoTaskResults(EmbeddedDocument):
     """Document with the most important results produced by the :class:`Task`"""
 
-    meta = {'allow_inheritance': True}
+    #meta = {'allow_inheritance': True}
 
     #: The initial input structure for the calculation in the pymatgen json representation
-    initial_structure = DictField(required=True)
+    #initial_structure = DictField(required=True)
+    initial_structure = MSONField(required=True)
 
     #: The final relaxed structure in a dict format. 
     final_structure = DictField(required=True)
 
     @classmethod
     def from_task(cls, task):
-        # Differernt Documents depending on task.__class__ or duck typing?
+        # TODO Different Documents depending on task.__class__ or duck typing?
+        #initial_structure = MSONField().to_mongo(task.input.structure.as_dict())
         initial_structure = task.input.structure.as_dict()
+        #print(type(initial_structure))
         final_structure = initial_structure
 
         if hasattr(task, "open_gsr"):
@@ -126,11 +179,8 @@ class MongoNode(Document):
     #meta = {'meta': True}
 
     node_id = LongField(required=True)
-
     node_class = StringField(required=True)
-
-    status = IntField(required=True)
-
+    status = StringField(required=True)
     workdir = StringField(required=True)
 
     #date_modified = DateTimeField(default=datetime.datetime.now)
@@ -140,7 +190,7 @@ class MongoNode(Document):
         return cls(
             node_class=node.__class__.__name__,
             node_id=node.node_id,
-            status=node.status,
+            status=str(node.status),
             workdir=node.workdir,
         )
 
@@ -154,7 +204,7 @@ class MongoEmbeddedNode(EmbeddedDocument):
 
     node_class = StringField(required=True)
 
-    status = IntField(required=True)
+    status = StringField(required=True)
 
     workdir = StringField(required=True)
 
@@ -165,7 +215,7 @@ class MongoEmbeddedNode(EmbeddedDocument):
         return cls(
             node_class=node.__class__.__name__,
             node_id=node.node_id,
-            status=node.status,
+            status=str(node.status),
             workdir=node.workdir,
         )
 
@@ -175,14 +225,41 @@ class MongoTask(MongoEmbeddedNode):
 
     input = DictField(required=True)
     input_str = StringField(required=True)
-    #output_str = StringField(required=True)
 
-    event_report = DictField(required=True)
-    #corrections =
+    # Abinit events.
+    report = DictField(required=True)
+    num_warnings = IntField(required=True, help_text="Number of warnings")
+    num_errors = IntField(required=True, help_text="Number of errors")
+    num_comments =  IntField(required=True, help_text="Number of comments")
+
+    #: Total CPU time taken.
+    #cpu_time = FloatField(required=True)
+    #: Total wall time taken.
+    #wall_time = FloatField(required=True)
 
     results = EmbeddedDocumentField(MongoTaskResults)
 
     outfiles = EmbeddedDocumentField(MongoFiles)
+
+    #@property
+    #def num_warnings(self):
+    #    """Number of warnings reported."""
+    #    return self.input.num_warnings
+
+    #@property
+    #def num_errors(self):
+    #    """Number of errors reported."""
+    #    return self.input.num_error
+
+    #@property
+    #def num_comments(self):
+    #    """Number of comments reported."""
+    #    return len(self.comments)
+
+    #@property
+    #def is_paw(self):
+    #    print("in is paw")
+    #    return True
 
     @classmethod
     def from_task(cls, task):
@@ -194,7 +271,9 @@ class MongoTask(MongoEmbeddedNode):
 
         # TODO: Handle None!
         report = task.get_event_report()
-        new.event_report = report.as_dict()
+        for a in ("num_errors", "num_comments", "num_warnings"):
+            setattr(new, a, getattr(report, a))
+        new.report = report.as_dict()
 
         new.results = MongoTaskResults.from_task(task)
         new.outfiles = MongoFiles.from_node(task)
@@ -207,6 +286,7 @@ class MongoWork(MongoEmbeddedNode):
     
     #: List of tasks.
     tasks = ListField(EmbeddedDocumentField(MongoTask), required=True)
+
     #: Output files produced by the work.
     outfiles = EmbeddedDocumentField(MongoFiles)
 
@@ -231,12 +311,24 @@ class MongoWork(MongoEmbeddedNode):
 
 
 class MongoFlow(MongoNode):
-    """Document associated to a :class:`Flow`"""
+    """
+    Document associated to a :class:`Flow`
+
+    Assumptions:
+        All the tasks must have the same list of pseudos, 
+        same chemical formula.
+    """
 
     #: List of works
     works = ListField(EmbeddedDocumentField(MongoWork), required=True)
+
     #: Output files produced by the flow.
     outfiles = EmbeddedDocumentField(MongoFiles)
+
+    meta = {
+        "collection": "flowdata",
+        #"indexes": ["status", "priority", "created"],
+    }
 
     @classmethod
     def from_flow(cls, flow):
@@ -267,3 +359,31 @@ class MongoFlow(MongoNode):
         flow = abilab.Flow.pickle_load(self.workdir)
         #flow.set_mongo_id(self.id)
         return flow 
+
+    def delete(self):
+        # Remove GridFs files.
+        for work in self.works:
+            work.outfiles.delete()
+            #work.delete()
+            for task in work:
+                #task.delete()
+                task.outfiles.delete()
+
+        self.delete()
+
+    @queryset_manager
+    def completed(doc_cls, queryset):
+        return queryset.filter(status="Completed")
+
+    #@queryset_manager
+    #def running(doc_cls, queryset):
+    #    return queryset.filter(status__in=["AbiCritical", "QCritical", "Error",])
+
+    #@queryset_manager
+    #def paw_flows(doc_cls, queryset):
+    #    return queryset.filter(is_paw=True)
+
+    #@queryset_manager
+    #def nc_flows(doc_cls, queryset):
+    #    return queryset.filter(is_nc=True)
+
