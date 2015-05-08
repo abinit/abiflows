@@ -8,12 +8,13 @@ import time
 import shutil
 import json
 
+from six.moves import cStringIO
 from datetime import datetime
 from tempfile import mkstemp
 from monty.collections import AttrDict
 from monty.io import FileLock
 from mongoengine import *
-from mongoengine import connect
+from mongoengine import connect #, get_db
 from abipy import abilab
 from .models import MongoFlow
 
@@ -22,7 +23,7 @@ class FlowUploader(object):
 
     db_name = "abiflows"
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         connect(db=self.db_name)
         self.node_ids = set()
 
@@ -147,7 +148,6 @@ class MongoFlowScheduler(object):
             logmode:
         """
         #TODO: host, port
-        from mongoengine import connect
         connect(self.db_name)
 
         workdir = "/tmp"
@@ -160,6 +160,7 @@ class MongoFlowScheduler(object):
         self.rm_errored_flows = bool(kwargs.pop("rm_errored_flows", True))
         self.fix_qcritical = bool(kwargs.pop("fix_qcritical", True))
         self.validate = bool(kwargs.pop("validate", True))
+        self.mailto = kwargs.pop("mailto", None)
 
         if kwargs.pop("logmode", "mongodb") == "mongodb":
             self.logger = MongoLogger()
@@ -245,13 +246,24 @@ class MongoFlowScheduler(object):
     #def __str__(self):
     #def drop_database()
 
-    def shutdown(self):
+    def shutdown(self, msg):
+        """Shutdown the scheduler."""
         try:
             os.remove(self.pid_path)
         except IOError:
             pass
+
+        #self.send_email(msg)
         import sys
         sys.exit(1)
+
+    #def select(self):
+    #    return [(e, e.pickle_load()) for e in FlowEntry.objects]
+    #def find_qcriticals(self):
+    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="QCritical")]
+    #def find_abicriticals(self):
+    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="AbiCritical")]
+    #def restart_unconverged(self):
 
     def sleep(self):
         time.sleep(self.sleep_time)
@@ -271,17 +283,6 @@ class MongoFlowScheduler(object):
     def update_entries(self):
         for entry in FlowEntry.objects:
             self.update_entry(entry)
-
-    def select(self):
-        return [(e, e.pickle_load()) for e in FlowEntry.objects]
-
-    #def find_qcriticals(self):
-    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="QCritical")]
-
-    #def find_abicriticals(self):
-    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="AbiCritical")]
-
-    #def restart_unconverged(self):
 
     def fix_queue_critical(self):
         for entry in FlowEntry.objects(status="QCritical"):
@@ -335,7 +336,9 @@ class MongoFlowScheduler(object):
 
     def rapidfire(self):
         # TODO: restart
-        for entry, flow in self.select():
+        for entry in FlowEntry.objects:
+            flow = entry.pickle_load()
+
             entry.last_scheduled = datetime.now()
             entry.num_scheduled += 1
             try:
@@ -370,8 +373,8 @@ class MongoFlowScheduler(object):
         return new_entry
 
     def run(self):
-        if FlowEntry.objects.count() == 0:
-            self.logger.info("No FlowEntries, will sleep for %s" % self.sleep_time)
+        if len(FlowEntry.objects) == 0:
+            self.logger.info("No FlowEntries, will sleep for %s s" % self.sleep_time)
             #self.sleep()
 
         self.update_entries()
@@ -380,9 +383,49 @@ class MongoFlowScheduler(object):
 
         self.rapidfire()
 
-        return FlowEntry.objects.count()
+        return len(FlowEntry.objects)
 
     def start(self):
         while True:
             if self.run() == 0:
                 return print("All flows completed")
+
+    def send_email(self, msg, tag=None):
+        """
+        Send an e-mail before completing the shutdown.
+        Returns 0 if success.
+        """
+        try:
+            return self._send_email(msg, tag)
+        except:
+            return -2
+
+    def _send_email(self, msg, tag):
+        if self.mailto is None: return -1
+                                                                                                 
+        header = msg.splitlines()
+        app = header.append
+                                                                                                 
+        app("Submitted on %s" % time.ctime(self.start_time))
+        app("Completed on %s" % time.asctime())
+        app("Elapsed time %s" % str(self.get_delta_etime()))
+        app("Number of errored tasks: %d" % self.flow.num_errored_tasks)
+        app("Number of unconverged tasks: %d" % self.flow.num_unconverged_tasks)
+                                                                                                 
+        strio = cStringIO()
+        strio.writelines("\n".join(header) + 4 * "\n")
+                                                                                                 
+        # Add the status of the flow.
+        self.flow.show_status(stream=strio)
+                                                                                                 
+        if self.exceptions:
+            # Report the list of exceptions.
+            strio.writelines(self.exceptions)
+                                                                                                 
+        if tag is None:
+            tag = " [ALL OK]" if self.flow.all_ok else " [WARNING]"
+
+        # TODO: Move to monty
+        from pymatgen.io.abinitio.launcher import sendmail
+        return sendmail(subject=self.flow.name + tag, text=strio.getvalue(), mailto=self.mailto)
+
