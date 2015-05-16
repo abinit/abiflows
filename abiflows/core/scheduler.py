@@ -20,7 +20,10 @@ from .models import MongoFlow
 
 
 class FlowUploader(object):
-
+    """
+    This object establishes a connection with the MongoDB database and 
+    allows the user to upload a :class:`Flow` instance to the database.
+    """
     db_name = "abiflows"
 
     def __init__(self):
@@ -28,6 +31,14 @@ class FlowUploader(object):
         self.node_ids = set()
 
     def upload(self, flow, priority="normal", flow_info=None):
+        """
+        Upload a :class:`Flow` to the database.
+
+        Args:
+            flow: :class:`Flow` instance.
+            priority: priority level. Possible values in ["low", "normal", "high"]
+            flow_info: JSON dictionary with info on the flow. mainly used for queries.
+        """
         if flow.node_id in self.node_ids:
             raise ValueError("Cannot upload the same flow twice")
         self.node_ids.update([flow.node_id])
@@ -38,14 +49,15 @@ class FlowUploader(object):
             assert not os.path.exists(workdir)
             flow.allocate(workdir=workdir)
 
+        flow.build_and_pickle_dump()
         entry = FlowEntry.from_flow(flow, priority=priority, flow_info=flow_info)
         entry.save(validate=True)
 
-        flow.build_and_pickle_dump()
-
 
 class FlowEntry(Document):
-
+    """
+    MongoDB document with information on the `Flow`.
+    """
     node_id = LongField(required=True)
     workdir = StringField(required=True)
     status = StringField(required=True)
@@ -64,6 +76,14 @@ class FlowEntry(Document):
 
     @classmethod
     def from_flow(cls, flow, priority="normal", flow_info=None):
+        """
+        Initialize the object from a :class:`Flow` object.
+
+        Args:
+            flow: :class:`Flow` instance.
+            priority: priority level. Possible values in ["low", "normal", "high"]
+            flow_info: JSON dictionary with info on the flow. mainly used for queries.
+        """
         info = flow.get_mongo_info()
         if flow_info is not None:
             info.update(flow_info)
@@ -83,12 +103,14 @@ class FlowEntry(Document):
         return new
 
     def pickle_load(self):
+        """Reconstruct the :class:`Flow` from the pickle file."""
         return abilab.Flow.pickle_load(self.workdir)
 
 
-
 class LogRecord(Document):
-    """Capped collection used for logging"""
+    """
+    Capped collection used for logging.
+    """
     meta = {'max_documents': 1000, 'max_size': 2000000}
 
     level = StringField(required=True)
@@ -97,8 +119,9 @@ class LogRecord(Document):
 
 
 class MongoLogger(object):
-    """Logger-like object that saves log messages in a MongoDb Capped collection."""
-
+    """
+    Logger-like object that saves log messages in a MongoDb Capped collection.
+    """
     def reset(self):
         LogRecord.drop_collection()
 
@@ -196,6 +219,7 @@ class MongoFlowScheduler(object):
 
     @classmethod
     def from_file(cls, filepath):
+        """Initialize the scheduler from a YAML file."""
         try:
             import yaml
             with open(filepath, "rt") as fh:
@@ -257,18 +281,13 @@ class MongoFlowScheduler(object):
         import sys
         sys.exit(1)
 
-    #def select(self):
-    #    return [(e, e.pickle_load()) for e in FlowEntry.objects]
-    #def find_qcriticals(self):
-    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="QCritical")]
-    #def find_abicriticals(self):
-    #    return [(e, e.pickle_load()) for e in FlowEntry.objects(status="AbiCritical")]
-    #def restart_unconverged(self):
-
     def sleep(self):
         time.sleep(self.sleep_time)
 
     def update_entry(self, entry, flow=None):
+        """
+        Update a :class:`FlowEntry`
+        """
         if flow is None:
             flow = entry.pickle_load()
                                                        
@@ -298,6 +317,8 @@ class MongoFlowScheduler(object):
             flow = entry.pickle_load()
             flow.fix_abicritical()
             self.update_entry(entry, flow=flow)
+
+    #def restart_unconverged(self):
 
     def move_to_completed(self, entry, flow):
         """Move this entry to the completed_flows collection."""
@@ -375,7 +396,7 @@ class MongoFlowScheduler(object):
     def run(self):
         if len(FlowEntry.objects) == 0:
             self.logger.info("No FlowEntries, will sleep for %s s" % self.sleep_time)
-            #self.sleep()
+            self.sleep()
 
         self.update_entries()
         self.fix_queue_critical()
@@ -387,8 +408,8 @@ class MongoFlowScheduler(object):
 
     def start(self):
         while True:
-            if self.run() == 0:
-                return print("All flows completed")
+            c = self.run()
+            #if c == 0: self.shutdown(msg="All flows completed")
 
     def send_email(self, msg, tag=None):
         """
@@ -421,7 +442,7 @@ class MongoFlowScheduler(object):
         if self.exceptions:
             # Report the list of exceptions.
             strio.writelines(self.exceptions)
-                                                                                                 
+
         if tag is None:
             tag = " [ALL OK]" if self.flow.all_ok else " [WARNING]"
 

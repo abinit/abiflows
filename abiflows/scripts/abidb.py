@@ -9,10 +9,8 @@ import os
 import argparse
 import shlex
 import time
-import socket
 
-from abiflows.core.server import AbiFlowsServer, daemonize_server, kill_server
-from abiflows.core.client import AbiFlowsClient
+from abiflows.core.scheduler import MongoFlowScheduler
 
 
 def main():
@@ -56,13 +54,13 @@ Usage example:\n
     p_start.add_argument("-r", '--remove-pid', default=False, action="store_true", 
                          help="Remove the pid file of the server before starting new instance.")
 
-    p_shutdown = subparsers.add_parser('shutdown', parents=[copts_parser], help="Shut down the server.")
+    #p_shutdown = subparsers.add_parser('shutdown', parents=[copts_parser], help="Shut down the server.")
 
     # Subparser for connect.
-    p_connect = subparsers.add_parser('connect', parents=[copts_parser], help="Test connection.")
+    #p_connect = subparsers.add_parser('connect', parents=[copts_parser], help="Test connection.")
 
     # Subparser for connect.
-    p_kill = subparsers.add_parser('kill', parents=[copts_parser], help="Kill server.")
+    #p_kill = subparsers.add_parser('kill', parents=[copts_parser], help="Kill server.")
 
     # Parse command line.
     try:
@@ -86,18 +84,18 @@ Usage example:\n
         return 0
 
     elif options.command == "start":
-        daemonize_server(options.remove_pid)
+        #daemonize_server(options.remove_pid)
 
-    elif options.command == "shutdown":
-        with AbiFlowsClient() as client:
-            client.shutdown_server()
+        if options.remove_pid and os.path.exists(MongoFlowScheduler.pid_path):
+            print("About to remove pid_file: %s" % MongoFlowScheduler.pid_path)
+            os.remove(MongoFlowScheduler.pid_path)
 
-    elif options.command == "kill":
-        retcode = kill_server()
+        scheduler = MongoFlowScheduler.from_user_config()
+        scheduler.start()
 
+    #elif options.command == "shutdown":
+    #elif options.command == "kill":
     #elif options.command == "restart":
-    #    server = AbiFlowsServer()
-
     #elif options.command == "status":
     #elif options.command == "info":
 
