@@ -118,6 +118,7 @@ install_requires = [
     "mongoengine",
     "flask",
     "flask-mongoengine",
+    "fireworks",
     #"abipy",
     #"apscheduler==2.1.0",
     #"pydispatcher>=2.0.3",
