@@ -749,8 +749,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                                 msg = "Couldn't find the 1WF{:d} file.".format(ii)
                                 logger.error(msg)
                                 raise InitializationError(msg)
-                            logger.info("Linking path {} --> {}".format(source, dest))
                             dest = os.path.join(self.workdir, self.prefix.idata + "_1WF{:d}".format(ii))
+                            logger.info("Linking path {} --> {}".format(source, dest))
                             os.symlink(source, dest)
                     else:
                         source_dir = previous_task['dir']
