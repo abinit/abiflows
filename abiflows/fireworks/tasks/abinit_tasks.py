@@ -745,7 +745,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     if d == "1WFs": # handle the link of multiple 1WF files
                         # make the links
                         source_dir = previous_task['dir']
-                        self.abiinput.set_vars(irdvars_for_ext("1WF"))
+                        self.abiinput.set_vars(irdvars_for_ext("DDK"))
                         outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
                         natom = len(self.abiinput.structure)
                         for ii in range(3*natom+1, 3*natom+4):
