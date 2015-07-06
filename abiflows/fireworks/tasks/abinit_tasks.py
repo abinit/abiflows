@@ -1389,7 +1389,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         if not self.files_file.exists:
             self.files_file.write(self.filesfile_string)
 
-        self.input_file.write(str(self.abiinput))
+        self.input_file.write(str(self.anaddb_input))
 
     def run_task(self, fw_spec):
         try:
