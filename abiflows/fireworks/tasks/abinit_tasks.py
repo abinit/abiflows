@@ -1381,7 +1381,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
                 if status == 0:
                     self.walltime = int(out)
                 else:
-                    logger.warning("Impossible to get the walltime: " + err)
+                    logger.warning("Impossible to ge    t the walltime: " + err)
             except Exception as e:
                 logger.warning("Impossible to get the walltime: ", exc_info=True)
 
@@ -1414,9 +1414,9 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
             else:
                 while True:
                     self.run_anaddb(fw_spec)
-                    # action = self.task_analysis(fw_spec)
-                    # if action:
-                    #     return action
+                    action = self.task_analysis(fw_spec)
+                    if action:
+                        return action
         except BaseException as exc:
             # log the error in history and reraise
             self.history.log_error(exc)
@@ -1425,6 +1425,9 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
             # Always dump the history for automatic parsing of the folders
             with open(HISTORY_JSON, "w") as f:
                 json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
+
+    def task_analysis(self, fw_spec):
+        return FWAction()
 
     def set_workdir(self, workdir):
         """Set the working directory."""
