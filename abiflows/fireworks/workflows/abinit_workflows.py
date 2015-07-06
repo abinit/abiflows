@@ -14,7 +14,7 @@ import logging
 import sys
 
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask, HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
-from abiflows.fireworks.tasks.abinit_tasks import DdkTask, DfptTask
+from abiflows.fireworks.tasks.abinit_tasks import Ddk1WFTask, DfptTask
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
@@ -324,7 +324,7 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
-        ddk_task = DdkTask(ddk_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK'})
+        ddk_task = Ddk1WFTask(ddk_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK'})
 
         self.ddk_fw = Firework(ddk_task, spec=spec, name=rf+ddk_task.task_type)
 
