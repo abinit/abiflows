@@ -1085,6 +1085,7 @@ class HybridFWTask(GsFWTask):
     ]
 
 
+@explicit_serialize
 class DfptTask(AbiFireTask):
     """
 
@@ -1312,14 +1313,21 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
     def get_ddb_list(self, previous_fws, task_type):
         ddb_files = []
+        print('IN GET_DDB_LIST')
         for t in previous_fws.get(task_type, []):
+            print(t)
             ddb = Directory(os.path.join(t['dir'], OUTDIR_NAME)).has_abiext('DDB')
             if not ddb:
                 msg = "One of the task of type {} (folder: {}) " \
                       "did not produce a DDB file!".format(task_type, t['dir'])
                 raise InitializationError(msg)
             ddb_files.append(ddb)
+        print('END GET_DDB_LIST')
         return ddb_files
+
+    # def get_ddb_file(self, previous_fws):
+    #
+    #     return
 
     def run_anaddb(self, fw_spec):
         """
@@ -1374,6 +1382,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
         # make the appropriate dependencies in the in dir
         ddb_list = self.get_ddb_list(fw_spec['previous_fws'], DfptTask.task_type)
+        # ddb_file = self.get_ddb_file(previous_fws=fw_spec['previous_fws'])
         if len(ddb_list) != 1:
             raise InitializationError("Found more than one DDB file for this anaddb task ...")
         self.ddb_filepath = File(os.path.join(os.path.join(self.workdir, INDIR_NAME), 'in_DDB'))
