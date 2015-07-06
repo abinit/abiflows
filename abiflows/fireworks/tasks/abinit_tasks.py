@@ -128,7 +128,12 @@ class BasicTaskMixin(object):
         return optconf, qadapter_spec
 
     def get_final_mod_spec(self, fw_spec):
-        return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
+        if 'previous_fws' in fw_spec:
+            prev_fws = fw_spec['previous_fws'].copy()
+        else:
+            prev_fws = {}
+        prev_fws[self.task_type] = [self.current_task_info(fw_spec)]
+        return [{'_set': {'previous_fws': prev_fws}}]
 
 
 @explicit_serialize
