@@ -1442,6 +1442,14 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
         return "\n".join(lines)
 
+    def set_logger(self):
+        # Set a logger for abinitio and abipy
+        log_handler = logging.FileHandler('abipy.log')
+        log_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+        logging.getLogger('pymatgen.io.abinitio').addHandler(log_handler)
+        logging.getLogger('abipy').addHandler(log_handler)
+        logging.getLogger('abiflows').addHandler(log_handler)
+
     def current_task_info(self, fw_spec):
         return dict(dir=self.workdir)
 
