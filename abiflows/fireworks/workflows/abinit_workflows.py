@@ -328,7 +328,7 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
         self.ddk_fw = Firework(ddk_task, spec=spec, name=rf+ddk_task.task_type)
 
-        rf_task = DfptTask(rf_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK', ddk_task.task_type: 'DDK'})
+        rf_task = DfptTask(rf_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK', ddk_task.task_type: '1WFs'})
 
         self.rf_fw = Firework(rf_task, spec=spec, name=rf+rf_task.task_type)
 

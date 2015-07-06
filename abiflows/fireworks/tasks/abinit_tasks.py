@@ -737,45 +737,61 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                         raise InitializationError(msg)
                     self.abiinput.set_structure(Structure.from_dict(previous_task['structure']))
                 elif not d.startswith('@'):
-                    source_dir = previous_task['dir']
-                    self.abiinput.set_vars(irdvars_for_ext(d))
-                    # handle the custom DDK extension on its own
-                    if d == "DDK":
+                    if d == "1WFs": # handle the link of multiple 1WF files
+                        # make the links
+                        source_dir = previous_task['dir']
+                        self.abiinput.set_vars(irdvars_for_ext("1WF"))
                         outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
-                        source = outdata_dir.has_abiext('DDK')
-                        if not source:
-                            msg = "DDK is needed by this task but it does not exist"
-                            logger.error(msg)
-                            raise InitializationError(msg)
-                        d = os.path.basename(source).split('_')[-2]
-                    source = os.path.join(source_dir, self.prefix.odata + "_" + d)
-                    logger.info("Need path {} with ext {}".format(source, d))
-                    dest = os.path.join(self.workdir, self.prefix.idata + "_" + d)
-                    if not os.path.exists(source):
-                        # Try netcdf file. TODO: this case should be treated in a cleaner way.
-                        source += "-etsf.nc"
-                        if os.path.exists(source): dest += "-etsf.nc"
-                    if not os.path.exists(source):
-                        msg = "{} is needed by this task but it does not exist".format(source)
-                        logger.error(msg)
-                        raise InitializationError(msg)
-
-                    # Link path to dest if dest link does not exist.
-                    # else check that it points to the expected file.
-                    logger.info("Linking path {} --> {}".format(source, dest))
-                    if not os.path.exists(dest):
-                        if self.ftm.fw_policy.copy_deps:
-                            shutil.copyfile(source, dest)
-                        else:
+                        natom = len(self.abiinput.structure)
+                        for ii in range(3*natom+1, 3*natom+4):
+                            source = outdata_dir.has_abiext('1WF{:d}'.format(ii))
+                            if not source:
+                                msg = "Couldn't find the 1WF{:d} file.".format(ii)
+                                logger.error(msg)
+                                raise InitializationError(msg)
+                            logger.info("Linking path {} --> {}".format(source, dest))
+                            dest = os.path.join(self.workdir, self.prefix.idata + "_1WF{:d}".format(ii))
                             os.symlink(source, dest)
                     else:
-                        # check links but only if we haven't performed the restart.
-                        # in this case, indeed we may have replaced the file pointer with the
-                        # previous output file of the present task.
-                        if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
-                            msg = "dest {} does not point to path {}".format(dest, source)
+                        source_dir = previous_task['dir']
+                        self.abiinput.set_vars(irdvars_for_ext(d))
+                        # handle the custom DDK extension on its own
+                        if d == "DDK":
+                            outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
+                            source = outdata_dir.has_abiext('DDK')
+                            if not source:
+                                msg = "DDK is needed by this task but it does not exist"
+                                logger.error(msg)
+                                raise InitializationError(msg)
+                            d = os.path.basename(source).split('_')[-2]
+                        source = os.path.join(source_dir, self.prefix.odata + "_" + d)
+                        logger.info("Need path {} with ext {}".format(source, d))
+                        dest = os.path.join(self.workdir, self.prefix.idata + "_" + d)
+                        if not os.path.exists(source):
+                            # Try netcdf file. TODO: this case should be treated in a cleaner way.
+                            source += "-etsf.nc"
+                            if os.path.exists(source): dest += "-etsf.nc"
+                        if not os.path.exists(source):
+                            msg = "{} is needed by this task but it does not exist".format(source)
                             logger.error(msg)
                             raise InitializationError(msg)
+
+                        # Link path to dest if dest link does not exist.
+                        # else check that it points to the expected file.
+                        logger.info("Linking path {} --> {}".format(source, dest))
+                        if not os.path.exists(dest):
+                            if self.ftm.fw_policy.copy_deps:
+                                shutil.copyfile(source, dest)
+                            else:
+                                os.symlink(source, dest)
+                        else:
+                            # check links but only if we haven't performed the restart.
+                            # in this case, indeed we may have replaced the file pointer with the
+                            # previous output file of the present task.
+                            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
+                                msg = "dest {} does not point to path {}".format(dest, source)
+                                logger.error(msg)
+                                raise InitializationError(msg)
 
     def resolve_deps(self, fw_spec):
         """
@@ -1124,6 +1140,22 @@ class DdkTask(AbiFireTask):
         os.symlink(wf_file, wf_file+'_DDK')
 
         return super(DdkTask, self).conclude_task(fw_spec)
+
+
+@explicit_serialize
+class Ddk1WFTask(AbiFireTask):
+    task_type = "ddk-1wf"
+
+    def conclude_task(self, fw_spec):
+        # # make the links
+        # natom = len(self.abiinput.structure)
+        # for ii in range(3*natom+1, 3*natom+4):
+        #     wf_file = self.outdir.has_abiext('1WF{:d}'.format(ii))
+        #     if not wf_file:
+        #         raise PostProcessError(self, "Couldn't link the 1WF files.")
+        #     os.symlink(wf_file, wf_file+'_DDK')
+
+        return super(Ddk1WFTask, self).conclude_task(fw_spec)
 
 
 @explicit_serialize
