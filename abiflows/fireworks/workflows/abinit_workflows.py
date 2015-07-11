@@ -14,11 +14,12 @@ import logging
 import sys
 
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask, HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
+from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, Ddk1WFTask, DfptTask
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory, PhononsFromGsFactory
-from abipy.abio.inputs import AbinitInput
+from abipy.abio.inputs import AbinitInput, AnaddbInput
 from monty.serialization import loadfn
 
 # logging.basicConfig()
@@ -60,6 +61,14 @@ class AbstractFWWorkflow(Workflow):
                                          name=(self.wf.name+"_insclnup")[:15])
 
         append_fw_to_wf(insert_and_cleanup_fw, self.wf)
+
+    def add_anaddb_task(self, structure):
+        spec = self.set_short_single_core_to_spec()
+        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure))
+        anaddb_fw = Firework([anaddb_task],
+                             spec=spec,
+                             name='anaddb')
+        append_fw_to_wf(anaddb_fw, self.wf)
 
     def add_metadata(self, structure=None, additional_metadata={}):
         metadata = dict(wf_type = self.__class__.__name__)
@@ -309,3 +318,32 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         return cls(scf_fact, phonon_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
 
+
+class PiezoElasticFWWorkflow(AbstractFWWorkflow):
+    def __init__(self, scf_inp, ddk_inp, rf_inp, autoparal=False, spec={}, initialization_info={}):
+        rf = self.get_reduced_formula(scf_inp)
+
+        scf_task = ScfFWTask(scf_inp, is_autoparal=autoparal)
+
+        spec = dict(spec)
+        spec['initialization_info'] = initialization_info
+        if autoparal:
+            spec = self.set_short_single_core_to_spec(spec)
+
+        self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
+
+        ddk_task = Ddk1WFTask(ddk_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK'})
+
+        self.ddk_fw = Firework(ddk_task, spec=spec, name=rf+ddk_task.task_type)
+
+        rf_task = DfptTask(rf_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK', ddk_task.task_type: '1WFs'})
+
+        self.rf_fw = Firework(rf_task, spec=spec, name=rf+rf_task.task_type)
+
+        self.wf = Workflow([self.scf_fw, self.ddk_fw, self.rf_fw], {self.scf_fw: self.ddk_fw, self.ddk_fw: self.rf_fw})
+
+        self.add_anaddb_task(scf_inp.structure)
+
+    @classmethod
+    def from_factory(cls):
+        raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')

@@ -51,6 +51,7 @@ FILES_FILE_NAME = "run.files"
 OUTPUT_FILE_NAME = "run.abo"
 INPUT_FILE_NAME = "run.abi"
 MPIABORTFILE = "__ABI_MPIABORTFILE__"
+DUMMY_FILENAME = "__DUMMY__"
 
 HISTORY_JSON = "history.json"
 
@@ -128,7 +129,12 @@ class BasicTaskMixin(object):
         return optconf, qadapter_spec
 
     def get_final_mod_spec(self, fw_spec):
-        return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
+        if 'previous_fws' in fw_spec:
+            prev_fws = fw_spec['previous_fws'].copy()
+        else:
+            prev_fws = {}
+        prev_fws[self.task_type] = [self.current_task_info(fw_spec)]
+        return [{'_set': {'previous_fws': prev_fws}}]
 
 
 @explicit_serialize
@@ -737,45 +743,61 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                         raise InitializationError(msg)
                     self.abiinput.set_structure(Structure.from_dict(previous_task['structure']))
                 elif not d.startswith('@'):
-                    source_dir = previous_task['dir']
-                    self.abiinput.set_vars(irdvars_for_ext(d))
-                    # handle the custom DDK extension on its own
-                    if d == "DDK":
+                    if d == "1WFs": # handle the link of multiple 1WF files
+                        # make the links
+                        source_dir = previous_task['dir']
+                        self.abiinput.set_vars(irdvars_for_ext("DDK"))
                         outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
-                        source = outdata_dir.has_abiext('DDK')
-                        if not source:
-                            msg = "DDK is needed by this task but it does not exist"
-                            logger.error(msg)
-                            raise InitializationError(msg)
-                        d = os.path.basename(source).split('_')[-2]
-                    source = os.path.join(source_dir, self.prefix.odata + "_" + d)
-                    logger.info("Need path {} with ext {}".format(source, d))
-                    dest = os.path.join(self.workdir, self.prefix.idata + "_" + d)
-                    if not os.path.exists(source):
-                        # Try netcdf file. TODO: this case should be treated in a cleaner way.
-                        source += "-etsf.nc"
-                        if os.path.exists(source): dest += "-etsf.nc"
-                    if not os.path.exists(source):
-                        msg = "{} is needed by this task but it does not exist".format(source)
-                        logger.error(msg)
-                        raise InitializationError(msg)
-
-                    # Link path to dest if dest link does not exist.
-                    # else check that it points to the expected file.
-                    logger.info("Linking path {} --> {}".format(source, dest))
-                    if not os.path.exists(dest):
-                        if self.ftm.fw_policy.copy_deps:
-                            shutil.copyfile(source, dest)
-                        else:
+                        natom = len(self.abiinput.structure)
+                        for ii in range(3*natom+1, 3*natom+4):
+                            source = outdata_dir.has_abiext('1WF{:d}'.format(ii))
+                            if not source:
+                                msg = "Couldn't find the 1WF{:d} file.".format(ii)
+                                logger.error(msg)
+                                raise InitializationError(msg)
+                            dest = os.path.join(self.workdir, self.prefix.idata + "_1WF{:d}".format(ii))
+                            logger.info("Linking path {} --> {}".format(source, dest))
                             os.symlink(source, dest)
                     else:
-                        # check links but only if we haven't performed the restart.
-                        # in this case, indeed we may have replaced the file pointer with the
-                        # previous output file of the present task.
-                        if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
-                            msg = "dest {} does not point to path {}".format(dest, source)
+                        source_dir = previous_task['dir']
+                        self.abiinput.set_vars(irdvars_for_ext(d))
+                        # handle the custom DDK extension on its own
+                        if d == "DDK":
+                            outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
+                            source = outdata_dir.has_abiext('DDK')
+                            if not source:
+                                msg = "DDK is needed by this task but it does not exist"
+                                logger.error(msg)
+                                raise InitializationError(msg)
+                            d = os.path.basename(source).split('_')[-2]
+                        source = os.path.join(source_dir, self.prefix.odata + "_" + d)
+                        logger.info("Need path {} with ext {}".format(source, d))
+                        dest = os.path.join(self.workdir, self.prefix.idata + "_" + d)
+                        if not os.path.exists(source):
+                            # Try netcdf file. TODO: this case should be treated in a cleaner way.
+                            source += "-etsf.nc"
+                            if os.path.exists(source): dest += "-etsf.nc"
+                        if not os.path.exists(source):
+                            msg = "{} is needed by this task but it does not exist".format(source)
                             logger.error(msg)
                             raise InitializationError(msg)
+
+                        # Link path to dest if dest link does not exist.
+                        # else check that it points to the expected file.
+                        logger.info("Linking path {} --> {}".format(source, dest))
+                        if not os.path.exists(dest):
+                            if self.ftm.fw_policy.copy_deps:
+                                shutil.copyfile(source, dest)
+                            else:
+                                os.symlink(source, dest)
+                        else:
+                            # check links but only if we haven't performed the restart.
+                            # in this case, indeed we may have replaced the file pointer with the
+                            # previous output file of the present task.
+                            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
+                                msg = "dest {} does not point to path {}".format(dest, source)
+                                logger.error(msg)
+                                raise InitializationError(msg)
 
     def resolve_deps(self, fw_spec):
         """
@@ -1063,6 +1085,7 @@ class HybridFWTask(GsFWTask):
     ]
 
 
+@explicit_serialize
 class DfptTask(AbiFireTask):
     """
 
@@ -1070,6 +1093,7 @@ class DfptTask(AbiFireTask):
     CRITICAL_EVENTS = [
         events.ScfConvergenceWarning,
     ]
+    task_type = "dfpt"
 
     def restart(self):
         """
@@ -1124,6 +1148,22 @@ class DdkTask(AbiFireTask):
         os.symlink(wf_file, wf_file+'_DDK')
 
         return super(DdkTask, self).conclude_task(fw_spec)
+
+
+@explicit_serialize
+class Ddk1WFTask(AbiFireTask):
+    task_type = "ddk-1wf"
+
+    def conclude_task(self, fw_spec):
+        # # make the links
+        # natom = len(self.abiinput.structure)
+        # for ii in range(3*natom+1, 3*natom+4):
+        #     wf_file = self.outdir.has_abiext('1WF{:d}'.format(ii))
+        #     if not wf_file:
+        #         raise PostProcessError(self, "Couldn't link the 1WF files.")
+        #     os.symlink(wf_file, wf_file+'_DDK')
+
+        return super(Ddk1WFTask, self).conclude_task(fw_spec)
 
 
 @explicit_serialize
@@ -1251,6 +1291,190 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 @explicit_serialize
 class AnaDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "anaddb"
+
+    def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[]):
+        self.anaddb_input = anaddb_input
+        self.restart_info = restart_info
+
+        self.handlers = handlers or [cls() for cls in events.get_event_handler_classes()]
+        self.is_autoparal = is_autoparal
+
+        # deps are transformed to be a list or a dict of lists
+        if isinstance(deps, dict):
+            deps = dict(deps)
+            for k, v in deps.items():
+                if not isinstance(v, (list, tuple)):
+                    deps[k] = [v]
+        elif deps and not isinstance(deps, (list, tuple)):
+            deps = [deps]
+        self.deps = deps
+
+        self.history = TaskHistory(history)
+
+    def get_ddb_list(self, previous_fws, task_type):
+        ddb_files = []
+        for t in previous_fws.get(task_type, []):
+            ddb = Directory(os.path.join(t['dir'], OUTDIR_NAME)).has_abiext('DDB')
+            if not ddb:
+                msg = "One of the task of type {} (folder: {}) " \
+                      "did not produce a DDB file!".format(task_type, t['dir'])
+                raise InitializationError(msg)
+            ddb_files.append(ddb)
+        return ddb_files
+
+    # def get_ddb_file(self, previous_fws):
+    #
+    #     return
+
+    def run_anaddb(self, fw_spec):
+        """
+        executes anaddb and waits for the end of the process.
+        TODO: make it general in the same way as "run_abinit"
+        the mpirun command is retrived from the mpirun_cmd keys in the fw_polity
+        of the FWTaskManager, that can be overridden by the values in the spec.
+        Note that in case of missing definition of this parameter, the values fall back to the default
+        value of  mpirun_cmd: 'mpirun', assuming that it is properly retrived
+        from the PATH. By default, anaddb is retrieved from the PATH.
+        """
+
+        def anaddb_process():
+            command = []
+            #consider the case of serial execution
+            if self.ftm.fw_policy.mpirun_cmd:
+                command.append(self.ftm.fw_policy.mpirun_cmd)
+                if 'mpi_ncpus' in fw_spec:
+                    command.extend(['-np', str(fw_spec['mpi_ncpus'])])
+            command.append('anaddb')
+            with open(self.files_file.path, 'r') as stdin, open(self.log_file.path, 'w') as stdout, \
+                    open(self.stderr_file.path, 'w') as stderr:
+                self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
+
+            (stdoutdata, stderrdata) = self.process.communicate()
+            self.returncode = self.process.returncode
+
+        thread = threading.Thread(target=anaddb_process)
+        # the amount of time left plus a buffer of 2 minutes
+        timeout = (self.walltime - (time.time() - self.start_time) - 120) if self.walltime else None
+        thread.start()
+        thread.join(timeout)
+        if thread.is_alive():
+            self.process.terminate()
+            thread.join()
+            raise WalltimeError("The task couldn't be terminated within the time limit. Killed.")
+
+    def setup_task(self, fw_spec):
+        self.start_time = time.time()
+
+        self.set_logger()
+
+        # load the FWTaskManager to get configuration parameters
+        self.ftm = self.get_fw_task_manager(fw_spec)
+
+        # set walltime, if possible
+        self.walltime = None
+        if self.ftm.fw_policy.walltime_command:
+            try:
+                p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err =p.communicate()
+                status = p.returncode
+                if status == 0:
+                    self.walltime = int(out)
+                else:
+                    logger.warning("Impossible to ge    t the walltime: " + err)
+            except Exception as e:
+                logger.warning("Impossible to get the walltime: ", exc_info=True)
+
+        # setting working directory and files
+        self.set_workdir(os.getcwd())
+
+        self.indir.makedirs()
+        self.outdir.makedirs()
+        self.tmpdir.makedirs()
+
+        # make the appropriate dependencies in the in dir
+        ddb_list = self.get_ddb_list(fw_spec['previous_fws'], DfptTask.task_type)
+        # ddb_file = self.get_ddb_file(previous_fws=fw_spec['previous_fws'])
+        if len(ddb_list) != 1:
+            raise InitializationError("Found more than one DDB file for this anaddb task ...")
+        self.ddb_filepath = File(os.path.join(os.path.join(self.workdir, INDIR_NAME), 'in_DDB'))
+        os.symlink(ddb_list[0], self.ddb_filepath.path)
+
+        # Write files file and input file.
+        if not self.files_file.exists:
+            self.files_file.write(self.filesfile_string)
+
+        self.input_file.write(str(self.anaddb_input))
+
+    def run_task(self, fw_spec):
+        try:
+            self.setup_task(fw_spec)
+            if self.is_autoparal:
+                return self.autoparal(fw_spec)
+            else:
+                while True:
+                    self.run_anaddb(fw_spec)
+                    action = self.task_analysis(fw_spec)
+                    if action:
+                        return action
+        except BaseException as exc:
+            # log the error in history and reraise
+            self.history.log_error(exc)
+            raise
+        finally:
+            # Always dump the history for automatic parsing of the folders
+            with open(HISTORY_JSON, "w") as f:
+                json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
+
+    def task_analysis(self, fw_spec):
+        return FWAction()
+
+    def set_workdir(self, workdir):
+        """Set the working directory."""
+
+        self.workdir = os.path.abspath(workdir)
+
+        # Files required for the execution.
+        self.input_file = File(os.path.join(self.workdir, INPUT_FILE_NAME))
+        self.output_file = File(os.path.join(self.workdir, OUTPUT_FILE_NAME))
+        self.files_file = File(os.path.join(self.workdir, FILES_FILE_NAME))
+        self.log_file = File(os.path.join(self.workdir, LOG_FILE_NAME))
+        self.stderr_file = File(os.path.join(self.workdir, STDERR_FILE_NAME))
+
+        # This file is produce by Abinit if nprocs > 1 and MPI_ABORT.
+        self.mpiabort_file = File(os.path.join(self.workdir, MPIABORTFILE))
+
+        # Directories with input|output|temporary data.
+        self.indir = Directory(os.path.join(self.workdir, INDIR_NAME))
+        self.outdir = Directory(os.path.join(self.workdir, OUTDIR_NAME))
+        self.tmpdir = Directory(os.path.join(self.workdir, TMPDIR_NAME))
+
+    @property
+    def filesfile_string(self):
+        """String with the list of files and prefixes needed to execute ABINIT."""
+        lines = []
+        app = lines.append
+
+        app(self.input_file.path)          # 1) Path of the input file
+        app(self.output_file.path)         # 2) Path of the output file
+        app(self.ddb_filepath.path)             # 3) Input derivative database e.g. t13.ddb.in
+        app(DUMMY_FILENAME)                # 4) Output molecular dynamics e.g. t13.md
+        app(DUMMY_FILENAME)                # 5) Input elphon matrix elements  (GKK file)
+        app(DUMMY_FILENAME)                # 6) Base name for elphon output files e.g. t13
+        app(DUMMY_FILENAME)                # 7) File containing ddk filenames for elphon/transport.
+
+        return "\n".join(lines)
+
+    def set_logger(self):
+        # Set a logger for abinitio and abipy
+        log_handler = logging.FileHandler('abipy.log')
+        log_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+        logging.getLogger('pymatgen.io.abinitio').addHandler(log_handler)
+        logging.getLogger('abipy').addHandler(log_handler)
+        logging.getLogger('abiflows').addHandler(log_handler)
+
+    def current_task_info(self, fw_spec):
+        return dict(dir=self.workdir)
 
 ##############################
 # Generation tasks
