@@ -136,6 +136,14 @@ class BasicTaskMixin(object):
         prev_fws[self.task_type] = [self.current_task_info(fw_spec)]
         return [{'_set': {'previous_fws': prev_fws}}]
 
+    def set_logger(self):
+        # Set a logger for abinitio and abipy
+        log_handler = logging.FileHandler('abipy.log')
+        log_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+        logging.getLogger('pymatgen.io.abinitio').addHandler(log_handler)
+        logging.getLogger('abipy').addHandler(log_handler)
+        logging.getLogger('abiflows').addHandler(log_handler)
+
 
 @explicit_serialize
 class AbiFireTask(BasicTaskMixin, FireTaskBase):
@@ -259,14 +267,6 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             app(pseudo.path)
 
         return "\n".join(lines)
-
-    def set_logger(self):
-        # Set a logger for abinitio and abipy
-        log_handler = logging.FileHandler('abipy.log')
-        log_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-        logging.getLogger('pymatgen.io.abinitio').addHandler(log_handler)
-        logging.getLogger('abipy').addHandler(log_handler)
-        logging.getLogger('abiflows').addHandler(log_handler)
 
     def config_run(self, fw_spec):
         """
@@ -733,8 +733,38 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
 
         return FWAction(detours=new_fw)
 
-    def make_links(self, previous_task_type, deps_list):
-        for previous_task in previous_task_type:
+    def link_ext(self, ext, source_dir):
+        source = os.path.join(source_dir, self.prefix.odata + "_" + ext)
+        logger.info("Need path {} with ext {}".format(source, ext))
+        dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext)
+        if not os.path.exists(source):
+            # Try netcdf file. TODO: this case should be treated in a cleaner way.
+            source += "-etsf.nc"
+            if os.path.exists(source): dest += "-etsf.nc"
+        if not os.path.exists(source):
+            msg = "{} is needed by this task but it does not exist".format(source)
+            logger.error(msg)
+            raise InitializationError(msg)
+
+        # Link path to dest if dest link does not exist.
+        # else check that it points to the expected file.
+        logger.info("Linking path {} --> {}".format(source, dest))
+        if not os.path.exists(dest):
+            if self.ftm.fw_policy.copy_deps:
+                shutil.copyfile(source, dest)
+            else:
+                os.symlink(source, dest)
+        else:
+            # check links but only if we haven't performed the restart.
+            # in this case, indeed we may have replaced the file pointer with the
+            # previous output file of the present task.
+            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
+                msg = "dest {} does not point to path {}".format(dest, source)
+                logger.error(msg)
+                raise InitializationError(msg)
+
+    def resolve_deps_per_task_type(self, previous_tasks, deps_list):
+        for previous_task in previous_tasks:
             for d in deps_list:
                 if d.startswith('@structure'):
                     if 'structure' not in previous_task:
@@ -743,68 +773,33 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                         raise InitializationError(msg)
                     self.abiinput.set_structure(Structure.from_dict(previous_task['structure']))
                 elif not d.startswith('@'):
-                    if d == "1WFs": # handle the link of multiple 1WF files
-                        # make the links
-                        source_dir = previous_task['dir']
-                        self.abiinput.set_vars(irdvars_for_ext("DDK"))
-                        outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
-                        natom = len(self.abiinput.structure)
-                        for ii in range(3*natom+1, 3*natom+4):
-                            source = outdata_dir.has_abiext('1WF{:d}'.format(ii))
-                            if not source:
-                                msg = "Couldn't find the 1WF{:d} file.".format(ii)
-                                logger.error(msg)
-                                raise InitializationError(msg)
-                            dest = os.path.join(self.workdir, self.prefix.idata + "_1WF{:d}".format(ii))
-                            logger.info("Linking path {} --> {}".format(source, dest))
-                            os.symlink(source, dest)
-                    else:
-                        source_dir = previous_task['dir']
-                        self.abiinput.set_vars(irdvars_for_ext(d))
+                    source_dir = previous_task['dir']
+                    self.abiinput.set_vars(irdvars_for_ext(d))
+                    if d == "DDK":
                         # handle the custom DDK extension on its own
-                        if d == "DDK":
-                            outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
-                            source = outdata_dir.has_abiext('DDK')
-                            if not source:
-                                msg = "DDK is needed by this task but it does not exist"
-                                logger.error(msg)
-                                raise InitializationError(msg)
-                            d = os.path.basename(source).split('_')[-2]
-                        source = os.path.join(source_dir, self.prefix.odata + "_" + d)
-                        logger.info("Need path {} with ext {}".format(source, d))
-                        dest = os.path.join(self.workdir, self.prefix.idata + "_" + d)
-                        if not os.path.exists(source):
-                            # Try netcdf file. TODO: this case should be treated in a cleaner way.
-                            source += "-etsf.nc"
-                            if os.path.exists(source): dest += "-etsf.nc"
-                        if not os.path.exists(source):
-                            msg = "{} is needed by this task but it does not exist".format(source)
+                        # accept more than one DDK file in the outdir: multiple perturbations are allowed in a
+                        # single calculation
+                        outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
+                        ddks = []
+                        for f in outdata_dir.list_filepaths():
+                            if f.endswith('_DDK'):
+                                ddks.append(f)
+                        if not ddks:
+                            msg = "DDK is needed by this task but it does not exist"
                             logger.error(msg)
                             raise InitializationError(msg)
-
-                        # Link path to dest if dest link does not exist.
-                        # else check that it points to the expected file.
-                        logger.info("Linking path {} --> {}".format(source, dest))
-                        if not os.path.exists(dest):
-                            if self.ftm.fw_policy.copy_deps:
-                                shutil.copyfile(source, dest)
-                            else:
-                                os.symlink(source, dest)
-                        else:
-                            # check links but only if we haven't performed the restart.
-                            # in this case, indeed we may have replaced the file pointer with the
-                            # previous output file of the present task.
-                            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
-                                msg = "dest {} does not point to path {}".format(dest, source)
-                                logger.error(msg)
-                                raise InitializationError(msg)
+                        exts = [os.path.basename(ddk).split('_')[-2] for ddk in ddks]
+                        for ext in exts:
+                            self.link_ext(ext, source_dir)
+                    else:
+                        self.link_ext(d, source_dir)
 
     def resolve_deps(self, fw_spec):
         """
         Method to link the required deps for the current FW.
         Note that different cases are handled here depending whether the current FW is a restart or not and whether
         the rerun is performed in the same folder or not.
-        In case of restart the safest choice is to link the in of the previous FW, so that if they have been
+        In case of restart the safest choice is to link the deps of the previous FW, so that if they have been
         updated in the meanwhile we are taking the correct one.
         TODO: this last case sounds quite unlikely and should be tested
         """
@@ -830,7 +825,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     logger.error(msg)
                     raise InitializationError(msg)
 
-                self.make_links(previous_fws.values()[0], self.deps)
+                self.resolve_deps_per_task_type(previous_fws.values()[0], self.deps)
 
             else:
                 # deps should be a dict
@@ -845,11 +840,11 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                         logger.error(msg)
                         raise InitializationError(msg)
                     elif len(previous_fws[task_type]) > 1:
-                        msg = "Previous_fws does not contain more than a single reference for task type {}, " \
+                        msg = "Previous_fws contains more than a single reference for task type {}, " \
                               "needed in reference {}. Risk of overwriting.".format(task_type, str(self.deps))
                         logger.warning(msg)
 
-                    self.make_links(previous_fws[task_type], deps_list)
+                    self.resolve_deps_per_task_type(previous_fws[task_type], deps_list)
 
         else:
             # If it is a restart, link the one from the previous task.
@@ -869,7 +864,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
 
     def out_to_in(self, out_file):
         """
-        copies the output file to the input data directory of this task
+        links or copies, according to the fw_policy, the output file to the input data directory of this task
         and rename the file so that ABINIT will read it as an input data file.
 
         Returns:
@@ -1100,37 +1095,39 @@ class DfptTask(AbiFireTask):
         Phonon calculations can be restarted only if we have the 1WF file or the 1DEN file.
         from which we can read the first-order wavefunctions or the first order density.
         Prefer 1WF over 1DEN since we can reuse the wavefunctions.
+        Try to handle an input with many perturbation calculated at the same time. link/copy all the 1WF or 1DEN files
         """
         # Abinit adds the idir-ipert index at the end of the file and this breaks the extension
         # e.g. out_1WF4, out_DEN4. find_1wf_files and find_1den_files returns the list of files found
-        restart_file, irdvars = None, None
+        restart_files, irdvars = None, None
 
         # Highest priority to the 1WF file because restart is more efficient.
         wf_files = self.restart_info.prev_outdir.find_1wf_files()
         if wf_files is not None:
-            restart_file = wf_files[0].path
+            restart_files = [f.path for f in wf_files]
             irdvars = irdvars_for_ext("1WF")
-            if len(wf_files) != 1:
-                restart_file = None
-                logger.critical("Found more than one 1WF file. Restart is ambiguous!")
+            # if len(wf_files) != 1:
+            #     restart_files = None
+            #     logger.critical("Found more than one 1WF file. Restart is ambiguous!")
 
-        if restart_file is None:
+        if restart_files is None:
             den_files = self.restart_info.prev_outdir.find_1den_files()
             if den_files is not None:
-                restart_file = den_files[0].path
+                restart_files = [f.path for f in den_files]
                 irdvars = {"ird1den": 1}
-                if len(den_files) != 1:
-                    restart_file = None
-                    logger.critical("Found more than one 1DEN file. Restart is ambiguous!")
+                # if len(den_files) != 1:
+                #     restart_files = None
+                #     logger.critical("Found more than one 1DEN file. Restart is ambiguous!")
 
-        if restart_file is None:
+        if not restart_files:
             # Raise because otherwise restart is equivalent to a run from scratch --> infinite loop!
             msg = "Cannot find the 1WF|1DEN file to restart from."
             logger.error(msg)
             raise RestartError(msg)
 
         # Move file.
-        restart_file = self.out_to_in(restart_file)
+        for f in restart_files:
+            self.out_to_in(f)
 
         # Add the appropriate variable for restarting.
         self.abiinput.set_vars(irdvars)
@@ -1142,28 +1139,29 @@ class DdkTask(AbiFireTask):
 
     def conclude_task(self, fw_spec):
         # make a link to _DDK of the 1WF file to ease the link in the dependencies
-        wf_file = self.outdir.has_abiext('1WF')
-        if not wf_file:
-            raise PostProcessError(self, "Couldn't link the 1WF file.")
-        os.symlink(wf_file, wf_file+'_DDK')
+        wf_files = self.outdir.find_1wf_files()
+        if not wf_files:
+            raise PostProcessError(self, "Couldn't link 1WF files.")
+        for f in wf_files:
+            os.symlink(f.path, f.path+'_DDK')
 
         return super(DdkTask, self).conclude_task(fw_spec)
 
 
-@explicit_serialize
-class Ddk1WFTask(AbiFireTask):
-    task_type = "ddk-1wf"
-
-    def conclude_task(self, fw_spec):
-        # # make the links
-        # natom = len(self.abiinput.structure)
-        # for ii in range(3*natom+1, 3*natom+4):
-        #     wf_file = self.outdir.has_abiext('1WF{:d}'.format(ii))
-        #     if not wf_file:
-        #         raise PostProcessError(self, "Couldn't link the 1WF files.")
-        #     os.symlink(wf_file, wf_file+'_DDK')
-
-        return super(Ddk1WFTask, self).conclude_task(fw_spec)
+# @explicit_serialize
+# class Ddk1WFTask(AbiFireTask):
+#     task_type = "ddk-1wf"
+#
+#     def conclude_task(self, fw_spec):
+#         # # make the links
+#         # natom = len(self.abiinput.structure)
+#         # for ii in range(3*natom+1, 3*natom+4):
+#         #     wf_file = self.outdir.has_abiext('1WF{:d}'.format(ii))
+#         #     if not wf_file:
+#         #         raise PostProcessError(self, "Couldn't link the 1WF files.")
+#         #     os.symlink(wf_file, wf_file+'_DDK')
+#
+#         return super(Ddk1WFTask, self).conclude_task(fw_spec)
 
 
 @explicit_serialize
@@ -1177,8 +1175,13 @@ class PhononTask(DfptTask):
 
 
 @explicit_serialize
-class BecTask(AbiFireTask):
+class BecTask(DfptTask):
     task_type = "bec"
+
+
+@explicit_serialize
+class StrainPertTask(DfptTask):
+    task_type = "strain_pert"
 
 
 ##############################
@@ -1393,7 +1396,10 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         self.tmpdir.makedirs()
 
         # make the appropriate dependencies in the in dir
+        #FIXME improve the retrieval of the ddb files
         ddb_list = self.get_ddb_list(fw_spec['previous_fws'], DfptTask.task_type)
+        for dfpt_subclass in DfptTask.__subclasses__():
+            ddb_list.extend(self.get_ddb_list(fw_spec['previous_fws'], dfpt_subclass.task_type))
         # ddb_file = self.get_ddb_file(previous_fws=fw_spec['previous_fws'])
         if len(ddb_list) != 1:
             raise InitializationError("Found more than one DDB file for this anaddb task ...")
@@ -1409,14 +1415,8 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
     def run_task(self, fw_spec):
         try:
             self.setup_task(fw_spec)
-            if self.is_autoparal:
-                return self.autoparal(fw_spec)
-            else:
-                while True:
-                    self.run_anaddb(fw_spec)
-                    action = self.task_analysis(fw_spec)
-                    if action:
-                        return action
+            self.run_anaddb(fw_spec)
+            action = self.task_analysis(fw_spec)
         except BaseException as exc:
             # log the error in history and reraise
             self.history.log_error(exc)
@@ -1465,16 +1465,6 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
         return "\n".join(lines)
 
-    def set_logger(self):
-        # Set a logger for abinitio and abipy
-        log_handler = logging.FileHandler('abipy.log')
-        log_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-        logging.getLogger('pymatgen.io.abinitio').addHandler(log_handler)
-        logging.getLogger('abipy').addHandler(log_handler)
-        logging.getLogger('abiflows').addHandler(log_handler)
-
-    def current_task_info(self, fw_spec):
-        return dict(dir=self.workdir)
 
 ##############################
 # Generation tasks
