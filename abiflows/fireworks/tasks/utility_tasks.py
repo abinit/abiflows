@@ -18,6 +18,7 @@ import importlib
 from abiflows.fireworks.tasks.abinit_tasks import INDIR_NAME, OUTDIR_NAME, TMPDIR_NAME
 from abiflows.fireworks.utils.databases import MongoDatabase
 from monty.serialization import loadfn
+from monty.json import jsanitize
 
 
 logger = logging.getLogger(__name__)
@@ -88,16 +89,18 @@ class FinalCleanUpTask(FireTaskBase):
 @explicit_serialize
 class DatabaseInsertTask(FireTaskBase):
 
-    def __init__(self, insertion_data={'structure': 'get_final_structure_and_history'}):
+    def __init__(self, insertion_data={'structure': 'get_final_structure_and_history'}, criteria=None):
         self.insertion_data = insertion_data
+        self.criteria = criteria
 
     @serialize_fw
     def to_dict(self):
-        return dict(insertion_data=self.insertion_data)
+        return dict(insertion_data=self.insertion_data, criteria=self.criteria)
 
     @classmethod
     def from_dict(cls, m_dict):
-        return cls(insertion_data=m_dict['insertion_data'])
+        return cls(insertion_data=m_dict['insertion_data'],
+                   criteria=m_dict['criteria'] if 'criteria' in m_dict else None)
 
     @staticmethod
     def insert_objects():
@@ -116,19 +119,28 @@ class DatabaseInsertTask(FireTaskBase):
 
         fw_id = fw_dict['fw_id']
         lp = LaunchPad.auto_load()
-        wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
+        wf = lp.get_wf_by_fw_id(fw_id)
         wf_module = importlib.import_module(wf.metadata['workflow_module'])
         wf_class = getattr(wf_module, wf.metadata['workflow_class'])
 
-        get_results_method = getattr(wf_class, 'get_final_structure_and_history')
-        #TODO: make this more general ... just to test right now ...
-        results = get_results_method(wf)
-
         database = MongoDatabase.from_dict(fw_spec['mongo_database'])
+        if self.criteria is not None:
+            entry = database.get_entry(criteria=self.criteria)
+        else:
+            entry = {}
 
-        database.insert_entry({'structure': results['structure'], 'history': results['history']})
+        inserted = []
+        for root_key, method_name in self.insertion_data.items():
+            get_results_method = getattr(wf_class, method_name)
+            results = get_results_method(wf)
+            for key, val in results.items():
+                entry[key] = jsanitize(val)
+                inserted.append(key)
 
-        logging.info("Inserted data:\n something")
+        if self.criteria is not None:
+            database.save_entry(entry=entry)
+        else:
+            database.insert_entry(entry=entry)
 
-
+        logging.info("Inserted data:\n{}".format('- {}\n'.join(inserted)))
         return FWAction()

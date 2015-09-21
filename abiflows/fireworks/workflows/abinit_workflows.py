@@ -52,10 +52,12 @@ class AbstractFWWorkflow(Workflow):
 
         append_fw_to_wf(cleanup_fw, self.wf)
 
-    def add_db_insert_and_cleanup(self, mongo_database, out_exts=["WFK"]):
+    def add_db_insert_and_cleanup(self, mongo_database, out_exts=["WFK"], insertion_data=None, criteria=None):
+        if insertion_data is None:
+            insertion_data = {'structure': 'get_final_structure_and_history'}
         spec = self.set_short_single_core_to_spec()
         spec['mongo_database'] = mongo_database.as_dict()
-        insert_and_cleanup_fw = Firework([DatabaseInsertTask(),
+        insert_and_cleanup_fw = Firework([DatabaseInsertTask(insertion_data=insertion_data, criteria=criteria),
                                           FinalCleanUpTask(out_exts=out_exts)],
                                          spec=spec,
                                          name=(self.wf.name+"_insclnup")[:15])
@@ -141,9 +143,10 @@ class ScfFWWorkflow(AbstractFWWorkflow):
 
 class RelaxFWWorkflow(AbstractFWWorkflow):
     workflow_class = 'RelaxFWWorkflow'
-    workflow_module = 'abipy.fworks.fw_workflows'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    def __init__(self, ion_input, ioncell_input, autoparal=False, spec={}, initialization_info={}, target_dilatmx=None):
+    def __init__(self, ion_input, ioncell_input, autoparal=False, spec={}, initialization_info={}, target_dilatmx=None,
+                 history=[]):
         start_task_index = 1
         spec = dict(spec)
         spec['initialization_info'] = initialization_info
@@ -152,14 +155,15 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
             start_task_index = 'autoparal'
 
         spec['wf_task_index'] = 'ion_' + str(start_task_index)
-        ion_task = RelaxFWTask(ion_input, is_autoparal=autoparal)
+        ion_task = RelaxFWTask(ion_input, is_autoparal=autoparal, history=history)
         self.ion_fw = Firework(ion_task, spec=spec)
 
         spec['wf_task_index'] = 'ioncell_' + str(start_task_index)
         if target_dilatmx:
-            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx)
+            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx,
+                                              history=history)
         else:
-            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal)
+            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal, history=history)
 
         self.ioncell_fw = Firework(ioncell_task, spec=spec)
 
@@ -194,6 +198,21 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
 
         return {'structure': structure.as_dict(), 'history': history}
+
+    @classmethod
+    def get_runtime_secs(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+        time_secs = 0.0
+        for fw_id, fw in wf.id_fw.items():
+            if 'wf_task_index' in fw.spec:
+                if fw.spec['wf_task_index'][-9:] == 'autoparal':
+                    time_secs += fw.launches[-1].runtime_secs
+                elif fw.spec['wf_task_index'][:4] == 'ion_':
+                    time_secs += fw.launches[-1].runtime_secs * fw.spec['mpi_ncpus']
+                elif fw.spec['wf_task_index'][:8] == 'ioncell_':
+                    time_secs += fw.launches[-1].runtime_secs * fw.spec['mpi_ncpus']
+        return time_secs
 
     @classmethod
     def from_factory(cls, structure, pseudos, kppa=None, nband=None, ecut=None, pawecutdg=None, accuracy="normal",
@@ -320,6 +339,9 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
 
 class PiezoElasticFWWorkflow(AbstractFWWorkflow):
+    workflow_class = 'PiezoElasticFWWorkflow'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
     def __init__(self, scf_inp, ddk_inp, rf_inp, autoparal=False, spec={}, initialization_info={}):
         rf = self.get_reduced_formula(scf_inp)
 
@@ -340,9 +362,33 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
         self.rf_fw = Firework(rf_task, spec=spec, name=rf+rf_task.task_type)
 
-        self.wf = Workflow([self.scf_fw, self.ddk_fw, self.rf_fw], {self.scf_fw: self.ddk_fw, self.ddk_fw: self.rf_fw})
+        self.wf = Workflow(fireworks=[self.scf_fw, self.ddk_fw, self.rf_fw],
+                           links_dict={self.scf_fw: self.ddk_fw, self.ddk_fw: self.rf_fw},
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
 
         self.add_anaddb_task(scf_inp.structure)
+
+    @classmethod
+    def get_elastic_tensor_and_history(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if fw.name == 'anaddb':
+                final_fw_id = fw_id
+        if final_fw_id is None:
+            raise RuntimeError('Final anaddb task not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
+        elastic_tensor = myfw.tasks[-1].get_elastic_tensor()
+        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+
+        return {'elastic_properties': elastic_tensor.extended_dict(), 'history': history}
 
     @classmethod
     def from_factory(cls):
