@@ -356,11 +356,15 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
         ddk_task = DdkTask(ddk_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK'})
 
-        self.ddk_fw = Firework(ddk_task, spec=spec, name=rf+ddk_task.task_type)
+        ddk_fw_name = rf+ddk_task.task_type
+        ddk_fw_name = ddk_fw_name[:8]
+        self.ddk_fw = Firework(ddk_task, spec=spec, name=ddk_fw_name)
 
         rf_task = StrainPertTask(rf_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK', ddk_task.task_type: 'DDK'})
 
-        self.rf_fw = Firework(rf_task, spec=spec, name=rf+rf_task.task_type)
+        rf_fw_name = rf+rf_task.task_type
+        rf_fw_name = rf_fw_name[:8]
+        self.rf_fw = Firework(rf_task, spec=spec, name=rf_fw_name)
 
         self.wf = Workflow(fireworks=[self.scf_fw, self.ddk_fw, self.rf_fw],
                            links_dict={self.scf_fw: self.ddk_fw, self.ddk_fw: self.rf_fw},
