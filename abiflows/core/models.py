@@ -5,9 +5,13 @@ from __future__ import print_function, division, unicode_literals
 import os
 import six
 import collections
+import shutil
+import gzip
+from tempfile import mkstemp, TemporaryFile, NamedTemporaryFile
 
 from abipy import abilab
 from monty.json import MontyDecoder
+from monty.functools import lazy_property
 from mongoengine import *
 from mongoengine.fields import GridFSProxy
 from mongoengine.base.datastructures import BaseDict
@@ -20,7 +24,6 @@ class AbiGridFSProxy(GridFSProxy):
 
     def abiopen(self):
         """Dump the gridfs data to a temporary file and use `abiopen` to open the file."""
-        from tempfile import mkstemp
         _, filepath = mkstemp(suffix='.' + self.abiext, text=self.abiform == "t")
 
         with open(filepath , "w" + self.abiform) as fh:
@@ -58,6 +61,79 @@ class AbiFileField(FileField):
         if value is not None:
             proxy = super(AbiFileField, self).to_python(value)
             return self._monkey_patch_proxy(proxy)
+
+class GzipGridFSProxy(GridFSProxy):
+
+    def put(self, file_obj, **kwargs):
+        try:
+            import magic
+            if magic.from_buffer(file_obj.read(3), mime=True) == "application/gzip":
+                file_obj.seek(0)
+                return super(GzipGridFSProxy, self).put(file_obj, **kwargs)
+        except ImportError:
+            logger.info("No python-magic library available. Skipping check...")
+
+        field = self.instance._fields[self.key]
+        # Handle nested fields
+        if hasattr(field, 'field') and isinstance(field.field, FileField):
+            field = field.field
+
+        with TemporaryFile() as tmp_file:
+            tmp_gz = gzip.GzipFile(fileobj=tmp_file, compresslevel=field.compresslevel, mode='w+b')
+            shutil.copyfileobj(file_obj, tmp_gz)
+            tmp_gz.close()
+            tmp_file.seek(0)
+
+            return super(GzipGridFSProxy, self).put(tmp_file, **kwargs)
+
+    def write(self, *args, **kwargs):
+        raise RuntimeError("Please use \"put\" method instead")
+
+    def writelines(self, *args, **kwargs):
+        raise RuntimeError("Please use \"put\" method instead")
+
+    def to_gzip(self):
+        return gzip.GzipFile(fileobj=self.get())
+
+    def unzip(self, filepath=None, mode='w+b'):
+
+        with open(filepath, mode) as f:
+            f.write(self.to_gzip().read())
+            return f
+
+
+class GzipFileField(FileField):
+    proxy_class = GzipGridFSProxy
+
+    def __init__(self, compresslevel=9, **kwargs):
+        self.compresslevel = compresslevel
+        super(GzipFileField, self).__init__(**kwargs)
+
+
+class AbiGzipFSProxy(GzipGridFSProxy):
+
+    def abiopen(self):
+        """Dump the unzipped gridfs data to a temporary file and use `abiopen` to open the file."""
+        field = self.instance._fields[self.key]
+        # Handle nested fields
+        if hasattr(field, 'field') and isinstance(field.field, FileField):
+            field = field.field
+
+        mode = 'w+'
+        if field.abiform == 'b':
+            mode += 'b'
+        with NamedTemporaryFile(suffix='.' + field.abiext, mode=mode) as tmp_abifile:
+            tmp_abifile.write(self.to_gzip().read())
+            return abilab.abiopen(tmp_abifile.name)
+
+
+class AbiGzipFileField(GzipFileField):
+    proxy_class = AbiGzipFSProxy
+
+    def __init__(self, abiext, abiform, compresslevel=9, **kwargs):
+        self.abiext =abiext
+        self.abiform = abiform
+        super(AbiGzipFileField, self).__init__(compresslevel=compresslevel, **kwargs)
 
 
 class MongoFiles(EmbeddedDocument):
