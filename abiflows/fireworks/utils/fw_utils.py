@@ -71,9 +71,11 @@ def append_fw_to_wf(new_fw, wf):
     wf.fw_states[new_fw.fw_id] = new_fw.state
 
 
-def get_short_single_core_spec(fw_manager_path=None):
-    if fw_manager_path:
-        ftm = FWTaskManager.from_file(fw_manager_path)
+def get_short_single_core_spec(fw_manager=None):
+    if isinstance(fw_manager, FWTaskManager):
+        ftm = fw_manager
+    elif fw_manager:
+        ftm = FWTaskManager.from_file(fw_manager)
     else:
         ftm = FWTaskManager.from_user_config()
 
