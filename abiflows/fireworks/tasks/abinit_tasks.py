@@ -25,7 +25,7 @@ import glob
 from collections import namedtuple
 from abiflows.fireworks.utils.task_history import TaskHistory
 from pymatgen.io.abinitio.utils import Directory, File
-from pymatgen.io.abinitio import events, TaskManager
+from pymatgen.io.abinitio import events, TaskManager, tasks
 from pymatgen.io.abinitio.utils import irdvars_for_ext
 from pymatgen.io.abinitio.wrappers import Mrgddb
 from pymatgen.serializers.json_coders import PMGSONable, json_pretty_dump, pmg_serialize
@@ -53,6 +53,8 @@ OUTPUT_FILE_NAME = "run.abo"
 INPUT_FILE_NAME = "run.abi"
 MPIABORTFILE = "__ABI_MPIABORTFILE__"
 DUMMY_FILENAME = "__DUMMY__"
+ELPHON_OUTPUT_FILE_NAME = "run.abo_elphon"
+DDK_FILES_FILE_NAME = "ddk.files"
 
 HISTORY_JSON = "history.json"
 
@@ -154,12 +156,13 @@ class BasicTaskMixin(object):
         return optconf, qadapter_spec
 
     def get_final_mod_spec(self, fw_spec):
-        if 'previous_fws' in fw_spec:
-            prev_fws = fw_spec['previous_fws'].copy()
-        else:
-            prev_fws = {}
-        prev_fws[self.task_type] = [self.current_task_info(fw_spec)]
-        return [{'_set': {'previous_fws': prev_fws}}]
+        return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
+        # if 'previous_fws' in fw_spec:
+        #     prev_fws = fw_spec['previous_fws'].copy()
+        # else:
+        #     prev_fws = {}
+        # prev_fws[self.task_type] = [self.current_task_info(fw_spec)]
+        # return [{'_set': {'previous_fws': prev_fws}}]
 
     def set_logger(self):
         # Set a logger for abinitio and abipy
@@ -168,6 +171,68 @@ class BasicTaskMixin(object):
         logging.getLogger('pymatgen.io.abinitio').addHandler(log_handler)
         logging.getLogger('abipy').addHandler(log_handler)
         logging.getLogger('abiflows').addHandler(log_handler)
+
+    def link_ext(self, ext, source_dir, strict=True):
+        source = os.path.join(source_dir, self.prefix.odata + "_" + ext)
+        logger.info("Need path {} with ext {}".format(source, ext))
+        dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext)
+        if not os.path.exists(source):
+            # Try netcdf file. TODO: this case should be treated in a cleaner way.
+            source += "-etsf.nc"
+            if os.path.exists(source): dest += "-etsf.nc"
+        if not os.path.exists(source):
+            if strict:
+                msg = "{} is needed by this task but it does not exist".format(source)
+                logger.error(msg)
+                raise InitializationError(msg)
+            else:
+                return None
+
+        # Link path to dest if dest link does not exist.
+        # else check that it points to the expected file.
+        logger.info("Linking path {} --> {}".format(source, dest))
+        if not os.path.exists(dest) or not strict:
+            if self.ftm.fw_policy.copy_deps:
+                shutil.copyfile(source, dest)
+            else:
+                os.symlink(source, dest)
+            return dest
+        else:
+            # check links but only if we haven't performed the restart.
+            # in this case, indeed we may have replaced the file pointer with the
+            # previous output file of the present task.
+            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
+                msg = "dest {} does not point to path {}".format(dest, source)
+                logger.error(msg)
+                raise InitializationError(msg)
+
+    def link_ddk(self, source_dir):
+        # handle the custom DDK extension on its own
+        # accept more than one DDK file in the outdir: multiple perturbations are allowed in a
+        # single calculation
+        outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
+        ddks = []
+        for f in outdata_dir.list_filepaths():
+            if f.endswith('_DDK'):
+                ddks.append(f)
+        if not ddks:
+            msg = "DDK is needed by this task but it does not exist"
+            logger.error(msg)
+            raise InitializationError(msg)
+        exts = [os.path.basename(ddk).split('_')[-2] for ddk in ddks]
+        ddk_files = []
+        for ext in exts:
+            ddk_files.append(self.link_ext(ext, source_dir))
+
+        return ddk_files
+
+    #from Task
+    # Prefixes for Abinit (input, output, temporary) files.
+    Prefix = collections.namedtuple("Prefix", "idata odata tdata")
+    pj = os.path.join
+
+    prefix = Prefix(pj("indata", "in"), pj("outdata", "out"), pj("tmpdata", "tmp"))
+    del Prefix, pj
 
 
 @explicit_serialize
@@ -251,14 +316,6 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 logger.info("Renamed %s to %s" % (f, new_path))
             except OSError as exc:
                 logger.warning("couldn't rename {} to {} : {} ".format(f, new_path, str(exc)))
-
-    #from Task
-    # Prefixes for Abinit (input, output, temporary) files.
-    Prefix = collections.namedtuple("Prefix", "idata odata tdata")
-    pj = os.path.join
-
-    prefix = Prefix(pj("indata", "in"), pj("outdata", "out"), pj("tmpdata", "tmp"))
-    del Prefix, pj
 
     #from AbintTask
     @property
@@ -347,11 +404,16 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             (stdoutdata, stderrdata) = self.process.communicate()
             self.returncode = self.process.returncode
 
+        # initialize returncode to avoid missing references in case of exception in the other thread
+        self.returncode = None
+
         thread = threading.Thread(target=abinit_process)
         # the amount of time left plus a buffer of 2 minutes
         timeout = (self.walltime - (time.time() - self.start_time) - 120) if self.walltime else None
+        start_abinit_time = time.time()
         thread.start()
         thread.join(timeout)
+        self.history.log_abinit_stop(run_time=(time.time() - start_abinit_time))
         if thread.is_alive():
             self.process.terminate()
             thread.join()
@@ -385,16 +447,19 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             if self.mpiabort_file.exists:
                 logger.critical("Found ABI_MPIABORTFILE!")
                 abort_report = parser.parse(self.mpiabort_file.path)
-                if len(abort_report) != 1:
-                    logger.critical("Found more than one event in ABI_MPIABORTFILE")
-
-                # Add it to the initial report only if it differs
-                # from the last one found in the main log file.
-                last_abort_event = abort_report[-1]
-                if report and last_abort_event != report[-1]:
-                    report.append(last_abort_event)
+                if len(abort_report) == 0:
+                    logger.warning("ABI_MPIABORTFILE but empty")
                 else:
-                    report.append(last_abort_event)
+                    if len(abort_report) != 1:
+                        logger.critical("Found more than one event in ABI_MPIABORTFILE")
+
+                    # Add it to the initial report only if it differs
+                    # from the last one found in the main log file.
+                    last_abort_event = abort_report[-1]
+                    if report and last_abort_event != report[-1]:
+                        report.append(last_abort_event)
+                    else:
+                        report.append(last_abort_event)
 
             return report
 
@@ -435,16 +500,17 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                             stored_data['final_state'] = 'Unconverged'
                             return FWAction(detours=restart_fw, stored_data=stored_data)
                     else:
-                        raise UnconvergedError(self, abiinput=self.abiinput, restart_info=self.restart_info,
+                        raise UnconvergedError(self, msg="Unconverged after {} restarts".format(num_restarts),
+                                               abiinput=self.abiinput, restart_info=self.restart_info,
                                                history=self.history)
                 else:
                     # calculation converged
                     # check if there are custom parameters that should be converged
-                    unconverged_params = self.check_parameters_convergence(fw_spec)
+                    unconverged_params, reset_restart = self.check_parameters_convergence(fw_spec)
                     if unconverged_params:
                         self.history.log_converge_params(unconverged_params, self.abiinput)
                         self.abiinput.set_vars(**unconverged_params)
-                        local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec)
+                        local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec, reset=reset_restart)
                         num_restarts = self.restart_info.num_restarts if self.restart_info else 0
                         if num_restarts < self.ftm.fw_policy.max_restarts:
                             if local_restart:
@@ -459,7 +525,6 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                         # everything is ok. conclude the task
                         # hook
                         update_spec, mod_spec, stored_data = self.conclude_task(fw_spec)
-                        self.history.log_concluded()
                         return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
             # Abinit reported problems
@@ -501,7 +566,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         raise AbinitRuntimeError(self, err_msg)
 
     def check_parameters_convergence(self, fw_spec):
-        return {}
+        return {}, False
 
     def _get_init_args_and_vals(self):
         init_dict = {}
@@ -703,6 +768,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             if self.is_autoparal:
                 return self.autoparal(fw_spec)
             else:
+                # loop to allow local restart
                 while True:
                     self.config_run(fw_spec)
                     self.run_abinit(fw_spec)
@@ -758,36 +824,6 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
 
         return FWAction(detours=new_fw)
 
-    def link_ext(self, ext, source_dir):
-        source = os.path.join(source_dir, self.prefix.odata + "_" + ext)
-        logger.info("Need path {} with ext {}".format(source, ext))
-        dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext)
-        if not os.path.exists(source):
-            # Try netcdf file. TODO: this case should be treated in a cleaner way.
-            source += "-etsf.nc"
-            if os.path.exists(source): dest += "-etsf.nc"
-        if not os.path.exists(source):
-            msg = "{} is needed by this task but it does not exist".format(source)
-            logger.error(msg)
-            raise InitializationError(msg)
-
-        # Link path to dest if dest link does not exist.
-        # else check that it points to the expected file.
-        logger.info("Linking path {} --> {}".format(source, dest))
-        if not os.path.exists(dest):
-            if self.ftm.fw_policy.copy_deps:
-                shutil.copyfile(source, dest)
-            else:
-                os.symlink(source, dest)
-        else:
-            # check links but only if we haven't performed the restart.
-            # in this case, indeed we may have replaced the file pointer with the
-            # previous output file of the present task.
-            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
-                msg = "dest {} does not point to path {}".format(dest, source)
-                logger.error(msg)
-                raise InitializationError(msg)
-
     def resolve_deps_per_task_type(self, previous_tasks, deps_list):
         for previous_task in previous_tasks:
             for d in deps_list:
@@ -801,21 +837,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
                     if d == "DDK":
-                        # handle the custom DDK extension on its own
-                        # accept more than one DDK file in the outdir: multiple perturbations are allowed in a
-                        # single calculation
-                        outdata_dir = Directory(os.path.join(source_dir, OUTDIR_NAME))
-                        ddks = []
-                        for f in outdata_dir.list_filepaths():
-                            if f.endswith('_DDK'):
-                                ddks.append(f)
-                        if not ddks:
-                            msg = "DDK is needed by this task but it does not exist"
-                            logger.error(msg)
-                            raise InitializationError(msg)
-                        exts = [os.path.basename(ddk).split('_')[-2] for ddk in ddks]
-                        for ext in exts:
-                            self.link_ext(ext, source_dir)
+                        self.link_ddk(source_dir)
                     else:
                         self.link_ext(d, source_dir)
 
@@ -926,6 +948,14 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
 
         return dest
 
+    def remove_restart_vars(self, exts):
+        if not isinstance(exts, (list, tuple)):
+            exts = [exts]
+
+        remove_vars = [v for e in exts for v in irdvars_for_ext(e).keys()]
+        self.abiinput.remove_vars(remove_vars, strict=False)
+        logger.info("Removing variables {} from input".format(remove_vars))
+
 ##############################
 # Specific tasks
 ##############################
@@ -936,18 +966,22 @@ class GsFWTask(AbiFireTask):
     @property
     def gsr_path(self):
         """Absolute path of the GSR file. Empty string if file is not present."""
-        path = self.outdir.has_abiext("GSR")
-        if path: self._gsr_path = path
-        return path
+        # Lazy property to avoid multiple calls to has_abiext.
+        try:
+            return self._gsr_path
+        except AttributeError:
+            path = self.outdir.has_abiext("GSR")
+            if path: self._gsr_path = path
+            return path
 
     def open_gsr(self):
         """
         Open the GSR file located in the in self.outdir.
-        Returns :class:`GsrFile` object, None if file could not be found or file is not readable.
+        Returns :class:`GsrFile` object, raise a PostProcessError exception if file could not be found or file is not readable.
         """
         gsr_path = self.gsr_path
         if not gsr_path:
-            msg = "{} reached the conclusion but didn't produce a GSR file in {}".format(self, self.outdir)
+            msg = "No GSR file available for task {} in {}".format(self, self.outdir)
             logger.critical(msg)
             raise PostProcessError(msg)
 
@@ -956,8 +990,9 @@ class GsFWTask(AbiFireTask):
         try:
             return GsrFile(gsr_path)
         except Exception as exc:
-            logger.critical("Exception while reading GSR file at %s:\n%s" % (gsr_path, str(exc)))
-            return None
+            msg = "Exception while reading GSR file at %s:\n%s" % (gsr_path, str(exc))
+            logger.critical(msg)
+            raise PostProcessError(msg)
 
 
 @explicit_serialize
@@ -971,7 +1006,10 @@ class ScfFWTask(GsFWTask):
     def restart(self):
         """SCF calculations can be restarted if we have either the WFK file or the DEN file."""
         # Prefer WFK over DEN files since we can reuse the wavefunctions.
-        if not self.restart_info.reset:
+        if self.restart_info.reset:
+            # remove non reset keys that may have been added in a previous restart
+            self.remove_restart_vars(["WFK", "DEN"])
+        else:
             for ext in ("WFK", "DEN"):
                 restart_file = self.restart_info.prev_outdir.has_abiext(ext)
                 irdvars = irdvars_for_ext(ext)
@@ -998,7 +1036,10 @@ class NscfFWTask(GsFWTask):
 
     def restart(self):
         """NSCF calculations can be restarted only if we have the WFK file."""
-        if not self.restart_info.reset:
+        if self.restart_info.reset:
+            # remove non reset keys that may have been added in a previous restart
+            self.remove_restart_vars(["WFK"])
+        else:
             ext = "WFK"
             restart_file = self.restart_info.prev_outdir.has_abiext(ext)
             if not restart_file:
@@ -1043,48 +1084,58 @@ class RelaxFWTask(GsFWTask):
 
         See original RelaxTask for more details
         """
-        if not self.restart_info.reset:
-            restart_file = None
 
-            # Try to restart from the WFK file if possible.
-            # FIXME: This part has been disabled because WFK=IO is a mess if paral_kgb == 1
-            # This is also the reason why I wrote my own MPI-IO code for the GW part!
-            wfk_file = self.restart_info.prev_outdir.has_abiext("WFK")
-            if False and wfk_file:
-                irdvars = irdvars_for_ext("WFK")
-                restart_file = self.out_to_in(wfk_file)
+        if self.restart_info.reset:
+            # remove non reset keys that may have been added in a previous restart
+            self.remove_restart_vars(["WFK", "DEN"])
+        else:
+            # for optcell > 0 it may fail to restart if paral_kgb == 0. Do not use DEN or WFK in this case
+            #FIXME fix when Matteo makes the restart possible for paral_kgb == 0
+            paral_kgb = self.abiinput.get('paral_kgb', 0)
+            optcell = self.abiinput.get('optcell', 0)
 
-            # Fallback to DEN file. Note that here we look for out_DEN instead of out_TIM?_DEN
-            # This happens when the previous run completed and task.on_done has been performed.
-            # ********************************************************************************
-            # Note that it's possible to have an undected error if we have multiple restarts
-            # and the last relax died badly. In this case indeed out_DEN is the file produced
-            # by the last run that has executed on_done.
-            # ********************************************************************************
-            if restart_file is None:
-                out_den = self.restart_info.prev_outdir.path_in("out_DEN")
-                if os.path.exists(out_den):
-                    irdvars = irdvars_for_ext("DEN")
-                    restart_file = self.out_to_in(out_den)
+            if optcell == 0 or paral_kgb == 1:
+                restart_file = None
 
-            if restart_file is None:
-                # Try to restart from the last TIM?_DEN file.
-                # This should happen if the previous run didn't complete in clean way.
-                # Find the last TIM?_DEN file.
-                last_timden = self.restart_info.prev_outdir.find_last_timden_file()
-                if last_timden is not None:
-                    ofile = self.restart_info.prev_outdir.path_in("out_DEN")
-                    os.rename(last_timden.path, ofile)
-                    restart_file = self.out_to_in(ofile)
-                    irdvars = irdvars_for_ext("DEN")
+                # Try to restart from the WFK file if possible.
+                # FIXME: This part has been disabled because WFK=IO is a mess if paral_kgb == 1
+                # This is also the reason why I wrote my own MPI-IO code for the GW part!
+                wfk_file = self.restart_info.prev_outdir.has_abiext("WFK")
+                if False and wfk_file:
+                    irdvars = irdvars_for_ext("WFK")
+                    restart_file = self.out_to_in(wfk_file)
 
-            if restart_file is None:
-                # Don't raise RestartError as the structure has been updated
-                logger.warning("Cannot find the WFK|DEN|TIM?_DEN file to restart from.")
-            else:
-                # Add the appropriate variable for restarting.
-                self.abiinput.set_vars(irdvars)
-                logger.info("Will restart from %s", restart_file)
+                # Fallback to DEN file. Note that here we look for out_DEN instead of out_TIM?_DEN
+                # This happens when the previous run completed and task.on_done has been performed.
+                # ********************************************************************************
+                # Note that it's possible to have an undected error if we have multiple restarts
+                # and the last relax died badly. In this case indeed out_DEN is the file produced
+                # by the last run that has executed on_done.
+                # ********************************************************************************
+                if restart_file is None:
+                    out_den = self.restart_info.prev_outdir.path_in("out_DEN")
+                    if os.path.exists(out_den):
+                        irdvars = irdvars_for_ext("DEN")
+                        restart_file = self.out_to_in(out_den)
+
+                if restart_file is None:
+                    # Try to restart from the last TIM?_DEN file.
+                    # This should happen if the previous run didn't complete in clean way.
+                    # Find the last TIM?_DEN file.
+                    last_timden = self.restart_info.prev_outdir.find_last_timden_file()
+                    if last_timden is not None:
+                        ofile = self.restart_info.prev_outdir.path_in("out_DEN")
+                        os.rename(last_timden.path, ofile)
+                        restart_file = self.out_to_in(ofile)
+                        irdvars = irdvars_for_ext("DEN")
+
+                if restart_file is None:
+                    # Don't raise RestartError as the structure has been updated
+                    logger.warning("Cannot find the WFK|DEN|TIM?_DEN file to restart from.")
+                else:
+                    # Add the appropriate variable for restarting.
+                    self.abiinput.set_vars(irdvars)
+                    logger.info("Will restart from %s", restart_file)
 
     def current_task_info(self, fw_spec):
         d = super(RelaxFWTask, self).current_task_info(fw_spec)
@@ -1124,6 +1175,7 @@ class DfptTask(AbiFireTask):
         """
         # Abinit adds the idir-ipert index at the end of the file and this breaks the extension
         # e.g. out_1WF4, out_DEN4. find_1wf_files and find_1den_files returns the list of files found
+        #TODO check for reset
         restart_files, irdvars = None, None
 
         # Highest priority to the 1WF file because restart is more efficient.
@@ -1224,7 +1276,8 @@ class RelaxDilatmxFWTask(RelaxFWTask):
     def check_parameters_convergence(self, fw_spec):
         actual_dilatmx = self.abiinput.get('dilatmx', 1.)
         new_dilatmx = actual_dilatmx - min((actual_dilatmx-self.target_dilatmx), actual_dilatmx*0.03)
-        return {'dilatmx': new_dilatmx} if new_dilatmx != actual_dilatmx else {}
+        #FIXME reset can be False with paral_kgb==1
+        return {'dilatmx': new_dilatmx} if new_dilatmx != actual_dilatmx else {}, True
 
 
 ##############################
@@ -1235,6 +1288,21 @@ class RelaxDilatmxFWTask(RelaxFWTask):
 @explicit_serialize
 class MergeDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "mrgddb"
+
+    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True):
+        """
+        ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.
+        The default is [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
+        delete_ddbs: delete the ddb files used after the merge
+        """
+
+        if ddb_source_task_types is None:
+            ddb_source_task_types = [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
+        elif not isinstance(ddb_source_task_types, (list, tuple)):
+            ddb_source_task_types = [ddb_source_task_types]
+
+        self.ddb_source_task_types = ddb_source_task_types
+        self.delete_source_ddbs = delete_source_ddbs
 
     def get_ddb_list(self, previous_fws, task_type):
         ddb_files = []
@@ -1262,8 +1330,13 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
                 logger.critical("{}: Exception while parsing MRGDDB events:\n {}".format(ofile, str(exc)))
                 return parser.report_exception(ofile.path, exc)
 
+    def set_workdir(self, workdir):
+        self.workdir = workdir
+        self.outdir = Directory(os.path.join(self.workdir, OUTDIR_NAME))
+
     def run_task(self, fw_spec):
-        self.workdir = os.getcwd()
+        self.set_workdir(workdir=os.getcwd())
+        self.outdir.makedirs()
         self.history = TaskHistory()
         try:
             ftm = self.get_fw_task_manager(fw_spec)
@@ -1273,13 +1346,8 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
             previous_fws = fw_spec['previous_fws']
             ddb_files = []
-            if 'ddb_files_task_types' in fw_spec:
-                for task_type in fw_spec['ddb_files_task_types']:
-                    ddb_files.extend(self.get_ddb_list(previous_fws, task_type))
-            else:
-                ddb_files.extend(self.get_ddb_list(previous_fws, PhononTask.task_type))
-                ddb_files.extend(self.get_ddb_list(previous_fws, DdeTask.task_type))
-                ddb_files.extend(self.get_ddb_list(previous_fws, BecTask.task_type))
+            for source_task_type in self.ddb_source_task_types:
+                ddb_files.extend(self.get_ddb_list(previous_fws, source_task_type))
 
             initialization_info = fw_spec.get('initialization_info', {})
             initialization_info['ddb_files_list'] = ddb_files
@@ -1289,11 +1357,11 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
                 raise InitializationError("No DDB files to merge.")
 
             # keep the output in the outdata dir for consistency
-            out_ddb = os.path.join(self.workdir, "out_DDB")
+            out_ddb = os.path.join(self.workdir, OUTDIR_NAME, "out_DDB")
             desc = "DDB file merged by %s on %s" % (self.__class__.__name__, time.asctime())
 
-            # merge will also delete the single ddb files
-            out_ddb = mrgddb.merge(self.workdir, ddb_files, out_ddb=out_ddb, description=desc)
+            out_ddb = mrgddb.merge(self.workdir, ddb_files, out_ddb=out_ddb, description=desc,
+                                   delete_source_ddbs=self.delete_source_ddbs)
 
             self.report = self.get_event_report()
 
@@ -1318,6 +1386,17 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
     def current_task_info(self, fw_spec):
         return dict(dir=self.workdir)
+
+    @property
+    def merged_ddb_path(self):
+        """Absolute path of the merged DDB file. Empty string if file is not present."""
+        # Lazy property to avoid multiple calls to has_abiext.
+        try:
+            return self._merged_ddb_path
+        except AttributeError:
+            path = self.outdir.has_abiext("DDB")
+            if path: self._merged_ddb_path = path
+            return path
 
 
 @explicit_serialize
@@ -1370,13 +1449,55 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
             if not ddb:
                 msg = "One of the task of type {} (folder: {}) " \
                       "did not produce a DDB file!".format(task_type, t['dir'])
-                raise InitializationError(msg)
-            ddb_files.append(ddb)
-        return ddb_files
+    def resolve_deps_per_task_type(self, previous_tasks, deps_list):
+        for previous_task in previous_tasks:
+            for d in deps_list:
+                source_dir = previous_task['dir']
+                if d == "DDB":
+                    self.ddb_filepath = self.link_ext(d, source_dir)
+                elif d == "GKK":
+                    self.gkk_filepath = self.link_ext(d, source_dir)
+                elif d == "DDK":
+                    self.ddk_filepaths.extend(self.link_ddk(source_dir))
+                else:
+                    logger.warning("Extensions {} is not used in anaddb and will be ignored".format(d))
+                    continue
 
-    # def get_ddb_file(self, previous_fws):
-    #
-    #     return
+    def resolve_deps(self, fw_spec):
+        #FIXME extract common method with AbinitTask
+        previous_fws = fw_spec.get('previous_fws', None)
+        if previous_fws is None:
+            msg = "No previous_fws data. Needed for dependecies {}.".format(str(self.deps))
+            logger.error(msg)
+            raise InitializationError(msg)
+
+        if isinstance(self.deps, (list, tuple)):
+            # check that there is only one previous_fws
+            if len(previous_fws) != 1 or len(previous_fws.values()[0]) != 1:
+                msg = "previous_fws does not contain a single reference. " \
+                      "Specify the dependency for {}.".format(str(self.deps))
+                logger.error(msg)
+                raise InitializationError(msg)
+
+            self.resolve_deps_per_task_type(previous_fws.values()[0], self.deps)
+        else:
+            # deps should be a dict
+            for task_type, deps_list in self.deps.items():
+                if task_type not in previous_fws:
+                    msg = "No previous_fws data for task type {}.".format(task_type)
+                    logger.error(msg)
+                    raise InitializationError(msg)
+                if len(previous_fws[task_type]) < 1:
+                    msg = "Previous_fws does not contain any reference for task type {}, " \
+                          "needed in reference {}. ".format(task_type, str(self.deps))
+                    logger.error(msg)
+                    raise InitializationError(msg)
+                elif len(previous_fws[task_type]) > 1:
+                    msg = "Previous_fws contains more than a single reference for task type {}, " \
+                          "needed in reference {}. Risk of overwriting.".format(task_type, str(self.deps))
+                    logger.warning(msg)
+
+                self.resolve_deps_per_task_type(previous_fws[task_type], deps_list)
 
     def run_anaddb(self, fw_spec):
         """
@@ -1403,6 +1524,9 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
             (stdoutdata, stderrdata) = self.process.communicate()
             self.returncode = self.process.returncode
+
+        # initialize returncode to avoid missing references in case of exception in the other thread
+        self.returncode = None
 
         thread = threading.Thread(target=anaddb_process)
         # the amount of time left plus a buffer of 2 minutes
@@ -1433,7 +1557,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
                 if status == 0:
                     self.walltime = int(out)
                 else:
-                    logger.warning("Impossible to ge    t the walltime: " + err)
+                    logger.warning("Impossible to get the walltime: " + err)
             except Exception as e:
                 logger.warning("Impossible to get the walltime: ", exc_info=True)
 
@@ -1444,16 +1568,29 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         self.outdir.makedirs()
         self.tmpdir.makedirs()
 
-        # make the appropriate dependencies in the in dir
-        #FIXME improve the retrieval of the ddb files
-        ddb_list = self.get_ddb_list(fw_spec['previous_fws'], DfptTask.task_type)
-        for dfpt_subclass in DfptTask.__subclasses__():
-            ddb_list.extend(self.get_ddb_list(fw_spec['previous_fws'], dfpt_subclass.task_type))
-        # ddb_file = self.get_ddb_file(previous_fws=fw_spec['previous_fws'])
-        if len(ddb_list) != 1:
-            raise InitializationError("Found more than one DDB file for this anaddb task ...")
-        self.ddb_filepath = File(os.path.join(os.path.join(self.workdir, INDIR_NAME), 'in_DDB'))
-        os.symlink(ddb_list[0], self.ddb_filepath.path)
+        self.ddb_filepath = None
+        self.gkk_filepath = None
+        self.ddk_filepaths = []
+
+        self.resolve_deps(fw_spec)
+
+        # the DDB file is needed. If not set as a dependency, look for it in all the possible sources
+        #FIXME check if we can remove this case and just rely on deps
+        if not self.ddb_filepath:
+            previous_fws = fw_spec['previous_fws']
+            for task_class in DfptTask.__subclasses__() + [DfptTask]:
+                task_type = task_class.task_type
+                ddb_list = []
+                for previous_task in previous_fws.get(task_type, []):
+                    ddb_list.append(self.link_ext("DDB", previous_task['dir'], strict=False))
+
+            if len(ddb_list) != 1:
+                raise InitializationError("Cannot find a single DDB to run...")
+
+            self.ddb_filepath = ddb_list[0]
+
+        if self.ddk_filepaths:
+            self.ddk_files_file.write("\n".join(self.ddk_filepaths))
 
         # Write files file and input file.
         if not self.files_file.exists:
@@ -1489,6 +1626,8 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         self.files_file = File(os.path.join(self.workdir, FILES_FILE_NAME))
         self.log_file = File(os.path.join(self.workdir, LOG_FILE_NAME))
         self.stderr_file = File(os.path.join(self.workdir, STDERR_FILE_NAME))
+        self.elphon_out_file = File(os.path.join(self.workdir, ELPHON_OUTPUT_FILE_NAME))
+        self.ddk_files_file = File(os.path.join(self.workdir, DDK_FILES_FILE_NAME))
 
         # This file is produce by Abinit if nprocs > 1 and MPI_ABORT.
         self.mpiabort_file = File(os.path.join(self.workdir, MPIABORTFILE))
@@ -1505,15 +1644,45 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         lines = []
         app = lines.append
 
-        app(self.input_file.path)          # 1) Path of the input file
-        app(self.output_file.path)         # 2) Path of the output file
-        app(self.ddb_filepath.path)             # 3) Input derivative database e.g. t13.ddb.in
-        app(DUMMY_FILENAME)                # 4) Output molecular dynamics e.g. t13.md
-        app(DUMMY_FILENAME)                # 5) Input elphon matrix elements  (GKK file)
-        app(DUMMY_FILENAME)                # 6) Base name for elphon output files e.g. t13
-        app(DUMMY_FILENAME)                # 7) File containing ddk filenames for elphon/transport.
+        app(self.input_file.path)                     # 1) Path of the input file
+        app(self.output_file.path)                    # 2) Path of the output file
+        app(self.ddb_filepath)                        # 3) Input derivative database e.g. t13.ddb.in
+        app(DUMMY_FILENAME)                           # 4) Ignored
+        app(self.gkk_filepath or DUMMY_FILENAME)      # 5) Input elphon matrix elements  (GKK file)
+        app(self.elphon_out_file.path)                     # 6) Base name for elphon output files e.g. t13
+        app(self.ddk_files_file if self.ddk_filepaths
+            else DUMMY_FILENAME)                      # 7) File containing ddk filenames for elphon/transport.
 
         return "\n".join(lines)
+
+    @property
+    def phbst_path(self):
+        """Absolute path of the merged DDB file. Empty string if file is not present."""
+        # Lazy property to avoid multiple calls to has_abiext.
+        try:
+            return self._phbst_path
+        except AttributeError:
+            path = os.path.join(self.workdir, "run.abo_PHBST.nc")
+            if path: self._phbst_path = path
+            return path
+
+    def open_phbst(self):
+        """
+        Open PHBST file produced by Anaddb and returns :class:`PhbstFile` object.
+        Raise a PostProcessError exception if file could not be found or file is not readable.
+        """
+        from abipy.dfpt.phonons import PhbstFile
+        if not self.phbst_path:
+            msg = "No PHBST file available for task {} in {}".format(self, self.outdir)
+            logger.critical(msg)
+            raise PostProcessError(msg)
+
+        try:
+            return PhbstFile(self.phbst_path)
+        except Exception as exc:
+            msg = "Exception while reading GSR file at %s:\n%s" % (self.phbst_path, str(exc))
+            logger.critical(msg)
+            return PostProcessError(msg)
 
 
 ##############################
@@ -1533,14 +1702,20 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         formula = multi_inp[0].structure.composition.reduced_formula
         fws = []
         for i, inp in enumerate(multi_inp):
+            start_task_index = 1
             if self.with_autoparal:
                 autoparal_dir = os.path.join(os.path.abspath('.'), "autoparal_{}_{}".format(task_class.__name__, str(i)))
                 optconf, qadapter_spec = self.run_autoparal(inp, autoparal_dir, ftm)
                 new_spec['_queueadapter'] = qadapter_spec
                 new_spec['mpi_ncpus'] = optconf['mpi_ncpus']
+                start_task_index = 'autoparal'
 
             task = task_class(inp, handlers=self.handlers, deps=deps, is_autoparal=False)
-            fws.append(Firework(task, spec=new_spec, name=(formula + '_' + task_class.task_type + str(i))[:15]))
+            # this index is for the different task, each performing a different perturbation
+            indexed_task_type = task_class.task_type + '_' + str(i)
+            # this index is to index the restarts of the single task
+            new_spec['wf_task_index'] = indexed_task_type + str(start_task_index)
+            fws.append(Firework(task, spec=new_spec, name=(formula + '_' + indexed_task_type)[:15]))
 
         return fws
 
@@ -1562,8 +1737,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
                 raise InitializationError(msg)
 
             # inject task manager
-            global _USER_CONFIG_TASKMANAGER
-            _USER_CONFIG_TASKMANAGER = ftm.task_manager
+            tasks._USER_CONFIG_TASKMANAGER = ftm.task_manager
 
         ph_inputs = self.phonon_factory.build_input(previous_input)
 
@@ -1593,7 +1767,18 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
             bec_fws = self.get_fws(bec_inputs, BecTask,
                                    {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
 
-        mrgddb_fw = Firework(MergeDdbTask(), spec=new_spec)
+
+        mrgddb_spec = dict(new_spec)
+        mrgddb_spec['wf_task_index'] = 'mrgddb'
+        #FIXME import here to avoid circular imports.
+        from abiflows.fireworks.utils.fw_utils import get_short_single_core_spec
+        qadapter_spec = get_short_single_core_spec(ftm)
+        mrgddb_spec['mpi_ncpus'] = 1
+        mrgddb_spec['_queueadapter'] = qadapter_spec
+        # Set a higher priority to favour the end of the WF
+        #TODO improve the handling of the priorities
+        mrgddb_spec['_priority'] = 10
+        mrgddb_fw = Firework(MergeDdbTask(), spec=mrgddb_spec)
 
         fws_deps = {}
 

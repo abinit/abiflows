@@ -18,7 +18,7 @@ from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, Dd
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
-from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory, PhononsFromGsFactory
+from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory, PhononsFromGsFactory, ScfForPhononsFactory
 from abipy.abio.inputs import AbinitInput, AnaddbInput
 from monty.serialization import loadfn
 
@@ -37,6 +37,11 @@ class AbstractFWWorkflow(Workflow):
             lpad = LaunchPad.auto_load()
         return lpad.add_wf(self.wf)
 
+    def append_fw(self, fw, short_single_spec=False):
+        if short_single_spec:
+            fw.spec.update(self.set_short_single_core_to_spec())
+        append_fw_to_wf(fw, self.wf)
+
     @staticmethod
     def set_short_single_core_to_spec(spec={}):
         spec = dict(spec)
@@ -47,7 +52,11 @@ class AbstractFWWorkflow(Workflow):
         return spec
 
     def add_final_cleanup(self, out_exts=["WFK"]):
-        cleanup_fw = Firework(FinalCleanUpTask(out_exts=out_exts), spec=self.set_short_single_core_to_spec(),
+        spec = self.set_short_single_core_to_spec()
+        # high priority
+        #TODO improve the handling of the priorities
+        spec['_priority'] = 100
+        cleanup_fw = Firework(FinalCleanUpTask(out_exts=out_exts), spec=spec,
                               name=(self.wf.name+"_cleanup")[:15])
 
         append_fw_to_wf(cleanup_fw, self.wf)
@@ -224,7 +233,11 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
                                             pawecutdg=pawecutdg, accuracy=accuracy, spin_mode=spin_mode,
                                             smearing=smearing, charge=charge, scf_algorithm=scf_algorithm)[0]
 
-        ioncell_fact = IoncellRelaxFromGsFactory(accuracy=accuracy)
+        ion_input.set_vars(**extra_abivars)
+        for d in decorators:
+            ion_input = d(ion_input)
+
+        ioncell_fact = IoncellRelaxFromGsFactory(accuracy=accuracy, extra_abivars=extra_abivars, decorators=decorators)
 
         return cls(ion_input, ioncell_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info,
                    target_dilatmx=target_dilatmx)
@@ -301,7 +314,12 @@ class NscfFWWorkflow(AbstractFWWorkflow):
 
 
 class PhononFWWorkflow(AbstractFWWorkflow):
+    workflow_class = 'PhononFWWorkflow'
+    workflow_module = 'abipy.fworks.fw_workflows'
+
     def __init__(self, scf_inp, phonon_factory, autoparal=False, spec={}, initialization_info={}):
+        start_task_index = 1
+
         rf = self.get_reduced_formula(scf_inp)
 
         scf_task = ScfFWTask(scf_inp, is_autoparal=autoparal)
@@ -310,30 +328,41 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         spec['initialization_info'] = initialization_info
         if autoparal:
             spec = self.set_short_single_core_to_spec(spec)
+            start_task_index = 'autoparal'
+
+        spec['wf_task_index'] = 'scf_' + str(start_task_index)
+
 
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
         ph_generation_task = GeneratePhononFlowFWTask(phonon_factory, previous_task_type=scf_task.task_type,
                                                       with_autoparal=autoparal)
 
+        spec['wf_task_index'] = 'gen_ph'
+
         self.ph_generation_fw = Firework(ph_generation_task, spec=spec, name=rf+"_gen_ph")
 
-        self.wf = Workflow([self.scf_fw, self.ph_generation_fw], {self.scf_fw: self.ph_generation_fw})
+        self.wf = Workflow([self.scf_fw, self.ph_generation_fw], {self.scf_fw: self.ph_generation_fw},
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
 
     @classmethod
     def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
-                     shift_mode="Monkhorst-Pack", ph_ngqpt=None, with_ddk=True, with_dde=True, with_bec=False,
-                     ph_tol=None, ddk_tol=None, dde_tol=None, extra_abivars={}, decorators=[], autoparal=False, spec={},
-                     initialization_info={}):
+                     shift_mode="Symmetric", ph_ngqpt=None, with_ddk=True, with_dde=True, with_bec=False,
+                     scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None, extra_abivars={}, decorators=[],
+                     autoparal=False, spec={}, initialization_info={}):
 
-        scf_fact = ScfFactory(structure=structure, pseudos=pseudos, kppa=kppa, ecut=ecut, pawecutdg=pawecutdg,
-                              nband=nband, accuracy=accuracy, spin_mode=spin_mode, smearing=smearing, charge=charge,
-                              scf_algorithm=scf_algorithm, shift_mode=shift_mode, extra_abivars=extra_abivars,
-                              decorators=decorators)
+        extra_abivars_scf = dict(extra_abivars)
+        extra_abivars_scf['tolwfr'] = scf_tol if scf_tol else 1.e-22
+        scf_fact = ScfForPhononsFactory(structure=structure, pseudos=pseudos, kppa=kppa, ecut=ecut, pawecutdg=pawecutdg,
+                                        nband=nband, accuracy=accuracy, spin_mode=spin_mode, smearing=smearing,
+                                        charge=charge, scf_algorithm=scf_algorithm, shift_mode=shift_mode,
+                                        extra_abivars=extra_abivars_scf, decorators=decorators)
 
         phonon_fact = PhononsFromGsFactory(ph_ngqpt=ph_ngqpt, with_ddk=with_ddk, with_dde=with_dde, with_bec=with_bec,
-                                           ph_tol=ph_tol, ddk_tol=ddk_tol, dde_tol=dde_tol)
+                                           ph_tol=ph_tol, ddk_tol=ddk_tol, dde_tol=dde_tol, extra_abivars=extra_abivars,
+                                           decorators=decorators)
 
         return cls(scf_fact, phonon_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
 
