@@ -1273,9 +1273,13 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
             previous_fws = fw_spec['previous_fws']
             ddb_files = []
-            ddb_files.extend(self.get_ddb_list(previous_fws, PhononTask.task_type))
-            ddb_files.extend(self.get_ddb_list(previous_fws, DdeTask.task_type))
-            ddb_files.extend(self.get_ddb_list(previous_fws, BecTask.task_type))
+            if 'ddb_files_task_types' in fw_spec:
+                for task_type in fw_spec['ddb_files_task_types']:
+                    ddb_files.extend(self.get_ddb_list(previous_fws, task_type))
+            else:
+                ddb_files.extend(self.get_ddb_list(previous_fws, PhononTask.task_type))
+                ddb_files.extend(self.get_ddb_list(previous_fws, DdeTask.task_type))
+                ddb_files.extend(self.get_ddb_list(previous_fws, BecTask.task_type))
 
             initialization_info = fw_spec.get('initialization_info', {})
             initialization_info['ddb_files_list'] = ddb_files

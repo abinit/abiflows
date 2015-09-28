@@ -14,7 +14,7 @@ import logging
 import sys
 
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask, HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
-from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask
+from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask, MergeDdbTask
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
@@ -373,8 +373,44 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
         self.add_anaddb_task(scf_inp.structure)
 
+    def add_anaddb_task(self, structure):
+        spec = self.set_short_single_core_to_spec()
+        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure))
+        anaddb_fw = Firework([anaddb_task],
+                             spec=spec,
+                             name='anaddb')
+        append_fw_to_wf(anaddb_fw, self.wf)
+
+    def add_mrgddb_task(self, structure):
+        spec = self.set_short_single_core_to_spec()
+        spec['ddb_files_task_types'] = ['scf', 'strain_pert']
+        mrgddb_task = MergeDdbTask()
+        mrgddb_fw = Firework([mrgddb_task], spec=spec, name='mrgddb')
+        append_fw_to_wf(mrgddb_fw, self.wf)
+
     @classmethod
     def get_elastic_tensor_and_history(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if fw.name == 'anaddb':
+                final_fw_id = fw_id
+        if final_fw_id is None:
+            raise RuntimeError('Final anaddb task not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
+        elastic_tensor = myfw.tasks[-1].get_elastic_tensor()
+        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+
+        return {'elastic_properties': elastic_tensor.extended_dict(), 'history': history}
+
+    @classmethod
+    def get_all_elastic_tensors(cls, wf):
         assert wf.metadata['workflow_class'] == cls.workflow_class
         assert wf.metadata['workflow_module'] == cls.workflow_module
 
