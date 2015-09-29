@@ -154,8 +154,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
     workflow_class = 'RelaxFWWorkflow'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    def __init__(self, ion_input, ioncell_input, autoparal=False, spec={}, initialization_info={}, target_dilatmx=None,
-                 history=[]):
+    def __init__(self, ion_input, ioncell_input, autoparal=False, spec={}, initialization_info={}, target_dilatmx=None):
         start_task_index = 1
         spec = dict(spec)
         spec['initialization_info'] = initialization_info
@@ -164,15 +163,14 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
             start_task_index = 'autoparal'
 
         spec['wf_task_index'] = 'ion_' + str(start_task_index)
-        ion_task = RelaxFWTask(ion_input, is_autoparal=autoparal, history=history)
+        ion_task = RelaxFWTask(ion_input, is_autoparal=autoparal)
         self.ion_fw = Firework(ion_task, spec=spec)
 
         spec['wf_task_index'] = 'ioncell_' + str(start_task_index)
         if target_dilatmx:
-            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx,
-                                              history=history)
+            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx)
         else:
-            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal, history=history)
+            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal)
 
         self.ioncell_fw = Firework(ioncell_task, spec=spec)
 
