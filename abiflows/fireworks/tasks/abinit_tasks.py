@@ -33,6 +33,7 @@ from monty.json import MontyEncoder, MontyDecoder
 from monty.serialization import loadfn
 from abipy.abio.factories import InputFactory
 from abipy.abio.inputs import AbinitInput
+from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
 from abipy.core import Structure
 
@@ -89,7 +90,7 @@ class BasicTaskMixin(object):
         ftm.update_fw_policy(fw_spec.get('fw_policy', {}))
         return ftm
 
-    def run_autoparal(self, abiinput, autoparal_dir, ftm):
+    def run_autoparal(self, abiinput, autoparal_dir, ftm, clean_up='move'):
         """
         Runs the autoparal using AbinitInput abiget_autoparal_pconfs method.
         The information are retrieved from the FWTaskManager that should be present and contain the standard
@@ -111,7 +112,7 @@ class BasicTaskMixin(object):
         d["optimal_conf"] = optconf
         json_pretty_dump(d, os.path.join(autoparal_dir, "autoparal.json"))
 
-        # Clean the output files
+        # Method to clean the output files
         def safe_rm(name):
             try:
                 path = os.path.join(autoparal_dir, name)
@@ -122,11 +123,35 @@ class BasicTaskMixin(object):
             except OSError:
                 pass
 
-        # remove useless files. The output files should removed also to avoid abinit renaming the out file in
+        # Method to rename the output files
+        def safe_mv(name):
+            try:
+                autoparal_backup_dir = os.path.join(autoparal_dir, 'autoparal_backup')
+                if not os.path.exists(autoparal_backup_dir):
+                    os.makedirs(autoparal_backup_dir)
+                current_path = os.path.join(autoparal_dir, name)
+                newpath = os.path.join(autoparal_backup_dir, name)
+                if not os.path.exists(newpath):
+                    shutil.move(current_path, newpath)
+                else:
+                    raise ValueError('Autoparal backup file already exists for the file "{}"'.format(name))
+            except OSError:
+                pass
+
+        # clean up useless files. The output files should removed also to avoid abinit renaming the out file in
         # case the main run will be performed in the same dir
-        to_be_removed = [OUTPUT_FILE_NAME, LOG_FILE_NAME, STDERR_FILE_NAME, TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME]
-        for r in to_be_removed:
-            safe_rm(r)
+
+        if clean_up == 'move':
+            to_be_moved = [OUTPUT_FILE_NAME, LOG_FILE_NAME, STDERR_FILE_NAME]
+            for r in to_be_moved:
+                safe_mv(r)
+            to_be_removed = [TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME]
+            for r in to_be_removed:
+                safe_rm(r)
+        elif clean_up == 'remove':
+            to_be_removed = [OUTPUT_FILE_NAME, LOG_FILE_NAME, STDERR_FILE_NAME, TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME]
+            for r in to_be_removed:
+                safe_rm(r)
 
         return optconf, qadapter_spec
 
@@ -1397,6 +1422,33 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
         self.history = TaskHistory(history)
 
+    @property
+    def ec_path(self):
+        """Absolute path of the GSR file. Empty string if file is not present."""
+        path = self.rundir.has_abiext("EC")
+        if path: self._ec_path = path
+        return path
+
+    def get_elastic_tensor(self):
+        """
+        Open the EC file located in the in self.workdir.
+        Returns :class:`ElasticConstant` object, None if file could not be found or file is not readable.
+        """
+        ec_path = self.ec_path
+        if not ec_path:
+            msg = "{} reached the conclusion but didn't produce a EC file in {}".format(self, self.workdir)
+            logger.critical(msg)
+            raise PostProcessError(msg)
+        ec = ElasticComplianceTensor.from_ec_nc_file(ec_path)
+        return ec
+
+    def get_ddb_list(self, previous_fws, task_type):
+        ddb_files = []
+        for t in previous_fws.get(task_type, []):
+            ddb = Directory(os.path.join(t['dir'], OUTDIR_NAME)).has_abiext('DDB')
+            if not ddb:
+                msg = "One of the task of type {} (folder: {}) " \
+                      "did not produce a DDB file!".format(task_type, t['dir'])
     def resolve_deps_per_task_type(self, previous_tasks, deps_list):
         for previous_task in previous_tasks:
             for d in deps_list:
@@ -1465,7 +1517,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
                 command.append(self.ftm.fw_policy.mpirun_cmd)
                 if 'mpi_ncpus' in fw_spec:
                     command.extend(['-np', str(fw_spec['mpi_ncpus'])])
-            command.append('anaddb')
+            command.append(self.ftm.fw_policy.anaddb_cmd)
             with open(self.files_file.path, 'r') as stdin, open(self.log_file.path, 'w') as stdout, \
                     open(self.stderr_file.path, 'w') as stderr:
                 self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -1581,6 +1633,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         self.mpiabort_file = File(os.path.join(self.workdir, MPIABORTFILE))
 
         # Directories with input|output|temporary data.
+        self.rundir = Directory(self.workdir)
         self.indir = Directory(os.path.join(self.workdir, INDIR_NAME))
         self.outdir = Directory(os.path.join(self.workdir, OUTDIR_NAME))
         self.tmpdir = Directory(os.path.join(self.workdir, TMPDIR_NAME))

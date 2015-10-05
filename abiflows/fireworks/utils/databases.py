@@ -37,6 +37,19 @@ class MongoDatabase(PMGSONable):
     def insert_entry(self, entry):
         self.collection.insert(entry)
 
+    def get_entry(self, criteria):
+        count = self.collection.find(criteria).count()
+        if count == 0:
+            raise ValueError("No entry found with criteria ...")
+        elif count > 1:
+            raise ValueError("Multiple entries ({:d}) found with criteria ...".format(count))
+        return self.collection.find_one(criteria)
+
+    def save_entry(self, entry):
+        if not '_id' in entry:
+            raise ValueError('Entry should contain "_id" field to be saved')
+        self.collection.save(entry)
+
     def update_entry(self, query, entry_update):
         count = self.collection.find(query).count()
         if count != 1:
