@@ -200,7 +200,7 @@ class MSONField(DictField):
         if isinstance(value, BaseDict):
             value.__class__ = MSONDict
         
-        print("value:", type(value))
+        # print("value:", type(value))
         return value
 
     #def to_python(self, value):

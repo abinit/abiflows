@@ -1289,11 +1289,13 @@ class RelaxDilatmxFWTask(RelaxFWTask):
 class MergeDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "mrgddb"
 
-    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True):
+    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None):
         """
         ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.
         The default is [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
         delete_ddbs: delete the ddb files used after the merge
+        num_ddbs: number of ddbs to be merged. If set will be used to check that the correct number of ddbs have been
+         passed to the task. Tha task will fizzle if the numbers do not match
         """
 
         if ddb_source_task_types is None:
@@ -1303,6 +1305,7 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
         self.ddb_source_task_types = ddb_source_task_types
         self.delete_source_ddbs = delete_source_ddbs
+        self.num_ddbs = num_ddbs
 
     def get_ddb_list(self, previous_fws, task_type):
         ddb_files = []
@@ -1355,6 +1358,10 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
             if not ddb_files:
                 raise InitializationError("No DDB files to merge.")
+
+            if self.num_ddbs is not None and self.num_ddbs != len(ddb_files):
+                raise InitializationError("Wrong number of DDB files: {} DDB files have been requested, "
+                                          "but {} have been linked".format(self.num_ddbs, len(ddb_files)))
 
             # keep the output in the outdata dir for consistency
             out_ddb = os.path.join(self.workdir, OUTDIR_NAME, "out_DDB")
@@ -1750,6 +1757,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         dde_inputs = ph_inputs.filter_by_tags(DDE)
         bec_inputs = ph_inputs.filter_by_tags(BEC)
 
+        ph_fws = []
         if ph_q_pert_inputs:
             ph_fws = self.get_fws(ph_q_pert_inputs, PhononTask, {self.previous_task_type: "WFK"}, new_spec, ftm)
 
@@ -1778,7 +1786,9 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         # Set a higher priority to favour the end of the WF
         #TODO improve the handling of the priorities
         mrgddb_spec['_priority'] = 10
-        mrgddb_fw = Firework(MergeDdbTask(), spec=mrgddb_spec)
+        num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
+        mrgddb_fw = Firework(MergeDdbTask(num_ddbs=num_ddbs_to_be_merged), spec=mrgddb_spec,
+                             name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
 
         fws_deps = {}
 

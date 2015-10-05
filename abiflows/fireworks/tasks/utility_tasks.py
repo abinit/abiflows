@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 class FinalCleanUpTask(FireTaskBase):
 
     def __init__(self, out_exts=["WFK", "1WF"]):
+        if isinstance(out_exts, str):
+            out_exts = [s.strip() for s in out_exts.split(',')]
+
         self.out_exts = out_exts
 
     @serialize_fw
@@ -74,7 +77,7 @@ class FinalCleanUpTask(FireTaskBase):
         deleted_files = []
         # iterate over all the fws and launches
         for fw_id, fw in wf.id_fw.items():
-            for l in fw.launches:
+            for l in fw.launches+fw.archived_launches:
                 l_dir = l.launch_dir
 
                 deleted_files.extend(self.delete_files(os.path.join(l_dir, TMPDIR_NAME)))
