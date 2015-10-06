@@ -447,6 +447,6 @@ class MongoFlowScheduler(object):
             tag = " [ALL OK]" if self.flow.all_ok else " [WARNING]"
 
         # TODO: Move to monty
-        from pymatgen.io.abinitio.launcher import sendmail
+        from pymatgen.io.abinit.launcher import sendmail
         return sendmail(subject=self.flow.name + tag, text=strio.getvalue(), mailto=self.mailto)
 

@@ -8,7 +8,7 @@ from abiflows.fireworks.tasks.abinit_tasks import RestartInfo
 from abiflows.fireworks.utils.task_history import TaskHistory, TaskEvent
 from abipy.core.testing import AbipyTest
 from abipy.abio.factories import ion_ioncell_relax_input
-from pymatgen.io.abinitio.events import Correction, DilatmxErrorHandler, DilatmxError
+from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 
 class TestTaskHistory(AbipyTest):
 

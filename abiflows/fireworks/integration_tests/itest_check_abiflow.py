@@ -9,7 +9,7 @@ from abipy.electrons.gsr import GsrFile
 from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
-from pymatgen.io.abinitio.utils import Directory
+from pymatgen.io.abinit.utils import Directory
 from fireworks.core.rocket_launcher import rapidfire
 
 

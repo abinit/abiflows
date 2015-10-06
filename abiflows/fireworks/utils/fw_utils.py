@@ -5,7 +5,7 @@ Utilities for fireworks
 
 from __future__ import print_function, division, unicode_literals
 
-from pymatgen.io.abinitio.tasks import ParalHints
+from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import Workflow
 import traceback
 from abiflows.fireworks.tasks.abinit_tasks import FWTaskManager

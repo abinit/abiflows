@@ -10,7 +10,7 @@ import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
 from abipy.abio.factories import *
 from abipy.core.testing import AbipyTest
 from abiflows.fireworks.tasks.tests import mock_objects
-from pymatgen.io.abinitio.events import Correction, DilatmxErrorHandler, DilatmxError
+from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 from fireworks import FWAction
 
 
