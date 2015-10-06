@@ -15,7 +15,7 @@ import sys
 
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask, HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask, MergeDdbTask
-from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
+from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask, CheckMemoryTask
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory, PhononsFromGsFactory, ScfForPhononsFactory
@@ -195,7 +195,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
                     ioncell = this_ioncell
                     final_fw_id = fw_id
         if final_fw_id is None:
-            raise RuntimeError('Final strucure not found ...')
+            raise RuntimeError('Final structure not found ...')
         myfw = wf.id_fw[final_fw_id]
         #TODO add a check on the state of the launches
         last_launch = (myfw.archived_launches + myfw.launches)[-1]
@@ -239,6 +239,60 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         return cls(ion_input, ioncell_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info,
                    target_dilatmx=target_dilatmx)
+
+
+
+class RelaxFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'RelaxFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    def __init__(self, ion_input, ioncell_input, spec={}, initialization_info={}, target_dilatmx=None):
+        spec = dict(spec)
+        start_task_index = 1
+        spec['initialization_info'] = initialization_info
+        spec['_add_launchpad_and_fw_id'] = True
+        # Use the SRC scheme (Setup, Run, Check)
+        spec['SRCScheme'] = True
+        # Autoparal ion firework
+        spec = self.set_short_single_core_to_spec(spec)
+        spec['wf_task_index'] = 'autoparal_ion_' + str(start_task_index)
+        autoparal_ion_task = RelaxFWTask(ion_input, is_autoparal=True)
+        self.autoparal_ion_fw = Firework(autoparal_ion_task, spec=spec)
+        # Run abinit ion firework
+        spec['wf_task_index'] = 'ion_' + str(start_task_index)
+        ion_task = RelaxFWTask(ion_input, is_autoparal=False)
+        self.ion_fw = Firework(ion_task, spec=spec)
+        # Check memory firework
+        spec['wf_task_index'] = 'check_ion_' + str(start_task_index)
+        check_ion_task = CheckMemoryTask()
+        spec['_allow_fizzled_parents'] = True
+        self.check_ion_fw = Firework(check_ion_task, spec=spec)
+
+        # Autoparal ioncell firework
+        spec = self.set_short_single_core_to_spec(spec)
+        spec['wf_task_index'] = 'autoparal_ioncell_' + str(start_task_index)
+        spec['_allow_fizzled_parents'] = False
+        autoparal_ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=True)
+        self.autoparal_ioncell_fw = Firework(autoparal_ioncell_task, spec=spec)
+        # Run abinit ion firework
+        spec['wf_task_index'] = 'ioncell_' + str(start_task_index)
+        ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=False)
+        self.ioncell_fw = Firework(ioncell_task, spec=spec)
+        # Check memory firework
+        spec['wf_task_index'] = 'check_ioncell_' + str(start_task_index)
+        check_ioncell_task = CheckMemoryTask()
+        spec['_allow_fizzled_parents'] = True
+        self.check_ioncell_fw = Firework(check_ioncell_task, spec=spec)
+
+        self.wf = Workflow([self.autoparal_ion_fw, self.ion_fw, self.check_ion_fw,
+                            self.autoparal_ioncell_fw, self.ioncell_fw, self.check_ioncell_fw],
+                           links_dict={self.autoparal_ion_fw: [self.ion_fw],
+                                       self.ion_fw: [self.check_ion_fw],
+                                       self.check_ion_fw: [self.autoparal_ioncell_fw],
+                                       self.autoparal_ioncell_fw: [self.ioncell_fw],
+                                       self.ioncell_fw: [self.check_ioncell_fw]},
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
 
 
 

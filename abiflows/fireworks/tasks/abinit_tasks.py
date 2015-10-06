@@ -808,8 +808,12 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         self.resolve_deps(fw_spec)
 
         optconf, qadapter_spec = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        if 'SRCScheme' in fw_spec:
+            return FWAction(mod_spec={'_set': {'_queueadapter': qadapter_spec, 'mpi_ncpus': optconf['mpi_ncpus'],
+                                               'optconf': optconf}})
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
+
         task = self.__class__(**self._get_init_args_and_vals())
         task.is_autoparal = False
         # forward all the specs of the task
