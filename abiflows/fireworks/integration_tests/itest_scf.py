@@ -47,7 +47,7 @@ class ItestScf():
 
         launch = fw.launches[-1]
 
-        assert len(launch.action.stored_data['events']) == 1
+        assert any(event['@class'] == 'ScfConvergenceWarning' for event in launch.action.stored_data['events'])
 
         links = lp.get_wf_by_fw_id(scf_fw_id).links
 
