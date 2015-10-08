@@ -13,7 +13,9 @@ from pymatgen.io.abinit import TaskManager
 from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import Workflow
 import traceback
-from abiflows.fireworks.tasks.abinit_tasks import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 SHORT_SINGLE_CORE_SPEC = {'_queueadapter': {'ntasks': 1, 'time': '00:10:00'}, 'mpi_ncpus': 1}
 
