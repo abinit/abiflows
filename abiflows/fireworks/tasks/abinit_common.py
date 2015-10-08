@@ -1,0 +1,15 @@
+__author__ = 'waroquiers'
+
+TMPDIR_NAME = "tmpdata"
+OUTDIR_NAME = "outdata"
+INDIR_NAME = "indata"
+STDERR_FILE_NAME = "run.err"
+LOG_FILE_NAME = "run.log"
+FILES_FILE_NAME = "run.files"
+OUTPUT_FILE_NAME = "run.abo"
+INPUT_FILE_NAME = "run.abi"
+MPIABORTFILE = "__ABI_MPIABORTFILE__"
+DUMMY_FILENAME = "__DUMMY__"
+ELPHON_OUTPUT_FILE_NAME = "run.abo_elphon"
+DDK_FILES_FILE_NAME = "ddk.files"
+HISTORY_JSON = "history.json"

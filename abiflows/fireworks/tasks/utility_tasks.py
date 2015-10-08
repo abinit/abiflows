@@ -15,9 +15,9 @@ import shutil
 import logging
 import traceback
 import importlib
-from abiflows.fireworks.tasks.abinit_tasks import INDIR_NAME, OUTDIR_NAME, TMPDIR_NAME, FWTaskManager
+from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
 from abiflows.fireworks.utils.databases import MongoDatabase
-from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
 from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize

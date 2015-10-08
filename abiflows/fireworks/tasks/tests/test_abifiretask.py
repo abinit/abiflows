@@ -12,6 +12,7 @@ from abipy.core.testing import AbipyTest
 from abiflows.fireworks.tasks.tests import mock_objects
 from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 from fireworks import FWAction
+import abiflows.fireworks.utils.fw_utils
 
 
 class TestAbiFireTask(AbipyTest):
@@ -40,7 +41,7 @@ class TestTaskAnalysis(AbipyTest):
     @mock.patch.object(abinit_tasks.AbiFireTask, 'get_event_report')
     def test_scf_unconverged(self, report):
         scf_task = abinit_tasks.ScfFWTask(self.si_scf_input)
-        scf_task.ftm = abinit_tasks.FWTaskManager.from_user_config({})
+        scf_task.ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
 
         report.return_value = mock_objects.report_ScfConvergenceWarning()
 
@@ -52,7 +53,7 @@ class TestTaskAnalysis(AbipyTest):
             self.assertIsInstance(action, FWAction)
 
             scf_task.restart_info = abinit_tasks.RestartInfo(
-                previous_dir='.', num_restarts=abinit_tasks.FWTaskManager.fw_policy_defaults['max_restarts'])
+                previous_dir='.', num_restarts=abiflows.fireworks.utils.fw_utils.FWTaskManager.fw_policy_defaults['max_restarts'])
             with self.assertRaises(abinit_tasks.UnconvergedError):
                 scf_task.task_analysis(fake_spec)
 
@@ -85,18 +86,18 @@ class TestTaskAnalysis(AbipyTest):
 class TestFWTaskManager(AbipyTest):
     def tearDown(self):
         try:
-            os.remove(abinit_tasks.FWTaskManager.YAML_FILE)
+            os.remove(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE)
         except OSError:
             pass
 
     def test_no_file(self):
-        abinit_tasks.FWTaskManager.from_user_config({})
+        abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
 
     def test_ok(self):
-        with open(os.path.abspath(abinit_tasks.FWTaskManager.YAML_FILE), 'w') as f:
+        with open(os.path.abspath(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE), 'w') as f:
             f.write(mock_objects.MANAGER_OK)
 
-        ftm = abinit_tasks.FWTaskManager.from_user_config()
+        ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config()
         ftm.update_fw_policy({'max_restarts': 30})
 
         self.assertTrue(ftm.fw_policy.rerun_same_dir)
@@ -104,17 +105,17 @@ class TestFWTaskManager(AbipyTest):
         self.assertTrue(ftm.fw_policy.autoparal)
 
     def test_no_qadapter(self):
-        with open(os.path.abspath(abinit_tasks.FWTaskManager.YAML_FILE), 'w') as f:
+        with open(os.path.abspath(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE), 'w') as f:
             f.write(mock_objects.MANAGER_NO_QADAPTERS)
 
-        ftm = abinit_tasks.FWTaskManager.from_user_config({})
+        ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
 
         self.assertIsNone(ftm.task_manager)
 
     def test_unknown_keys(self):
-        with open(os.path.abspath(abinit_tasks.FWTaskManager.YAML_FILE), 'w') as f:
+        with open(os.path.abspath(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE), 'w') as f:
             f.write(mock_objects.MANAGER_UNKNOWN_KEYS)
 
         with self.assertRaises(RuntimeError):
-            abinit_tasks.FWTaskManager.from_user_config({})
+            abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
 

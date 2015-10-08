@@ -4,12 +4,6 @@ Task classes for Fireworks.
 """
 from __future__ import print_function, division, unicode_literals
 
-from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
-from fireworks.utilities.fw_utilities import explicit_serialize
-from fireworks.utilities.fw_serializers import serialize_fw
-from fireworks.queue.queue_adapter import Command
-
-import os
 import inspect
 import subprocess
 import logging
@@ -17,47 +11,37 @@ import collections
 import time
 import shutil
 import json
-import copy
-import itertools
 import threading
-import traceback
 import glob
-from collections import namedtuple
-from abiflows.fireworks.utils.task_history import TaskHistory
+
+from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
+from fireworks.utilities.fw_utilities import explicit_serialize
+from fireworks.utilities.fw_serializers import serialize_fw
+import os
 from pymatgen.io.abinit.utils import Directory, File
-from pymatgen.io.abinit import events, TaskManager, tasks
+from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
 from pymatgen.serializers.json_coders import PMGSONable, json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder
-from monty.serialization import loadfn
-from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
 from abipy.abio.factories import InputFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
+
 from abipy.core import Structure
 
-import abipy.abilab as abilab
+from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
+    LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
+    ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
+from abiflows.fireworks.utils.fw_utils import FWTaskManager
+from abiflows.fireworks.utils.task_history import TaskHistory
+from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
 
 logger = logging.getLogger(__name__)
 
 
 # files and folders names
-TMPDIR_NAME = "tmpdata"
-OUTDIR_NAME = "outdata"
-INDIR_NAME = "indata"
-STDERR_FILE_NAME = "run.err"
-LOG_FILE_NAME = "run.log"
-FILES_FILE_NAME = "run.files"
-OUTPUT_FILE_NAME = "run.abo"
-INPUT_FILE_NAME = "run.abi"
-MPIABORTFILE = "__ABI_MPIABORTFILE__"
-DUMMY_FILENAME = "__DUMMY__"
-ELPHON_OUTPUT_FILE_NAME = "run.abo_elphon"
-DDK_FILES_FILE_NAME = "ddk.files"
-
-HISTORY_JSON = "history.json"
 
 class BasicTaskMixin(object):
     task_type = ""
@@ -1955,86 +1939,3 @@ class RestartInfo(PMGSONable):
     @property
     def prev_indir(self):
         return Directory(os.path.join(self.previous_dir, INDIR_NAME))
-
-
-class FWTaskManager(object):
-    """
-    Object containing the configuration parameters and policies to run abipy.
-    The policies needed for the abinit FW will always be available through default values. These can be overridden
-    also setting the parameters in the spec.
-    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal.
-    The rationale behind this choice, instead of subclassing, is to not force the user to fill the qadapter part
-    of the task manager, which is needed only for the autoparal, but is required in the TaskManager initialization.
-    Wherever the TaskManager is needed just pass the ftm.task_manager
-    """
-
-    YAML_FILE = "fw_manager.yaml"
-    USER_CONFIG_DIR = TaskManager.USER_CONFIG_DIR # keep the same as the standard TaskManager
-
-    fw_policy_defaults = dict(rerun_same_dir=False,
-                              max_restarts=10,
-                              autoparal=False,
-                              abinit_cmd='abinit',
-                              mrgddb_cmd='mrgddb',
-                              anaddb_cmd='anaddb',
-                              mpirun_cmd='mpirun',
-                              copy_deps=False,
-                              walltime_command=None,
-                              continue_unconverged_on_rerun=True,
-                              allow_local_restart=False)
-    FWPolicy = namedtuple("FWPolicy", fw_policy_defaults.keys())
-
-    def __init__(self, **kwargs):
-        self._kwargs = copy.deepcopy(kwargs)
-
-        fw_policy = kwargs.pop('fw_policy', {})
-        unknown_keys = set(fw_policy.keys()) - set(self.fw_policy_defaults.keys())
-        if unknown_keys:
-            msg = "Unknown key(s) present in fw_policy: ".format(", ".join(unknown_keys))
-            logger.error(msg)
-            raise RuntimeError(msg)
-        fw_policy = dict(self.fw_policy_defaults, **fw_policy)
-
-        # make a namedtuple for easier access to the attributes
-        self.fw_policy = self.FWPolicy(**fw_policy)
-
-        #TODO consider if raising an exception if it's requested when not available
-        # create the task manager only if possibile
-        if 'qadapters' in kwargs:
-            self.task_manager = TaskManager.from_dict(kwargs)
-        else:
-            self.task_manager = None
-
-    @classmethod
-    def from_user_config(cls, fw_policy={}):
-        """
-        Initialize the manager using the dict in the following order of preference:
-        - the "fw_manager.yaml" file in the folder where the command is executed
-        - a yaml file pointed by the "FW_TASK_MANAGER"
-        - the "fw_manager.yaml" in the ~/.abinit/abipy folder
-        - if no file available, fall back to default values
-        """
-
-        # Try in the current directory then in user configuration directory.
-        paths = [os.path.join(os.getcwd(), cls.YAML_FILE), os.getenv("FW_TASK_MANAGER"),
-                 os.path.join(cls.USER_CONFIG_DIR, cls.YAML_FILE)]
-
-        config = {}
-        for path in paths:
-            if path and os.path.exists(path):
-                config = loadfn(path)
-                logger.info("Reading manager from {}.".format(path))
-                break
-
-        return cls(**config)
-
-    @classmethod
-    def from_file(cls, path):
-        """Read the configuration parameters from the Yaml file filename."""
-        return cls(**(loadfn(path)))
-
-    def has_task_manager(self):
-        return self.task_manager is not None
-
-    def update_fw_policy(self, d):
-        self.fw_policy = self.fw_policy._replace(**d)
