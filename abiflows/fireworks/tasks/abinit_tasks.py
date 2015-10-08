@@ -31,6 +31,7 @@ from pymatgen.io.abinit.wrappers import Mrgddb
 from pymatgen.serializers.json_coders import PMGSONable, json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder
 from monty.serialization import loadfn
+from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
 from abipy.abio.factories import InputFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
@@ -153,7 +154,7 @@ class BasicTaskMixin(object):
             for r in to_be_removed:
                 safe_rm(r)
 
-        return optconf, qadapter_spec
+        return optconf, qadapter_spec, manager.qadapter
 
     def get_final_mod_spec(self, fw_spec):
         return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
@@ -243,7 +244,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
     CRITICAL_EVENTS = [
     ]
 
-    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[]):
+    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+                 use_SRC_scheme=False):
         """
         Basic __init__, subclasses are supposed to define the same input parameters, add their own and call super for
         the basic ones. The input parameter should be stored as attributes of the instance for serialization and
@@ -254,6 +256,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
 
         self.handlers = handlers or [cls() for cls in events.get_event_handler_classes()]
         self.is_autoparal = is_autoparal
+        self.use_SRC_scheme = use_SRC_scheme
 
         # deps are transformed to be a list or a dict of lists
         if isinstance(deps, dict):
@@ -595,6 +598,16 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         if self.ftm.fw_policy.allow_local_restart and self.walltime and self.walltime/2 > (time.time() - self.start_time):
             local_restart = True
 
+        if self.use_SRC_scheme:
+            fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
+            new_index = fw_task_index + 1
+            SRC_fws = SRCFireworks(task_class=self, task_input=self.abiinput, spec=new_spec,
+                                   initialization_info=fw_spec['initialization_info'],
+                                   wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
+                                   current_task_index=new_index)
+            wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+            return FWAction(detours=[wf])
+
         # run here the autorun, otherwise it would need a separated FW
         if self.ftm.fw_policy.autoparal:
             # in case of restarting from the same folder the autoparal subfolder can already exist
@@ -603,7 +616,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             while os.path.exists(os.path.join(self.workdir, "autoparal{}".format("_"+str(i) if i else ""))):
                 i += 1
             autoparal_dir = os.path.join(self.workdir, "autoparal{}".format("_"+str(i) if i else ""))
-            optconf, qadapter_spec = self.run_autoparal(self.abiinput, autoparal_dir, self.ftm)
+            optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, autoparal_dir, self.ftm)
             self.history.log_autoparal(optconf)
             self.abiinput.set_vars(optconf.vars)
             # set quadapter specification.
@@ -807,10 +820,10 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         # Copy the appropriate dependencies in the in dir. needed in some cases
         self.resolve_deps(fw_spec)
 
-        optconf, qadapter_spec = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
-        if 'SRCScheme' in fw_spec:
+        optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        if self.use_SRC_scheme:
             return FWAction(mod_spec={'_set': {'_queueadapter': qadapter_spec, 'mpi_ncpus': optconf['mpi_ncpus'],
-                                               'optconf': optconf}})
+                                               'optconf': optconf, 'qtk_queueadapter': qadapter_spec.as_dict()}})
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
 
@@ -1716,7 +1729,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
             start_task_index = 1
             if self.with_autoparal:
                 autoparal_dir = os.path.join(os.path.abspath('.'), "autoparal_{}_{}".format(task_class.__name__, str(i)))
-                optconf, qadapter_spec = self.run_autoparal(inp, autoparal_dir, ftm)
+                optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(inp, autoparal_dir, ftm)
                 new_spec['_queueadapter'] = qadapter_spec
                 new_spec['mpi_ncpus'] = optconf['mpi_ncpus']
                 start_task_index = 'autoparal'

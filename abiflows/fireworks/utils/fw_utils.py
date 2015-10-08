@@ -97,7 +97,13 @@ def get_short_single_core_spec(fw_manager=None):
     return {}
 
 
+def set_short_single_core_to_spec(spec={}):
+        spec = dict(spec)
 
+        qadapter_spec = get_short_single_core_spec()
+        spec['mpi_ncpus'] = 1
+        spec['_queueadapter'] = qadapter_spec
+        return spec
 
 
 
