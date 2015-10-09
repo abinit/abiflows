@@ -296,7 +296,7 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
                                        initialization_info=initialization_info,
                                        wf_task_index_prefix='ioncell',
                                        deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'})
-        fws.extend(SRC_ion_fws['fws'])
+        fws.extend(SRC_ioncell_fws['fws'])
         links_dict.update(SRC_ioncell_fws['links_dict'])
 
         links_dict.update({SRC_ion_fws['check_fw']: SRC_ioncell_fws['setup_fw']})
