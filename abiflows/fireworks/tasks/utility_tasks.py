@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1,
-                 current_memory_per_proc_mb=None, memory_increase_megabytes=1000, max_memory_megabytes=7600):
+                 current_memory_per_proc_mb=None, deps=None, memory_increase_megabytes=1000, max_memory_megabytes=7600):
     spec = dict(spec)
     spec['initialization_info'] = initialization_info
     spec['_add_launchpad_and_fw_id'] = True
@@ -42,11 +42,11 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
     # Setup (Autoparal) run
     spec = set_short_single_core_to_spec(spec)
     spec['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
-    setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True)
+    setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps)
     setup_fw = Firework(setup_task, spec=spec)
     # Actual run of simulation
     spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
-    run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True)
+    run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps)
     run_fw = Firework(run_task, spec=spec)
     # Check memory firework
     spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])

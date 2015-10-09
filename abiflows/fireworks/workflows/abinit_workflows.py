@@ -203,9 +203,10 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         spec['wf_task_index'] = 'ioncell_' + str(start_task_index)
         if target_dilatmx:
-            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx)
+            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx,
+                                              deps={ion_task.task_type: '@structure'})
         else:
-            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal)
+            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal, deps={ion_task.task_type: '@structure'})
 
         self.ioncell_fw = Firework(ioncell_task, spec=spec)
 
@@ -293,7 +294,8 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
 
         SRC_ioncell_fws = SRCFireworks(task_class=RelaxFWTask, task_input=ioncell_input, spec=spec,
                                        initialization_info=initialization_info,
-                                       wf_task_index_prefix='ioncell')
+                                       wf_task_index_prefix='ioncell',
+                                       deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'})
         fws.extend(SRC_ion_fws['fws'])
         links_dict.update(SRC_ioncell_fws['links_dict'])
 
@@ -304,55 +306,34 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module})
 
+    @classmethod
+    def get_final_structure_and_history(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+        ioncell = -1
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if 'wf_task_index' in fw.spec:
+                if fw.spec['wf_task_index'][:12] == 'run_ioncell_':
+                    try:
+                        this_ioncell =  int(fw.spec['wf_task_index'].split('_')[-1])
+                    except ValueError:
+                        # skip if the index is not an int
+                        continue
+                    if this_ioncell > ioncell:
+                        ioncell = this_ioncell
+                        final_fw_id = fw_id
+        if final_fw_id is None:
+            raise RuntimeError('Final structure not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
+        structure = myfw.tasks[-1].get_final_structure()
+        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
 
-
-    # def __init__(self, ion_input, ioncell_input, spec={}, initialization_info={}, target_dilatmx=None):
-    #     spec = dict(spec)
-    #     start_task_index = 1
-    #     spec['initialization_info'] = initialization_info
-    #     spec['_add_launchpad_and_fw_id'] = True
-    #     # Use the SRC scheme (Setup, Run, Check)
-    #     spec['SRCScheme'] = True
-    #     # Autoparal ion firework
-    #     spec = self.set_short_single_core_to_spec(spec)
-    #     spec['wf_task_index'] = 'autoparal_ion_' + str(start_task_index)
-    #     autoparal_ion_task = RelaxFWTask(ion_input, is_autoparal=True)
-    #     self.autoparal_ion_fw = Firework(autoparal_ion_task, spec=spec)
-    #     # Run abinit ion firework
-    #     spec['wf_task_index'] = 'ion_' + str(start_task_index)
-    #     ion_task = RelaxFWTask(ion_input, is_autoparal=False)
-    #     self.ion_fw = Firework(ion_task, spec=spec)
-    #     # Check memory firework
-    #     spec['wf_task_index'] = 'check_ion_' + str(start_task_index)
-    #     check_ion_task = CheckMemoryTask()
-    #     spec['_allow_fizzled_parents'] = True
-    #     self.check_ion_fw = Firework(check_ion_task, spec=spec)
-    #
-    #     # Autoparal ioncell firework
-    #     spec = self.set_short_single_core_to_spec(spec)
-    #     spec['wf_task_index'] = 'autoparal_ioncell_' + str(start_task_index)
-    #     spec['_allow_fizzled_parents'] = False
-    #     autoparal_ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=True)
-    #     self.autoparal_ioncell_fw = Firework(autoparal_ioncell_task, spec=spec)
-    #     # Run abinit ion firework
-    #     spec['wf_task_index'] = 'ioncell_' + str(start_task_index)
-    #     ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=False)
-    #     self.ioncell_fw = Firework(ioncell_task, spec=spec)
-    #     # Check memory firework
-    #     spec['wf_task_index'] = 'check_ioncell_' + str(start_task_index)
-    #     check_ioncell_task = CheckMemoryTask()
-    #     spec['_allow_fizzled_parents'] = True
-    #     self.check_ioncell_fw = Firework(check_ioncell_task, spec=spec)
-    #
-    #     self.wf = Workflow([self.autoparal_ion_fw, self.ion_fw, self.check_ion_fw,
-    #                         self.autoparal_ioncell_fw, self.ioncell_fw, self.check_ioncell_fw],
-    #                        links_dict={self.autoparal_ion_fw: [self.ion_fw],
-    #                                    self.ion_fw: [self.check_ion_fw],
-    #                                    self.check_ion_fw: [self.autoparal_ioncell_fw],
-    #                                    self.autoparal_ioncell_fw: [self.ioncell_fw],
-    #                                    self.ioncell_fw: [self.check_ioncell_fw]},
-    #                        metadata={'workflow_class': self.workflow_class,
-    #                                  'workflow_module': self.workflow_module})
+        return {'structure': structure.as_dict(), 'history': history}
 
 
 class NscfFWWorkflow(AbstractFWWorkflow):
