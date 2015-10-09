@@ -807,7 +807,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
         if self.use_SRC_scheme:
             return FWAction(mod_spec={'_set': {'_queueadapter': qadapter_spec, 'mpi_ncpus': optconf['mpi_ncpus'],
-                                               'optconf': optconf, 'qtk_queueadapter': qadapter_spec.as_dict()}})
+                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter.as_dict()}})
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
 
