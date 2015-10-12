@@ -407,7 +407,7 @@ class NscfFWWorkflow(AbstractFWWorkflow):
 
 class PhononFWWorkflow(AbstractFWWorkflow):
     workflow_class = 'PhononFWWorkflow'
-    workflow_module = 'abipy.fworks.fw_workflows'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
     def __init__(self, scf_inp, phonon_factory, autoparal=False, spec={}, initialization_info={}):
         start_task_index = 1
