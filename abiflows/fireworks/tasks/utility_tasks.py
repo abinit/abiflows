@@ -240,10 +240,11 @@ class CheckMemoryTask(FireTaskBase):
         # next one.
         if not '_fizzled_parents' in fw_spec:
             stored_data = {}
-            update_spec = {}
+            update_spec = {'previous_fws': fw_spec['previous_fws']}
             mod_spec = []
-            for task_type, task_info in fw_spec['previous_fws'].items():
-                mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
+            #TODO : investigate why the following did not work ??? Anyway, do we need it ?
+            # for task_type, task_info in fw_spec['previous_fws'].items():
+            #     mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
             return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
         if len(fw_spec['_fizzled_parents']) > 1:
@@ -323,7 +324,9 @@ class CheckMemoryTask(FireTaskBase):
                                        initialization_info=initialization_info,
                                        wf_task_index_prefix=spec['wf_task_index_prefix'],
                                        current_task_index=new_index,
-                                       current_memory_per_proc_mb=new_mem)
+                                       current_memory_per_proc_mb=new_mem,
+                                       memory_increase_megabytes=self.memory_increase_megabytes,
+                                       max_memory_megabytes=self.max_memory_megabytes)
                 wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
                 return FWAction(detours=[wf])
         raise ValueError('Could not check for memory problem ...')
