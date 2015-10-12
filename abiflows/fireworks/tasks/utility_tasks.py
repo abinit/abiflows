@@ -318,12 +318,12 @@ class CheckMemoryTask(FireTaskBase):
                 spec['qtk_queueadapter'] = qtk_qadapter.as_dict()
                 qadapter_spec = qtk_qadapter.get_subs_dict()
                 spec['_queueadapter'] = qadapter_spec
-                spec['current_memory_per_proc_mb'] = new_mem
 
                 SRC_fws = SRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
                                        initialization_info=initialization_info,
                                        wf_task_index_prefix=spec['wf_task_index_prefix'],
-                                       current_task_index=new_index)
+                                       current_task_index=new_index,
+                                       current_memory_per_proc_mb=new_mem)
                 wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
                 return FWAction(detours=[wf])
         raise ValueError('Could not check for memory problem ...')
