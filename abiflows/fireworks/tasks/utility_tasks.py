@@ -318,6 +318,7 @@ class CheckMemoryTask(FireTaskBase):
                 spec['qtk_queueadapter'] = qtk_qadapter.as_dict()
                 qadapter_spec = qtk_qadapter.get_subs_dict()
                 spec['_queueadapter'] = qadapter_spec
+                spec['current_memory_per_proc_mb'] = new_mem
 
                 SRC_fws = SRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
                                        initialization_info=initialization_info,
