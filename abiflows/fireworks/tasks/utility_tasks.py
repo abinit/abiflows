@@ -38,6 +38,7 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
     if not wf_task_index_prefix.isalpha():
         raise ValueError('wf_task_index_prefix should only contain letters')
     spec['wf_task_index_prefix'] = wf_task_index_prefix
+    spec['current_memory_per_proc_mb'] = current_memory_per_proc_mb
 
     # Setup (Autoparal) run
     spec = set_short_single_core_to_spec(spec)
@@ -248,11 +249,9 @@ class CheckMemoryTask(FireTaskBase):
         if len(fw_spec['_fizzled_parents']) > 1:
             raise ValueError('Multiple parents fizzled ... Only one is allowed.')
 
-        fizzled_fw_id = Firework.from_dict(fw_spec['_fizzled_parents'][0]['fw_id'])
+        fizzled_fw_id = fw_spec['_fizzled_parents'][0]['fw_id']
         fizzled_fw = lp.get_fw_by_id(fizzled_fw_id)
         fizzled_fw_dir = fizzled_fw.launches[-1].launch_dir
-
-        manager = get_fw_task_manager(fw_spec=fw_spec)
 
         # Analyze the stderr and stdout files of the resource manager system.
         qerr_info = None
@@ -269,11 +268,13 @@ class CheckMemoryTask(FireTaskBase):
 
         if qerr_info or qout_info:
             from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-            scheduler_parser = get_parser(manager.qadapter.QTYPE, err_file=qerr_file,
+            qtk_qadapter = QueueAdapter.from_dict(fizzled_fw.spec['qtk_queueadapter'])
+            qtype = qtk_qadapter.QTYPE
+            scheduler_parser = get_parser(qtype, err_file=qerr_file,
                                           out_file=qout_file, run_err_file=runerr_file)
 
             if scheduler_parser is None:
-                raise ValueError('Cannot find scheduler_parser for qtype {}'.format(manager.qadapter.QTYPE))
+                raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
 
             scheduler_parser.parse()
             queue_errors = scheduler_parser.errors
@@ -308,7 +309,6 @@ class CheckMemoryTask(FireTaskBase):
                 fizzled_fw_task_index = int(fizzled_fw.spec['wf_task_index'].split('_')[-1])
                 new_index = fizzled_fw_task_index + 1
                 # Update the memory in the queue adapter
-                qtk_qadapter = QueueAdapter.from_dict(fizzled_fw.spec['qtk_queueadapter'])
                 old_mem = qtk_qadapter.mem_per_proc
                 new_mem = old_mem + self.memory_increase_megabytes
                 if new_mem > self.max_memory_megabytes:
@@ -327,7 +327,7 @@ class CheckMemoryTask(FireTaskBase):
                 return FWAction(detours=[wf])
         raise ValueError('Could not check for memory problem ...')
 
-def get_fw_task_manager(self, fw_spec):
+def get_fw_task_manager(fw_spec):
     if 'ftm_file' in fw_spec:
         ftm = FWTaskManager.from_file(fw_spec['ftm_file'])
     else:
