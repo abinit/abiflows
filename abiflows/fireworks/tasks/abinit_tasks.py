@@ -700,7 +700,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         # AbinitInput and not a factory. In this case there should be either a single input coming from the previous
         # fws or a deps specifying which input use
         if isinstance(self.abiinput, InputFactory):
-            initialization_info['input_factory'] = self.abiinput.as_dict()
+            initialization_info['input_factory'] = self.abiinput
             previous_input = None
             if self.abiinput.input_required:
                 previous_fws = fw_spec.get('previous_fws', {})
@@ -725,12 +725,12 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     logger.error(msg)
                     raise InitializationError(msg)
                 # a single input exists
-                previous_input = AbinitInput.from_dict(previous_fws[task_type_source][0]['input'])
-                initialization_info['previous_input'] = previous_input.as_dict()
+                previous_input = previous_fws[task_type_source][0]['input']
+                initialization_info['previous_input'] = previous_input
 
             self.abiinput = self.abiinput.build_input(previous_input)
 
-        initialization_info['initial_input'] = self.abiinput.as_dict()
+        initialization_info['initial_input'] = self.abiinput
 
         # if it's the first run log the initialization of the task
         if len(self.history) == 0:
@@ -811,10 +811,10 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             encoder = MontyEncoder()
             update_spec = None
             if 'previous_fws' in fw_spec:
-                update_spec ={'previous_fws': encoder.encode(fw_spec['previous_fws'])}
+                update_spec ={'previous_fws': fw_spec['previous_fws']}
             return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
                                                'mpi_ncpus': optconf['mpi_ncpus'],
-                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter.as_dict()}},
+                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
                             update_spec=update_spec)
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
@@ -841,7 +841,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                         msg = "previous_fws does not contain the structure."
                         logger.error(msg)
                         raise InitializationError(msg)
-                    self.abiinput.set_structure(Structure.from_dict(previous_task['structure']))
+                    self.abiinput.set_structure(previous_task['structure'])
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
@@ -1740,7 +1740,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         if not previous_input:
             raise InitializationError('No input file available from task of type {}'.format(self.previous_task_type))
 
-        previous_input = AbinitInput.from_dict(previous_input)
+        #previous_input = AbinitInput.from_dict(previous_input)
 
         if self.with_autoparal is None:
             self.with_autoparal = ftm.fw_policy.autoparal
@@ -1758,7 +1758,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         ph_inputs = self.phonon_factory.build_input(previous_input)
 
         initialization_info = fw_spec.get('initialization_info', {})
-        initialization_info['input_factory'] = self.phonon_factory.as_dict()
+        initialization_info['input_factory'] = self.phonon_factory
         new_spec = dict(previous_fws=fw_spec['previous_fws'], initialization_info=initialization_info)
 
         ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)

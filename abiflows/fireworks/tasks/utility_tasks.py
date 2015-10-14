@@ -177,7 +177,7 @@ class DatabaseInsertTask(FireTaskBase):
         wf_module = importlib.import_module(wf.metadata['workflow_module'])
         wf_class = getattr(wf_module, wf.metadata['workflow_class'])
 
-        database = MongoDatabase.from_dict(fw_spec['mongo_database'])
+        database = fw_spec['mongo_database']
         if self.criteria is not None:
             entry = database.get_entry(criteria=self.criteria)
         else:
@@ -270,7 +270,7 @@ class CheckMemoryTask(FireTaskBase):
 
         if qerr_info or qout_info:
             from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-            qtk_qadapter = QueueAdapter.from_dict(fizzled_fw.spec['qtk_queueadapter'])
+            qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
             qtype = qtk_qadapter.QTYPE
             scheduler_parser = get_parser(qtype, err_file=qerr_file,
                                           out_file=qout_file, run_err_file=runerr_file)
@@ -317,7 +317,7 @@ class CheckMemoryTask(FireTaskBase):
                     raise ValueError('New memory {:d} is larger than '
                                      'max memory per proc {:d}'.format(new_mem, self.max_memory_megabytes))
                 qtk_qadapter.set_mem_per_proc(new_mem)
-                spec['qtk_queueadapter'] = qtk_qadapter.as_dict()
+                spec['qtk_queueadapter'] = qtk_qadapter
                 qadapter_spec = qtk_qadapter.get_subs_dict()
                 spec['_queueadapter'] = qadapter_spec
 
