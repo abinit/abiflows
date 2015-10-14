@@ -808,9 +808,14 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         if self.use_SRC_scheme:
             if 'current_memory_per_proc_mb' in fw_spec and fw_spec['current_memory_per_proc_mb'] is not None:
                 qtk_qadapter.set_mem_per_proc(fw_spec['current_memory_per_proc_mb'])
+            encoder = MontyEncoder()
+            update_spec = None
+            if 'previous_fws' in fw_spec:
+                update_spec ={'previous_fws': encoder.encode(fw_spec['previous_fws'])}
             return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
                                                'mpi_ncpus': optconf['mpi_ncpus'],
-                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter.as_dict()}})
+                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter.as_dict()}},
+                            update_spec=update_spec)
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
 
