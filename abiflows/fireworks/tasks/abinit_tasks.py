@@ -22,8 +22,8 @@ from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
-from pymatgen.serializers.json_coders import PMGSONable, json_pretty_dump, pmg_serialize
-from monty.json import MontyEncoder, MontyDecoder
+from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
+from monty.json import MontyEncoder, MontyDecoder, MSONable
 from abipy.abio.factories import InputFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
@@ -1918,7 +1918,7 @@ class PostProcessError(AbiFWError):
 ##############################
 
 
-class RestartInfo(PMGSONable):
+class RestartInfo(MSONable):
     """
     Object that contains the information about the restart of a task.
     """

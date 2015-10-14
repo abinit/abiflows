@@ -24,7 +24,7 @@ class TestAbiFireTask(AbipyTest):
     def test_AbiFireTask(self):
         task = abinit_tasks.AbiFireTask(self.si_scf_input)
         task.to_dict()
-        self.assertPMGSONable(self.si_scf_input)
+        self.assertMSONable(self.si_scf_input)
         self.assertFwSerializable(task)
 
     def test_ScfFireTask(self):

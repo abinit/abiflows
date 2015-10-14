@@ -3,12 +3,12 @@
 Utilities for database insertion
 """
 
-from pymatgen.serializers.json_coders import PMGSONable
+from monty.json import MSONable
 import gridfs
 import pymongo
 
 
-class MongoDatabase(PMGSONable):
+class MongoDatabase(MSONable):
     """
     MongoDB database class for access, insertion, update, ... in a MongoDB database
     """
