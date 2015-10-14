@@ -16,14 +16,11 @@ import logging
 import traceback
 import importlib
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
-from abiflows.fireworks.utils.databases import MongoDatabase
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
 from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
-from monty.json import jsanitize, MontyEncoder
+from monty.json import jsanitize
 from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
-from pymatgen.io.abinit.qadapters import QueueAdapter
-
 
 logger = logging.getLogger(__name__)
 
@@ -239,9 +236,8 @@ class CheckMemoryTask(FireTaskBase):
         # Treat the case where there was no memory error => forward "needed" outputs of the previous firework to the
         # next one.
         if not '_fizzled_parents' in fw_spec:
-            encoder = MontyEncoder()
             stored_data = {}
-            update_spec = {'previous_fws': encoder.encode(fw_spec['previous_fws'])}
+            update_spec = {'previous_fws': fw_spec['previous_fws']}
             mod_spec = []
             #TODO : investigate why the following did not work ??? Anyway, do we need it ?
             # for task_type, task_info in fw_spec['previous_fws'].items():
