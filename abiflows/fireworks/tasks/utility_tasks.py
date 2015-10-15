@@ -21,7 +21,6 @@ from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize
 from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
-from pymatgen.io.abinit.qadapters import QueueAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -269,7 +268,7 @@ class CheckMemoryTask(FireTaskBase):
 
         if qerr_info or qout_info:
             from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-            qtk_qadapter = QueueAdapter.from_dict(fizzled_fw.spec['qtk_queueadapter'])
+            qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
             qtype = qtk_qadapter.QTYPE
             scheduler_parser = get_parser(qtype, err_file=qerr_file,
                                           out_file=qout_file, run_err_file=runerr_file)
