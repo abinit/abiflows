@@ -21,13 +21,16 @@ from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize
 from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
+from pymatgen.io.abinit.qadapters import QueueAdapter
 
 logger = logging.getLogger(__name__)
 
 
-
+#TODO: make it possible to use "any" task and in particular, MergeDdbTask, AnaDdbTask, ...
+# within the SRC scheme (to be rationalized)
 def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1,
-                 current_memory_per_proc_mb=None, deps=None, memory_increase_megabytes=1000, max_memory_megabytes=7600):
+                 current_memory_per_proc_mb=None, deps=None, memory_increase_megabytes=1000, max_memory_megabytes=7600,
+                 task_type=None):
     spec = dict(spec)
     spec['initialization_info'] = initialization_info
     spec['_add_launchpad_and_fw_id'] = True
@@ -40,11 +43,11 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
     # Setup (Autoparal) run
     spec = set_short_single_core_to_spec(spec)
     spec['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
-    setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps)
+    setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
     setup_fw = Firework(setup_task, spec=spec)
     # Actual run of simulation
     spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
-    run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps)
+    run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
     run_fw = Firework(run_task, spec=spec)
     # Check memory firework
     spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
@@ -266,7 +269,7 @@ class CheckMemoryTask(FireTaskBase):
 
         if qerr_info or qout_info:
             from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-            qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
+            qtk_qadapter = QueueAdapter.from_dict(fizzled_fw.spec['qtk_queueadapter'])
             qtype = qtk_qadapter.QTYPE
             scheduler_parser = get_parser(qtype, err_file=qerr_file,
                                           out_file=qout_file, run_err_file=runerr_file)

@@ -229,7 +229,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
     ]
 
     def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
-                 use_SRC_scheme=False):
+                 use_SRC_scheme=False, task_type=None):
         """
         Basic __init__, subclasses are supposed to define the same input parameters, add their own and call super for
         the basic ones. The input parameter should be stored as attributes of the instance for serialization and
@@ -241,6 +241,13 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         self.handlers = handlers or [cls() for cls in events.get_event_handler_classes()]
         self.is_autoparal = is_autoparal
         self.use_SRC_scheme = use_SRC_scheme
+
+        #TODO: rationalize this and check whether this might create problems due to the fact that if task_type is None,
+        #      self.task_type is the class variable (actually self.task_type refers to self.__class__.task_type) while
+        #      if task_type is specified, self.task_type is an instance variable and is potentially different from
+        #      self.__class__.task_type !
+        if task_type is not None:
+            self.task_type = task_type
 
         # deps are transformed to be a list or a dict of lists
         if isinstance(deps, dict):
@@ -1298,6 +1305,8 @@ class RelaxDilatmxFWTask(RelaxFWTask):
 class MergeDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "mrgddb"
 
+    #TODO: make it possible to use "any" task and in particular, this MergeDdbTask for the SRC
+    # scheme (to be rationalized)
     def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None):
         """
         ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.
@@ -1419,12 +1428,22 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 class AnaDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "anaddb"
 
-    def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[]):
+    def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+                 use_SRC_scheme=False, task_type=None):
         self.anaddb_input = anaddb_input
         self.restart_info = restart_info
 
         self.handlers = handlers or [cls() for cls in events.get_event_handler_classes()]
         self.is_autoparal = is_autoparal
+
+        self.use_SRC_scheme = use_SRC_scheme
+
+        #TODO: rationalize this and check whether this might create problems due to the fact that if task_type is None,
+        #      self.task_type is the class variable (actually self.task_type refers to self.__class__.task_type) while
+        #      if task_type is specified, self.task_type is an instance variable and is potentially different from
+        #      self.__class__.task_type !
+        if task_type is not None:
+            self.task_type = task_type
 
         # deps are transformed to be a list or a dict of lists
         if isinstance(deps, dict):

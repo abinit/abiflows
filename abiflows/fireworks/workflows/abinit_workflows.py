@@ -18,6 +18,7 @@ from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, Dd
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory, PhononsFromGsFactory, ScfForPhononsFactory
 from abipy.abio.inputs import AbinitInput, AnaddbInput
@@ -550,6 +551,99 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
         history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
 
         return {'elastic_properties': elastic_tensor.extended_dict(), 'history': history}
+
+    @classmethod
+    def from_factory(cls):
+        raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
+
+
+class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'PiezoElasticFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    # def __init__(self, ion_input, ioncell_input, spec={}, initialization_info={}):
+    def __init__(self, scf_inp_ibz, scf_inp_fbz, ddk_inp, rf_inp, spec={}, initialization_info={}):
+
+        fws = []
+        links_dict = {}
+
+        #First SCF run in the irreducible Brillouin Zone
+        SRC_scf_ibz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, spec=spec,
+                                       initialization_info=initialization_info,
+                                       wf_task_index_prefix='scfibz', task_type='scfibz')
+        fws.extend(SRC_scf_ibz_fws['fws'])
+        links_dict.update(SRC_scf_ibz_fws['links_dict'])
+
+        #Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
+        #2nd derivative DDB's from the DFPT RF run
+        SRC_scf_fbz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
+                                       initialization_info=initialization_info,
+                                       wf_task_index_prefix='scffbz', task_type='scffbz',
+                                       deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']})
+        fws.extend(SRC_scf_fbz_fws['fws'])
+        links_dict.update(SRC_scf_fbz_fws['links_dict'])
+        #Link with previous SCF
+        links_dict.update({SRC_scf_ibz_fws['check_fw']: SRC_scf_fbz_fws['setup_fw']})
+
+        #DDK calculation
+        SRC_ddk_fws = SRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
+                                       initialization_info=initialization_info,
+                                       wf_task_index_prefix='ddk',
+                                       deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'})
+        fws.extend(SRC_ddk_fws['fws'])
+        links_dict.update(SRC_ddk_fws['links_dict'])
+        #Link with the IBZ SCF run
+        links_dict.update({SRC_scf_ibz_fws['check_fw']: SRC_ddk_fws['setup_fw']})
+
+        #Response-Function calculation of the elastic constants
+        SRC_rf_fws = SRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
+                                  initialization_info=initialization_info,
+                                  wf_task_index_prefix='rf',
+                                  deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
+                                        SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'})
+        fws.extend(SRC_rf_fws['fws'])
+        links_dict.update(SRC_rf_fws['links_dict'])
+        #Link with the IBZ SCF run and the DDK run
+        links_dict.update({SRC_scf_ibz_fws['check_fw']: SRC_rf_fws['setup_fw'],
+                           SRC_ddk_fws['check_fw']: SRC_rf_fws['setup_fw']})
+
+        #Merge DDB files from response function (second derivatives for the elastic constants) and from the
+        # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
+        # stress-corrected elastic constants)
+        mrgddb_task = MergeDdbTask(ddb_source_task_types=[SRC_rf_fws['run_fw'].tasks[0].task_type,
+                                                          SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
+                                   delete_source_ddbs=False, num_ddbs=2)
+        mrgddb_spec = set_short_single_core_to_spec(spec)
+        mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec)
+        fws.append(mrgddb_fw)
+        links_dict.update({SRC_rf_fws['check_fw']: mrgddb_fw,
+                           SRC_scf_fbz_fws['check_fw']: mrgddb_fw})
+
+        spec = self.set_short_single_core_to_spec()
+        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(scf_inp_ibz.structure))
+        anaddb_fw = Firework([anaddb_task],
+                             spec=spec,
+                             name='anaddb')
+
+
+        # ddk_task = DdkTask(ddk_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK'})
+        #
+        # ddk_fw_name = rf+ddk_task.task_type
+        # ddk_fw_name = ddk_fw_name[:8]
+        # self.ddk_fw = Firework(ddk_task, spec=spec, name=ddk_fw_name)
+        #
+        # rf_task = StrainPertTask(rf_inp, is_autoparal=autoparal, deps={scf_task.task_type: 'WFK', ddk_task.task_type: 'DDK'})
+        #
+        # rf_fw_name = rf+rf_task.task_type
+        # rf_fw_name = rf_fw_name[:8]
+        # self.rf_fw = Firework(rf_task, spec=spec, name=rf_fw_name)
+
+
+        self.wf = Workflow(fireworks=fws,
+                           links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+        pass
 
     @classmethod
     def from_factory(cls):
