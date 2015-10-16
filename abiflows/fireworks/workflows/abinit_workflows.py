@@ -561,8 +561,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    # def __init__(self, ion_input, ioncell_input, spec={}, initialization_info={}):
-    def __init__(self, scf_inp_ibz, scf_inp_fbz, ddk_inp, rf_inp, spec={}, initialization_info={}):
+    def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={}):
 
         fws = []
         links_dict = {}
@@ -576,6 +575,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
         #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
         #2nd derivative DDB's from the DFPT RF run
+        scf_inp_fbz = scf_inp_ibz.deepcopy()
+        scf_inp_fbz['kptopt'] = 3
         SRC_scf_fbz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
                                        initialization_info=initialization_info,
                                        wf_task_index_prefix='scffbz', task_type='scffbz',
