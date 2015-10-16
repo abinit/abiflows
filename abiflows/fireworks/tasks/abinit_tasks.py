@@ -1464,7 +1464,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         if path: self._ec_path = path
         return path
 
-    def get_elastic_tensor(self):
+    def get_elastic_tensor(self, tensor_type='relaxed_ion'):
         """
         Open the EC file located in the in self.workdir.
         Returns :class:`ElasticConstant` object, None if file could not be found or file is not readable.
@@ -1474,7 +1474,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
             msg = "{} reached the conclusion but didn't produce a EC file in {}".format(self, self.workdir)
             logger.critical(msg)
             raise PostProcessError(msg)
-        ec = ElasticComplianceTensor.from_ec_nc_file(ec_path)
+        ec = ElasticComplianceTensor.from_ec_nc_file(ec_path, tensor_type=tensor_type)
         return ec
 
     def get_ddb_list(self, previous_fws, task_type):
