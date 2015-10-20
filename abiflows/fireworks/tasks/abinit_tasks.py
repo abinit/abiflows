@@ -4,12 +4,6 @@ Task classes for Fireworks.
 """
 from __future__ import print_function, division, unicode_literals
 
-from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
-from fireworks.utilities.fw_utilities import explicit_serialize
-from fireworks.utilities.fw_serializers import serialize_fw
-from fireworks.queue.queue_adapter import Command
-
-import os
 import inspect
 import subprocess
 import logging
@@ -17,46 +11,37 @@ import collections
 import time
 import shutil
 import json
-import copy
-import itertools
 import threading
-import traceback
 import glob
-from collections import namedtuple
-from abiflows.fireworks.utils.task_history import TaskHistory
+
+from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
+from fireworks.utilities.fw_utilities import explicit_serialize
+from fireworks.utilities.fw_serializers import serialize_fw
+import os
 from pymatgen.io.abinit.utils import Directory, File
-from pymatgen.io.abinit import events, TaskManager, tasks
+from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
-from pymatgen.serializers.json_coders import PMGSONable, json_pretty_dump, pmg_serialize
-from monty.json import MontyEncoder, MontyDecoder
-from monty.serialization import loadfn
+from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
+from monty.json import MontyEncoder, MontyDecoder, MSONable
 from abipy.abio.factories import InputFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
+
 from abipy.core import Structure
 
-import abipy.abilab as abilab
+from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
+    LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
+    ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
+from abiflows.fireworks.utils.fw_utils import FWTaskManager
+from abiflows.fireworks.utils.task_history import TaskHistory
+from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
 
 logger = logging.getLogger(__name__)
 
 
 # files and folders names
-TMPDIR_NAME = "tmpdata"
-OUTDIR_NAME = "outdata"
-INDIR_NAME = "indata"
-STDERR_FILE_NAME = "run.err"
-LOG_FILE_NAME = "run.log"
-FILES_FILE_NAME = "run.files"
-OUTPUT_FILE_NAME = "run.abo"
-INPUT_FILE_NAME = "run.abi"
-MPIABORTFILE = "__ABI_MPIABORTFILE__"
-DUMMY_FILENAME = "__DUMMY__"
-ELPHON_OUTPUT_FILE_NAME = "run.abo_elphon"
-DDK_FILES_FILE_NAME = "ddk.files"
-
-HISTORY_JSON = "history.json"
 
 class BasicTaskMixin(object):
     task_type = ""
@@ -153,7 +138,7 @@ class BasicTaskMixin(object):
             for r in to_be_removed:
                 safe_rm(r)
 
-        return optconf, qadapter_spec
+        return optconf, qadapter_spec, manager.qadapter
 
     def get_final_mod_spec(self, fw_spec):
         return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
@@ -243,7 +228,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
     CRITICAL_EVENTS = [
     ]
 
-    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[]):
+    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+                 use_SRC_scheme=False, task_type=None):
         """
         Basic __init__, subclasses are supposed to define the same input parameters, add their own and call super for
         the basic ones. The input parameter should be stored as attributes of the instance for serialization and
@@ -254,6 +240,14 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
 
         self.handlers = handlers or [cls() for cls in events.get_event_handler_classes()]
         self.is_autoparal = is_autoparal
+        self.use_SRC_scheme = use_SRC_scheme
+
+        #TODO: rationalize this and check whether this might create problems due to the fact that if task_type is None,
+        #      self.task_type is the class variable (actually self.task_type refers to self.__class__.task_type) while
+        #      if task_type is specified, self.task_type is an instance variable and is potentially different from
+        #      self.__class__.task_type !
+        if task_type is not None:
+            self.task_type = task_type
 
         # deps are transformed to be a list or a dict of lists
         if isinstance(deps, dict):
@@ -595,6 +589,16 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         if self.ftm.fw_policy.allow_local_restart and self.walltime and self.walltime/2 > (time.time() - self.start_time):
             local_restart = True
 
+        if self.use_SRC_scheme:
+            fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
+            new_index = fw_task_index + 1
+            SRC_fws = SRCFireworks(task_class=self, task_input=self.abiinput, spec=new_spec,
+                                   initialization_info=fw_spec['initialization_info'],
+                                   wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
+                                   current_task_index=new_index)
+            wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+            return FWAction(detours=[wf])
+
         # run here the autorun, otherwise it would need a separated FW
         if self.ftm.fw_policy.autoparal:
             # in case of restarting from the same folder the autoparal subfolder can already exist
@@ -603,7 +607,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             while os.path.exists(os.path.join(self.workdir, "autoparal{}".format("_"+str(i) if i else ""))):
                 i += 1
             autoparal_dir = os.path.join(self.workdir, "autoparal{}".format("_"+str(i) if i else ""))
-            optconf, qadapter_spec = self.run_autoparal(self.abiinput, autoparal_dir, self.ftm)
+            optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, autoparal_dir, self.ftm)
             self.history.log_autoparal(optconf)
             self.abiinput.set_vars(optconf.vars)
             # set quadapter specification.
@@ -703,7 +707,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         # AbinitInput and not a factory. In this case there should be either a single input coming from the previous
         # fws or a deps specifying which input use
         if isinstance(self.abiinput, InputFactory):
-            initialization_info['input_factory'] = self.abiinput.as_dict()
+            initialization_info['input_factory'] = self.abiinput
             previous_input = None
             if self.abiinput.input_required:
                 previous_fws = fw_spec.get('previous_fws', {})
@@ -728,12 +732,12 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     logger.error(msg)
                     raise InitializationError(msg)
                 # a single input exists
-                previous_input = AbinitInput.from_dict(previous_fws[task_type_source][0]['input'])
-                initialization_info['previous_input'] = previous_input.as_dict()
+                previous_input = previous_fws[task_type_source][0]['input']
+                initialization_info['previous_input'] = previous_input
 
             self.abiinput = self.abiinput.build_input(previous_input)
 
-        initialization_info['initial_input'] = self.abiinput.as_dict()
+        initialization_info['initial_input'] = self.abiinput
 
         # if it's the first run log the initialization of the task
         if len(self.history) == 0:
@@ -807,9 +811,21 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         # Copy the appropriate dependencies in the in dir. needed in some cases
         self.resolve_deps(fw_spec)
 
-        optconf, qadapter_spec = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        if self.use_SRC_scheme:
+            if 'current_memory_per_proc_mb' in fw_spec and fw_spec['current_memory_per_proc_mb'] is not None:
+                qtk_qadapter.set_mem_per_proc(fw_spec['current_memory_per_proc_mb'])
+            encoder = MontyEncoder()
+            update_spec = None
+            if 'previous_fws' in fw_spec:
+                update_spec ={'previous_fws': fw_spec['previous_fws']}
+            return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
+                                               'mpi_ncpus': optconf['mpi_ncpus'],
+                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
+                            update_spec=update_spec)
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
+
         task = self.__class__(**self._get_init_args_and_vals())
         task.is_autoparal = False
         # forward all the specs of the task
@@ -832,7 +848,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                         msg = "previous_fws does not contain the structure."
                         logger.error(msg)
                         raise InitializationError(msg)
-                    self.abiinput.set_structure(Structure.from_dict(previous_task['structure']))
+                    self.abiinput.set_structure(previous_task['structure'])
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
@@ -1289,6 +1305,8 @@ class RelaxDilatmxFWTask(RelaxFWTask):
 class MergeDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "mrgddb"
 
+    #TODO: make it possible to use "any" task and in particular, this MergeDdbTask for the SRC
+    # scheme (to be rationalized)
     def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None):
         """
         ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.
@@ -1410,12 +1428,22 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 class AnaDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "anaddb"
 
-    def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[]):
+    def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+                 use_SRC_scheme=False, task_type=None):
         self.anaddb_input = anaddb_input
         self.restart_info = restart_info
 
         self.handlers = handlers or [cls() for cls in events.get_event_handler_classes()]
         self.is_autoparal = is_autoparal
+
+        self.use_SRC_scheme = use_SRC_scheme
+
+        #TODO: rationalize this and check whether this might create problems due to the fact that if task_type is None,
+        #      self.task_type is the class variable (actually self.task_type refers to self.__class__.task_type) while
+        #      if task_type is specified, self.task_type is an instance variable and is potentially different from
+        #      self.__class__.task_type !
+        if task_type is not None:
+            self.task_type = task_type
 
         # deps are transformed to be a list or a dict of lists
         if isinstance(deps, dict):
@@ -1436,7 +1464,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
         if path: self._ec_path = path
         return path
 
-    def get_elastic_tensor(self):
+    def get_elastic_tensor(self, tensor_type='relaxed_ion'):
         """
         Open the EC file located in the in self.workdir.
         Returns :class:`ElasticConstant` object, None if file could not be found or file is not readable.
@@ -1446,7 +1474,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
             msg = "{} reached the conclusion but didn't produce a EC file in {}".format(self, self.workdir)
             logger.critical(msg)
             raise PostProcessError(msg)
-        ec = ElasticComplianceTensor.from_ec_nc_file(ec_path)
+        ec = ElasticComplianceTensor.from_ec_nc_file(ec_path, tensor_type=tensor_type)
         return ec
 
     def get_ddb_list(self, previous_fws, task_type):
@@ -1712,7 +1740,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
             start_task_index = 1
             if self.with_autoparal:
                 autoparal_dir = os.path.join(os.path.abspath('.'), "autoparal_{}_{}".format(task_class.__name__, str(i)))
-                optconf, qadapter_spec = self.run_autoparal(inp, autoparal_dir, ftm)
+                optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(inp, autoparal_dir, ftm)
                 new_spec['_queueadapter'] = qadapter_spec
                 new_spec['mpi_ncpus'] = optconf['mpi_ncpus']
                 start_task_index = 'autoparal'
@@ -1731,7 +1759,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         if not previous_input:
             raise InitializationError('No input file available from task of type {}'.format(self.previous_task_type))
 
-        previous_input = AbinitInput.from_dict(previous_input)
+        #previous_input = AbinitInput.from_dict(previous_input)
 
         if self.with_autoparal is None:
             self.with_autoparal = ftm.fw_policy.autoparal
@@ -1749,7 +1777,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         ph_inputs = self.phonon_factory.build_input(previous_input)
 
         initialization_info = fw_spec.get('initialization_info', {})
-        initialization_info['input_factory'] = self.phonon_factory.as_dict()
+        initialization_info['input_factory'] = self.phonon_factory
         new_spec = dict(previous_fws=fw_spec['previous_fws'], initialization_info=initialization_info)
 
         ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
@@ -1914,7 +1942,7 @@ class PostProcessError(AbiFWError):
 ##############################
 
 
-class RestartInfo(PMGSONable):
+class RestartInfo(MSONable):
     """
     Object that contains the information about the restart of a task.
     """
@@ -1938,86 +1966,3 @@ class RestartInfo(PMGSONable):
     @property
     def prev_indir(self):
         return Directory(os.path.join(self.previous_dir, INDIR_NAME))
-
-
-class FWTaskManager(object):
-    """
-    Object containing the configuration parameters and policies to run abipy.
-    The policies needed for the abinit FW will always be available through default values. These can be overridden
-    also setting the parameters in the spec.
-    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal.
-    The rationale behind this choice, instead of subclassing, is to not force the user to fill the qadapter part
-    of the task manager, which is needed only for the autoparal, but is required in the TaskManager initialization.
-    Wherever the TaskManager is needed just pass the ftm.task_manager
-    """
-
-    YAML_FILE = "fw_manager.yaml"
-    USER_CONFIG_DIR = TaskManager.USER_CONFIG_DIR # keep the same as the standard TaskManager
-
-    fw_policy_defaults = dict(rerun_same_dir=False,
-                              max_restarts=10,
-                              autoparal=False,
-                              abinit_cmd='abinit',
-                              mrgddb_cmd='mrgddb',
-                              anaddb_cmd='anaddb',
-                              mpirun_cmd='mpirun',
-                              copy_deps=False,
-                              walltime_command=None,
-                              continue_unconverged_on_rerun=True,
-                              allow_local_restart=False)
-    FWPolicy = namedtuple("FWPolicy", fw_policy_defaults.keys())
-
-    def __init__(self, **kwargs):
-        self._kwargs = copy.deepcopy(kwargs)
-
-        fw_policy = kwargs.pop('fw_policy', {})
-        unknown_keys = set(fw_policy.keys()) - set(self.fw_policy_defaults.keys())
-        if unknown_keys:
-            msg = "Unknown key(s) present in fw_policy: ".format(", ".join(unknown_keys))
-            logger.error(msg)
-            raise RuntimeError(msg)
-        fw_policy = dict(self.fw_policy_defaults, **fw_policy)
-
-        # make a namedtuple for easier access to the attributes
-        self.fw_policy = self.FWPolicy(**fw_policy)
-
-        #TODO consider if raising an exception if it's requested when not available
-        # create the task manager only if possibile
-        if 'qadapters' in kwargs:
-            self.task_manager = TaskManager.from_dict(kwargs)
-        else:
-            self.task_manager = None
-
-    @classmethod
-    def from_user_config(cls, fw_policy={}):
-        """
-        Initialize the manager using the dict in the following order of preference:
-        - the "fw_manager.yaml" file in the folder where the command is executed
-        - a yaml file pointed by the "FW_TASK_MANAGER"
-        - the "fw_manager.yaml" in the ~/.abinit/abipy folder
-        - if no file available, fall back to default values
-        """
-
-        # Try in the current directory then in user configuration directory.
-        paths = [os.path.join(os.getcwd(), cls.YAML_FILE), os.getenv("FW_TASK_MANAGER"),
-                 os.path.join(cls.USER_CONFIG_DIR, cls.YAML_FILE)]
-
-        config = {}
-        for path in paths:
-            if path and os.path.exists(path):
-                config = loadfn(path)
-                logger.info("Reading manager from {}.".format(path))
-                break
-
-        return cls(**config)
-
-    @classmethod
-    def from_file(cls, path):
-        """Read the configuration parameters from the Yaml file filename."""
-        return cls(**(loadfn(path)))
-
-    def has_task_manager(self):
-        return self.task_manager is not None
-
-    def update_fw_policy(self, d):
-        self.fw_policy = self.fw_policy._replace(**d)

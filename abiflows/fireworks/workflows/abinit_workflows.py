@@ -16,7 +16,9 @@ import sys
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask, HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask, MergeDdbTask
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
+from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory, PhononsFromGsFactory, ScfForPhononsFactory
 from abipy.abio.inputs import AbinitInput, AnaddbInput
@@ -25,6 +27,40 @@ from monty.serialization import loadfn
 # logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
+
+
+
+
+# class SRCWorkflowMixin(object):
+#
+#
+#     def SRCFireworks(self, task_class, task_input, spec, initialization_info, wf_task_index_prefix):
+#         spec = dict(spec)
+#         start_task_index = 1
+#         spec['initialization_info'] = initialization_info
+#         spec['_add_launchpad_and_fw_id'] = True
+#         spec['SRCScheme'] = True
+#
+#         # Setup (Autoparal) run
+#         spec = self.set_short_single_core_to_spec(spec)
+#         spec['wf_task_index'] = 'autoparal_' + wf_task_index_prefix + str(start_task_index)
+#         autoparal_task = task_class(task_input, is_autoparal=True)
+#         autoparal_fw = Firework(autoparal_task, spec=spec)
+#         # Actual run of simulation
+#         spec['wf_task_index'] = wf_task_index_prefix + str(start_task_index)
+#         run_task = task_class(task_input, is_autoparal=False)
+#         run_fw = Firework(run_task, spec=spec)
+#         # Check memory firework
+#         spec['wf_task_index'] = 'check_' + wf_task_index_prefix + str(start_task_index)
+#         check_task = CheckMemoryTask()
+#         spec['_allow_fizzled_parents'] = True
+#         check_fw = Firework(check_task, spec=spec)
+#         links_dict = {autoparal_fw: [run_fw],
+#                       run_fw: [check_fw]}
+#         return {'setup_fw': autoparal_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
+#                 'fws': [autoparal_fw, run_fw, check_fw]}
+
+
 
 @six.add_metaclass(abc.ABCMeta)
 class AbstractFWWorkflow(Workflow):
@@ -168,9 +204,10 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         spec['wf_task_index'] = 'ioncell_' + str(start_task_index)
         if target_dilatmx:
-            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx)
+            ioncell_task = RelaxDilatmxFWTask(ioncell_input, is_autoparal=autoparal, target_dilatmx=target_dilatmx,
+                                              deps={ion_task.task_type: '@structure'})
         else:
-            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal)
+            ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal, deps={ion_task.task_type: '@structure'})
 
         self.ioncell_fw = Firework(ioncell_task, spec=spec)
 
@@ -195,7 +232,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
                     ioncell = this_ioncell
                     final_fw_id = fw_id
         if final_fw_id is None:
-            raise RuntimeError('Final strucure not found ...')
+            raise RuntimeError('Final structure not found ...')
         myfw = wf.id_fw[final_fw_id]
         #TODO add a check on the state of the launches
         last_launch = (myfw.archived_launches + myfw.launches)[-1]
@@ -240,6 +277,64 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         return cls(ion_input, ioncell_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info,
                    target_dilatmx=target_dilatmx)
 
+
+class RelaxFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'RelaxFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    def __init__(self, ion_input, ioncell_input, spec={}, initialization_info={}):
+
+        fws = []
+        links_dict = {}
+
+        SRC_ion_fws = SRCFireworks(task_class=RelaxFWTask, task_input=ion_input, spec=spec,
+                                   initialization_info=initialization_info,
+                                   wf_task_index_prefix='ion')
+        fws.extend(SRC_ion_fws['fws'])
+        links_dict.update(SRC_ion_fws['links_dict'])
+
+        SRC_ioncell_fws = SRCFireworks(task_class=RelaxFWTask, task_input=ioncell_input, spec=spec,
+                                       initialization_info=initialization_info,
+                                       wf_task_index_prefix='ioncell',
+                                       deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'})
+        fws.extend(SRC_ioncell_fws['fws'])
+        links_dict.update(SRC_ioncell_fws['links_dict'])
+
+        links_dict.update({SRC_ion_fws['check_fw']: SRC_ioncell_fws['setup_fw']})
+
+        self.wf = Workflow(fireworks=fws,
+                           links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+
+    @classmethod
+    def get_final_structure_and_history(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+        ioncell = -1
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if 'wf_task_index' in fw.spec:
+                if fw.spec['wf_task_index'][:12] == 'run_ioncell_':
+                    try:
+                        this_ioncell =  int(fw.spec['wf_task_index'].split('_')[-1])
+                    except ValueError:
+                        # skip if the index is not an int
+                        continue
+                    if this_ioncell > ioncell:
+                        ioncell = this_ioncell
+                        final_fw_id = fw_id
+        if final_fw_id is None:
+            raise RuntimeError('Final structure not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
+        structure = myfw.tasks[-1].get_final_structure()
+        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+
+        return {'structure': structure.as_dict(), 'history': history}
 
 
 class NscfFWWorkflow(AbstractFWWorkflow):
@@ -313,7 +408,7 @@ class NscfFWWorkflow(AbstractFWWorkflow):
 
 class PhononFWWorkflow(AbstractFWWorkflow):
     workflow_class = 'PhononFWWorkflow'
-    workflow_module = 'abipy.fworks.fw_workflows'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
     def __init__(self, scf_inp, phonon_factory, autoparal=False, spec={}, initialization_info={}):
         start_task_index = 1
@@ -456,6 +551,136 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
         history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
 
         return {'elastic_properties': elastic_tensor.extended_dict(), 'history': history}
+
+    @classmethod
+    def from_factory(cls):
+        raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
+
+
+class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'PiezoElasticFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={}):
+
+        fws = []
+        links_dict = {}
+
+        #1. First SCF run in the irreducible Brillouin Zone
+        SRC_scf_ibz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, spec=spec,
+                                       initialization_info=initialization_info,
+                                       wf_task_index_prefix='scfibz', task_type='scfibz')
+        fws.extend(SRC_scf_ibz_fws['fws'])
+        links_dict.update(SRC_scf_ibz_fws['links_dict'])
+
+        #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
+        #2nd derivative DDB's from the DFPT RF run
+        scf_inp_fbz = scf_inp_ibz.deepcopy()
+        scf_inp_fbz['kptopt'] = 3
+        SRC_scf_fbz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
+                                       initialization_info=initialization_info,
+                                       wf_task_index_prefix='scffbz', task_type='scffbz',
+                                       deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']})
+        fws.extend(SRC_scf_fbz_fws['fws'])
+        links_dict.update(SRC_scf_fbz_fws['links_dict'])
+        #Link with previous SCF
+        links_dict.update({SRC_scf_ibz_fws['check_fw']: SRC_scf_fbz_fws['setup_fw']})
+
+        #3. DDK calculation
+        SRC_ddk_fws = SRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
+                                       initialization_info=initialization_info,
+                                       wf_task_index_prefix='ddk',
+                                       deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'})
+        fws.extend(SRC_ddk_fws['fws'])
+        links_dict.update(SRC_ddk_fws['links_dict'])
+        #Link with the IBZ SCF run
+        links_dict.update({SRC_scf_ibz_fws['check_fw']: SRC_ddk_fws['setup_fw']})
+
+        #4. Response-Function calculation of the elastic constants
+        SRC_rf_fws = SRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
+                                  initialization_info=initialization_info,
+                                  wf_task_index_prefix='rf',
+                                  deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
+                                        SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'})
+        fws.extend(SRC_rf_fws['fws'])
+        links_dict.update(SRC_rf_fws['links_dict'])
+        #Link with the IBZ SCF run and the DDK run
+        links_dict.update({SRC_scf_ibz_fws['check_fw']: SRC_rf_fws['setup_fw'],
+                           SRC_ddk_fws['check_fw']: SRC_rf_fws['setup_fw']})
+
+        #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
+        # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
+        # stress-corrected elastic constants)
+        mrgddb_task = MergeDdbTask(ddb_source_task_types=[SRC_rf_fws['run_fw'].tasks[0].task_type,
+                                                          SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
+                                   delete_source_ddbs=False, num_ddbs=2)
+        mrgddb_spec = set_short_single_core_to_spec(spec)
+        mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec)
+        fws.append(mrgddb_fw)
+        links_dict.update({SRC_rf_fws['check_fw']: mrgddb_fw,
+                           SRC_scf_fbz_fws['check_fw']: mrgddb_fw})
+
+        #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
+        anaddb_tag = 'anaddb-piezo-elast'
+        spec = set_short_single_core_to_spec(spec)
+        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(scf_inp_ibz.structure, stress_correction=False),
+                                 deps={SRC_rf_fws['check_fw'].tasks[0].task_type: ['DDB']},
+                                 task_type=anaddb_tag)
+        anaddb_fw = Firework([anaddb_task],
+                             spec=spec,
+                             name=anaddb_tag)
+        fws.append(anaddb_fw)
+        links_dict.update({SRC_rf_fws['check_fw']: anaddb_fw})
+
+        #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
+        anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
+        spec = set_short_single_core_to_spec(spec)
+        anaddb_stress_task = AnaDdbTask(AnaddbInput.piezo_elastic(scf_inp_ibz.structure, stress_correction=True),
+                                        deps={mrgddb_task.task_type: ['DDB']},
+                                        task_type=anaddb_tag)
+        anaddb_stress_fw = Firework([anaddb_stress_task],
+                                    spec=spec,
+                                    name=anaddb_tag)
+        fws.append(anaddb_stress_fw)
+        links_dict.update({mrgddb_fw: anaddb_stress_fw})
+
+
+        self.wf = Workflow(fireworks=fws,
+                           links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+
+    @classmethod
+    def get_all_elastic_tensors(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+
+        anaddb_no_stress_id = None
+        anaddb_stress_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if fw.name == 'anaddb-piezo-elast':
+                anaddb_no_stress_id = fw_id
+            if fw.name == 'anaddb-piezo-elast-stress-corrected':
+                anaddb_stress_id = fw_id
+        if anaddb_no_stress_id is None or anaddb_stress_id is None:
+            raise RuntimeError('Final anaddb tasks not found ...')
+        myfw_nostress = wf.id_fw[anaddb_no_stress_id]
+        last_launch_nostress = (myfw_nostress.archived_launches + myfw_nostress.launches)[-1]
+        myfw_nostress.tasks[-1].set_workdir(workdir=last_launch_nostress.launch_dir)
+
+        myfw_stress = wf.id_fw[anaddb_stress_id]
+        last_launch_stress = (myfw_stress.archived_launches + myfw_stress.launches)[-1]
+        myfw_stress.tasks[-1].set_workdir(workdir=last_launch_stress.launch_dir)
+
+        ec_nostress_clamped = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='clamped_ion')
+        ec_nostress_relaxed = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion')
+        ec_stress_relaxed = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion_stress_corrected')
+
+        ec_dicts = {'clamped_ion': ec_nostress_clamped.extended_dict(),
+                    'relaxed_ion': ec_nostress_relaxed.extended_dict(),
+                    'relaxed_ion_stress_corrected': ec_stress_relaxed.extended_dict()}
+
+        return {'elastic_properties': ec_dicts}
 
     @classmethod
     def from_factory(cls):

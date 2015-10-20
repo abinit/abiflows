@@ -4,11 +4,18 @@ Utilities for fireworks
 """
 
 from __future__ import print_function, division, unicode_literals
+from collections import namedtuple
+import copy
+from monty.serialization import loadfn
+import os
+from pymatgen.io.abinit import TaskManager
 
 from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import Workflow
 import traceback
-from abiflows.fireworks.tasks.abinit_tasks import FWTaskManager
+import logging
+
+logger = logging.getLogger(__name__)
 
 SHORT_SINGLE_CORE_SPEC = {'_queueadapter': {'ntasks': 1, 'time': '00:10:00'}, 'mpi_ncpus': 1}
 
@@ -97,10 +104,93 @@ def get_short_single_core_spec(fw_manager=None):
     return {}
 
 
+def set_short_single_core_to_spec(spec={}):
+        spec = dict(spec)
+
+        qadapter_spec = get_short_single_core_spec()
+        spec['mpi_ncpus'] = 1
+        spec['_queueadapter'] = qadapter_spec
+        return spec
 
 
+class FWTaskManager(object):
+    """
+    Object containing the configuration parameters and policies to run abipy.
+    The policies needed for the abinit FW will always be available through default values. These can be overridden
+    also setting the parameters in the spec.
+    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal.
+    The rationale behind this choice, instead of subclassing, is to not force the user to fill the qadapter part
+    of the task manager, which is needed only for the autoparal, but is required in the TaskManager initialization.
+    Wherever the TaskManager is needed just pass the ftm.task_manager
+    """
 
+    YAML_FILE = "fw_manager.yaml"
+    USER_CONFIG_DIR = TaskManager.USER_CONFIG_DIR # keep the same as the standard TaskManager
 
+    fw_policy_defaults = dict(rerun_same_dir=False,
+                              max_restarts=10,
+                              autoparal=False,
+                              abinit_cmd='abinit',
+                              mrgddb_cmd='mrgddb',
+                              anaddb_cmd='anaddb',
+                              mpirun_cmd='mpirun',
+                              copy_deps=False,
+                              walltime_command=None,
+                              continue_unconverged_on_rerun=True,
+                              allow_local_restart=False)
+    FWPolicy = namedtuple("FWPolicy", fw_policy_defaults.keys())
 
+    def __init__(self, **kwargs):
+        self._kwargs = copy.deepcopy(kwargs)
 
+        fw_policy = kwargs.pop('fw_policy', {})
+        unknown_keys = set(fw_policy.keys()) - set(self.fw_policy_defaults.keys())
+        if unknown_keys:
+            msg = "Unknown key(s) present in fw_policy: ".format(", ".join(unknown_keys))
+            logger.error(msg)
+            raise RuntimeError(msg)
+        fw_policy = dict(self.fw_policy_defaults, **fw_policy)
 
+        # make a namedtuple for easier access to the attributes
+        self.fw_policy = self.FWPolicy(**fw_policy)
+
+        #TODO consider if raising an exception if it's requested when not available
+        # create the task manager only if possibile
+        if 'qadapters' in kwargs:
+            self.task_manager = TaskManager.from_dict(kwargs)
+        else:
+            self.task_manager = None
+
+    @classmethod
+    def from_user_config(cls, fw_policy={}):
+        """
+        Initialize the manager using the dict in the following order of preference:
+        - the "fw_manager.yaml" file in the folder where the command is executed
+        - a yaml file pointed by the "FW_TASK_MANAGER"
+        - the "fw_manager.yaml" in the ~/.abinit/abipy folder
+        - if no file available, fall back to default values
+        """
+
+        # Try in the current directory then in user configuration directory.
+        paths = [os.path.join(os.getcwd(), cls.YAML_FILE), os.getenv("FW_TASK_MANAGER"),
+                 os.path.join(cls.USER_CONFIG_DIR, cls.YAML_FILE)]
+
+        config = {}
+        for path in paths:
+            if path and os.path.exists(path):
+                config = loadfn(path)
+                logger.info("Reading manager from {}.".format(path))
+                break
+
+        return cls(**config)
+
+    @classmethod
+    def from_file(cls, path):
+        """Read the configuration parameters from the Yaml file filename."""
+        return cls(**(loadfn(path)))
+
+    def has_task_manager(self):
+        return self.task_manager is not None
+
+    def update_fw_policy(self, d):
+        self.fw_policy = self.fw_policy._replace(**d)
