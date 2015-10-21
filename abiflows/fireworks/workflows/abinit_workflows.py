@@ -559,6 +559,8 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
 def links_dict_update(links_dict, links_update):
     for parent_id, child_ids in links_update.items():
+        if isinstance(child_ids, int):
+                child_ids = [child_ids]
         if parent_id in links_dict:
             for child_id in child_ids:
                 if child_id in links_dict[parent_id]:
