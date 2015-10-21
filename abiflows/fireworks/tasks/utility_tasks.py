@@ -54,10 +54,44 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
                                  max_memory_megabytes=max_memory_megabytes)
     spec['_allow_fizzled_parents'] = True
     check_fw = Firework(check_task, spec=spec)
-    links_dict = {setup_fw: [run_fw],
-                  run_fw: [check_fw]}
+    links_dict = {setup_fw.fw_id: [run_fw.fw_id],
+                  run_fw.fw_id: [check_fw.fw_id]}
     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
             'fws': [setup_fw, run_fw, check_fw]}
+
+
+def createSRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix,
+                       handlers=None, validators=None, current_task_index=1,
+                       task_type=None):
+    pass
+    # spec = dict(spec)
+    # spec['initialization_info'] = initialization_info
+    # spec['_add_launchpad_and_fw_id'] = True
+    # spec['SRCScheme'] = True
+    # if not wf_task_index_prefix.isalpha():
+    #     raise ValueError('wf_task_index_prefix should only contain letters')
+    # spec['wf_task_index_prefix'] = wf_task_index_prefix
+    # spec['current_memory_per_proc_mb'] = current_memory_per_proc_mb
+    #
+    # # Setup (Autoparal) run
+    # spec = set_short_single_core_to_spec(spec)
+    # spec['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
+    # setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
+    # setup_fw = Firework(setup_task, spec=spec)
+    # # Actual run of simulation
+    # spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
+    # run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
+    # run_fw = Firework(run_task, spec=spec)
+    # # Check memory firework
+    # spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
+    # check_task = CheckMemoryTask(memory_increase_megabytes=memory_increase_megabytes,
+    #                              max_memory_megabytes=max_memory_megabytes)
+    # spec['_allow_fizzled_parents'] = True
+    # check_fw = Firework(check_task, spec=spec)
+    # links_dict = {setup_fw: [run_fw],
+    #               run_fw: [check_fw]}
+    # return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
+    #         'fws': [setup_fw, run_fw, check_fw]}
 
 
 @explicit_serialize
@@ -330,6 +364,29 @@ class CheckMemoryTask(FireTaskBase):
                 return FWAction(detours=[wf])
         raise ValueError('Could not check for memory problem ...')
 
+
+@explicit_serialize
+class CheckTask(FireTaskBase):
+    task_type = 'check'
+
+    optional_params = ['handlers', 'validators']
+
+    def __init__(self, handlers=None, validators=None):
+        super(CheckTask).__init__(self)
+        self.handlers = handlers
+        self.validators = validators
+
+    @serialize_fw
+    def to_dict(self):
+        return dict(handlers=self.handlers, validators=self.validators)
+
+    @classmethod
+    def from_dict(cls, m_dict):
+        return cls(handlers=m_dict['handlers'], validators=m_dict['validators'])
+
+    def run_task(self, fw_spec):
+        pass
+
 def get_fw_task_manager(fw_spec):
     if 'ftm_file' in fw_spec:
         ftm = FWTaskManager.from_file(fw_spec['ftm_file'])
@@ -337,3 +394,5 @@ def get_fw_task_manager(fw_spec):
         ftm = FWTaskManager.from_user_config()
     ftm.update_fw_policy(fw_spec.get('fw_policy', {}))
     return ftm
+
+
