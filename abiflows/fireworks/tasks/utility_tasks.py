@@ -273,11 +273,12 @@ class CheckMemoryTask(FireTaskBase):
         # next one.
         if not '_fizzled_parents' in fw_spec:
             stored_data = {}
-            update_spec = {'previous_fws': fw_spec['previous_fws']}
+            # update_spec = {'previous_fws': fw_spec['previous_fws']}
+            update_spec = {}
             mod_spec = []
             #TODO : investigate why the following did not work ??? Anyway, do we need it ?
-            # for task_type, task_info in fw_spec['previous_fws'].items():
-            #     mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
+            for task_type, task_info in fw_spec['previous_fws'].items():
+                mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
             return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
         if len(fw_spec['_fizzled_parents']) > 1:
