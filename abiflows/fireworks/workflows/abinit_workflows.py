@@ -638,7 +638,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                                                           SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
                                    delete_source_ddbs=False, num_ddbs=2)
         mrgddb_spec = set_short_single_core_to_spec(spec)
-        mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec)
+        mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
         fws.append(mrgddb_fw)
         links_dict_update(links_dict=links_dict,
                           links_update={SRC_rf_fws['check_fw'].fw_id: mrgddb_fw.fw_id,
