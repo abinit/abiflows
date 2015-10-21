@@ -277,8 +277,10 @@ class CheckMemoryTask(FireTaskBase):
             update_spec = {}
             mod_spec = []
             #TODO : investigate why the following did not work ??? Anyway, do we need it ?
+            from monty.json import MontyEncoder
+            encoder = MontyEncoder()
             for task_type, task_info in fw_spec['previous_fws'].items():
-                mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
+                mod_spec.append({'_push': {'previous_fws->'+task_type: encoder.encode(task_info)}})
             return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
         if len(fw_spec['_fizzled_parents']) > 1:
