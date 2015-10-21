@@ -590,7 +590,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
         #2nd derivative DDB's from the DFPT RF run
         scf_inp_fbz = scf_inp_ibz.deepcopy()
-        scf_inp_fbz['kptopt'] = 3
+        scf_inp_fbz['kptopt'] = 2
         SRC_scf_fbz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
                                        initialization_info=initialization_info,
                                        wf_task_index_prefix='scffbz', task_type='scffbz',
