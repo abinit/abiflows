@@ -1336,6 +1336,8 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
         # previous_fws contains duplicates ... (might be due to _push_all or SRC scheme somewhere)
         mydirs = []
         for t in previous_fws.get(task_type, []):
+            #TODO@DW: I make sure I dont pass twice the same directory here ... but I should check in my workflow why
+            # previous_fws contains duplicates ... (might be due to _push_all or SRC scheme somewhere)
             if t['dir'] in mydirs:
                 continue
             ddb = Directory(os.path.join(t['dir'], OUTDIR_NAME)).has_abiext('DDB')
@@ -1499,10 +1501,19 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
                 msg = "One of the task of type {} (folder: {}) " \
                       "did not produce a DDB file!".format(task_type, t['dir'])
     def resolve_deps_per_task_type(self, previous_tasks, deps_list):
+        #TODO@DW: I make sure I dont pass twice the same directory here ... but I should check in my workflow why
+        # previous_fws contains duplicates ... (might be due to _push_all or SRC scheme somewhere)
+        ddb_dirs = []
         for previous_task in previous_tasks:
             for d in deps_list:
                 source_dir = previous_task['dir']
                 if d == "DDB":
+                    #TODO@DW: I make sure I dont pass twice the same directory here ... but I should check in my
+                    # workflow why previous_fws contains duplicates ... (might be due to _push_all or SRC scheme
+                    # somewhere)
+                    if source_dir in ddb_dirs:
+                        continue
+                    ddb_dirs.append(source_dir)
                     self.ddb_filepath = self.link_ext(d, source_dir)
                 elif d == "GKK":
                     self.gkk_filepath = self.link_ext(d, source_dir)
