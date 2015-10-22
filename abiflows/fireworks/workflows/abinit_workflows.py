@@ -695,7 +695,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
         ec_nostress_clamped = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='clamped_ion')
         ec_nostress_relaxed = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion')
-        ec_stress_relaxed = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion_stress_corrected')
+        ec_stress_relaxed = myfw_stress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion_stress_corrected')
 
         ec_dicts = {'clamped_ion': ec_nostress_clamped.extended_dict(),
                     'relaxed_ion': ec_nostress_relaxed.extended_dict(),
