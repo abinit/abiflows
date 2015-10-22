@@ -1307,17 +1307,13 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
     #TODO: make it possible to use "any" task and in particular, this MergeDdbTask for the SRC
     # scheme (to be rationalized)
-    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None, consistency_check=True):
+    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None):
         """
         ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.
         The default is [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
         delete_ddbs: delete the ddb files used after the merge
         num_ddbs: number of ddbs to be merged. If set will be used to check that the correct number of ddbs have been
          passed to the task. Tha task will fizzle if the numbers do not match
-        consistency_check: whether consistency checks are performed by the mrgddb utility (structure, occ, ...). If
-         set to False, string "NO_DDB_CHECK" is added to the description of the output DDB file. The mrgddb utility
-         then skips the consistency checks. In case no consistency check is required, be sure that you know what you
-         are doing!
         """
 
         if ddb_source_task_types is None:
@@ -1328,7 +1324,6 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
         self.ddb_source_task_types = ddb_source_task_types
         self.delete_source_ddbs = delete_source_ddbs
         self.num_ddbs = num_ddbs
-        self.consistency_check = consistency_check
 
     def get_ddb_list(self, previous_fws, task_type):
         ddb_files = []
@@ -1396,10 +1391,7 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
             # keep the output in the outdata dir for consistency
             out_ddb = os.path.join(self.workdir, OUTDIR_NAME, "out_DDB")
-            if self.consistency_check:
-                desc = "DDB file merged by %s on %s" % (self.__class__.__name__, time.asctime())
-            else:
-                desc = "DDB file merged by %s on %s (NO_DDB_CHECK)" % (self.__class__.__name__, time.asctime())
+            desc = "DDB file merged by %s on %s" % (self.__class__.__name__, time.asctime())
 
             out_ddb = mrgddb.merge(self.workdir, ddb_files, out_ddb=out_ddb, description=desc,
                                    delete_source_ddbs=self.delete_source_ddbs)
