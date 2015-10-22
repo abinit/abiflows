@@ -630,7 +630,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         # stress-corrected elastic constants)
         mrgddb_task = MergeDdbTask(ddb_source_task_types=[SRC_rf_fws['run_fw'].tasks[0].task_type,
                                                           SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
-                                   delete_source_ddbs=False, num_ddbs=2)
+                                   delete_source_ddbs=False, num_ddbs=2,
+                                   consistency_check=False)
         mrgddb_spec = set_short_single_core_to_spec(spec)
         mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
         fws.append(mrgddb_fw)
@@ -642,7 +643,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         anaddb_tag = 'anaddb-piezo-elast'
         spec = set_short_single_core_to_spec(spec)
         anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(scf_inp_ibz.structure, stress_correction=False),
-                                 deps={SRC_rf_fws['check_fw'].tasks[0].task_type: ['DDB']},
+                                 deps={SRC_rf_fws['run_fw'].tasks[0].task_type: ['DDB']},
                                  task_type=anaddb_tag)
         anaddb_fw = Firework([anaddb_task],
                              spec=spec,
