@@ -358,7 +358,8 @@ class CheckMemoryTask(FireTaskBase):
                                        current_task_index=new_index,
                                        current_memory_per_proc_mb=new_mem,
                                        memory_increase_megabytes=self.memory_increase_megabytes,
-                                       max_memory_megabytes=self.max_memory_megabytes)
+                                       max_memory_megabytes=self.max_memory_megabytes,
+                                       task_type=mytask.task_type)
                 wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
                 return FWAction(detours=[wf])
         raise ValueError('Could not check for memory problem ...')
