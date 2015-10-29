@@ -14,6 +14,7 @@ from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import Workflow
 import traceback
 import logging
+from abiflows.fireworks.utils.time_utils import TimeReport
 
 logger = logging.getLogger(__name__)
 
@@ -194,3 +195,63 @@ class FWTaskManager(object):
 
     def update_fw_policy(self, d):
         self.fw_policy = self.fw_policy._replace(**d)
+
+
+def get_time_report_for_wf(wf):
+
+        total_run_time = 0
+        total_cpu_time = 0
+        contributed_cpu_time = 0
+        total_run_time_per_tag = {}
+        total_cpu_time_per_tag = {}
+        contributed_cpu_time_per_tag = {}
+        worker = None
+
+        for fw in wf.fws:
+            # skip not completed fws
+            if fw.state != 'COMPLETED':
+                continue
+
+            launches = fw.archived_launches + fw.launches
+            completed_launch = None
+
+            #take the last completed launch
+            for l in launches[-1::-1]:
+                if l.state == 'COMPLETED':
+                    completed_launch = l
+                    break
+
+            # assume all fw have runned on the same worker
+            if worker is None:
+                worker = completed_launch.fworker.name
+
+            run_time = completed_launch.runtime_secs
+            total_run_time += run_time
+
+            if 'mpi_ncpus' in fw.spec:
+                ncpus = fw.spec['mpi_ncpus']
+            elif 'ntasks' in fw.spec:
+                ncpus = fw.spec['ntasks']
+            else:
+                ncpus = None
+
+            if ncpus:
+                cpu_time = run_time*ncpus
+                total_cpu_time += cpu_time
+                contributed_cpu_time += 1
+            else:
+                cpu_time = None
+
+            wf_task_index = fw.spec.get('wf_task_index', 'Unclassified')
+
+            task_tag = wf_task_index.rsplit('_', 1)[0]
+            total_run_time_per_tag[task_tag] = total_run_time_per_tag.get(task_tag, 0) + run_time
+            if cpu_time is not None:
+                total_cpu_time_per_tag[task_tag] = total_cpu_time_per_tag.get(task_tag, 0) + cpu_time
+                contributed_cpu_time_per_tag[task_tag] = contributed_cpu_time_per_tag.get(task_tag, 0) + 1
+
+        tr = TimeReport(total_run_time, len(wf.fws), total_cpu_time=total_cpu_time, contributed_cpu_time=contributed_cpu_time,
+                       total_run_time_per_tag=total_run_time_per_tag, total_cpu_time_per_tag=total_cpu_time_per_tag,
+                       contributed_cpu_time_per_tag=contributed_cpu_time_per_tag, worker=worker)
+
+        return tr

@@ -13,11 +13,13 @@ import shutil
 import json
 import threading
 import glob
-
+import os
+import numpy as np
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
-import os
+from collections import namedtuple, defaultdict
+from abiflows.fireworks.utils.task_history import TaskHistory
 from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
@@ -1743,40 +1745,55 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
 @explicit_serialize
 class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
-    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None):
+    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
         self.phonon_factory = phonon_factory
         self.previous_task_type = previous_task_type
         self.handlers = handlers
         self.with_autoparal=with_autoparal
+        self.ddb_file = ddb_file
 
-    def get_fws(self, multi_inp, task_class, deps, new_spec, ftm):
+    def get_fws(self, multi_inp, task_class, deps, new_spec, ftm, nscf_fws=None):
         new_spec = dict(new_spec)
         formula = multi_inp[0].structure.composition.reduced_formula
         fws = []
+        fw_deps = defaultdict(list)
         for i, inp in enumerate(multi_inp):
             start_task_index = 1
             if self.with_autoparal:
                 autoparal_dir = os.path.join(os.path.abspath('.'), "autoparal_{}_{}".format(task_class.__name__, str(i)))
-                optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(inp, autoparal_dir, ftm)
+                optconf, qadapter_spec = self.run_autoparal(inp, autoparal_dir, ftm)
                 new_spec['_queueadapter'] = qadapter_spec
                 new_spec['mpi_ncpus'] = optconf['mpi_ncpus']
-                start_task_index = 'autoparal'
+
+            deps = dict(deps)
+            parent_fw = None
+            if nscf_fws:
+                qpt = inp['qpt']
+                for nscf_fw in nscf_fws:
+                    if np.allclose(nscf_fw.tasks[0].abiinput['qpt'], qpt):
+                        parent_fw = nscf_fw
+                        deps[nscf_fw.tasks[0].task_type] = "WFQ"
+                        break
+
 
             task = task_class(inp, handlers=self.handlers, deps=deps, is_autoparal=False)
             # this index is for the different task, each performing a different perturbation
             indexed_task_type = task_class.task_type + '_' + str(i)
             # this index is to index the restarts of the single task
-            new_spec['wf_task_index'] = indexed_task_type + str(start_task_index)
-            fws.append(Firework(task, spec=new_spec, name=(formula + '_' + indexed_task_type)[:15]))
+            new_spec['wf_task_index'] = indexed_task_type + '_' + str(start_task_index)
+            fw = Firework(task, spec=new_spec, name=(formula + '_' + indexed_task_type)[:15])
+            fws.append(fw)
+            if parent_fw is not None:
+                fw_deps[parent_fw].append(fw)
 
-        return fws
+        return fws, fw_deps
 
     def run_task(self, fw_spec):
         previous_input = fw_spec.get('previous_fws', {}).get(self.previous_task_type, [{}])[0].get('input', None)
         if not previous_input:
             raise InitializationError('No input file available from task of type {}'.format(self.previous_task_type))
 
-        #previous_input = AbinitInput.from_dict(previous_input)
+        previous_input = AbinitInput.from_dict(previous_input)
 
         if self.with_autoparal is None:
             self.with_autoparal = ftm.fw_policy.autoparal
@@ -1794,7 +1811,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         ph_inputs = self.phonon_factory.build_input(previous_input)
 
         initialization_info = fw_spec.get('initialization_info', {})
-        initialization_info['input_factory'] = self.phonon_factory
+        initialization_info['input_factory'] = self.phonon_factory.as_dict()
         new_spec = dict(previous_fws=fw_spec['previous_fws'], initialization_info=initialization_info)
 
         ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
@@ -1802,23 +1819,30 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         dde_inputs = ph_inputs.filter_by_tags(DDE)
         bec_inputs = ph_inputs.filter_by_tags(BEC)
 
+        nscf_inputs = ph_inputs.filter_by_tags(NSCF)
+
+        nscf_fws = []
+        if nscf_inputs is not None:
+            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfFWTask, {}, new_spec, ftm)
+
         ph_fws = []
         if ph_q_pert_inputs:
-            ph_fws = self.get_fws(ph_q_pert_inputs, PhononTask, {self.previous_task_type: "WFK"}, new_spec, ftm)
+            ph_fws, ph_fw_deps = self.get_fws(ph_q_pert_inputs, PhononTask, {self.previous_task_type: "WFK"}, new_spec,
+                                              ftm, nscf_fws)
 
         ddk_fws = []
         if ddk_inputs:
-            ddk_fws = self.get_fws(ddk_inputs, DdkTask, {self.previous_task_type: "WFK"}, new_spec, ftm)
+            ddk_fws, ddk_fw_deps = self.get_fws(ddk_inputs, DdkTask, {self.previous_task_type: "WFK"}, new_spec, ftm)
 
         dde_fws = []
         if dde_inputs:
-            dde_fws = self.get_fws(dde_inputs, DdeTask,
-                                   {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
+            dde_fws, dde_fw_deps = self.get_fws(dde_inputs, DdeTask,
+                                                {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
 
         bec_fws = []
         if bec_inputs:
-            bec_fws = self.get_fws(bec_inputs, BecTask,
-                                   {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
+            bec_fws, bec_fw_deps = self.get_fws(bec_inputs, BecTask,
+                                                {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
 
 
         mrgddb_spec = dict(new_spec)
@@ -1832,7 +1856,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         #TODO improve the handling of the priorities
         mrgddb_spec['_priority'] = 10
         num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
-        mrgddb_fw = Firework(MergeDdbTask(num_ddbs=num_ddbs_to_be_merged), spec=mrgddb_spec,
+        mrgddb_fw = Firework(MergeDdbTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
                              name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
 
         fws_deps = {}
@@ -1849,12 +1873,15 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         for ddb_fw in ddb_fws:
             fws_deps[ddb_fw] = mrgddb_fw
 
-        ph_wf = Workflow(ddb_fws+ddk_fws+[mrgddb_fw], fws_deps)
+        total_list_fws = ddb_fws+ddk_fws+[mrgddb_fw] + nscf_fws
+
+        fws_deps.update(ph_fw_deps)
+
+        ph_wf = Workflow(total_list_fws, fws_deps)
 
         stored_data = dict(finalized=True)
 
         return FWAction(stored_data=stored_data, detours=ph_wf)
-
 
 ##############################
 # Exceptions
