@@ -444,7 +444,7 @@ class PhononFWWorkflow(AbstractFWWorkflow):
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      shift_mode="Symmetric", ph_ngqpt=None, with_ddk=True, with_dde=True, with_bec=False,
                      scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None, extra_abivars={}, decorators=[],
-                     autoparal=False, spec={}, initialization_info={}, ddb_file=None):
+                     autoparal=False, spec={}, initialization_info={}):
 
         extra_abivars_scf = dict(extra_abivars)
         extra_abivars_scf['tolwfr'] = scf_tol if scf_tol else 1.e-22
@@ -453,11 +453,9 @@ class PhononFWWorkflow(AbstractFWWorkflow):
                                         charge=charge, scf_algorithm=scf_algorithm, shift_mode=shift_mode,
                                         extra_abivars=extra_abivars_scf, decorators=decorators)
 
-        if ddb_file is not None:
-            ddb_file = os.path.abspath(ddb_file)
         phonon_fact = PhononsFromGsFactory(ph_ngqpt=ph_ngqpt, with_ddk=with_ddk, with_dde=with_dde, with_bec=with_bec,
                                            ph_tol=ph_tol, ddk_tol=ddk_tol, dde_tol=dde_tol, extra_abivars=extra_abivars,
-                                           decorators=decorators, ddb_file=ddb_file)
+                                           decorators=decorators)
 
         return cls(scf_fact, phonon_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
 
