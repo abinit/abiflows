@@ -79,10 +79,10 @@ class AbstractFWWorkflow(Workflow):
         append_fw_to_wf(fw, self.wf)
 
     @staticmethod
-    def set_short_single_core_to_spec(spec={}):
+    def set_short_single_core_to_spec(spec={}, master_mem_overhead=0):
         spec = dict(spec)
 
-        qadapter_spec = get_short_single_core_spec()
+        qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead)
         spec['mpi_ncpus'] = 1
         spec['_queueadapter'] = qadapter_spec
         return spec
