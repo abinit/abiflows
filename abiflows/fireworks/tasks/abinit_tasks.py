@@ -597,7 +597,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             SRC_fws = SRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
                                    initialization_info=fw_spec['initialization_info'],
                                    wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
-                                   current_task_index=new_index)
+                                   current_task_index=new_index, timelimit_run=fw_spec['run_timelimit'])
             wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
             return FWAction(detours=[wf])
 
@@ -821,6 +821,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             update_spec = None
             if 'previous_fws' in fw_spec:
                 update_spec ={'previous_fws': fw_spec['previous_fws']}
+            if 'run_timelimit' in fw_spec:
+                qtk_qadapter.set_timelimit(fw_spec['run_timelimit'])
             return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
                                                'mpi_ncpus': optconf['mpi_ncpus'],
                                                'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},

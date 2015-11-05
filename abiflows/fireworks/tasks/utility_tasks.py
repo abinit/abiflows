@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # within the SRC scheme (to be rationalized)
 def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1,
                  current_memory_per_proc_mb=None, deps=None, memory_increase_megabytes=1000, max_memory_megabytes=7600,
-                 task_type=None):
+                 task_type=None, run_timelimit=None):
     spec = dict(spec)
     spec['initialization_info'] = initialization_info
     spec['_add_launchpad_and_fw_id'] = True
@@ -46,6 +46,8 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
     setup_fw = Firework(setup_task, spec=spec, name=spec['wf_task_index'])
     # Actual run of simulation
     spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
+    if run_timelimit is not None:
+        spec['run_timelimit'] = run_timelimit
     run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
     run_fw = Firework(run_task, spec=spec, name=spec['wf_task_index'])
     # Check memory firework
@@ -351,6 +353,10 @@ class CheckMemoryTask(FireTaskBase):
                 spec['qtk_queueadapter'] = qtk_qadapter
                 qadapter_spec = qtk_qadapter.get_subs_dict()
                 spec['_queueadapter'] = qadapter_spec
+                if 'run_timelimit' in spec:
+                    run_timelimit = spec['run_timelimit']
+                else:
+                    run_timelimit = None
 
                 SRC_fws = SRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
                                        initialization_info=initialization_info,
@@ -359,7 +365,7 @@ class CheckMemoryTask(FireTaskBase):
                                        current_memory_per_proc_mb=new_mem,
                                        memory_increase_megabytes=self.memory_increase_megabytes,
                                        max_memory_megabytes=self.max_memory_megabytes,
-                                       task_type=mytask.task_type)
+                                       task_type=mytask.task_type, run_timelimit=run_timelimit)
                 wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
                 return FWAction(detours=[wf])
         raise ValueError('Could not check for memory problem ...')
