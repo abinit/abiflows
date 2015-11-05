@@ -594,7 +594,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         if self.use_SRC_scheme:
             fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
             new_index = fw_task_index + 1
-            SRC_fws = SRCFireworks(task_class=self, task_input=self.abiinput, spec=new_spec,
+            SRC_fws = SRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
                                    initialization_info=fw_spec['initialization_info'],
                                    wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
                                    current_task_index=new_index)
