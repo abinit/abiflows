@@ -38,7 +38,7 @@ from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, IND
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.utils.task_history import TaskHistory
-from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
+from abiflows.fireworks.tasks.utility_tasks import createSRCFireworks
 
 logger = logging.getLogger(__name__)
 
@@ -592,14 +592,30 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             local_restart = True
 
         if self.use_SRC_scheme:
+            #TODO: The way we get the CheckTask's handlers and validators is very ugly here ...
+            #      If we go for SRC, this will obviously be changed as any restart would
+            #      be performed in the check task ...
+            wf = self.launchpad.get_wf_by_fw_id_lzyfw(self.fw_id)
+            run_children_ids = wf.links[self.fw_id]
+            if len(run_children_ids) != 1:
+                raise ValueError('Run Firework should have exactly one child in SRC scheme ...')
+            check_fw = self.launchpad.get_fw_by_id(run_children_ids[0])
+            check_task = check_fw.tasks[0]
+            # SRC_fws = SRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
+            #                        initialization_info=fw_spec['initialization_info'],
+            #                        wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
+            #                        current_task_index=new_index, timelimit_run=fw_spec['run_timelimit'])
+            # createSRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1, handlers=None, validators=None, deps=None, task_type=None)
             fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
             new_index = fw_task_index + 1
-            SRC_fws = SRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
-                                   initialization_info=fw_spec['initialization_info'],
-                                   wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
-                                   current_task_index=new_index, timelimit_run=fw_spec['run_timelimit'])
+            SRC_fws = createSRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
+                                         initialization_info=fw_spec['initialization_info'],
+                                         wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
+                                         current_task_index=new_index,
+                                         handlers=check_task.handlers, validators=check_task.validators,
+                                         deps=self.deps, task_type=self.task_type)
             wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
-            return FWAction(detours=[wf])
+            return FWAction(detours=[wf], defuse_children=True)
 
         # run here the autorun, otherwise it would need a separated FW
         if self.ftm.fw_policy.autoparal:
@@ -771,7 +787,9 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
     def run_task(self, fw_spec):
         try:
             self.setup_task(fw_spec)
-            if self.is_autoparal:
+            if self.use_SRC_scheme and self.is_autoparal:
+                self.setupSRC(fw_spec=fw_spec)
+            elif self.is_autoparal:
                 return self.autoparal(fw_spec)
             else:
                 # loop to allow local restart
@@ -809,24 +827,47 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
     def current_task_info(self, fw_spec):
         return dict(dir=self.workdir, input=self.abiinput)
 
+    def setupSRC(self, fw_spec):
+        # Copy the appropriate dependencies in the in dir. needed in some cases
+        self.resolve_deps(fw_spec)
+
+        optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        #TODO: handle the update of the queue adapter more cleanly ...
+        if 'queue_adapter_update' in fw_spec:
+            for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
+                if qa_key == 'timelimit':
+                    qtk_qadapter.set_timelimit(qa_val)
+                elif qa_key == 'mem_per_proc':
+                    qtk_qadapter.set_mem_per_proc(qa_val)
+                elif qa_key == 'master_mem_overhead':
+                    qtk_qadapter.set_master_mem_overhead(qa_val)
+                else:
+                    raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
+        update_spec = None
+        if 'previous_fws' in fw_spec:
+            update_spec ={'previous_fws': fw_spec['previous_fws']}
+        return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
+                                           'mpi_ncpus': optconf['mpi_ncpus'],
+                                           'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
+                        update_spec=update_spec)
+
     def autoparal(self, fw_spec):
         # Copy the appropriate dependencies in the in dir. needed in some cases
         self.resolve_deps(fw_spec)
 
         optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
-        if self.use_SRC_scheme:
-            if 'current_memory_per_proc_mb' in fw_spec and fw_spec['current_memory_per_proc_mb'] is not None:
-                qtk_qadapter.set_mem_per_proc(fw_spec['current_memory_per_proc_mb'])
-            encoder = MontyEncoder()
-            update_spec = None
-            if 'previous_fws' in fw_spec:
-                update_spec ={'previous_fws': fw_spec['previous_fws']}
-            if 'run_timelimit' in fw_spec:
-                qtk_qadapter.set_timelimit(fw_spec['run_timelimit'])
-            return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
-                                               'mpi_ncpus': optconf['mpi_ncpus'],
-                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
-                            update_spec=update_spec)
+        # if self.use_SRC_scheme:
+        #     if 'current_memory_per_proc_mb' in fw_spec and fw_spec['current_memory_per_proc_mb'] is not None:
+        #         qtk_qadapter.set_mem_per_proc(fw_spec['current_memory_per_proc_mb'])
+        #     update_spec = None
+        #     if 'previous_fws' in fw_spec:
+        #         update_spec ={'previous_fws': fw_spec['previous_fws']}
+        #     if 'run_timelimit' in fw_spec:
+        #         qtk_qadapter.set_timelimit(fw_spec['run_timelimit'])
+        #     return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
+        #                                        'mpi_ncpus': optconf['mpi_ncpus'],
+        #                                        'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
+        #                     update_spec=update_spec)
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
 
@@ -1884,6 +1925,44 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         stored_data = dict(finalized=True)
 
         return FWAction(stored_data=stored_data, detours=ph_wf)
+
+
+@explicit_serialize
+class GenerateDDKFlowFWTask(BasicTaskMixin, FireTaskBase):
+    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
+        self.phonon_factory = phonon_factory
+        self.previous_task_type = previous_task_type
+        self.handlers = handlers
+        self.with_autoparal=with_autoparal
+        self.ddb_file = ddb_file
+
+    def run_task(self, fw_spec):
+        previous_input = fw_spec.get('previous_fws', {}).get(self.previous_task_type, [{}])[0].get('input', None)
+        if not previous_input:
+            raise InitializationError('No input file available from task of type {}'.format(self.previous_task_type))
+
+        previous_input = AbinitInput.from_dict(previous_input)
+
+        return FWAction()
+
+
+@explicit_serialize
+class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
+    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
+        self.phonon_factory = phonon_factory
+        self.previous_task_type = previous_task_type
+        self.handlers = handlers
+        self.with_autoparal=with_autoparal
+        self.ddb_file = ddb_file
+
+    def run_task(self, fw_spec):
+        previous_input = fw_spec.get('previous_fws', {}).get(self.previous_task_type, [{}])[0].get('input', None)
+        if not previous_input:
+            raise InitializationError('No input file available from task of type {}'.format(self.previous_task_type))
+
+        previous_input = AbinitInput.from_dict(previous_input)
+
+        return FWAction()
 
 ##############################
 # Exceptions

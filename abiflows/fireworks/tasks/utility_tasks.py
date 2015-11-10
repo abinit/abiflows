@@ -5,6 +5,7 @@ Utility tasks for Fireworks.
 
 from __future__ import print_function, division, unicode_literals
 
+from custodian.ansible.interpreter import Modder
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
@@ -16,6 +17,7 @@ import logging
 import traceback
 import importlib
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
+from abiflows.fireworks.utils.custodian import SRCErrorHandler
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
 from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
@@ -27,9 +29,44 @@ logger = logging.getLogger(__name__)
 
 #TODO: make it possible to use "any" task and in particular, MergeDdbTask, AnaDdbTask, ...
 # within the SRC scheme (to be rationalized)
-def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1,
-                 current_memory_per_proc_mb=None, deps=None, memory_increase_megabytes=1000, max_memory_megabytes=7600,
-                 task_type=None, run_timelimit=None):
+# def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1,
+#                  current_memory_per_proc_mb=None, deps=None, memory_increase_megabytes=1000, max_memory_megabytes=7600,
+#                  task_type=None, run_timelimit=None):
+#     spec = dict(spec)
+#     spec['initialization_info'] = initialization_info
+#     spec['_add_launchpad_and_fw_id'] = True
+#     spec['SRCScheme'] = True
+#     if not wf_task_index_prefix.isalpha():
+#         raise ValueError('wf_task_index_prefix should only contain letters')
+#     spec['wf_task_index_prefix'] = wf_task_index_prefix
+#     spec['current_memory_per_proc_mb'] = current_memory_per_proc_mb
+#
+#     # Setup (Autoparal) run
+#     spec = set_short_single_core_to_spec(spec)
+#     spec['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
+#     setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
+#     setup_fw = Firework(setup_task, spec=spec, name=spec['wf_task_index'])
+#     # Actual run of simulation
+#     spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
+#     if run_timelimit is not None:
+#         spec['run_timelimit'] = run_timelimit
+#     run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
+#     run_fw = Firework(run_task, spec=spec, name=spec['wf_task_index'])
+#     # Check memory firework
+#     spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
+#     check_task = CheckMemoryTask(memory_increase_megabytes=memory_increase_megabytes,
+#                                  max_memory_megabytes=max_memory_megabytes)
+#     spec['_allow_fizzled_parents'] = True
+#     check_fw = Firework(check_task, spec=spec, name=spec['wf_task_index'])
+#     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
+#                   run_fw.fw_id: [check_fw.fw_id]}
+#     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
+#             'fws': [setup_fw, run_fw, check_fw]}
+
+
+def createSRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1,
+                       handlers=None, validators=None,
+                       deps=None, task_type=None, queue_adapter_update=None):
     spec = dict(spec)
     spec['initialization_info'] = initialization_info
     spec['_add_launchpad_and_fw_id'] = True
@@ -37,7 +74,9 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
     if not wf_task_index_prefix.isalpha():
         raise ValueError('wf_task_index_prefix should only contain letters')
     spec['wf_task_index_prefix'] = wf_task_index_prefix
-    spec['current_memory_per_proc_mb'] = current_memory_per_proc_mb
+
+    if queue_adapter_update is not None:
+        spec['queue_adapter_update'] = queue_adapter_update
 
     # Setup (Autoparal) run
     spec = set_short_single_core_to_spec(spec)
@@ -46,14 +85,11 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
     setup_fw = Firework(setup_task, spec=spec, name=spec['wf_task_index'])
     # Actual run of simulation
     spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
-    if run_timelimit is not None:
-        spec['run_timelimit'] = run_timelimit
     run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
     run_fw = Firework(run_task, spec=spec, name=spec['wf_task_index'])
     # Check memory firework
     spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
-    check_task = CheckMemoryTask(memory_increase_megabytes=memory_increase_megabytes,
-                                 max_memory_megabytes=max_memory_megabytes)
+    check_task = CheckTask(handlers=handlers, validators=validators)
     spec['_allow_fizzled_parents'] = True
     check_fw = Firework(check_task, spec=spec, name=spec['wf_task_index'])
     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
@@ -62,38 +98,38 @@ def SRCFireworks(task_class, task_input, spec, initialization_info, wf_task_inde
             'fws': [setup_fw, run_fw, check_fw]}
 
 
-def createSRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix,
-                       handlers=None, validators=None, current_task_index=1,
-                       task_type=None):
-    pass
-    # spec = dict(spec)
-    # spec['initialization_info'] = initialization_info
-    # spec['_add_launchpad_and_fw_id'] = True
-    # spec['SRCScheme'] = True
-    # if not wf_task_index_prefix.isalpha():
-    #     raise ValueError('wf_task_index_prefix should only contain letters')
-    # spec['wf_task_index_prefix'] = wf_task_index_prefix
-    # spec['current_memory_per_proc_mb'] = current_memory_per_proc_mb
-    #
-    # # Setup (Autoparal) run
-    # spec = set_short_single_core_to_spec(spec)
-    # spec['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
-    # setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
-    # setup_fw = Firework(setup_task, spec=spec)
-    # # Actual run of simulation
-    # spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
-    # run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
-    # run_fw = Firework(run_task, spec=spec)
-    # # Check memory firework
-    # spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
-    # check_task = CheckMemoryTask(memory_increase_megabytes=memory_increase_megabytes,
-    #                              max_memory_megabytes=max_memory_megabytes)
-    # spec['_allow_fizzled_parents'] = True
-    # check_fw = Firework(check_task, spec=spec)
-    # links_dict = {setup_fw: [run_fw],
-    #               run_fw: [check_fw]}
-    # return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
-    #         'fws': [setup_fw, run_fw, check_fw]}
+# def createSRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix,
+#                        handlers=None, validators=None, current_task_index=1,
+#                        task_type=None):
+#     pass
+#     spec = dict(spec)
+#     spec['initialization_info'] = initialization_info
+#     spec['_add_launchpad_and_fw_id'] = True
+#     spec['SRCScheme'] = True
+#     if not wf_task_index_prefix.isalpha():
+#         raise ValueError('wf_task_index_prefix should only contain letters')
+#     spec['wf_task_index_prefix'] = wf_task_index_prefix
+#     spec['current_memory_per_proc_mb'] = current_memory_per_proc_mb
+#
+#     # Setup (Autoparal) run
+#     spec = set_short_single_core_to_spec(spec)
+#     spec['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
+#     setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
+#     setup_fw = Firework(setup_task, spec=spec)
+#     # Actual run of simulation
+#     spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
+#     run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
+#     run_fw = Firework(run_task, spec=spec)
+#     # Check memory firework
+#     spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
+#     check_task = CheckMemoryTask(memory_increase_megabytes=memory_increase_megabytes,
+#                                  max_memory_megabytes=max_memory_megabytes)
+#     spec['_allow_fizzled_parents'] = True
+#     check_fw = Firework(check_task, spec=spec)
+#     links_dict = {setup_fw: [run_fw],
+#                   run_fw: [check_fw]}
+#     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
+#             'fws': [setup_fw, run_fw, check_fw]}
 
 
 @explicit_serialize
@@ -235,26 +271,170 @@ class DatabaseInsertTask(FireTaskBase):
         return FWAction()
 
 
-@explicit_serialize
-class CheckMemoryTask(FireTaskBase):
-    task_type = 'checkmem'
+# @explicit_serialize
+# class CheckMemoryTask(FireTaskBase):
+#     task_type = 'checkmem'
+#
+#     def __init__(self, memory_increase_megabytes=1000, max_memory_megabytes=7600):
+#         self.memory_increase_megabytes = memory_increase_megabytes
+#         self.max_memory_megabytes = max_memory_megabytes
+#
+#     @serialize_fw
+#     def to_dict(self):
+#         return dict(memory_increase_megabytes=self.memory_increase_megabytes,
+#                     max_memory_megabytes=self.max_memory_megabytes)
+#
+#     @classmethod
+#     def from_dict(cls, m_dict):
+#         return cls(memory_increase_megabytes=m_dict['memory_increase_megabytes'],
+#                    max_memory_megabytes=m_dict['max_memory_megabytes'])
+#
+#     def run_task(self, fw_spec):
+#
+#         # Get the fw_id and launchpad
+#         if '_add_launchpad_and_fw_id' in fw_spec:
+#             lp = self.launchpad
+#             fw_id = self.fw_id
+#         else:
+#             try:
+#                 fw_dict = loadfn('FW.json')
+#             except IOError:
+#                 try:
+#                     fw_dict = loadfn('FW.yaml')
+#                 except IOError:
+#                     raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+#                                        "impossible to determine fw_id")
+#             lp = LaunchPad.auto_load()
+#             fw_id = fw_dict['fw_id']
+#
+#         # Treat the case where there was no memory error => forward "needed" outputs of the previous firework to the
+#         # next one.
+#         if not '_fizzled_parents' in fw_spec:
+#             stored_data = {}
+#             update_spec = {}
+#             mod_spec = []
+#             for task_type, task_info in fw_spec['previous_fws'].items():
+#                 mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+#             return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
+#
+#         if len(fw_spec['_fizzled_parents']) > 1:
+#             raise ValueError('Multiple parents fizzled ... Only one is allowed.')
+#
+#         fizzled_fw_id = fw_spec['_fizzled_parents'][0]['fw_id']
+#         fizzled_fw = lp.get_fw_by_id(fizzled_fw_id)
+#         fizzled_fw_dir = fizzled_fw.launches[-1].launch_dir
+#
+#         # Analyze the stderr and stdout files of the resource manager system.
+#         qerr_info = None
+#         qout_info = None
+#         qerr_file = os.path.join(fizzled_fw_dir, 'queue.qerr')
+#         qout_file = os.path.join(fizzled_fw_dir, 'queue.qout')
+#         runerr_file = fw_spec['runerr_file'] if 'runerr_file' in fw_spec else None
+#         if os.path.exists(qerr_file):
+#             with open(qerr_file, "r") as f:
+#                 qerr_info = f.read()
+#         if os.path.exists(qout_file):
+#             with open(qout_file, "r") as f:
+#                 qout_info = f.read()
+#
+#         if qerr_info or qout_info:
+#             from pymatgen.io.abinit.scheduler_error_parsers import get_parser
+#             qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
+#             qtype = qtk_qadapter.QTYPE
+#             scheduler_parser = get_parser(qtype, err_file=qerr_file,
+#                                           out_file=qout_file, run_err_file=runerr_file)
+#
+#             if scheduler_parser is None:
+#                 raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
+#
+#             scheduler_parser.parse()
+#             queue_errors = scheduler_parser.errors
+#
+#             if queue_errors:
+#                 # the queue errors in the task
+#                 logger.debug('scheduler errors found:')
+#                 logger.debug(str(queue_errors))
+#             else:
+#                 if len(qerr_info) > 0:
+#                     logger.debug('found unknown queue error: {}'.format(str(qerr_info)))
+#                     raise ValueError(qerr_info)
+#                     # The job is killed or crashed but we don't know what happened
+#
+#             to_be_corrected = False
+#             for error in queue_errors:
+#                 if isinstance(error, MemoryCancelError):
+#                     logger.debug('found memory error.')
+#                     to_be_corrected = True
+#             if to_be_corrected:
+#                 if len(fizzled_fw.tasks) > 1:
+#                     raise ValueError('More than 1 task found in "memory-fizzled" firework, not yet supported')
+#                 logger.debug('adding SRC detour')
+#                 mytask = fizzled_fw.tasks[0]
+#                 task_class = mytask.__class__
+#                 # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
+#                 #       to abinit
+#                 task_input = AbinitInput.from_dict(fizzled_fw.spec['_tasks'][0]['abiinput'])
+#                 spec = fizzled_fw.spec
+#                 initialization_info = fizzled_fw.spec['initialization_info']
+#                 # Update the task index
+#                 fizzled_fw_task_index = int(fizzled_fw.spec['wf_task_index'].split('_')[-1])
+#                 new_index = fizzled_fw_task_index + 1
+#                 # Update the memory in the queue adapter
+#                 old_mem = qtk_qadapter.mem_per_proc
+#                 new_mem = old_mem + self.memory_increase_megabytes
+#                 if new_mem > self.max_memory_megabytes:
+#                     raise ValueError('New memory {:d} is larger than '
+#                                      'max memory per proc {:d}'.format(new_mem, self.max_memory_megabytes))
+#                 qtk_qadapter.set_mem_per_proc(new_mem)
+#                 spec['qtk_queueadapter'] = qtk_qadapter
+#                 qadapter_spec = qtk_qadapter.get_subs_dict()
+#                 spec['_queueadapter'] = qadapter_spec
+#                 if 'run_timelimit' in spec:
+#                     run_timelimit = spec['run_timelimit']
+#                 else:
+#                     run_timelimit = None
+#
+#                 SRC_fws = SRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
+#                                        initialization_info=initialization_info,
+#                                        wf_task_index_prefix=spec['wf_task_index_prefix'],
+#                                        current_task_index=new_index,
+#                                        current_memory_per_proc_mb=new_mem,
+#                                        memory_increase_megabytes=self.memory_increase_megabytes,
+#                                        max_memory_megabytes=self.max_memory_megabytes,
+#                                        task_type=mytask.task_type, run_timelimit=run_timelimit)
+#                 wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+#                 return FWAction(detours=[wf])
+#         raise ValueError('Could not check for memory problem ...')
 
-    def __init__(self, memory_increase_megabytes=1000, max_memory_megabytes=7600):
-        self.memory_increase_megabytes = memory_increase_megabytes
-        self.max_memory_megabytes = max_memory_megabytes
+
+@explicit_serialize
+class CheckTask(FireTaskBase):
+    task_type = 'check'
+
+    optional_params = ['handlers', 'validators']
+
+    def __init__(self, handlers=None, validators=None, max_restarts=10):
+        super(CheckTask).__init__(self)
+        self.handlers = handlers
+        # Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)
+        h_priorities = [h.handler_priority for h in self.handlers]
+        nhfirst = h_priorities.count(SRCErrorHandler.PRIORITY_FIRST)
+        nhlast = h_priorities.count(SRCErrorHandler.PRIORITY_LAST)
+        if nhfirst > 1 or nhlast > 1:
+            raise ValueError('More than one first or last handler :\n - nfirst : {:d}\n - nlast : {:d}'.format(nhfirst,
+                                                                                                               nhlast))
+        self.validators = validators
+        self.max_restarts = max_restarts
 
     @serialize_fw
     def to_dict(self):
-        return dict(memory_increase_megabytes=self.memory_increase_megabytes,
-                    max_memory_megabytes=self.max_memory_megabytes)
+        return dict(handlers=self.handlers, validators=self.validators, max_restarts=self.max_restarts)
 
     @classmethod
     def from_dict(cls, m_dict):
-        return cls(memory_increase_megabytes=m_dict['memory_increase_megabytes'],
-                   max_memory_megabytes=m_dict['max_memory_megabytes'])
+        return cls(handlers=m_dict['handlers'], validators=m_dict['validators'], max_restarts=m_dict['max_restarts'])
 
     def run_task(self, fw_spec):
-
         # Get the fw_id and launchpad
         if '_add_launchpad_and_fw_id' in fw_spec:
             lp = self.launchpad
@@ -271,9 +451,108 @@ class CheckMemoryTask(FireTaskBase):
             lp = LaunchPad.auto_load()
             fw_id = fw_dict['fw_id']
 
-        # Treat the case where there was no memory error => forward "needed" outputs of the previous firework to the
+        # Treat the case where there was some error that led to a fizzled state
+        if '_fizzled_parents' in fw_spec:
+            # Get the fizzled fw
+            fizzled_fw_id = fw_spec['_fizzled_parents'][0]['fw_id']
+            fizzled_fw = lp.get_fw_by_id(fizzled_fw_id)
+            # Sort handlers by their priority
+            sorted_handlers = sorted([h for h in self.handlers if h.allow_fizzled], key=lambda x: x.handler_priority)
+            # Get the corrections for all the handlers
+            corrections = []
+            for handler in sorted_handlers:
+                # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
+                handler.src_setup(fw_spec=fw_spec, fw_to_check=fizzled_fw)
+                if handler.check():
+                    corrections.append(handler.correct())
+                if handler.skip_remaining_handlers:
+                    break
+
+            # Apply the corrections
+            fw_action = self.apply_corrections(fw_to_correct=fizzled_fw, corrections=corrections)
+            return fw_action
+            # spec = fizzled_fw.spec
+            # modder = Modder()
+            # for correction in corrections:
+            #     actions = correction['actions']
+            #     for action in actions:
+            #         if action['action_type'] == 'modify_object':
+            #             if action['object']['source'] == 'fw_spec':
+            #                 myobject = spec[action['object']['key']]
+            #             else:
+            #                 raise NotImplementedError('Object source "{}" not implemented in '
+            #                                           'CheckTask'.format(action['object']['source']))
+            #             modder.modify_object(myobject, action['action'])
+            #         elif action['action_type'] == 'modify_dict':
+            #             if action['dict']['source'] == 'fw_spec':
+            #                 mydict = spec[action['dict']['key']]
+            #             else:
+            #                 raise NotImplementedError('Dict source "{}" not implemented in '
+            #                                           'CheckTask'.format(action['dict']['source']))
+            #             modder.modify(mydict, action['action'])
+            #         else:
+            #             raise NotImplementedError('Action type "{}" not implemented in '
+            #                                       'CheckTask'.format(action['action_type']))
+            #
+            # # Update the task index
+            # fizzled_fw_task_index = int(fizzled_fw.spec['wf_task_index'].split('_')[-1])
+            # new_index = fizzled_fw_task_index + 1
+            # # Update the Fireworks _queueadapter key
+            # #TODO: in the future, see whether the FW queueadapter might be replaced by the qtk_queueadapter ?
+            # #      ... to be discussed with Anubhav, when the qtk queueadapter is in a qtk toolkit and not anymore
+            # #          in pymatgen/io/abinit
+            # spec['_queueadapter'] = spec['qtk_queueadapter'].get_subs_dict()
+            #
+            # # Get and update the task_input if needed
+            # # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
+            # #       to abinit
+            # mytask = fizzled_fw.tasks[0]
+            # task_class = mytask.__class__
+            # task_input = AbinitInput.from_dict(fizzled_fw.spec['_tasks'][0]['abiinput'])
+            # initialization_info = fizzled_fw.spec['initialization_info']
+            # deps = mytask.deps
+            #
+            # # Create the new Setup/Run/Check fireworks
+            # SRC_fws = createSRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
+            #                              initialization_info=initialization_info,
+            #                              wf_task_index_prefix=spec['wf_task_index_prefix'],
+            #                              current_task_index=new_index,
+            #                              handlers=self.handlers, validators=self.validators,
+            #                              deps=deps,
+            #                              task_type=mytask.task_type)
+            # wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+            # return FWAction(detours=[wf])
+        # Treat the case where there was no fizzled parents => forward "needed" outputs of the previous firework to the
         # next one.
-        if not '_fizzled_parents' in fw_spec:
+        else:
+            # Get the previous fw
+            this_fw = lp.get_fw_by_id(fw_id=fw_id)
+            parents = this_fw.parents
+            if len(parents) != 1:
+                raise RuntimeError('CheckTask Firework should only have one parent Firework ...')
+            run_fw = lp.get_fw_by_id(parents[0].fw_id)
+            # Get the corrections for all the handlers
+            # Sort handlers by their priority
+            sorted_handlers = sorted([h for h in self.handlers if h.allow_completed], key=lambda x: x.handler_priority)
+            # Get the corrections for all the handlers
+            corrections = []
+            for handler in sorted_handlers:
+                # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
+                handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
+                if handler.check():
+                    corrections.append(handler.correct())
+                if handler.skip_remaining_handlers:
+                    break
+
+            # If some corrections are found, apply and return the FWAction
+            if len(corrections) > 0:
+                fw_action = self.apply_corrections(fw_to_correct=run_fw, corrections=corrections)
+                return fw_action
+
+            # Validate the results if no error was found
+            for validator in self.validators:
+                if not validator.check():
+                    raise RuntimeError('Validator invalidate results ...')
             stored_data = {}
             update_spec = {}
             mod_spec = []
@@ -281,117 +560,60 @@ class CheckMemoryTask(FireTaskBase):
                 mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
             return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
-        if len(fw_spec['_fizzled_parents']) > 1:
-            raise ValueError('Multiple parents fizzled ... Only one is allowed.')
-
-        fizzled_fw_id = fw_spec['_fizzled_parents'][0]['fw_id']
-        fizzled_fw = lp.get_fw_by_id(fizzled_fw_id)
-        fizzled_fw_dir = fizzled_fw.launches[-1].launch_dir
-
-        # Analyze the stderr and stdout files of the resource manager system.
-        qerr_info = None
-        qout_info = None
-        qerr_file = os.path.join(fizzled_fw_dir, 'queue.qerr')
-        qout_file = os.path.join(fizzled_fw_dir, 'queue.qout')
-        runerr_file = fw_spec['runerr_file'] if 'runerr_file' in fw_spec else None
-        if os.path.exists(qerr_file):
-            with open(qerr_file, "r") as f:
-                qerr_info = f.read()
-        if os.path.exists(qout_file):
-            with open(qout_file, "r") as f:
-                qout_info = f.read()
-
-        if qerr_info or qout_info:
-            from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-            qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
-            qtype = qtk_qadapter.QTYPE
-            scheduler_parser = get_parser(qtype, err_file=qerr_file,
-                                          out_file=qout_file, run_err_file=runerr_file)
-
-            if scheduler_parser is None:
-                raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
-
-            scheduler_parser.parse()
-            queue_errors = scheduler_parser.errors
-
-            if queue_errors:
-                # the queue errors in the task
-                logger.debug('scheduler errors found:')
-                logger.debug(str(queue_errors))
-            else:
-                if len(qerr_info) > 0:
-                    logger.debug('found unknown queue error: {}'.format(str(qerr_info)))
-                    raise ValueError(qerr_info)
-                    # The job is killed or crashed but we don't know what happened
-
-            to_be_corrected = False
-            for error in queue_errors:
-                if isinstance(error, MemoryCancelError):
-                    logger.debug('found memory error.')
-                    to_be_corrected = True
-            if to_be_corrected:
-                if len(fizzled_fw.tasks) > 1:
-                    raise ValueError('More than 1 task found in "memory-fizzled" firework, not yet supported')
-                logger.debug('adding SRC detour')
-                mytask = fizzled_fw.tasks[0]
-                task_class = mytask.__class__
-                # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
-                #       to abinit
-                task_input = AbinitInput.from_dict(fizzled_fw.spec['_tasks'][0]['abiinput'])
-                spec = fizzled_fw.spec
-                initialization_info = fizzled_fw.spec['initialization_info']
-                # Update the task index
-                fizzled_fw_task_index = int(fizzled_fw.spec['wf_task_index'].split('_')[-1])
-                new_index = fizzled_fw_task_index + 1
-                # Update the memory in the queue adapter
-                old_mem = qtk_qadapter.mem_per_proc
-                new_mem = old_mem + self.memory_increase_megabytes
-                if new_mem > self.max_memory_megabytes:
-                    raise ValueError('New memory {:d} is larger than '
-                                     'max memory per proc {:d}'.format(new_mem, self.max_memory_megabytes))
-                qtk_qadapter.set_mem_per_proc(new_mem)
-                spec['qtk_queueadapter'] = qtk_qadapter
-                qadapter_spec = qtk_qadapter.get_subs_dict()
-                spec['_queueadapter'] = qadapter_spec
-                if 'run_timelimit' in spec:
-                    run_timelimit = spec['run_timelimit']
+    def apply_corrections(self, fw_to_correct, corrections):
+        # Apply the corrections
+        spec = fw_to_correct.spec
+        modder = Modder()
+        for correction in corrections:
+            actions = correction['actions']
+            for action in actions:
+                if action['action_type'] == 'modify_object':
+                    if action['object']['source'] == 'fw_spec':
+                        myobject = spec[action['object']['key']]
+                    else:
+                        raise NotImplementedError('Object source "{}" not implemented in '
+                                                  'CheckTask'.format(action['object']['source']))
+                    modder.modify_object(myobject, action['action'])
+                elif action['action_type'] == 'modify_dict':
+                    if action['dict']['source'] == 'fw_spec':
+                        mydict = spec[action['dict']['key']]
+                    else:
+                        raise NotImplementedError('Dict source "{}" not implemented in '
+                                                  'CheckTask'.format(action['dict']['source']))
+                    modder.modify(mydict, action['action'])
                 else:
-                    run_timelimit = None
+                    raise NotImplementedError('Action type "{}" not implemented in '
+                                              'CheckTask'.format(action['action_type']))
 
-                SRC_fws = SRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
-                                       initialization_info=initialization_info,
-                                       wf_task_index_prefix=spec['wf_task_index_prefix'],
-                                       current_task_index=new_index,
-                                       current_memory_per_proc_mb=new_mem,
-                                       memory_increase_megabytes=self.memory_increase_megabytes,
-                                       max_memory_megabytes=self.max_memory_megabytes,
-                                       task_type=mytask.task_type, run_timelimit=run_timelimit)
-                wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
-                return FWAction(detours=[wf])
-        raise ValueError('Could not check for memory problem ...')
+        # Update the task index
+        fws_task_index = int(fw_to_correct.spec['wf_task_index'].split('_')[-1])
+        new_index = fws_task_index + 1
+        # Update the Fireworks _queueadapter key
+        #TODO: in the future, see whether the FW queueadapter might be replaced by the qtk_queueadapter ?
+        #      ... to be discussed with Anubhav, when the qtk queueadapter is in a qtk toolkit and not anymore
+        #          in pymatgen/io/abinit
+        spec['_queueadapter'] = spec['qtk_queueadapter'].get_subs_dict()
 
+        # Get and update the task_input if needed
+        # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
+        #       to abinit
+        mytask = fw_to_correct.tasks[0]
+        task_class = mytask.__class__
+        task_input = AbinitInput.from_dict(fw_to_correct.spec['_tasks'][0]['abiinput'])
+        initialization_info = fw_to_correct.spec['initialization_info']
+        deps = mytask.deps
 
-@explicit_serialize
-class CheckTask(FireTaskBase):
-    task_type = 'check'
+        # Create the new Setup/Run/Check fireworks
+        SRC_fws = createSRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
+                                     initialization_info=initialization_info,
+                                     wf_task_index_prefix=spec['wf_task_index_prefix'],
+                                     current_task_index=new_index,
+                                     handlers=self.handlers, validators=self.validators,
+                                     deps=deps,
+                                     task_type=mytask.task_type)
+        wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+        return FWAction(detours=[wf], defuse_children=True)
 
-    optional_params = ['handlers', 'validators']
-
-    def __init__(self, handlers=None, validators=None):
-        super(CheckTask).__init__(self)
-        self.handlers = handlers
-        self.validators = validators
-
-    @serialize_fw
-    def to_dict(self):
-        return dict(handlers=self.handlers, validators=self.validators)
-
-    @classmethod
-    def from_dict(cls, m_dict):
-        return cls(handlers=m_dict['handlers'], validators=m_dict['validators'])
-
-    def run_task(self, fw_spec):
-        pass
 
 def get_fw_task_manager(fw_spec):
     if 'ftm_file' in fw_spec:

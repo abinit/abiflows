@@ -16,7 +16,7 @@ import sys
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask, HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask, MergeDdbTask
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
-from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
+from abiflows.fireworks.tasks.utility_tasks import createSRCFireworks
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
@@ -286,22 +286,17 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
 
         fws = []
         links_dict = {}
-        if 'run_timelimit' in spec:
-            run_timelimit = spec['run_timelimit']
-        else:
-            run_timelimit = None
 
-        SRC_ion_fws = SRCFireworks(task_class=RelaxFWTask, task_input=ion_input, spec=spec,
-                                   initialization_info=initialization_info,
-                                   wf_task_index_prefix='ion', run_timelimit=run_timelimit)
+        SRC_ion_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ion_input, spec=spec,
+                                         initialization_info=initialization_info,
+                                         wf_task_index_prefix='ion')
         fws.extend(SRC_ion_fws['fws'])
         links_dict.update(SRC_ion_fws['links_dict'])
 
-        SRC_ioncell_fws = SRCFireworks(task_class=RelaxFWTask, task_input=ioncell_input, spec=spec,
-                                       initialization_info=initialization_info,
-                                       wf_task_index_prefix='ioncell',
-                                       deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'},
-                                       run_timelimit=run_timelimit)
+        SRC_ioncell_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ioncell_input, spec=spec,
+                                             initialization_info=initialization_info,
+                                             wf_task_index_prefix='ioncell',
+                                             deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'})
         fws.extend(SRC_ioncell_fws['fws'])
         links_dict.update(SRC_ioncell_fws['links_dict'])
 
@@ -593,9 +588,9 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             run_timelimit = None
 
         #1. First SCF run in the irreducible Brillouin Zone
-        SRC_scf_ibz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, spec=spec,
-                                       initialization_info=initialization_info,
-                                       wf_task_index_prefix='scfibz', task_type='scfibz', run_timelimit=run_timelimit)
+        SRC_scf_ibz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, spec=spec,
+                                             initialization_info=initialization_info,
+                                             wf_task_index_prefix='scfibz', task_type='scfibz')
         fws.extend(SRC_scf_ibz_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_scf_ibz_fws['links_dict'])
 
@@ -603,11 +598,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         #2nd derivative DDB's from the DFPT RF run
         scf_inp_fbz = scf_inp_ibz.deepcopy()
         scf_inp_fbz['kptopt'] = 2
-        SRC_scf_fbz_fws = SRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
-                                       initialization_info=initialization_info,
-                                       wf_task_index_prefix='scffbz', task_type='scffbz',
-                                       deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']},
-                                       run_timelimit=run_timelimit)
+        SRC_scf_fbz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
+                                             initialization_info=initialization_info,
+                                             wf_task_index_prefix='scffbz', task_type='scffbz',
+                                             deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']})
         fws.extend(SRC_scf_fbz_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_scf_fbz_fws['links_dict'])
         #Link with previous SCF
@@ -615,11 +609,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                           links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_scf_fbz_fws['setup_fw'].fw_id})
 
         #3. DDK calculation
-        SRC_ddk_fws = SRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
-                                   initialization_info=initialization_info,
-                                   wf_task_index_prefix='ddk',
-                                   deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'},
-                                   run_timelimit=run_timelimit)
+        SRC_ddk_fws = createSRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
+                                         initialization_info=initialization_info,
+                                         wf_task_index_prefix='ddk',
+                                         deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'})
         fws.extend(SRC_ddk_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_ddk_fws['links_dict'])
         #Link with the IBZ SCF run
@@ -627,11 +620,11 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                           links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_ddk_fws['setup_fw'].fw_id})
 
         #4. Response-Function calculation of the elastic constants
-        SRC_rf_fws = SRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
-                                  initialization_info=initialization_info,
-                                  wf_task_index_prefix='rf',
-                                  deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
-                                        SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'}, run_timelimit=run_timelimit)
+        SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
+                                        initialization_info=initialization_info,
+                                        wf_task_index_prefix='rf',
+                                        deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
+                                              SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'})
         fws.extend(SRC_rf_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
         #Link with the IBZ SCF run and the DDK run
