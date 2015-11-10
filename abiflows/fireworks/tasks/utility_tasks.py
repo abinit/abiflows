@@ -75,6 +75,7 @@ def createSRCFireworks(task_class, task_input, spec, initialization_info, wf_tas
         raise ValueError('wf_task_index_prefix should only contain letters')
     spec['wf_task_index_prefix'] = wf_task_index_prefix
 
+    spec.pop('queue_adapter_update', None)
     if queue_adapter_update is not None:
         spec['queue_adapter_update'] = queue_adapter_update
 

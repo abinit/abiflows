@@ -287,16 +287,22 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
         fws = []
         links_dict = {}
 
+        if 'queue_adapter_update' in initialization_info:
+            queue_adapter_update = initialization_info['queue_adapter_update']
+        else:
+            queue_adapter_update = None
+
         SRC_ion_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ion_input, spec=spec,
                                          initialization_info=initialization_info,
-                                         wf_task_index_prefix='ion')
+                                         wf_task_index_prefix='ion', queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_ion_fws['fws'])
         links_dict.update(SRC_ion_fws['links_dict'])
 
         SRC_ioncell_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ioncell_input, spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='ioncell',
-                                             deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'})
+                                             deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'},
+                                             queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_ioncell_fws['fws'])
         links_dict.update(SRC_ioncell_fws['links_dict'])
 
@@ -580,15 +586,16 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         fws = []
         links_dict = {}
 
-        if 'run_timelimit' in spec:
-            run_timelimit = spec['run_timelimit']
+        if 'queue_adapter_update' in initialization_info:
+            queue_adapter_update = initialization_info['queue_adapter_update']
         else:
-            run_timelimit = None
+            queue_adapter_update = None
 
         #1. First SCF run in the irreducible Brillouin Zone
         SRC_scf_ibz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, spec=spec,
                                              initialization_info=initialization_info,
-                                             wf_task_index_prefix='scfibz', task_type='scfibz')
+                                             wf_task_index_prefix='scfibz', task_type='scfibz',
+                                             queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_scf_ibz_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_scf_ibz_fws['links_dict'])
 
@@ -599,7 +606,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         SRC_scf_fbz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='scffbz', task_type='scffbz',
-                                             deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']})
+                                             deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']},
+                                             queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_scf_fbz_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_scf_fbz_fws['links_dict'])
         #Link with previous SCF
@@ -610,7 +618,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         SRC_ddk_fws = createSRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
                                          initialization_info=initialization_info,
                                          wf_task_index_prefix='ddk',
-                                         deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'})
+                                         deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'},
+                                         queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_ddk_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_ddk_fws['links_dict'])
         #Link with the IBZ SCF run
@@ -622,7 +631,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                                         initialization_info=initialization_info,
                                         wf_task_index_prefix='rf',
                                         deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
-                                              SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'})
+                                              SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
+                                        queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_rf_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
         #Link with the IBZ SCF run and the DDK run
