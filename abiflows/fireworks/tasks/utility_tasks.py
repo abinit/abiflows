@@ -415,15 +415,17 @@ class CheckTask(FireTaskBase):
     optional_params = ['handlers', 'validators']
 
     def __init__(self, handlers=None, validators=None, max_restarts=10):
-        super(CheckTask).__init__(self)
+        #super(CheckTask).__init__(self)
         self.handlers = handlers
         # Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)
-        h_priorities = [h.handler_priority for h in self.handlers]
-        nhfirst = h_priorities.count(SRCErrorHandler.PRIORITY_FIRST)
-        nhlast = h_priorities.count(SRCErrorHandler.PRIORITY_LAST)
-        if nhfirst > 1 or nhlast > 1:
-            raise ValueError('More than one first or last handler :\n - nfirst : {:d}\n - nlast : {:d}'.format(nhfirst,
-                                                                                                               nhlast))
+        if self.handlers is not None:
+            h_priorities = [h.handler_priority for h in self.handlers]
+            nhfirst = h_priorities.count(SRCErrorHandler.PRIORITY_FIRST)
+            nhlast = h_priorities.count(SRCErrorHandler.PRIORITY_LAST)
+            if nhfirst > 1 or nhlast > 1:
+                raise ValueError('More than one first or last handler :\n'
+                                 ' - nfirst : {:d}\n - nlast : {:d}'.format(nhfirst,
+                                                                            nhlast))
         self.validators = validators
         self.max_restarts = max_restarts
 
@@ -466,8 +468,8 @@ class CheckTask(FireTaskBase):
                 handler.src_setup(fw_spec=fw_spec, fw_to_check=fizzled_fw)
                 if handler.check():
                     corrections.append(handler.correct())
-                if handler.skip_remaining_handlers:
-                    break
+                    if handler.skip_remaining_handlers:
+                        break
 
             # Apply the corrections
             fw_action = self.apply_corrections(fw_to_correct=fizzled_fw, corrections=corrections)

@@ -64,6 +64,10 @@ class MemoryHandler(SRCErrorHandler):
     def handler_priority(self):
         return self.PRIORITY_VERY_LOW
 
+    @property
+    def skip_remaining_handlers(self):
+        return True
+
     def setup(self):
         if 'SRCScheme' in self.fw_to_check.spec and self.fw_to_check.spec['SRCScheme']:
             self.src_fw = True
