@@ -38,7 +38,7 @@ class MemoryHandler(SRCErrorHandler):
             master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process
                                              in megabytes.
         """
-        super(MemoryHandler).__init__()
+        super(MemoryHandler, self).__init__()
         self.job_rundir = job_rundir
         self.qout_file = qout_file
         self.qerr_file = qerr_file
