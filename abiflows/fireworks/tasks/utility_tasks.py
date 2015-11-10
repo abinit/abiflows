@@ -5,7 +5,7 @@ Utility tasks for Fireworks.
 
 from __future__ import print_function, division, unicode_literals
 
-from custodian_utils.ansible.interpreter import Modder
+from custodian.ansible.interpreter import Modder
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
