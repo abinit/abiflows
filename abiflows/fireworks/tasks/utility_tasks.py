@@ -272,140 +272,140 @@ class DatabaseInsertTask(FireTaskBase):
         return FWAction()
 
 
-# @explicit_serialize
-# class CheckMemoryTask(FireTaskBase):
-#     task_type = 'checkmem'
-#
-#     def __init__(self, memory_increase_megabytes=1000, max_memory_megabytes=7600):
-#         self.memory_increase_megabytes = memory_increase_megabytes
-#         self.max_memory_megabytes = max_memory_megabytes
-#
-#     @serialize_fw
-#     def to_dict(self):
-#         return dict(memory_increase_megabytes=self.memory_increase_megabytes,
-#                     max_memory_megabytes=self.max_memory_megabytes)
-#
-#     @classmethod
-#     def from_dict(cls, m_dict):
-#         return cls(memory_increase_megabytes=m_dict['memory_increase_megabytes'],
-#                    max_memory_megabytes=m_dict['max_memory_megabytes'])
-#
-#     def run_task(self, fw_spec):
-#
-#         # Get the fw_id and launchpad
-#         if '_add_launchpad_and_fw_id' in fw_spec:
-#             lp = self.launchpad
-#             fw_id = self.fw_id
-#         else:
-#             try:
-#                 fw_dict = loadfn('FW.json')
-#             except IOError:
-#                 try:
-#                     fw_dict = loadfn('FW.yaml')
-#                 except IOError:
-#                     raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
-#                                        "impossible to determine fw_id")
-#             lp = LaunchPad.auto_load()
-#             fw_id = fw_dict['fw_id']
-#
-#         # Treat the case where there was no memory error => forward "needed" outputs of the previous firework to the
-#         # next one.
-#         if not '_fizzled_parents' in fw_spec:
-#             stored_data = {}
-#             update_spec = {}
-#             mod_spec = []
-#             for task_type, task_info in fw_spec['previous_fws'].items():
-#                 mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
-#             return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
-#
-#         if len(fw_spec['_fizzled_parents']) > 1:
-#             raise ValueError('Multiple parents fizzled ... Only one is allowed.')
-#
-#         fizzled_fw_id = fw_spec['_fizzled_parents'][0]['fw_id']
-#         fizzled_fw = lp.get_fw_by_id(fizzled_fw_id)
-#         fizzled_fw_dir = fizzled_fw.launches[-1].launch_dir
-#
-#         # Analyze the stderr and stdout files of the resource manager system.
-#         qerr_info = None
-#         qout_info = None
-#         qerr_file = os.path.join(fizzled_fw_dir, 'queue.qerr')
-#         qout_file = os.path.join(fizzled_fw_dir, 'queue.qout')
-#         runerr_file = fw_spec['runerr_file'] if 'runerr_file' in fw_spec else None
-#         if os.path.exists(qerr_file):
-#             with open(qerr_file, "r") as f:
-#                 qerr_info = f.read()
-#         if os.path.exists(qout_file):
-#             with open(qout_file, "r") as f:
-#                 qout_info = f.read()
-#
-#         if qerr_info or qout_info:
-#             from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-#             qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
-#             qtype = qtk_qadapter.QTYPE
-#             scheduler_parser = get_parser(qtype, err_file=qerr_file,
-#                                           out_file=qout_file, run_err_file=runerr_file)
-#
-#             if scheduler_parser is None:
-#                 raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
-#
-#             scheduler_parser.parse()
-#             queue_errors = scheduler_parser.errors
-#
-#             if queue_errors:
-#                 # the queue errors in the task
-#                 logger.debug('scheduler errors found:')
-#                 logger.debug(str(queue_errors))
-#             else:
-#                 if len(qerr_info) > 0:
-#                     logger.debug('found unknown queue error: {}'.format(str(qerr_info)))
-#                     raise ValueError(qerr_info)
-#                     # The job is killed or crashed but we don't know what happened
-#
-#             to_be_corrected = False
-#             for error in queue_errors:
-#                 if isinstance(error, MemoryCancelError):
-#                     logger.debug('found memory error.')
-#                     to_be_corrected = True
-#             if to_be_corrected:
-#                 if len(fizzled_fw.tasks) > 1:
-#                     raise ValueError('More than 1 task found in "memory-fizzled" firework, not yet supported')
-#                 logger.debug('adding SRC detour')
-#                 mytask = fizzled_fw.tasks[0]
-#                 task_class = mytask.__class__
-#                 # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
-#                 #       to abinit
-#                 task_input = AbinitInput.from_dict(fizzled_fw.spec['_tasks'][0]['abiinput'])
-#                 spec = fizzled_fw.spec
-#                 initialization_info = fizzled_fw.spec['initialization_info']
-#                 # Update the task index
-#                 fizzled_fw_task_index = int(fizzled_fw.spec['wf_task_index'].split('_')[-1])
-#                 new_index = fizzled_fw_task_index + 1
-#                 # Update the memory in the queue adapter
-#                 old_mem = qtk_qadapter.mem_per_proc
-#                 new_mem = old_mem + self.memory_increase_megabytes
-#                 if new_mem > self.max_memory_megabytes:
-#                     raise ValueError('New memory {:d} is larger than '
-#                                      'max memory per proc {:d}'.format(new_mem, self.max_memory_megabytes))
-#                 qtk_qadapter.set_mem_per_proc(new_mem)
-#                 spec['qtk_queueadapter'] = qtk_qadapter
-#                 qadapter_spec = qtk_qadapter.get_subs_dict()
-#                 spec['_queueadapter'] = qadapter_spec
-#                 if 'run_timelimit' in spec:
-#                     run_timelimit = spec['run_timelimit']
-#                 else:
-#                     run_timelimit = None
-#
-#                 SRC_fws = SRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
-#                                        initialization_info=initialization_info,
-#                                        wf_task_index_prefix=spec['wf_task_index_prefix'],
-#                                        current_task_index=new_index,
-#                                        current_memory_per_proc_mb=new_mem,
-#                                        memory_increase_megabytes=self.memory_increase_megabytes,
-#                                        max_memory_megabytes=self.max_memory_megabytes,
-#                                        task_type=mytask.task_type, run_timelimit=run_timelimit)
-#                 wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
-#                 return FWAction(detours=[wf])
-#         raise ValueError('Could not check for memory problem ...')
+@explicit_serialize
+class CheckMemoryTask(FireTaskBase):
+    task_type = 'checkmem'
+
+    def __init__(self, memory_increase_megabytes=1000, max_memory_megabytes=7600):
+        self.memory_increase_megabytes = memory_increase_megabytes
+        self.max_memory_megabytes = max_memory_megabytes
+
+    @serialize_fw
+    def to_dict(self):
+        return dict(memory_increase_megabytes=self.memory_increase_megabytes,
+                    max_memory_megabytes=self.max_memory_megabytes)
+
+    @classmethod
+    def from_dict(cls, m_dict):
+        return cls(memory_increase_megabytes=m_dict['memory_increase_megabytes'],
+                   max_memory_megabytes=m_dict['max_memory_megabytes'])
+
+    # def run_task(self, fw_spec):
+    #
+    #     # Get the fw_id and launchpad
+    #     if '_add_launchpad_and_fw_id' in fw_spec:
+    #         lp = self.launchpad
+    #         fw_id = self.fw_id
+    #     else:
+    #         try:
+    #             fw_dict = loadfn('FW.json')
+    #         except IOError:
+    #             try:
+    #                 fw_dict = loadfn('FW.yaml')
+    #             except IOError:
+    #                 raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+    #                                    "impossible to determine fw_id")
+    #         lp = LaunchPad.auto_load()
+    #         fw_id = fw_dict['fw_id']
+    #
+    #     # Treat the case where there was no memory error => forward "needed" outputs of the previous firework to the
+    #     # next one.
+    #     if not '_fizzled_parents' in fw_spec:
+    #         stored_data = {}
+    #         update_spec = {}
+    #         mod_spec = []
+    #         for task_type, task_info in fw_spec['previous_fws'].items():
+    #             mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+    #         return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
+    #
+    #     if len(fw_spec['_fizzled_parents']) > 1:
+    #         raise ValueError('Multiple parents fizzled ... Only one is allowed.')
+    #
+    #     fizzled_fw_id = fw_spec['_fizzled_parents'][0]['fw_id']
+    #     fizzled_fw = lp.get_fw_by_id(fizzled_fw_id)
+    #     fizzled_fw_dir = fizzled_fw.launches[-1].launch_dir
+    #
+    #     # Analyze the stderr and stdout files of the resource manager system.
+    #     qerr_info = None
+    #     qout_info = None
+    #     qerr_file = os.path.join(fizzled_fw_dir, 'queue.qerr')
+    #     qout_file = os.path.join(fizzled_fw_dir, 'queue.qout')
+    #     runerr_file = fw_spec['runerr_file'] if 'runerr_file' in fw_spec else None
+    #     if os.path.exists(qerr_file):
+    #         with open(qerr_file, "r") as f:
+    #             qerr_info = f.read()
+    #     if os.path.exists(qout_file):
+    #         with open(qout_file, "r") as f:
+    #             qout_info = f.read()
+    #
+    #     if qerr_info or qout_info:
+    #         from pymatgen.io.abinit.scheduler_error_parsers import get_parser
+    #         qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
+    #         qtype = qtk_qadapter.QTYPE
+    #         scheduler_parser = get_parser(qtype, err_file=qerr_file,
+    #                                       out_file=qout_file, run_err_file=runerr_file)
+    #
+    #         if scheduler_parser is None:
+    #             raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
+    #
+    #         scheduler_parser.parse()
+    #         queue_errors = scheduler_parser.errors
+    #
+    #         if queue_errors:
+    #             # the queue errors in the task
+    #             logger.debug('scheduler errors found:')
+    #             logger.debug(str(queue_errors))
+    #         else:
+    #             if len(qerr_info) > 0:
+    #                 logger.debug('found unknown queue error: {}'.format(str(qerr_info)))
+    #                 raise ValueError(qerr_info)
+    #                 # The job is killed or crashed but we don't know what happened
+    #
+    #         to_be_corrected = False
+    #         for error in queue_errors:
+    #             if isinstance(error, MemoryCancelError):
+    #                 logger.debug('found memory error.')
+    #                 to_be_corrected = True
+    #         if to_be_corrected:
+    #             if len(fizzled_fw.tasks) > 1:
+    #                 raise ValueError('More than 1 task found in "memory-fizzled" firework, not yet supported')
+    #             logger.debug('adding SRC detour')
+    #             mytask = fizzled_fw.tasks[0]
+    #             task_class = mytask.__class__
+    #             # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
+    #             #       to abinit
+    #             task_input = AbinitInput.from_dict(fizzled_fw.spec['_tasks'][0]['abiinput'])
+    #             spec = fizzled_fw.spec
+    #             initialization_info = fizzled_fw.spec['initialization_info']
+    #             # Update the task index
+    #             fizzled_fw_task_index = int(fizzled_fw.spec['wf_task_index'].split('_')[-1])
+    #             new_index = fizzled_fw_task_index + 1
+    #             # Update the memory in the queue adapter
+    #             old_mem = qtk_qadapter.mem_per_proc
+    #             new_mem = old_mem + self.memory_increase_megabytes
+    #             if new_mem > self.max_memory_megabytes:
+    #                 raise ValueError('New memory {:d} is larger than '
+    #                                  'max memory per proc {:d}'.format(new_mem, self.max_memory_megabytes))
+    #             qtk_qadapter.set_mem_per_proc(new_mem)
+    #             spec['qtk_queueadapter'] = qtk_qadapter
+    #             qadapter_spec = qtk_qadapter.get_subs_dict()
+    #             spec['_queueadapter'] = qadapter_spec
+    #             if 'run_timelimit' in spec:
+    #                 run_timelimit = spec['run_timelimit']
+    #             else:
+    #                 run_timelimit = None
+    #
+    #             SRC_fws = SRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
+    #                                    initialization_info=initialization_info,
+    #                                    wf_task_index_prefix=spec['wf_task_index_prefix'],
+    #                                    current_task_index=new_index,
+    #                                    current_memory_per_proc_mb=new_mem,
+    #                                    memory_increase_megabytes=self.memory_increase_megabytes,
+    #                                    max_memory_megabytes=self.max_memory_megabytes,
+    #                                    task_type=mytask.task_type, run_timelimit=run_timelimit)
+    #             wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+    #             return FWAction(detours=[wf])
+    #     raise ValueError('Could not check for memory problem ...')
 
 
 @explicit_serialize
