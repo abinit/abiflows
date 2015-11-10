@@ -5,7 +5,7 @@ Utility tasks for Fireworks.
 
 from __future__ import print_function, division, unicode_literals
 
-from custodian.ansible.interpreter import Modder
+from custodian_utils.ansible.interpreter import Modder
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
@@ -17,7 +17,7 @@ import logging
 import traceback
 import importlib
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
-from abiflows.fireworks.utils.custodian import SRCErrorHandler
+from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
 from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn

@@ -3,7 +3,7 @@
 Error handlers and validators
 """
 
-from abiflows.fireworks.utils.custodian import SRCErrorHandler, SRCValidator
+from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler, SRCValidator
 from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
