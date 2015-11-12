@@ -542,7 +542,11 @@ class CheckTask(FireTaskBase):
             run_fw = lp.get_fw_by_id(parents_fw_ids[0])
             # Get the corrections for all the handlers
             # Sort handlers by their priority
-            sorted_handlers = sorted([h for h in self.handlers if h.allow_completed], key=lambda x: x.handler_priority)
+            if self.handlers is not None:
+                sorted_handlers = sorted([h for h in self.handlers if h.allow_completed],
+                                         key=lambda x: x.handler_priority)
+            else:
+                sorted_handlers = []
             # Get the corrections for all the handlers
             corrections = []
             for handler in sorted_handlers:
@@ -559,7 +563,8 @@ class CheckTask(FireTaskBase):
                 return fw_action
 
             # Validate the results if no error was found
-            for validator in self.validators:
+            validators = self.validators if self.validators is not None else []
+            for validator in validators:
                 if not validator.check():
                     raise RuntimeError('Validator invalidate results ...')
             stored_data = {}
