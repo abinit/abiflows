@@ -20,10 +20,12 @@ from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 from collections import namedtuple, defaultdict
 from abiflows.fireworks.utils.task_history import TaskHistory
+from abiflows.fireworks.tasks.utility_tasks import SRC_TIMELIMIT_BUFFER
 from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
+from pymatgen.io.abinit.qutils import time2slurm
 from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder, MSONable
 from abipy.abio.factories import InputFactory
@@ -393,6 +395,11 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 if 'mpi_ncpus' in fw_spec:
                     command.extend(['-np', str(fw_spec['mpi_ncpus'])])
             command.append(self.ftm.fw_policy.abinit_cmd)
+            if self.use_SRC_scheme:
+                mytimelimit = fw_spec['qtk_queueadapter'].timelimit-SRC_TIMELIMIT_BUFFER
+                if mytimelimit < 120:
+                    raise ValueError('Abinit timelimit less than 2 min. Probably wrong queue/job configuration')
+                command.append(['--timelimit', time2slurm(mytimelimit)])
             with open(self.files_file.path, 'r') as stdin, open(self.log_file.path, 'w') as stdout, \
                     open(self.stderr_file.path, 'w') as stderr:
                 self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)

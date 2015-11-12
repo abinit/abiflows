@@ -48,10 +48,6 @@ class SRCErrorHandler(ErrorHandler):
         self.setup()
 
     @abc.abstractproperty
-    def src_scheme(self):
-        pass
-
-    @abc.abstractproperty
     def handler_priority(self):
         pass
 

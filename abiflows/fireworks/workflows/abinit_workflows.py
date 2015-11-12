@@ -17,7 +17,7 @@ from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxF
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask, MergeDdbTask
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.tasks.utility_tasks import createSRCFireworks
-from abiflows.fireworks.tasks.handlers import MemoryHandler
+from abiflows.fireworks.tasks.handlers import MemoryHandler, WalltimeHandler
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input
@@ -582,9 +582,11 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    STANDARD_HANDLERS = {'_all': [MemoryHandler()]}
+    STANDARD_HANDLERS = {'_all': [MemoryHandler(), WalltimeHandler()]}
+    STANDARD_VALIDATORS = {'_all': []}
 
-    def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={}, handlers=STANDARD_HANDLERS):
+    def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
+                 handlers=STANDARD_HANDLERS, validators=STANDARD_VALIDATORS):
 
         fws = []
         links_dict = {}
@@ -594,11 +596,18 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         else:
             queue_adapter_update = None
 
+        # If handlers are passed as a list, they should be applied on all task_types
+        if isinstance(handlers, (list, tuple)):
+            handlers = {'_all': handlers}
+        # If validators are passed as a list, they should be applied on all task_types
+        if isinstance(validators, (list, tuple)):
+            validators = {'_all': validators}
+
         #1. First SCF run in the irreducible Brillouin Zone
         SRC_scf_ibz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='scfibz', task_type='scfibz',
-                                             handlers=handlers['_all'],
+                                             handlers=handlers['_all'], validators=validators['_all'],
                                              queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_scf_ibz_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=SRC_scf_ibz_fws['links_dict'])
@@ -610,7 +619,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         SRC_scf_fbz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='scffbz', task_type='scffbz',
-                                             handlers=handlers['_all'],
+                                             handlers=handlers['_all'], validators=validators['_all'],
                                              deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']},
                                              queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_scf_fbz_fws['fws'])
@@ -623,7 +632,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         SRC_ddk_fws = createSRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
                                          initialization_info=initialization_info,
                                          wf_task_index_prefix='ddk',
-                                         handlers=handlers['_all'],
+                                         handlers=handlers['_all'], validators=validators['_all'],
                                          deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'},
                                          queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_ddk_fws['fws'])
@@ -636,7 +645,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
                                         initialization_info=initialization_info,
                                         wf_task_index_prefix='rf',
-                                        handlers=handlers['_all'],
+                                        handlers=handlers['_all'], validators=validators['_all'],
                                         deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
                                               SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
                                         queue_adapter_update=queue_adapter_update)

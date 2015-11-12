@@ -3,11 +3,11 @@
 Error handlers and validators
 """
 
-from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler, SRCValidator
-from fireworks.utilities.fw_utilities import explicit_serialize
+from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
+from pymatgen.io.abinit.scheduler_error_parsers import TimeCancelError
 from pymatgen.io.abinit.qadapters import QueueAdapter
 import logging
 import os
@@ -16,7 +16,151 @@ import os
 logger = logging.getLogger(__name__)
 
 
-@explicit_serialize
+class WalltimeHandler(SRCErrorHandler):
+    """
+    Handler for walltime infringements of the resource manager.
+    """
+
+    def __init__(self, job_rundir='.', qout_file='queue.qout', qerr_file='queue.qerr', queue_adapter=None,
+                 max_timelimit=None, timelimit_increase=None):
+        """
+        Initializes the handler with the directory where the job was run, the standard output and error files
+        of the queue manager and the queue adapter used.
+
+        Args:
+            job_rundir: Directory where the job was run.
+            qout_file: Standard output file of the queue manager.
+            qerr_file: Standard error file of the queue manager.
+            queue_adapter: Queue adapter used to submit the job.
+            max_timelimit: Maximum timelimit (in seconds) allowed by the resource manager for the queue.
+            timelimit_increase: Amount of time (in seconds) to increase the timelimit.
+        """
+        super(WalltimeHandler, self).__init__()
+        self.job_rundir = job_rundir
+        self.qout_file = qout_file
+        self.qerr_file = qerr_file
+        self.queue_adapter = queue_adapter
+        self.qout_filepath = os.path.join(job_rundir, qout_file)
+        self.qerr_filepath = os.path.join(job_rundir, qerr_file)
+        self.max_timelimit = max_timelimit
+        self.timelimit_increase = timelimit_increase
+
+        self.src_fw = False
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'job_rundir': self.job_rundir,
+                'qout_file': self.qout_file,
+                'qerr_file': self.qerr_file,
+                'queue_adapter': self.queue_adapter.as_dict() if self.queue_adapter is not None else None,
+                'max_timelimit': self.max_timelimit,
+                'timelimit_increase': self.timelimit_increase
+                }
+
+    @classmethod
+    def from_dict(cls, d):
+        qa = QueueAdapter.from_dict(d['queue_adapter']) if d['queue_adapter'] is not None else None
+        return cls(job_rundir=d['job_rundir'], qout_file=d['qout_file'], qerr_file=d['qerr_file'], queue_adapter=qa,
+                   max_timelimit=d['max_timelimit'],
+                   timelimit_increase=d['timelimit_increase'])
+
+    @property
+    def allow_fizzled(self):
+        return True
+
+    @property
+    def allow_completed(self):
+        return False
+
+    @property
+    def handler_priority(self):
+        return self.PRIORITY_VERY_LOW
+
+    @property
+    def skip_remaining_handlers(self):
+        return True
+
+    def setup(self):
+        if 'SRCScheme' in self.fw_to_check.spec and self.fw_to_check.spec['SRCScheme']:
+            self.src_fw = True
+        else:
+            self.src_fw = False
+        self.job_rundir = self.fw_to_check.launches[-1].launch_dir
+        self.queue_adapter = self.fw_to_check.spec['qtk_queueadapter']
+
+    def check(self):
+
+        # Analyze the stderr and stdout files of the resource manager system.
+        qerr_info = None
+        qout_info = None
+        if os.path.exists(self.qerr_filepath):
+            with open(self.qerr_filepath, "r") as f:
+                qerr_info = f.read()
+        if os.path.exists(self.qout_filepath):
+            with open(self.qout_filepath, "r") as f:
+                qout_info = f.read()
+
+        self.timelimit_error = None
+        self.queue_errors = None
+        if qerr_info or qout_info:
+            from pymatgen.io.abinit.scheduler_error_parsers import get_parser
+            qtype = self.queue_adapter.QTYPE
+            scheduler_parser = get_parser(qtype, err_file=self.qerr_filepath,
+                                          out_file=self.qout_filepath)
+
+            if scheduler_parser is None:
+                raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
+
+            scheduler_parser.parse()
+            self.queue_errors = scheduler_parser.errors
+
+            for error in self.queue_errors:
+                if isinstance(error, TimeCancelError):
+                    logger.debug('found timelimit error.')
+                    self.timelimit_error = error
+                    return True
+        return False
+
+    def correct(self):
+        if self.src_fw:
+            if len(self.fw_to_check.tasks) > 1:
+                raise ValueError('More than 1 task found in "memory-fizzled" firework, not yet supported')
+            logger.debug('adding SRC detour')
+            # Information about the update of the memory (master overhead or base mem per proc) in the queue adapter
+            queue_adapter_update = {}
+            # When max_timelimit is not set, automatically take the hard timelimit of the queue
+            if self.max_timelimit is None:
+                max_timelimit = self.queue_adapter.timelimit_hard
+            else:
+                max_timelimit = self.max_timelimit
+            # When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue
+            if self.timelimit_increase is None:
+                timelimit_increase = self.queue_adapter.timelimit_hard / 10
+            else:
+                timelimit_increase = self.timelimit_increase
+            if isinstance(self.timelimit_error, TimeCancelError):
+                old_timelimit = self.queue_adapter.timelimit
+                if old_timelimit == max_timelimit:
+                    raise ValueError('Cannot increase beyond maximum timelimit ({:d} seconds) set in WalltimeHandler.'
+                                     'Hard time limit of '
+                                     'the queue is {:d} seconds'.format(max_timelimit,
+                                                                        self.queue_adapter.timelimit_hard))
+                new_timelimit = old_timelimit + timelimit_increase
+                # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
+                if new_timelimit > max_timelimit:
+                    new_timelimit = max_timelimit
+                queue_adapter_update['timelimit'] = new_timelimit
+            else:
+                raise ValueError('Should not be here ...')
+            return {'errors': [self.__class__.__name__],
+                    'actions': [{'action_type': 'modify_object',
+                                 'object': {'source': 'fw_spec', 'key': 'qtk_queueadapter'},
+                                 'action': {'_set': queue_adapter_update}}]}
+        else:
+            raise NotImplementedError('This handler cannot be used without the SRC scheme')
+
+
 class MemoryHandler(SRCErrorHandler):
     """
     Handler for memory infringements of the resource manager. The handler should be able to handle the possible
@@ -101,10 +245,6 @@ class MemoryHandler(SRCErrorHandler):
         self.job_rundir = self.fw_to_check.launches[-1].launch_dir
         self.queue_adapter = self.fw_to_check.spec['qtk_queueadapter']
 
-    @property
-    def src_scheme(self):
-        return self.src_fw
-
     def check(self):
 
         # Analyze the stderr and stdout files of the resource manager system.
@@ -176,7 +316,6 @@ class MemoryHandler(SRCErrorHandler):
             raise NotImplementedError('This handler cannot be used without the SRC scheme')
 
 
-@explicit_serialize
 class UltimateMemoryHandler(MemoryHandler):
     """
     Handler for infringements of the resource manager. If no memory error is found,
