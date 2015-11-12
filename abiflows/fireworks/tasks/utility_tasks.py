@@ -431,8 +431,9 @@ class CheckTask(FireTaskBase):
 
     @serialize_fw
     def to_dict(self):
-        return dict(handlers=[h.as_dict() for h in self.handlers],
-                    validators=[v.as_dict() for v in self.validators], max_restarts=self.max_restarts)
+        return dict(handlers=[h.as_dict() for h in self.handlers] if self.handlers is not None else None,
+                    validators=[v.as_dict() for v in self.validators] if self.validators is not None else None,
+                    max_restarts=self.max_restarts)
 
     @classmethod
     def from_dict(cls, m_dict):
