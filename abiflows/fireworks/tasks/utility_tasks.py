@@ -460,6 +460,8 @@ class CheckTask(FireTaskBase):
 
         # Treat the case where there was some error that led to a fizzled state
         if '_fizzled_parents' in fw_spec:
+            if len(fw_spec['_fizzled_parents']) != 1:
+                raise ValueError('CheckTask\'s Firework should have exactly one parent firework')
             # Get the fizzled fw
             fizzled_fw_id = fw_spec['_fizzled_parents'][0]['fw_id']
             fizzled_fw = lp.get_fw_by_id(fizzled_fw_id)
@@ -533,11 +535,11 @@ class CheckTask(FireTaskBase):
         # next one.
         else:
             # Get the previous fw
-            this_fw = lp.get_fw_by_id(fw_id=fw_id)
-            parents = this_fw.parents
-            if len(parents) != 1:
-                raise RuntimeError('CheckTask Firework should only have one parent Firework ...')
-            run_fw = lp.get_fw_by_id(parents[0].fw_id)
+            this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
+            parents_fw_ids = this_lzy_wf.links.parent_links[fw_id]
+            if len(parents_fw_ids) != 1:
+                raise ValueError('CheckTask\'s Firework should have exactly one parent firework')
+            run_fw = lp.get_fw_by_id(parents_fw_ids[0])
             # Get the corrections for all the handlers
             # Sort handlers by their priority
             sorted_handlers = sorted([h for h in self.handlers if h.allow_completed], key=lambda x: x.handler_priority)
