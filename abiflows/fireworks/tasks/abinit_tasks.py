@@ -788,7 +788,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         try:
             self.setup_task(fw_spec)
             if self.use_SRC_scheme and self.is_autoparal:
-                self.setupSRC(fw_spec=fw_spec)
+                return self.setupSRC(fw_spec=fw_spec)
             elif self.is_autoparal:
                 return self.autoparal(fw_spec)
             else:
