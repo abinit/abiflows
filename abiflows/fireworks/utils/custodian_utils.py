@@ -25,6 +25,14 @@ class SRCErrorHandler(ErrorHandler):
         self.fw_to_check = None
 
     @abc.abstractmethod
+    def as_dict(self):
+        pass
+
+    @abc.abstractmethod
+    def from_dict(cls, d):
+        pass
+
+    @abc.abstractmethod
     def setup(self):
         pass
 

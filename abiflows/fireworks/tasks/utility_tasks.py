@@ -22,7 +22,7 @@ from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWT
 from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize
-from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
+from monty.json import MontyDecoder
 
 logger = logging.getLogger(__name__)
 
@@ -431,11 +431,14 @@ class CheckTask(FireTaskBase):
 
     @serialize_fw
     def to_dict(self):
-        return dict(handlers=self.handlers, validators=self.validators, max_restarts=self.max_restarts)
+        return dict(handlers=[h.as_dict() for h in self.handlers],
+                    validators=[v.as_dict() for v in self.validators], max_restarts=self.max_restarts)
 
     @classmethod
     def from_dict(cls, m_dict):
-        return cls(handlers=m_dict['handlers'], validators=m_dict['validators'], max_restarts=m_dict['max_restarts'])
+        m = MontyDecoder()
+        return cls(handlers=m.process_decoded(m_dict['handlers']), validators=m.process_decoded(m_dict['validators'])
+                   , max_restarts=m_dict['max_restarts'])
 
     def run_task(self, fw_spec):
         # Get the fw_id and launchpad

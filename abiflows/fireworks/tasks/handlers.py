@@ -4,9 +4,11 @@ Error handlers and validators
 """
 
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler, SRCValidator
+from fireworks.utilities.fw_utilities import explicit_serialize
 from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
+from pymatgen.io.abinit.qadapters import QueueAdapter
 import logging
 import os
 
@@ -14,6 +16,7 @@ import os
 logger = logging.getLogger(__name__)
 
 
+@explicit_serialize
 class MemoryHandler(SRCErrorHandler):
     """
     Handler for memory infringements of the resource manager. The handler should be able to handle the possible
@@ -51,6 +54,28 @@ class MemoryHandler(SRCErrorHandler):
         self.master_mem_overhead_increase_mb = master_mem_overhead_increase_mb
 
         self.src_fw = False
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'job_rundir': self.job_rundir,
+                'qout_file': self.qout_file,
+                'qerr_file': self.qerr_file,
+                'queue_adapter': self.queue_adapter.as_dict() if self.queue_adapter is not None else None,
+                'max_mem_per_proc_mb': self.max_mem_per_proc_mb,
+                'mem_per_proc_increase_mb': self.mem_per_proc_increase_mb,
+                'max_master_mem_overhead_mb': self.max_master_mem_overhead_mb,
+                'master_mem_overhead_increase_mb': self.master_mem_overhead_increase_mb
+                }
+
+    @classmethod
+    def from_dict(cls, d):
+        qa = QueueAdapter.from_dict(d['queue_adapter']) if d['queue_adapter'] is not None else None
+        return cls(job_rundir=d['job_rundir'], qout_file=d['qout_file'], qerr_file=d['qerr_file'], queue_adapter=qa,
+                   max_mem_per_proc_mb=d['max_mem_per_proc_mb'],
+                   mem_per_proc_increase_mb=d['mem_per_proc_increase_mb'],
+                   max_master_mem_overhead_mb=d['max_master_mem_overhead_mb'],
+                   master_mem_overhead_increase_mb=d['master_mem_overhead_increase_mb'])
 
     @property
     def allow_fizzled(self):
