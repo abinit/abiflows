@@ -20,6 +20,8 @@ from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 from collections import namedtuple, defaultdict
 from abiflows.fireworks.utils.task_history import TaskHistory
+from abiflows.fireworks.utils.fw_utils import links_dict_update
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abiflows.fireworks.tasks.utility_tasks import SRC_TIMELIMIT_BUFFER
 from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit import events, tasks
@@ -28,7 +30,7 @@ from pymatgen.io.abinit.wrappers import Mrgddb
 from pymatgen.io.abinit.qutils import time2slurm
 from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder, MSONable
-from abipy.abio.factories import InputFactory
+from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
@@ -600,7 +602,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
 
         if self.use_SRC_scheme:
             #TODO: The way we get the CheckTask's handlers and validators is very ugly here ...
-            #      If we go for SRC, this will obviously be changed as any restart would
+            #      If we go for SRC everywhere, this will obviously be changed as any restart would
             #      be performed in the check task ...
             wf = self.launchpad.get_wf_by_fw_id_lzyfw(self.fw_id)
             run_children_ids = wf.links[self.fw_id]
@@ -608,11 +610,6 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 raise ValueError('Run Firework should have exactly one child in SRC scheme ...')
             check_fw = self.launchpad.get_fw_by_id(run_children_ids[0])
             check_task = check_fw.tasks[0]
-            # SRC_fws = SRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
-            #                        initialization_info=fw_spec['initialization_info'],
-            #                        wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
-            #                        current_task_index=new_index, timelimit_run=fw_spec['run_timelimit'])
-            # createSRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1, handlers=None, validators=None, deps=None, task_type=None)
             fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
             new_index = fw_task_index + 1
             SRC_fws = createSRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
@@ -622,7 +619,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                                          handlers=check_task.handlers, validators=check_task.validators,
                                          deps=self.deps, task_type=self.task_type)
             wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
-            return FWAction(detours=[wf], defuse_children=True)
+            return FWAction(detours=[wf])
 
         # run here the autorun, otherwise it would need a separated FW
         if self.ftm.fw_policy.autoparal:
@@ -1359,7 +1356,7 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
     #TODO: make it possible to use "any" task and in particular, this MergeDdbTask for the SRC
     # scheme (to be rationalized)
-    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None):
+    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None, task_type=None):
         """
         ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.
         The default is [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
@@ -1376,6 +1373,9 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
         self.ddb_source_task_types = ddb_source_task_types
         self.delete_source_ddbs = delete_source_ddbs
         self.num_ddbs = num_ddbs
+
+        if task_type is not None:
+            self.task_type = task_type
 
     def get_ddb_list(self, previous_fws, task_type):
         ddb_files = []
@@ -1935,41 +1935,83 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
 
 
 @explicit_serialize
-class GenerateDDKFlowFWTask(BasicTaskMixin, FireTaskBase):
-    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
-        self.phonon_factory = phonon_factory
-        self.previous_task_type = previous_task_type
-        self.handlers = handlers
-        self.with_autoparal=with_autoparal
-        self.ddb_file = ddb_file
-
-    def run_task(self, fw_spec):
-        previous_input = fw_spec.get('previous_fws', {}).get(self.previous_task_type, [{}])[0].get('input', None)
-        if not previous_input:
-            raise InitializationError('No input file available from task of type {}'.format(self.previous_task_type))
-
-        previous_input = AbinitInput.from_dict(previous_input)
-
-        return FWAction()
-
-
-@explicit_serialize
 class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
-    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
-        self.phonon_factory = phonon_factory
-        self.previous_task_type = previous_task_type
+    def __init__(self, piezo_elastic_factory=None, previous_scf_task_type=ScfFWTask.task_type,
+                 previous_ddk_task_type=DdkTask.task_type,
+                 handlers=None, validators=None, mrgddb_task_type='mrgddb-strains'):
+        if piezo_elastic_factory is None:
+            self.piezo_elastic_factory = PiezoElasticFromGsFactory()
+        else:
+            self.piezo_elastic_factory = piezo_elastic_factory
+        self.previous_scf_task_type = previous_scf_task_type
+        self.previous_ddk_task_type = previous_ddk_task_type
         self.handlers = handlers
-        self.with_autoparal=with_autoparal
-        self.ddb_file = ddb_file
+        self.validators = validators
+        self.mrgddb_task_type = mrgddb_task_type
 
     def run_task(self, fw_spec):
-        previous_input = fw_spec.get('previous_fws', {}).get(self.previous_task_type, [{}])[0].get('input', None)
-        if not previous_input:
-            raise InitializationError('No input file available from task of type {}'.format(self.previous_task_type))
+        # Get the previous SCF input
+        previous_scf_input = fw_spec.get('previous_fws', {}).get(self.previous_scf_task_type,
+                                                                 [{}])[0].get('input', None)
+        if not previous_scf_input:
+            raise InitializationError('No input file available '
+                                      'from task of type {}'.format(self.previous_scf_task_type))
+        previous_scf_input = AbinitInput.from_dict(previous_scf_input)
 
-        previous_input = AbinitInput.from_dict(previous_input)
+        # # Get the previous DDK input
+        # previous_ddk_input = fw_spec.get('previous_fws', {}).get(self.previous_ddk_task_type,
+        #                                                          [{}])[0].get('input', None)
+        # if not previous_ddk_input:
+        #     raise InitializationError('No input file available '
+        #                               'from task of type {}'.format(self.previous_ddk_task_type))
+        # previous_ddk_input = AbinitInput.from_dict(previous_ddk_input)
 
-        return FWAction()
+        # Get the strain RF inputs
+        piezo_elastic_inputs = self.piezo_elastic_factory.build_input(previous_scf_input)
+        rf_strain_inputs = piezo_elastic_inputs.filter_by_tags(STRAIN)
+
+        initialization_info = fw_spec.get('initialization_info', {})
+        initialization_info['input_factory'] = self.piezo_elastic_factory.as_dict()
+        new_spec = dict(previous_fws=fw_spec['previous_fws'], initialization_info=initialization_info)
+
+        # Get the initial queue_adapter_updates
+        queue_adapter_update = initialization_info.get('queue_adapter_update', None)
+
+        # Create the SRC fireworks for each perturbation
+        all_SRC_rf_fws = []
+        total_list_fws = []
+        fws_deps = {}
+        for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
+            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_strain_input, spec=new_spec,
+                                            initialization_info=initialization_info,
+                                            wf_task_index_prefix='rfstrains-pert-{-d}'.format(istrain_pert+1),
+                                            handlers=self.handlers['_all'], validators=self.validators['_all'],
+                                            deps={self.previous_scf_task_type: 'WFK',
+                                                  self.previous_ddk_task_type: 'DDK'},
+                                            queue_adapter_update=queue_adapter_update)
+            all_SRC_rf_fws.append(SRC_rf_fws)
+            total_list_fws.extend(SRC_rf_fws['fws'])
+            links_dict_update(links_dict=fws_deps, links_update=SRC_rf_fws['links_dict'])
+
+        # Adding the MrgDdb Firework
+        mrgddb_spec = dict(new_spec)
+        mrgddb_spec['wf_task_index_prefix'] = 'mrgddb-rfstrains'
+        mrgddb_spec['wf_task_index'] = mrgddb_spec['wf_task_index_prefix']
+        mrgddb_spec = set_short_single_core_to_spec(mrgddb_spec)
+        mrgddb_spec['_priority'] = 10
+        num_ddbs_to_be_merged = len(all_SRC_rf_fws)
+        mrgddb_fw = Firework(MergeDdbTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=True,
+                                          task_type= self.mrgddb_task_type),
+                             spec=mrgddb_spec,
+                             name=mrgddb_spec['wf_task_index'])
+        total_list_fws.append(mrgddb_fw)
+        #Adding the dependencies
+        for src_fws in all_SRC_rf_fws:
+            links_dict_update(links_dict=fws_deps, links_update={src_fws['check_fw']: mrgddb_fw})
+
+        rf_strains_wf = Workflow(total_list_fws, fws_deps)
+
+        return FWAction(detours=rf_strains_wf)
 
 ##############################
 # Exceptions

@@ -510,7 +510,7 @@ class CheckTask(FireTaskBase):
                                      deps=deps,
                                      task_type=mytask.task_type)
         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
-        return FWAction(detours=[wf], defuse_children=True)
+        return FWAction(detours=[wf])
 
 
 def get_fw_task_manager(fw_spec):

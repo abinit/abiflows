@@ -4,26 +4,29 @@ Firework workflows
 """
 from __future__ import print_function, division, unicode_literals
 
-from fireworks.core.launchpad import LaunchPad
-from fireworks.core.firework import Firework, Workflow
-
-import abc
-import six
-import os
 import logging
 import sys
 
-from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask, HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
+import abc
+import os
+import six
+from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory
+from abipy.abio.factories import PhononsFromGsFactory, ScfForPhononsFactory
+from abipy.abio.factories import ion_ioncell_relax_input, scf_input
+from abipy.abio.inputs import AbinitInput, AnaddbInput
+from fireworks.core.firework import Firework, Workflow
+from fireworks.core.launchpad import LaunchPad
+from monty.serialization import loadfn
+
+from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask
+from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
+from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask, MergeDdbTask
+from abiflows.fireworks.tasks.handlers import MemoryHandler, WalltimeHandler
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.tasks.utility_tasks import createSRCFireworks
-from abiflows.fireworks.tasks.handlers import MemoryHandler, WalltimeHandler
-from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec
+from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
-from abipy.abio.factories import ion_ioncell_relax_input, scf_input
-from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory, PhononsFromGsFactory, ScfForPhononsFactory
-from abipy.abio.inputs import AbinitInput, AnaddbInput
-from monty.serialization import loadfn
 
 # logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -564,20 +567,6 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
         raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
 
 
-def links_dict_update(links_dict, links_update):
-    for parent_id, child_ids in links_update.items():
-        if isinstance(child_ids, int):
-                child_ids = [child_ids]
-        if parent_id in links_dict:
-            for child_id in child_ids:
-                if child_id in links_dict[parent_id]:
-                    raise ValueError('Child fireworks already defined for parent ...')
-                links_dict[parent_id].append(child_id)
-        else:
-            links_dict[parent_id] = child_ids
-
-
-
 class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
@@ -586,7 +575,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
     STANDARD_VALIDATORS = {'_all': []}
 
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
-                 handlers=STANDARD_HANDLERS, validators=STANDARD_VALIDATORS):
+                 handlers=STANDARD_HANDLERS, validators=STANDARD_VALIDATORS, ddk_split=False, rf_split=False):
 
         fws = []
         links_dict = {}
@@ -629,63 +618,83 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                           links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_scf_fbz_fws['setup_fw'].fw_id})
 
         #3. DDK calculation
-        SRC_ddk_fws = createSRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
-                                         initialization_info=initialization_info,
-                                         wf_task_index_prefix='ddk',
-                                         handlers=handlers['_all'], validators=validators['_all'],
-                                         deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'},
-                                         queue_adapter_update=queue_adapter_update)
-        fws.extend(SRC_ddk_fws['fws'])
-        links_dict_update(links_dict=links_dict, links_update=SRC_ddk_fws['links_dict'])
-        #Link with the IBZ SCF run
-        links_dict_update(links_dict=links_dict,
-                          links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_ddk_fws['setup_fw'].fw_id})
+        if ddk_split:
+            raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
+        else:
+            SRC_ddk_fws = createSRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
+                                             initialization_info=initialization_info,
+                                             wf_task_index_prefix='ddk',
+                                             handlers=handlers['_all'], validators=validators['_all'],
+                                             deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'},
+                                             queue_adapter_update=queue_adapter_update)
+            fws.extend(SRC_ddk_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=SRC_ddk_fws['links_dict'])
+            #Link with the IBZ SCF run
+            links_dict_update(links_dict=links_dict,
+                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_ddk_fws['setup_fw'].fw_id})
 
-        #4. Response-Function calculation of the elastic constants
-        SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
-                                        initialization_info=initialization_info,
-                                        wf_task_index_prefix='rf',
-                                        handlers=handlers['_all'], validators=validators['_all'],
-                                        deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
-                                              SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
-                                        queue_adapter_update=queue_adapter_update)
-        fws.extend(SRC_rf_fws['fws'])
-        links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
-        #Link with the IBZ SCF run and the DDK run
-        links_dict_update(links_dict=links_dict,
-                          links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id,
-                                        SRC_ddk_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id})
+        #4. Response-Function calculation(s) of the elastic constants
+        if rf_split:
+            rf_ddb_source_task_type = 'mrgddb-strains'
+            gen_task = GeneratePiezoElasticFlowFWTask(previous_scf_task_type=ScfFWTask.task_type,
+                                                      previous_ddk_task_type=DdkTask.task_type,
+                                                      handlers=None, validators=None,
+                                                      mrgddb_task_type=rf_ddb_source_task_type)
+            gen_fw = Firework([gen_task], spec=spec, name='gen-piezo-elast')
+            fws.append(gen_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: gen_fw.fw_id,
+                                            SRC_ddk_fws['check_fw'].fw_id: gen_fw.fw_id})
+            rf_ddb_src_fw = gen_fw
+        else:
+            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
+                                            initialization_info=initialization_info,
+                                            wf_task_index_prefix='rf',
+                                            handlers=handlers['_all'], validators=validators['_all'],
+                                            deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
+                                                  SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
+                                            queue_adapter_update=queue_adapter_update)
+            fws.extend(SRC_rf_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
+            #Link with the IBZ SCF run and the DDK run
+            links_dict_update(links_dict=links_dict,
+                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id,
+                                            SRC_ddk_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id})
+            rf_ddb_source_task_type = SRC_rf_fws['run_fw'].tasks[0].task_type
+            rf_ddb_src_fw = SRC_rf_fws['check_fw']
 
         #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
         # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
         # stress-corrected elastic constants)
-        mrgddb_task = MergeDdbTask(ddb_source_task_types=[SRC_rf_fws['run_fw'].tasks[0].task_type,
+        mrgddb_task = MergeDdbTask(ddb_source_task_types=[rf_ddb_source_task_type,
                                                           SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
                                    delete_source_ddbs=False, num_ddbs=2)
         mrgddb_spec = set_short_single_core_to_spec(spec)
         mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
         fws.append(mrgddb_fw)
         links_dict_update(links_dict=links_dict,
-                          links_update={SRC_rf_fws['check_fw'].fw_id: mrgddb_fw.fw_id,
+                          links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
                                         SRC_scf_fbz_fws['check_fw'].fw_id: mrgddb_fw.fw_id})
 
         #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
         anaddb_tag = 'anaddb-piezo-elast'
         spec = set_short_single_core_to_spec(spec)
-        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(scf_inp_ibz.structure, stress_correction=False),
-                                 deps={SRC_rf_fws['run_fw'].tasks[0].task_type: ['DDB']},
+        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                           stress_correction=False),
+                                 deps={rf_ddb_source_task_type: ['DDB']},
                                  task_type=anaddb_tag)
         anaddb_fw = Firework([anaddb_task],
                              spec=spec,
                              name=anaddb_tag)
         fws.append(anaddb_fw)
         links_dict_update(links_dict=links_dict,
-                          links_update={SRC_rf_fws['check_fw'].fw_id: anaddb_fw.fw_id})
+                          links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
 
         #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
         anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
         spec = set_short_single_core_to_spec(spec)
-        anaddb_stress_task = AnaDdbTask(AnaddbInput.piezo_elastic(scf_inp_ibz.structure, stress_correction=True),
+        anaddb_stress_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                  stress_correction=True),
                                         deps={mrgddb_task.task_type: ['DDB']},
                                         task_type=anaddb_tag)
         anaddb_stress_fw = Firework([anaddb_stress_task],
@@ -694,7 +703,6 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         fws.append(anaddb_stress_fw)
         links_dict_update(links_dict=links_dict,
                           links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
-
 
         self.wf = Workflow(fireworks=fws,
                            links_dict=links_dict,
