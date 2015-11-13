@@ -480,7 +480,8 @@ class CheckTask(FireTaskBase):
                     else:
                         raise NotImplementedError('Object source "{}" not implemented in '
                                                   'CheckTask'.format(action['object']['source']))
-                    modder.modify_object(action['action'], myobject)
+                    newobj = modder.modify_object(action['action'], myobject)
+                    spec[action['object']['key']] = newobj
                 elif action['action_type'] == 'modify_dict':
                     if action['dict']['source'] == 'fw_spec':
                         mydict = spec[action['dict']['key']]
