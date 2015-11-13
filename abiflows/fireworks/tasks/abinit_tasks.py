@@ -854,7 +854,9 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 for action in correction['actions']:
                     if action['object']['key'] == 'qtk_queueadapter':
                         queue_adapter_update = action['action']['_set']
-                        qtk_qadapter = QueueAdapter.from_dict(qtk_qadapter.as_dict().update(queue_adapter_update))
+                        qtk_qadapter_dict = qtk_qadapter.as_dict()
+                        qtk_qadapter_dict.update(queue_adapter_update)
+                        qtk_qadapter = QueueAdapter.from_dict(qtk_qadapter_dict)
 
         update_spec = None
         if 'previous_fws' in fw_spec:
