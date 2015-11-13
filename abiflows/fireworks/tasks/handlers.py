@@ -345,6 +345,13 @@ class UltimateMemoryHandler(MemoryHandler):
     def handler_priority(self):
         return self.PRIORITY_LAST
 
+    def check(self):
+        mem_check = super(UltimateMemoryHandler, self).check()
+        if mem_check:
+            raise ValueError('This error should have been caught by a standard MemoryHandler ...')
+        #TODO: Do we have some check that we can do here ?
+        return True
+
     def correct(self):
         if self.src_fw:
             if len(self.fw_to_check.tasks) > 1:
