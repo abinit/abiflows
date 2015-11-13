@@ -22,13 +22,12 @@ from collections import namedtuple, defaultdict
 from abiflows.fireworks.utils.task_history import TaskHistory
 from abiflows.fireworks.utils.fw_utils import links_dict_update
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
-from abiflows.fireworks.tasks.utility_tasks import SRC_TIMELIMIT_BUFFER
+from abiflows.fireworks.tasks.utility_tasks import SRC_TIMELIMIT_BUFFER, get_queue_adapter_update
 from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
 from pymatgen.io.abinit.qutils import time2slurm
-from pymatgen.io.abinit.qadapters import QueueAdapter
 from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder, MSONable
 from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
@@ -613,12 +612,15 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             check_task = check_fw.tasks[0]
             fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
             new_index = fw_task_index + 1
+            queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=fw_spec['qtk_queueadapter'],
+                                                            corrections=[])
             SRC_fws = createSRCFireworks(task_class=self.__class__, task_input=self.abiinput, SRC_spec=new_spec,
                                          initialization_info=fw_spec['initialization_info'],
                                          wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
                                          current_task_index=new_index,
                                          handlers=check_task.handlers, validators=check_task.validators,
-                                         deps=self.deps, task_type=self.task_type)
+                                         deps=self.deps, task_type=self.task_type,
+                                         queue_adapter_update=queue_adapter_update)
             wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
             return FWAction(detours=[wf])
 
@@ -837,6 +839,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         self.resolve_deps(fw_spec)
 
         optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        #TODO: handle the update of the queue adapter more cleanly ...
         if 'queue_adapter_update' in fw_spec:
             for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
                 if qa_key == 'timelimit':
@@ -847,16 +850,6 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     qtk_qadapter.set_master_mem_overhead(qa_val)
                 else:
                     raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
-        #TODO: handle the update of the queue adapter more cleanly ...
-        if 'SRC_check_corrections' in fw_spec:
-            corrections = fw_spec['SRC_check_corrections']
-            for correction in corrections:
-                for action in correction['actions']:
-                    if action['object']['key'] == 'qtk_queueadapter':
-                        queue_adapter_update = action['action']['_set']
-                        qtk_qadapter_dict = qtk_qadapter.as_dict()
-                        qtk_qadapter_dict.update(queue_adapter_update)
-                        qtk_qadapter = QueueAdapter.from_dict(qtk_qadapter_dict)
 
         update_spec = None
         if 'previous_fws' in fw_spec:

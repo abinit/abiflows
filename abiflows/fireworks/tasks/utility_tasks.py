@@ -44,7 +44,7 @@ def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf
         raise ValueError('wf_task_index_prefix should only contain letters')
     SRC_spec['wf_task_index_prefix'] = wf_task_index_prefix
 
-    # Remove any initial queue_adapter_update from the spec (when there is a restart, we do not want to override this!)
+    # Remove any initial queue_adapter_update from the spec
     SRC_spec.pop('queue_adapter_update', None)
     if queue_adapter_update is not None:
         SRC_spec['queue_adapter_update'] = queue_adapter_update
@@ -503,6 +503,8 @@ class CheckTask(FireTaskBase):
         #      ... to be discussed with Anubhav, when the qtk queueadapter is in a qtk toolkit and not anymore
         #          in pymatgen/io/abinit
         spec['_queueadapter'] = spec['qtk_queueadapter'].get_subs_dict()
+        queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=spec['qtk_queueadapter'],
+                                                        corrections=corrections)
 
         # Get and update the task_input if needed
         # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
@@ -520,7 +522,7 @@ class CheckTask(FireTaskBase):
                                      current_task_index=new_index,
                                      handlers=self.handlers, validators=self.validators,
                                      deps=deps,
-                                     task_type=mytask.task_type)
+                                     task_type=mytask.task_type, queue_adapter_update=queue_adapter_update)
         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
         return FWAction(detours=[wf])
 
@@ -557,3 +559,24 @@ def apply_corrections_to_spec(corrections, spec):
             else:
                 raise NotImplementedError('Action type "{}" not implemented in '
                                           'CheckTask'.format(action['action_type']))
+
+
+def get_queue_adapter_update(qtk_queueadapter, corrections, qa_params=None):
+    if qa_params is None:
+        qa_params = ['timelimit', 'mem_per_proc', 'master_mem_overhead']
+    queue_adapter_update = {}
+    for qa_param in qa_params:
+        if qa_param == 'timelimit':
+            queue_adapter_update[qa_param] = qtk_queueadapter.timelimit
+        elif qa_param == 'mem_per_proc':
+            queue_adapter_update[qa_param] = qtk_queueadapter.mem_per_proc
+        elif qa_param == 'master_mem_overhead':
+            queue_adapter_update[qa_param] = qtk_queueadapter.master_mem_overhead
+        else:
+            raise ValueError('Wrong queue adapter parameter for update')
+    for correction in corrections:
+        for action in correction['actions']:
+            if action['object']['key'] == 'qtk_queueadapter':
+                qa_update = action['action']['_set']
+                queue_adapter_update.update(qa_update)
+    return queue_adapter_update
