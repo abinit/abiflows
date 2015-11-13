@@ -62,6 +62,7 @@ def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf
     run_fw = Firework(run_task, spec=SRC_spec_run, name=SRC_spec_run['wf_task_index'])
     # Check memory firework
     SRC_spec_check = copy.deepcopy(SRC_spec)
+    SRC_spec_check = set_short_single_core_to_spec(SRC_spec_check)
     SRC_spec_check['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
     check_task = CheckTask(handlers=handlers, validators=validators)
     SRC_spec_check['_allow_fizzled_parents'] = True
