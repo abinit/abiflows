@@ -492,6 +492,8 @@ class CheckTask(FireTaskBase):
                 else:
                     raise NotImplementedError('Action type "{}" not implemented in '
                                               'CheckTask'.format(action['action_type']))
+        # Keep track of the corrections that have been applied
+        spec['SRC_check_corrections'] = corrections
 
         # Update the task index
         fws_task_index = int(fw_to_correct.spec['wf_task_index'].split('_')[-1])
@@ -532,3 +534,26 @@ def get_fw_task_manager(fw_spec):
     return ftm
 
 
+def apply_corrections_to_spec(corrections, spec):
+    modder = Modder()
+    for correction in corrections:
+        actions = correction['actions']
+        for action in actions:
+            if action['action_type'] == 'modify_object':
+                if action['object']['source'] == 'fw_spec':
+                    myobject = spec[action['object']['key']]
+                else:
+                    raise NotImplementedError('Object source "{}" not implemented in '
+                                              'CheckTask'.format(action['object']['source']))
+                newobj = modder.modify_object(action['action'], myobject)
+                spec[action['object']['key']] = newobj
+            elif action['action_type'] == 'modify_dict':
+                if action['dict']['source'] == 'fw_spec':
+                    mydict = spec[action['dict']['key']]
+                else:
+                    raise NotImplementedError('Dict source "{}" not implemented in '
+                                              'CheckTask'.format(action['dict']['source']))
+                modder.modify(action['action'], mydict)
+            else:
+                raise NotImplementedError('Action type "{}" not implemented in '
+                                          'CheckTask'.format(action['action_type']))

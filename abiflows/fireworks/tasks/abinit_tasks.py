@@ -28,6 +28,7 @@ from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
 from pymatgen.io.abinit.qutils import time2slurm
+from pymatgen.io.abinit.qadapters import QueueAdapter
 from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder, MSONable
 from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
@@ -836,7 +837,6 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         self.resolve_deps(fw_spec)
 
         optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
-        #TODO: handle the update of the queue adapter more cleanly ...
         if 'queue_adapter_update' in fw_spec:
             for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
                 if qa_key == 'timelimit':
@@ -847,6 +847,15 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     qtk_qadapter.set_master_mem_overhead(qa_val)
                 else:
                     raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
+        #TODO: handle the update of the queue adapter more cleanly ...
+        if 'SRC_check_corrections' in fw_spec:
+            corrections = fw_spec['SRC_check_corrections']
+            for correction in corrections:
+                for action in correction['actions']:
+                    if action['object']['key'] == 'qtk_queueadapter':
+                        queue_adapter_update = action['action']['_set']
+                        qtk_qadapter = QueueAdapter.from_dict(qtk_qadapter.as_dict().update(queue_adapter_update))
+
         update_spec = None
         if 'previous_fws' in fw_spec:
             update_spec ={'previous_fws': fw_spec['previous_fws']}
