@@ -640,7 +640,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             ddk_task_type = SRC_ddk_fws['run_fw'].tasks[0].task_type
             gen_task = GeneratePiezoElasticFlowFWTask(previous_scf_task_type=scf_task_type,
                                                       previous_ddk_task_type=ddk_task_type,
-                                                      handlers=None, validators=None,
+                                                      handlers=handlers, validators=validators,
                                                       mrgddb_task_type=rf_ddb_source_task_type)
             genrfstrains_spec = set_short_single_core_to_spec(spec)
             gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')

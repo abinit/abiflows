@@ -1942,9 +1942,9 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
 class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
     def __init__(self, piezo_elastic_factory=None, previous_scf_task_type=ScfFWTask.task_type,
                  previous_ddk_task_type=DdkTask.task_type,
-                 handlers=None, validators=None, mrgddb_task_type='mrgddb-strains'):
+                 handlers=None, validators=None, mrgddb_task_type='mrgddb-strains', rf_tol=None):
         if piezo_elastic_factory is None:
-            self.piezo_elastic_factory = PiezoElasticFromGsFactory()
+            self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=self.rf_tol, rf_split=True)
         else:
             self.piezo_elastic_factory = piezo_elastic_factory
         self.previous_scf_task_type = previous_scf_task_type
@@ -1952,6 +1952,7 @@ class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
         self.handlers = handlers
         self.validators = validators
         self.mrgddb_task_type = mrgddb_task_type
+        self.rf_tol = rf_tol
 
     def run_task(self, fw_spec):
         # Get the previous SCF input
@@ -1960,7 +1961,7 @@ class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
         if not previous_scf_input:
             raise InitializationError('No input file available '
                                       'from task of type {}'.format(self.previous_scf_task_type))
-        previous_scf_input = AbinitInput.from_dict(previous_scf_input)
+        #previous_scf_input = AbinitInput.from_dict(previous_scf_input)
 
         # # Get the previous DDK input
         # previous_ddk_input = fw_spec.get('previous_fws', {}).get(self.previous_ddk_task_type,
@@ -1969,6 +1970,17 @@ class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
         #     raise InitializationError('No input file available '
         #                               'from task of type {}'.format(self.previous_ddk_task_type))
         # previous_ddk_input = AbinitInput.from_dict(previous_ddk_input)
+
+        ftm = self.get_fw_task_manager(fw_spec)
+        tasks._USER_CONFIG_TASKMANAGER = ftm.task_manager
+        # if self.with_autoparal:
+        #     if not ftm.has_task_manager():
+        #         msg = 'No task manager available: autoparal could not be performed.'
+        #         logger.error(msg)
+        #         raise InitializationError(msg)
+        #
+        #     # inject task manager
+        #     tasks._USER_CONFIG_TASKMANAGER = ftm.task_manager
 
         # Get the strain RF inputs
         piezo_elastic_inputs = self.piezo_elastic_factory.build_input(previous_scf_input)
@@ -1985,11 +1997,13 @@ class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
         all_SRC_rf_fws = []
         total_list_fws = []
         fws_deps = {}
+        rf_strain_handlers = self.handlers['_all'] if self.handlers is not None else []
+        rf_strain_validators = self.validators['_all'] if self.validators is not None else []
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
             SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_strain_input, SRC_spec=new_spec,
                                             initialization_info=initialization_info,
-                                            wf_task_index_prefix='rfstrains-pert-{-d}'.format(istrain_pert+1),
-                                            handlers=self.handlers['_all'], validators=self.validators['_all'],
+                                            wf_task_index_prefix='rfstrains-pert-{:d}'.format(istrain_pert+1),
+                                            handlers=rf_strain_handlers, validators=rf_strain_validators,
                                             deps={self.previous_scf_task_type: 'WFK',
                                                   self.previous_ddk_task_type: 'DDK'},
                                             queue_adapter_update=queue_adapter_update)

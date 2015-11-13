@@ -40,8 +40,13 @@ def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf
     SRC_spec['initialization_info'] = initialization_info
     SRC_spec['_add_launchpad_and_fw_id'] = True
     SRC_spec['SRCScheme'] = True
-    if not wf_task_index_prefix.isalpha():
-        raise ValueError('wf_task_index_prefix should only contain letters')
+    prefix_allowed_chars = ['-']
+    prefix_test_string = str(wf_task_index_prefix)
+    for allowed_char in prefix_allowed_chars:
+        prefix_test_string = prefix_test_string.replace(allowed_char, "")
+    if not prefix_test_string.isalnum():
+        raise ValueError('wf_task_index_prefix should only contain letters '
+                         'and the following characters : {}'.format(prefix_test_string))
     SRC_spec['wf_task_index_prefix'] = wf_task_index_prefix
 
     # Remove any initial queue_adapter_update from the spec
