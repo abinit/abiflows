@@ -636,11 +636,14 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         #4. Response-Function calculation(s) of the elastic constants
         if rf_split:
             rf_ddb_source_task_type = 'mrgddb-strains'
-            gen_task = GeneratePiezoElasticFlowFWTask(previous_scf_task_type=ScfFWTask.task_type,
-                                                      previous_ddk_task_type=DdkTask.task_type,
+            scf_task_type = SRC_scf_ibz_fws['run_fw'].tasks[0].task_type
+            ddk_task_type = SRC_ddk_fws['run_fw'].tasks[0].task_type
+            gen_task = GeneratePiezoElasticFlowFWTask(previous_scf_task_type=scf_task_type,
+                                                      previous_ddk_task_type=ddk_task_type,
                                                       handlers=None, validators=None,
                                                       mrgddb_task_type=rf_ddb_source_task_type)
-            gen_fw = Firework([gen_task], spec=spec, name='gen-piezo-elast')
+            genrfstrains_spec = set_short_single_core_to_spec(spec)
+            gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
             fws.append(gen_fw)
             links_dict_update(links_dict=links_dict,
                               links_update={SRC_scf_ibz_fws['check_fw'].fw_id: gen_fw.fw_id,
