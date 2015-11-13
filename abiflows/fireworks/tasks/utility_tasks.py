@@ -11,6 +11,7 @@ from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 
+import copy
 import os
 import shutil
 import logging
@@ -31,37 +32,40 @@ SRC_TIMELIMIT_BUFFER = 120
 
 
 #TODO: make it possible to use "any" task and in particular, MergeDdbTask, AnaDdbTask, ...
-# within the SRC scheme (to be rationalized)
-def createSRCFireworks(task_class, task_input, spec, initialization_info, wf_task_index_prefix, current_task_index=1,
+# within the SRC scheme (to be rationalized), as well as Task not related to abinit ...
+def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf_task_index_prefix, current_task_index=1,
                        handlers=None, validators=None,
                        deps=None, task_type=None, queue_adapter_update=None):
-    spec = dict(spec)
-    spec['initialization_info'] = initialization_info
-    spec['_add_launchpad_and_fw_id'] = True
-    spec['SRCScheme'] = True
+    SRC_spec = copy.deepcopy(SRC_spec)
+    SRC_spec['initialization_info'] = initialization_info
+    SRC_spec['_add_launchpad_and_fw_id'] = True
+    SRC_spec['SRCScheme'] = True
     if not wf_task_index_prefix.isalpha():
         raise ValueError('wf_task_index_prefix should only contain letters')
-    spec['wf_task_index_prefix'] = wf_task_index_prefix
+    SRC_spec['wf_task_index_prefix'] = wf_task_index_prefix
 
     # Remove any initial queue_adapter_update from the spec (when there is a restart, we do not want to override this!)
-    spec.pop('queue_adapter_update', None)
+    SRC_spec.pop('queue_adapter_update', None)
     if queue_adapter_update is not None:
-        spec['queue_adapter_update'] = queue_adapter_update
+        SRC_spec['queue_adapter_update'] = queue_adapter_update
 
     # Setup (Autoparal) run
-    spec = set_short_single_core_to_spec(spec)
-    spec['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
+    SRC_spec_setup = copy.deepcopy(SRC_spec)
+    SRC_spec_setup = set_short_single_core_to_spec(SRC_spec_setup)
+    SRC_spec_setup['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
     setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
-    setup_fw = Firework(setup_task, spec=spec, name=spec['wf_task_index'])
+    setup_fw = Firework(setup_task, spec=SRC_spec_setup, name=SRC_spec_setup['wf_task_index'])
     # Actual run of simulation
-    spec['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
+    SRC_spec_run = copy.deepcopy(SRC_spec)
+    SRC_spec_run['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
     run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
-    run_fw = Firework(run_task, spec=spec, name=spec['wf_task_index'])
+    run_fw = Firework(run_task, spec=SRC_spec_run, name=SRC_spec_run['wf_task_index'])
     # Check memory firework
-    spec['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
+    SRC_spec_check = copy.deepcopy(SRC_spec)
+    SRC_spec_check['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
     check_task = CheckTask(handlers=handlers, validators=validators)
-    spec['_allow_fizzled_parents'] = True
-    check_fw = Firework(check_task, spec=spec, name=spec['wf_task_index'])
+    SRC_spec_check['_allow_fizzled_parents'] = True
+    check_fw = Firework(check_task, spec=SRC_spec_check, name=SRC_spec_check['wf_task_index'])
     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
                   run_fw.fw_id: [check_fw.fw_id]}
     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
@@ -412,6 +416,10 @@ class CheckTask(FireTaskBase):
                     if handler.skip_remaining_handlers:
                         break
 
+            # In case of a fizzled parent, at least one correction is needed !
+            if len(corrections) == 0:
+                raise RuntimeError('No corrections found for fizzled firework ...')
+
             # Apply the corrections
             fw_action = self.apply_corrections(fw_to_correct=fizzled_fw, corrections=corrections)
             return fw_action
@@ -502,7 +510,7 @@ class CheckTask(FireTaskBase):
         deps = mytask.deps
 
         # Create the new Setup/Run/Check fireworks
-        SRC_fws = createSRCFireworks(task_class=task_class, task_input=task_input, spec=spec,
+        SRC_fws = createSRCFireworks(task_class=task_class, task_input=task_input, SRC_spec=spec,
                                      initialization_info=initialization_info,
                                      wf_task_index_prefix=spec['wf_task_index_prefix'],
                                      current_task_index=new_index,

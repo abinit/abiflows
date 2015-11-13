@@ -401,7 +401,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 mytimelimit = fw_spec['qtk_queueadapter'].timelimit-SRC_TIMELIMIT_BUFFER
                 if mytimelimit < 120:
                     raise ValueError('Abinit timelimit less than 2 min. Probably wrong queue/job configuration')
-                command.append(['--timelimit', time2slurm(mytimelimit)])
+                command.extend(['--timelimit', time2slurm(mytimelimit)])
             with open(self.files_file.path, 'r') as stdin, open(self.log_file.path, 'w') as stdout, \
                     open(self.stderr_file.path, 'w') as stderr:
                 self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -612,7 +612,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             check_task = check_fw.tasks[0]
             fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
             new_index = fw_task_index + 1
-            SRC_fws = createSRCFireworks(task_class=self.__class__, task_input=self.abiinput, spec=new_spec,
+            SRC_fws = createSRCFireworks(task_class=self.__class__, task_input=self.abiinput, SRC_spec=new_spec,
                                          initialization_info=fw_spec['initialization_info'],
                                          wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
                                          current_task_index=new_index,
@@ -1982,7 +1982,7 @@ class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
         total_list_fws = []
         fws_deps = {}
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
-            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_strain_input, spec=new_spec,
+            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_strain_input, SRC_spec=new_spec,
                                             initialization_info=initialization_info,
                                             wf_task_index_prefix='rfstrains-pert-{-d}'.format(istrain_pert+1),
                                             handlers=self.handlers['_all'], validators=self.validators['_all'],

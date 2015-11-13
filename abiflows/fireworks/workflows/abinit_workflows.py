@@ -296,13 +296,13 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
         else:
             queue_adapter_update = None
 
-        SRC_ion_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ion_input, spec=spec,
+        SRC_ion_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ion_input, SRC_spec=spec,
                                          initialization_info=initialization_info,
                                          wf_task_index_prefix='ion', queue_adapter_update=queue_adapter_update)
         fws.extend(SRC_ion_fws['fws'])
         links_dict.update(SRC_ion_fws['links_dict'])
 
-        SRC_ioncell_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ioncell_input, spec=spec,
+        SRC_ioncell_fws = createSRCFireworks(task_class=RelaxFWTask, task_input=ioncell_input, SRC_spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='ioncell',
                                              deps={SRC_ion_fws['run_fw'].tasks[0].task_type: '@structure'},
@@ -593,7 +593,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             validators = {'_all': validators}
 
         #1. First SCF run in the irreducible Brillouin Zone
-        SRC_scf_ibz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, spec=spec,
+        SRC_scf_ibz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_ibz, SRC_spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='scfibz', task_type='scfibz',
                                              handlers=handlers['_all'], validators=validators['_all'],
@@ -605,7 +605,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         #2nd derivative DDB's from the DFPT RF run
         scf_inp_fbz = scf_inp_ibz.deepcopy()
         scf_inp_fbz['kptopt'] = 2
-        SRC_scf_fbz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, spec=spec,
+        SRC_scf_fbz_fws = createSRCFireworks(task_class=ScfFWTask, task_input=scf_inp_fbz, SRC_spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='scffbz', task_type='scffbz',
                                              handlers=handlers['_all'], validators=validators['_all'],
@@ -621,7 +621,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         if ddk_split:
             raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
         else:
-            SRC_ddk_fws = createSRCFireworks(task_class=DdkTask, task_input=ddk_inp, spec=spec,
+            SRC_ddk_fws = createSRCFireworks(task_class=DdkTask, task_input=ddk_inp, SRC_spec=spec,
                                              initialization_info=initialization_info,
                                              wf_task_index_prefix='ddk',
                                              handlers=handlers['_all'], validators=validators['_all'],
@@ -647,7 +647,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                                             SRC_ddk_fws['check_fw'].fw_id: gen_fw.fw_id})
             rf_ddb_src_fw = gen_fw
         else:
-            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_inp, spec=spec,
+            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_inp, SRC_spec=spec,
                                             initialization_info=initialization_info,
                                             wf_task_index_prefix='rf',
                                             handlers=handlers['_all'], validators=validators['_all'],
