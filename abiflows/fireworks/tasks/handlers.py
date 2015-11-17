@@ -40,12 +40,15 @@ class WalltimeHandler(SRCErrorHandler):
         self.qout_file = qout_file
         self.qerr_file = qerr_file
         self.queue_adapter = queue_adapter
-        self.qout_filepath = os.path.join(job_rundir, qout_file)
-        self.qerr_filepath = os.path.join(job_rundir, qerr_file)
+        self.setup_filepaths()
         self.max_timelimit = max_timelimit
         self.timelimit_increase = timelimit_increase
 
         self.src_fw = False
+
+    def setup_filepaths(self):
+        self.qout_filepath = os.path.join(self.job_rundir, self.qout_file)
+        self.qerr_filepath = os.path.join(self.job_rundir, self.qerr_file)
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
@@ -87,6 +90,7 @@ class WalltimeHandler(SRCErrorHandler):
         else:
             self.src_fw = False
         self.job_rundir = self.fw_to_check.launches[-1].launch_dir
+        self.setup_filepaths()
         self.queue_adapter = self.fw_to_check.spec['qtk_queueadapter']
 
     def check(self):
@@ -190,14 +194,17 @@ class MemoryHandler(SRCErrorHandler):
         self.qout_file = qout_file
         self.qerr_file = qerr_file
         self.queue_adapter = queue_adapter
-        self.qout_filepath = os.path.join(job_rundir, qout_file)
-        self.qerr_filepath = os.path.join(job_rundir, qerr_file)
+        self.setup_filepaths()
         self.max_mem_per_proc_mb = max_mem_per_proc_mb
         self.mem_per_proc_increase_mb = mem_per_proc_increase_mb
         self.max_master_mem_overhead_mb = max_master_mem_overhead_mb
         self.master_mem_overhead_increase_mb = master_mem_overhead_increase_mb
 
         self.src_fw = False
+
+    def setup_filepaths(self):
+        self.qout_filepath = os.path.join(self.job_rundir, self.qout_file)
+        self.qerr_filepath = os.path.join(self.job_rundir, self.qerr_file)
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
@@ -243,6 +250,7 @@ class MemoryHandler(SRCErrorHandler):
         else:
             self.src_fw = False
         self.job_rundir = self.fw_to_check.launches[-1].launch_dir
+        self.setup_filepaths()
         self.queue_adapter = self.fw_to_check.spec['qtk_queueadapter']
 
     def check(self):

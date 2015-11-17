@@ -513,10 +513,11 @@ class CheckTask(FireTaskBase):
 
         # Get and update the task_input if needed
         # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
-        #       to abinit
+        #       to abinit due to abiinput, deps, ...
         mytask = fw_to_correct.tasks[0]
         task_class = mytask.__class__
-        task_input = AbinitInput.from_dict(fw_to_correct.spec['_tasks'][0]['abiinput'])
+        decoder = MontyDecoder()
+        task_input = decoder.process_decoded(fw_to_correct.spec['_tasks'][0]['abiinput'])
         initialization_info = fw_to_correct.spec['initialization_info']
         deps = mytask.deps
 
