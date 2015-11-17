@@ -1950,7 +1950,7 @@ class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
                  previous_ddk_task_type=DdkTask.task_type,
                  handlers=None, validators=None, mrgddb_task_type='mrgddb-strains', rf_tol=None):
         if piezo_elastic_factory is None:
-            self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=self.rf_tol, rf_split=True)
+            self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
         else:
             self.piezo_elastic_factory = piezo_elastic_factory
         self.previous_scf_task_type = previous_scf_task_type
