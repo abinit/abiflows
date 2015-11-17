@@ -496,6 +496,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 if not_ok:
                     self.history.log_unconverged()
                     # hook
+                    if self.use_SRC_scheme:
+                        return self.prepare_restart(fw_spec)
                     local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec)
                     num_restarts = self.restart_info.num_restarts if self.restart_info else 0
                     if num_restarts < self.ftm.fw_policy.max_restarts:
@@ -515,6 +517,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     if unconverged_params:
                         self.history.log_converge_params(unconverged_params, self.abiinput)
                         self.abiinput.set_vars(**unconverged_params)
+                        if self.use_SRC_scheme:
+                            return self.prepare_restart(fw_spec, reset=reset_restart)
                         local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec, reset=reset_restart)
                         num_restarts = self.restart_info.num_restarts if self.restart_info else 0
                         if num_restarts < self.ftm.fw_policy.max_restarts:
@@ -546,6 +550,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 # ABINIT errors, try to handle them
                 fixed, reset = self.fix_abicritical(fw_spec)
                 if fixed:
+                    if self.use_SRC_scheme:
+                        return self.prepare_restart(fw_spec, reset=reset)
                     local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec, reset=reset)
                     if local_restart:
                         return None
