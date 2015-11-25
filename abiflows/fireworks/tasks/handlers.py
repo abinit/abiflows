@@ -16,6 +16,100 @@ import os
 logger = logging.getLogger(__name__)
 
 
+class AbinitHandler(SRCErrorHandler):
+    """
+    General handler for abinit's critical events handlers.
+    """
+
+    def __init__(self, job_rundir='.'):
+        """
+        Initializes the handler with the directory where the job was run.
+
+        Args:
+            job_rundir: Directory where the job was run.
+        """
+        super(AbinitHandler, self).__init__()
+        self.job_rundir = job_rundir
+
+        self.src_fw = False
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'job_rundir': self.job_rundir
+                }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(job_rundir=d['job_rundir'])
+
+    @property
+    def allow_fizzled(self):
+        return False
+
+    @property
+    def allow_completed(self):
+        return True
+
+    @property
+    def handler_priority(self):
+        return self.PRIORITY_MEDIUM
+
+    @property
+    def skip_remaining_handlers(self):
+        return True
+
+    def setup(self):
+        if 'SRCScheme' in self.fw_to_check.spec and self.fw_to_check.spec['SRCScheme']:
+            self.src_fw = True
+        else:
+            self.src_fw = False
+        self.job_rundir = self.fw_to_check.launches[-1].launch_dir
+
+    def check(self):
+        abinit_task = self.fw_to_check.tasks[0]
+        self.report = None
+        try:
+            self.report = abinit_task.get_event_report()
+        except Exception as exc:
+            msg = "%s exception while parsing event_report:\n%s" % (self, exc)
+            logger.critical(msg)
+
+        if self.report is not None:
+            # Run has completed, check for critical events (convergence, ...)
+            if self.report.run_completed:
+                self.events = self.report.filter_types(abinit_task.CRITICAL_EVENTS)
+                if self.events:
+                    return True
+                else:
+                    # Calculation has converged
+                    # Check if there are custom parameters that should be converged
+                    unconverged_params, reset_restart = abinit_task.check_parameters_convergence(self.fw_to_check.spec)
+                    if unconverged_params:
+                        return True
+                    else:
+                        return False
+            # Abinit run failed to complete
+            # Check if the errors can be handled
+            if self.report.errors:
+                return True
+        return True
+
+    def has_corrections(self):
+        return True
+
+    def correct(self):
+        if self.src_fw:
+            if len(self.fw_to_check.tasks) > 1:
+                raise ValueError('More than 1 task found in fizzled firework, not yet supported')
+            # return {'errors': [self.__class__.__name__],
+            #         'actions': [{'action_type': 'modify_object',
+            #                      'object': {'source': 'fw_spec', 'key': 'qtk_queueadapter'},
+            #                      'action': {'_set': queue_adapter_update}}]}
+        else:
+            raise NotImplementedError('This handler cannot be used without the SRC scheme')
+
+
 class WalltimeHandler(SRCErrorHandler):
     """
     Handler for walltime infringements of the resource manager.
@@ -163,6 +257,9 @@ class WalltimeHandler(SRCErrorHandler):
                                  'action': {'_set': queue_adapter_update}}]}
         else:
             raise NotImplementedError('This handler cannot be used without the SRC scheme')
+
+    def has_corrections(self):
+        return True
 
 
 class MemoryHandler(SRCErrorHandler):
@@ -322,6 +419,9 @@ class MemoryHandler(SRCErrorHandler):
                                  'action': {'_set': queue_adapter_update}}]}
         else:
             raise NotImplementedError('This handler cannot be used without the SRC scheme')
+
+    def has_corrections(self):
+        return True
 
 
 class UltimateMemoryHandler(MemoryHandler):

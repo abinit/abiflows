@@ -2,6 +2,8 @@ import abc
 from custodian.custodian import ErrorHandler, Validator
 
 
+#TODO: do we stick to custodian's ErrorHandler/Validator inheritance ??
+
 class SRCErrorHandler(ErrorHandler):
 
     HANDLER_PRIORITIES = {'PRIORITY_FIRST': 0,
@@ -63,6 +65,59 @@ class SRCErrorHandler(ErrorHandler):
     def allow_completed(self):
         pass
 
+    @abc.abstractmethod
+    def has_corrections(self):
+        pass
+
+
+class MonitoringSRCErrorHandler(ErrorHandler):
+
+    HANDLER_PRIORITIES = {'PRIORITY_FIRST': 0,
+                          'PRIORITY_VERY_HIGH': 1,
+                          'PRIORITY_HIGH': 2,
+                          'PRIORITY_MEDIUM': 3,
+                          'PRIORITY_LOW': 4,
+                          'PRIORITY_VERY_LOW': 5,
+                          'PRIORITY_LAST': 6}
+    PRIORITY_FIRST = HANDLER_PRIORITIES['PRIORITY_FIRST']
+    PRIORITY_VERY_HIGH = HANDLER_PRIORITIES['PRIORITY_VERY_HIGH']
+    PRIORITY_HIGH = HANDLER_PRIORITIES['PRIORITY_HIGH']
+    PRIORITY_MEDIUM = HANDLER_PRIORITIES['PRIORITY_MEDIUM']
+    PRIORITY_LOW = HANDLER_PRIORITIES['PRIORITY_LOW']
+    PRIORITY_VERY_LOW = HANDLER_PRIORITIES['PRIORITY_VERY_LOW']
+    PRIORITY_LAST = HANDLER_PRIORITIES['PRIORITY_LAST']
+
+    @abc.abstractmethod
+    def as_dict(self):
+        pass
+
+    @abc.abstractmethod
+    def from_dict(cls, d):
+        pass
+
+    @abc.abstractproperty
+    def handler_priority(self):
+        pass
+
+    @property
+    def skip_remaining_handlers(self):
+        return False
+
 
 class SRCValidator(Validator):
+
+    HANDLER_PRIORITIES = {'PRIORITY_FIRST': 0,
+                          'PRIORITY_VERY_HIGH': 1,
+                          'PRIORITY_HIGH': 2,
+                          'PRIORITY_MEDIUM': 3,
+                          'PRIORITY_LOW': 4,
+                          'PRIORITY_VERY_LOW': 5,
+                          'PRIORITY_LAST': 6}
+    PRIORITY_FIRST = HANDLER_PRIORITIES['PRIORITY_FIRST']
+    PRIORITY_VERY_HIGH = HANDLER_PRIORITIES['PRIORITY_VERY_HIGH']
+    PRIORITY_HIGH = HANDLER_PRIORITIES['PRIORITY_HIGH']
+    PRIORITY_MEDIUM = HANDLER_PRIORITIES['PRIORITY_MEDIUM']
+    PRIORITY_LOW = HANDLER_PRIORITIES['PRIORITY_LOW']
+    PRIORITY_VERY_LOW = HANDLER_PRIORITIES['PRIORITY_VERY_LOW']
+    PRIORITY_LAST = HANDLER_PRIORITIES['PRIORITY_LAST']
     pass

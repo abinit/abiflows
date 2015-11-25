@@ -19,9 +19,9 @@ from fireworks.core.launchpad import LaunchPad
 from monty.serialization import loadfn
 
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask
-from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWTask
-from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWTask
-from abiflows.fireworks.tasks.abinit_tasks import AnaDdbTask, StrainPertTask, DdkTask, MergeDdbTask
+from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
+from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask
+from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTask, DdkTask, MergeDdbAbinitTask
 from abiflows.fireworks.tasks.handlers import MemoryHandler, WalltimeHandler
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask
 from abiflows.fireworks.tasks.utility_tasks import createSRCFireworks
@@ -31,38 +31,6 @@ from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 # logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
-
-
-
-
-# class SRCWorkflowMixin(object):
-#
-#
-#     def SRCFireworks(self, task_class, task_input, spec, initialization_info, wf_task_index_prefix):
-#         spec = dict(spec)
-#         start_task_index = 1
-#         spec['initialization_info'] = initialization_info
-#         spec['_add_launchpad_and_fw_id'] = True
-#         spec['SRCScheme'] = True
-#
-#         # Setup (Autoparal) run
-#         spec = self.set_short_single_core_to_spec(spec)
-#         spec['wf_task_index'] = 'autoparal_' + wf_task_index_prefix + str(start_task_index)
-#         autoparal_task = task_class(task_input, is_autoparal=True)
-#         autoparal_fw = Firework(autoparal_task, spec=spec)
-#         # Actual run of simulation
-#         spec['wf_task_index'] = wf_task_index_prefix + str(start_task_index)
-#         run_task = task_class(task_input, is_autoparal=False)
-#         run_fw = Firework(run_task, spec=spec)
-#         # Check memory firework
-#         spec['wf_task_index'] = 'check_' + wf_task_index_prefix + str(start_task_index)
-#         check_task = CheckMemoryTask()
-#         spec['_allow_fizzled_parents'] = True
-#         check_fw = Firework(check_task, spec=spec)
-#         links_dict = {autoparal_fw: [run_fw],
-#                       run_fw: [check_fw]}
-#         return {'setup_fw': autoparal_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
-#                 'fws': [autoparal_fw, run_fw, check_fw]}
 
 
 
@@ -115,7 +83,7 @@ class AbstractFWWorkflow(Workflow):
 
     def add_anaddb_task(self, structure):
         spec = self.set_short_single_core_to_spec()
-        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure))
+        anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure))
         anaddb_fw = Firework([anaddb_task],
                              spec=spec,
                              name='anaddb')
@@ -438,8 +406,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
-        ph_generation_task = GeneratePhononFlowFWTask(phonon_factory, previous_task_type=scf_task.task_type,
-                                                      with_autoparal=autoparal)
+        ph_generation_task = GeneratePhononFlowFWAbinitTask(phonon_factory, previous_task_type=scf_task.task_type,
+                                                            with_autoparal=autoparal)
 
         spec['wf_task_index'] = 'gen_ph'
 
@@ -507,7 +475,7 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
     def add_anaddb_task(self, structure):
         spec = self.set_short_single_core_to_spec()
-        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure))
+        anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure))
         anaddb_fw = Firework([anaddb_task],
                              spec=spec,
                              name='anaddb')
@@ -516,7 +484,7 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
     def add_mrgddb_task(self, structure):
         spec = self.set_short_single_core_to_spec()
         spec['ddb_files_task_types'] = ['scf', 'strain_pert']
-        mrgddb_task = MergeDdbTask()
+        mrgddb_task = MergeDdbAbinitTask()
         mrgddb_fw = Firework([mrgddb_task], spec=spec, name='mrgddb')
         append_fw_to_wf(mrgddb_fw, self.wf)
 
@@ -638,10 +606,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             rf_ddb_source_task_type = 'mrgddb-strains'
             scf_task_type = SRC_scf_ibz_fws['run_fw'].tasks[0].task_type
             ddk_task_type = SRC_ddk_fws['run_fw'].tasks[0].task_type
-            gen_task = GeneratePiezoElasticFlowFWTask(previous_scf_task_type=scf_task_type,
-                                                      previous_ddk_task_type=ddk_task_type,
-                                                      handlers=handlers, validators=validators,
-                                                      mrgddb_task_type=rf_ddb_source_task_type)
+            gen_task = GeneratePiezoElasticFlowFWAbinitTask(previous_scf_task_type=scf_task_type,
+                                                            previous_ddk_task_type=ddk_task_type,
+                                                            handlers=handlers, validators=validators,
+                                                            mrgddb_task_type=rf_ddb_source_task_type)
             genrfstrains_spec = set_short_single_core_to_spec(spec)
             gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
             fws.append(gen_fw)
@@ -669,9 +637,9 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
         # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
         # stress-corrected elastic constants)
-        mrgddb_task = MergeDdbTask(ddb_source_task_types=[rf_ddb_source_task_type,
-                                                          SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
-                                   delete_source_ddbs=False, num_ddbs=2)
+        mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
+                                                                SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
+                                         delete_source_ddbs=False, num_ddbs=2)
         mrgddb_spec = set_short_single_core_to_spec(spec)
         mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
         fws.append(mrgddb_fw)
@@ -682,10 +650,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
         anaddb_tag = 'anaddb-piezo-elast'
         spec = set_short_single_core_to_spec(spec)
-        anaddb_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                           stress_correction=False),
-                                 deps={rf_ddb_source_task_type: ['DDB']},
-                                 task_type=anaddb_tag)
+        anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                 stress_correction=False),
+                                       deps={rf_ddb_source_task_type: ['DDB']},
+                                       task_type=anaddb_tag)
         anaddb_fw = Firework([anaddb_task],
                              spec=spec,
                              name=anaddb_tag)
@@ -696,10 +664,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
         anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
         spec = set_short_single_core_to_spec(spec)
-        anaddb_stress_task = AnaDdbTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                                  stress_correction=True),
-                                        deps={mrgddb_task.task_type: ['DDB']},
-                                        task_type=anaddb_tag)
+        anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                        stress_correction=True),
+                                              deps={mrgddb_task.task_type: ['DDB']},
+                                              task_type=anaddb_tag)
         anaddb_stress_fw = Firework([anaddb_stress_task],
                                     spec=spec,
                                     name=anaddb_tag)

@@ -49,7 +49,17 @@ logger = logging.getLogger(__name__)
 
 # files and folders names
 
-class BasicTaskMixin(object):
+#
+# class SRCTask(FireTaskBase):
+#
+#     def setupSRC(self):
+#         pass
+#
+#     def checkSRC(self):
+#         pass
+
+
+class BasicAbinitTaskMixin(object):
     task_type = ""
 
     @serialize_fw
@@ -227,7 +237,7 @@ class BasicTaskMixin(object):
 
 
 @explicit_serialize
-class AbiFireTask(BasicTaskMixin, FireTaskBase):
+class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
 
     # List of `AbinitEvent` subclasses that are tested in the check_status method.
     # Subclasses should provide their own list if they need to check the converge status.
@@ -798,28 +808,54 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 self.history = TaskHistory.from_dict(exception_details['history'])
 
     def run_task(self, fw_spec):
-        try:
-            self.setup_task(fw_spec)
-            if self.use_SRC_scheme and self.is_autoparal:
-                return self.setupSRC(fw_spec=fw_spec)
-            elif self.is_autoparal:
-                return self.autoparal(fw_spec)
-            else:
-                # loop to allow local restart
-                while True:
-                    self.config_run(fw_spec)
-                    self.run_abinit(fw_spec)
-                    action = self.task_analysis(fw_spec)
-                    if action:
+        if self.use_SRC_scheme:
+            try:
+                self.setup_task(fw_spec)
+                if self.is_autoparal:
+                    return self.setupSRC(fw_spec=fw_spec)
+                else:
+                    # loop to allow local restart
+                    while True:
+                        self.config_run(fw_spec)
+                        self.run_abinit(fw_spec)
+                        #SHOULD GET BACK OUTPUT_FILE, LOG_FILE, MPIABORT_FILE IN THE CHECK TASK
+                        #WHAT TO DO WITH self.CRITICAL_EVENTS => in checktask
+                        #WHAT TO DO WITH self.history => in checktask
+                        #WHAT TO DO WITH RestartInfo ? => in checktask ...
+                        action = FWAction(mod_spec={'_set': {'SRC_run_info': {'output_file'}}})
                         return action
-        except BaseException as exc:
-            # log the error in history and reraise
-            self.history.log_error(exc)
-            raise
-        finally:
-            # Always dump the history for automatic parsing of the folders
-            with open(HISTORY_JSON, "w") as f:
-                json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
+                        # action = self.task_analysis(fw_spec)
+                        # if action:
+                        #     return action
+            except BaseException as exc:
+                # log the error in history and reraise
+                self.history.log_error(exc)
+                raise
+            finally:
+                # Always dump the history for automatic parsing of the folders
+                with open(HISTORY_JSON, "w") as f:
+                    json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
+        else:
+            try:
+                self.setup_task(fw_spec)
+                if self.is_autoparal:
+                    return self.autoparal(fw_spec)
+                else:
+                    # loop to allow local restart
+                    while True:
+                        self.config_run(fw_spec)
+                        self.run_abinit(fw_spec)
+                        action = self.task_analysis(fw_spec)
+                        if action:
+                            return action
+            except BaseException as exc:
+                # log the error in history and reraise
+                self.history.log_error(exc)
+                raise
+            finally:
+                # Always dump the history for automatic parsing of the folders
+                with open(HISTORY_JSON, "w") as f:
+                    json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
 
     def restart(self):
         """
@@ -1361,7 +1397,7 @@ class RelaxDilatmxFWTask(RelaxFWTask):
 
 
 @explicit_serialize
-class MergeDdbTask(BasicTaskMixin, FireTaskBase):
+class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     task_type = "mrgddb"
 
     #TODO: make it possible to use "any" task and in particular, this MergeDdbTask for the SRC
@@ -1495,7 +1531,7 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
 
 @explicit_serialize
-class AnaDdbTask(BasicTaskMixin, FireTaskBase):
+class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     task_type = "anaddb"
 
     def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
@@ -1804,7 +1840,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 ##############################
 
 @explicit_serialize
-class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
+class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
         self.phonon_factory = phonon_factory
         self.previous_task_type = previous_task_type
@@ -1916,7 +1952,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         #TODO improve the handling of the priorities
         mrgddb_spec['_priority'] = 10
         num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
-        mrgddb_fw = Firework(MergeDdbTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
+        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
                              name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
 
         fws_deps = {}
@@ -1945,7 +1981,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
 
 
 @explicit_serialize
-class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
+class GeneratePiezoElasticFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     def __init__(self, piezo_elastic_factory=None, previous_scf_task_type=ScfFWTask.task_type,
                  previous_ddk_task_type=DdkTask.task_type,
                  handlers=None, validators=None, mrgddb_task_type='mrgddb-strains', rf_tol=None):
@@ -2024,8 +2060,8 @@ class GeneratePiezoElasticFlowFWTask(BasicTaskMixin, FireTaskBase):
         mrgddb_spec = set_short_single_core_to_spec(mrgddb_spec)
         mrgddb_spec['_priority'] = 10
         num_ddbs_to_be_merged = len(all_SRC_rf_fws)
-        mrgddb_fw = Firework(MergeDdbTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=True,
-                                          task_type= self.mrgddb_task_type),
+        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=True,
+                                                task_type= self.mrgddb_task_type),
                              spec=mrgddb_spec,
                              name=mrgddb_spec['wf_task_index'])
         total_list_fws.append(mrgddb_fw)
