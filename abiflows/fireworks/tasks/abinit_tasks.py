@@ -236,6 +236,11 @@ class BasicAbinitTaskMixin(object):
     del Prefix, pj
 
 
+# class AbiSetupTask(SetupTask):
+# class AbiRunTask(RunTask):
+# class AbiCheckTask(CheckTask):
+
+
 @explicit_serialize
 class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
 

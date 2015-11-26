@@ -21,7 +21,7 @@ class AbinitHandler(SRCErrorHandler):
     General handler for abinit's critical events handlers.
     """
 
-    def __init__(self, job_rundir='.'):
+    def __init__(self, job_rundir='.', critical_events=None):
         """
         Initializes the handler with the directory where the job was run.
 

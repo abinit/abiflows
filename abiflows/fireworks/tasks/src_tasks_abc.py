@@ -401,7 +401,7 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
         return FWAction(detours=[wf])
 
 
-def createSRCFireworks(setup_task, run_task, handlers=None, validators=None, spec=None, initialization_info=None,
+def createSRCFireworks(setup_task, run_task, check_task, spec=None, initialization_info=None,
                        task_index=None, deps=None):
     spec = copy.deepcopy(spec)
     if task_index is not None:
