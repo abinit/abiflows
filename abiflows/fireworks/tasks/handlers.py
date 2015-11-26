@@ -30,6 +30,7 @@ class AbinitHandler(SRCErrorHandler):
         """
         super(AbinitHandler, self).__init__()
         self.job_rundir = job_rundir
+        self.critical_events = critical_events
 
         self.src_fw = False
 
