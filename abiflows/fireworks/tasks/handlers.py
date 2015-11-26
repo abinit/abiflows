@@ -103,10 +103,11 @@ class AbinitHandler(SRCErrorHandler):
         if self.src_fw:
             if len(self.fw_to_check.tasks) > 1:
                 raise ValueError('More than 1 task found in fizzled firework, not yet supported')
-            # return {'errors': [self.__class__.__name__],
-            #         'actions': [{'action_type': 'modify_object',
-            #                      'object': {'source': 'fw_spec', 'key': 'qtk_queueadapter'},
-            #                      'action': {'_set': queue_adapter_update}}]}
+            abinit_input_update = {'iscf': 2}
+            return {'errors': [self.__class__.__name__],
+                    'actions': [{'action_type': 'modify_object',
+                                 'object': {'source': 'fw_spec', 'key': 'abinit_input'},
+                                 'action': {'_set': abinit_input_update}}]}
         else:
             raise NotImplementedError('This handler cannot be used without the SRC scheme')
 
