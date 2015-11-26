@@ -327,15 +327,28 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
             # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
             handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
             if handler.check():
-                # TODO: add something whether we have a possible correction here or not ? has_correction() in handler ?
-                if handler.has_correction():
-                    corrections.append(handler.correct())
-                    if handler.skip_remaining_handlers:
-                        break
-                else:
-                    if handler.correction_is_required():
-                        raise ValueError('No correction found for error while correction is required ...')
+                corrections.append(handler.correct())
+                if handler.skip_remaining_handlers:
+                    break
         return corrections
+
+    # def get_corrections(self, fw_spec, run_fw, handlers):
+    #     #TODO: we should add here something about the corrections that have already been applied and that cannot
+    #     #      be applied anymore ...
+    #     corrections = []
+    #     for handler in handlers:
+    #         # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
+    #         handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
+    #         if handler.check():
+    #             # TODO: add something whether we have a possible correction here or not ? has_correction() in handler ?
+    #             if handler.has_correction():
+    #                 corrections.append(handler.correct())
+    #                 if handler.skip_remaining_handlers:
+    #                     break
+    #             else:
+    #                 if handler.correction_is_required():
+    #                     raise ValueError('No correction found for error while correction is required ...')
+    #     return corrections
 
     def validate(self):
         validators = self.validators if self.validators is not None else []
