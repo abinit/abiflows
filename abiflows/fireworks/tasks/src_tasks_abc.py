@@ -409,7 +409,7 @@ def createSRCFireworks(setup_task, run_task, handlers=None, validators=None, spe
     else:
         src_task_index = SRCTaskIndex.from_task(run_task)
     setup_spec = copy.deepcopy(spec)
-    setup_spec['SRC_task_index'] = task_index
+    setup_spec['SRC_task_index'] = src_task_index
     pass
 
 
