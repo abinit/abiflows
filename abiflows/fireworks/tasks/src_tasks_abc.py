@@ -4,8 +4,11 @@ import copy
 import inspect
 import os
 
+from custodian.ansible.interpreter import Modder
+
 from fireworks.core.firework import FireTaskBase
 from fireworks.core.firework import FWAction
+from fireworks.core.firework import Workflow
 from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
@@ -234,8 +237,10 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
                                          key=lambda x: x.validator_priority)
 
     def run_task(self, fw_spec):
-        # Get the run firework
-        run_fw = self.get_run_fw(fw_spec=fw_spec)
+        # Get the setup and run fireworks
+        setup_and_run_fws = self.get_setup_and_run_fw(fw_spec=fw_spec)
+        setup_fw = setup_and_run_fws['setup_fw']
+        run_fw = setup_and_run_fws['run_fw']
         # Get the handlers
         handlers = self.get_handlers(run_fw=run_fw)
 
@@ -249,7 +254,7 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
 
         # If some errors were found, apply the corrections and return the FWAction
         if len(corrections) > 0:
-            fw_action = self.apply_corrections(fw_to_correct=run_fw, corrections=corrections)
+            fw_action = self.apply_corrections(setup_fw=setup_fw, run_fw=run_fw, corrections=corrections)
             return fw_action
 
         # Validate the results if no error was found
@@ -265,7 +270,7 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
             mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
         return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
-    def get_run_fw(self, fw_spec):
+    def get_setup_and_run_fw(self, fw_spec):
         # Get previous job information
         previous_job_info = fw_spec['_job_info']
         run_fw_id = previous_job_info['fw_id']
@@ -299,7 +304,11 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
             raise ValueError('Run firework is FIZZLED and COMPLETED ...')
         if (not run_is_completed) and (not run_is_fizzled):
             raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
-        return run_fw
+        # Get the Setup Firework
+        setup_job_info = run_fw.spec['_job_info']
+        setup_fw_id = setup_job_info['fw_id']
+        setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
+        return {'setup_fw': setup_fw, 'run_fw': run_fw}
 
     def get_handlers(self, run_fw):
         if run_fw.state == 'FIZZLED':
@@ -311,15 +320,21 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
         return handlers
 
     def get_corrections(self, fw_spec, run_fw, handlers):
+        #TODO: we should add here something about the corrections that have already been applied and that cannot
+        #      be applied anymore ...
         corrections = []
         for handler in handlers:
             # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
             handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
             if handler.check():
                 # TODO: add something whether we have a possible correction here or not ? has_correction() in handler ?
-                corrections.append(handler.correct())
-                if handler.skip_remaining_handlers:
-                    break
+                if handler.has_correction():
+                    corrections.append(handler.correct())
+                    if handler.skip_remaining_handlers:
+                        break
+                else:
+                    if handler.correction_is_required():
+                        raise ValueError('No correction found for error while correction is required ...')
         return corrections
 
     def validate(self):
@@ -328,72 +343,73 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
             if not validator.check():
                 raise RuntimeError('Validator invalidate results ...')
 
-    def apply_corrections(self, fw_to_correct, corrections):
-        pass
-        # # Apply the corrections
-        # spec = fw_to_correct.spec
-        # modder = Modder()
-        # for correction in corrections:
-        #     actions = correction['actions']
-        #     for action in actions:
-        #         if action['action_type'] == 'modify_object':
-        #             if action['object']['source'] == 'fw_spec':
-        #                 myobject = spec[action['object']['key']]
-        #             else:
-        #                 raise NotImplementedError('Object source "{}" not implemented in '
-        #                                           'CheckTask'.format(action['object']['source']))
-        #             newobj = modder.modify_object(action['action'], myobject)
-        #             spec[action['object']['key']] = newobj
-        #         elif action['action_type'] == 'modify_dict':
-        #             if action['dict']['source'] == 'fw_spec':
-        #                 mydict = spec[action['dict']['key']]
-        #             else:
-        #                 raise NotImplementedError('Dict source "{}" not implemented in '
-        #                                           'CheckTask'.format(action['dict']['source']))
-        #             modder.modify(action['action'], mydict)
-        #         else:
-        #             raise NotImplementedError('Action type "{}" not implemented in '
-        #                                       'CheckTask'.format(action['action_type']))
-        # # Keep track of the corrections that have been applied
-        # spec['SRC_check_corrections'] = corrections
-        #
-        # # Update the task index
-        # fws_task_index = int(fw_to_correct.spec['wf_task_index'].split('_')[-1])
-        # new_index = fws_task_index + 1
-        # # Update the Fireworks _queueadapter key
-        # #TODO: in the future, see whether the FW queueadapter might be replaced by the qtk_queueadapter ?
-        # #      ... to be discussed with Anubhav, when the qtk queueadapter is in a qtk toolkit and not anymore
-        # #          in pymatgen/io/abinit
-        # spec['_queueadapter'] = spec['qtk_queueadapter'].get_subs_dict()
-        # queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=spec['qtk_queueadapter'],
-        #                                                 corrections=corrections)
-        #
-        # # Get and update the task_input if needed
-        # # TODO: make this more general ... right now, it is based on AbinitInput and thus is strongly tight
-        # #       to abinit due to abiinput, deps, ...
-        # mytask = fw_to_correct.tasks[0]
-        # task_class = mytask.__class__
-        # decoder = MontyDecoder()
-        # task_input = decoder.process_decoded(fw_to_correct.spec['_tasks'][0]['abiinput'])
-        # initialization_info = fw_to_correct.spec['initialization_info']
-        # deps = mytask.deps
-        #
-        # # Create the new Setup/Run/Check fireworks
-        # SRC_fws = createSRCFireworks(task_class=task_class, task_input=task_input, SRC_spec=spec,
-        #                              initialization_info=initialization_info,
-        #                              wf_task_index_prefix=spec['wf_task_index_prefix'],
-        #                              current_task_index=new_index,
-        #                              handlers=self.handlers, validators=self.validators,
-        #                              deps=deps,
-        #                              task_type=mytask.task_type, queue_adapter_update=queue_adapter_update)
-        # wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
-        # return FWAction(detours=[wf])
+    def apply_corrections(self, setup_fw, run_fw, corrections):
+        spec = copy.deepcopy(run_fw.spec)
+        modder = Modder()
+        for correction in corrections:
+            actions = correction['actions']
+            for action in actions:
+                if action['action_type'] == 'modify_object':
+                    if action['object']['source'] == 'fw_spec':
+                        myobject = spec[action['object']['key']]
+                    else:
+                        raise NotImplementedError('Object source "{}" not implemented in '
+                                                  'CheckTask'.format(action['object']['source']))
+                    newobj = modder.modify_object(action['action'], myobject)
+                    spec[action['object']['key']] = newobj
+                elif action['action_type'] == 'modify_dict':
+                    if action['dict']['source'] == 'fw_spec':
+                        mydict = spec[action['dict']['key']]
+                    else:
+                        raise NotImplementedError('Dict source "{}" not implemented in '
+                                                  'CheckTask'.format(action['dict']['source']))
+                    modder.modify(action['action'], mydict)
+                else:
+                    raise NotImplementedError('Action type "{}" not implemented in '
+                                              'CheckTask'.format(action['action_type']))
+        # Keep track of the corrections that have been applied
+        if 'SRC_check_corrections' in spec:
+            spec['SRC_check_corrections'].extend(corrections)
+        else:
+            spec['SRC_check_corrections'] = corrections
+
+        # Update the task index
+        task_index = SRCTaskIndex.from_any(spec['SRC_task_index'])
+        task_index.increase_index()
+
+        #TODO: in the future, see whether the FW queueadapter might be replaced by the qtk_queueadapter ?
+        #      ... to be discussed with Anubhav, when the qtk queueadapter is in a qtk toolkit and not anymore
+        #          in pymatgen/io/abinit
+        #      in that case, this part will not be needed anymore ...
+        spec['_queueadapter'] = spec['qtk_queueadapter'].get_subs_dict()
+        #TODO: why do we need this again ??
+        queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=spec['qtk_queueadapter'],
+                                                        corrections=corrections)
+
+        run_task = run_fw.tasks[0]
+        initialization_info = run_task.spec['initialization_info']
+        deps = run_task.deps
+        setup_task = setup_fw.tasks[0]
+
+        # Create the new Setup/Run/Check fireworks
+        #TODO: do we need initialization info here ?
+        #      do we need deps here ?
+        SRC_fws = createSRCFireworks(setup_task, run_task, handlers=self.handlers, validators=self.validators,
+                                     spec=spec, initialization_info=initialization_info,
+                                     task_index=task_index, deps=deps)
+        wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+        return FWAction(detours=[wf])
 
 
 def createSRCFireworks(setup_task, run_task, handlers=None, validators=None, spec=None, initialization_info=None,
                        task_index=None, deps=None):
     spec = copy.deepcopy(spec)
-    src_task_index = SRCTaskIndex.from_any(task_index)
+    if task_index is not None:
+        src_task_index = SRCTaskIndex.from_any(task_index)
+    else:
+        src_task_index = SRCTaskIndex.from_task(run_task)
+    setup_spec = copy.deepcopy(spec)
+    setup_spec['SRC_task_index'] = task_index
     pass
 
 
@@ -426,6 +442,9 @@ class SRCTaskIndex(object):
         else:
             raise ValueError('Index in SRCTaskIndex should be an integer or a string '
                              'that can be cast into an integer')
+
+    def increase_index(self):
+        self.index += 1
 
     def __str__(self):
         return '_'.join([self.task_type, str(self.index)])
@@ -467,6 +486,10 @@ class SRCTaskIndex(object):
         else:
             raise ValueError('SRC_task_index should be an instance of "str" or "SRCTaskIndex" '
                              'in "from_any" class method')
+
+    @classmethod
+    def from_task(cls, task):
+        return cls(task_type=task.task_type)
 
 
 # def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf_task_index_prefix, current_task_index=1,
@@ -512,3 +535,23 @@ class SRCTaskIndex(object):
 #                   run_fw.fw_id: [check_fw.fw_id]}
 #     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
 #             'fws': [setup_fw, run_fw, check_fw]}
+
+def get_queue_adapter_update(qtk_queueadapter, corrections, qa_params=None):
+    if qa_params is None:
+        qa_params = ['timelimit', 'mem_per_proc', 'master_mem_overhead']
+    queue_adapter_update = {}
+    for qa_param in qa_params:
+        if qa_param == 'timelimit':
+            queue_adapter_update[qa_param] = qtk_queueadapter.timelimit
+        elif qa_param == 'mem_per_proc':
+            queue_adapter_update[qa_param] = qtk_queueadapter.mem_per_proc
+        elif qa_param == 'master_mem_overhead':
+            queue_adapter_update[qa_param] = qtk_queueadapter.master_mem_overhead
+        else:
+            raise ValueError('Wrong queue adapter parameter for update')
+    for correction in corrections:
+        for action in correction['actions']:
+            if action['object']['key'] == 'qtk_queueadapter':
+                qa_update = action['action']['_set']
+                queue_adapter_update.update(qa_update)
+    return queue_adapter_update
