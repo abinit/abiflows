@@ -25,7 +25,7 @@ PRIORITIES = {'PRIORITY_FIRST': 0,
 
 class Controller(MSONable):
     """
-    Abstract base class for controlling a task, an event, a result, an output, ...
+    Abstract base class for controlling a task, an event, a result, an output, an object, ...
     """
     PRIORITY_FIRST = PRIORITIES['PRIORITY_FIRST']
     PRIORITY_VERY_HIGH = PRIORITIES['PRIORITY_VERY_HIGH']
