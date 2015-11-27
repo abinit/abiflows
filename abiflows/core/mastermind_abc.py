@@ -1,7 +1,7 @@
 # coding: utf-8
 """
 Abstract base classes for controllers, monitors, and other possible tools/utils/objects used to manage, correct,
-monitor and check tasks, events, results, ...
+monitor and check tasks, events, results, objects, ...
 """
 
 import abc
