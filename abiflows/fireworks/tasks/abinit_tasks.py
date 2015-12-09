@@ -14,6 +14,7 @@ import json
 import threading
 import glob
 import os
+import errno
 import numpy as np
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.utilities.fw_utilities import explicit_serialize
@@ -389,7 +390,7 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             command = []
             #consider the case of serial execution
             if self.ftm.fw_policy.mpirun_cmd:
-                command.append(self.ftm.fw_policy.mpirun_cmd)
+                command.extend(self.ftm.fw_policy.mpirun_cmd.split())
                 if 'mpi_ncpus' in fw_spec:
                     command.extend(['-np', str(fw_spec['mpi_ncpus'])])
             command.append(self.ftm.fw_policy.abinit_cmd)
@@ -735,6 +736,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     raise InitializationError(msg)
                 # a single input exists
                 previous_input = previous_fws[task_type_source][0]['input']
+                if not isinstance(previous_input, AbinitInput):
+                    previous_input = AbinitInput.from_dict(previous_input)
                 initialization_info['previous_input'] = previous_input
 
             self.abiinput = self.abiinput.build_input(previous_input)
@@ -922,7 +925,11 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             #just link everything from the indata folder of the previous run. files needed for restart will be overwritten
             prev_indata = os.path.join(self.restart_info.previous_dir, INDIR_NAME)
             for f in os.listdir(prev_indata):
-                os.symlink(os.path.join(prev_indata, f), os.path.join(self.workdir, INDIR_NAME, f))
+                # if the target is already a link, link to the source to avoid many nested levels of linking
+                source = os.path.join(prev_indata, f)
+                if os.path.islink(source):
+                    source = os.readlink(source)
+                os.symlink(source, os.path.join(self.workdir, INDIR_NAME, f))
 
     def load_previous_fws_data(self, fw_spec):
         pass
@@ -945,7 +952,15 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
         if self.ftm.fw_policy.copy_deps or self.workdir == self.restart_info.previous_dir:
             shutil.copyfile(out_file, dest)
         else:
-            os.symlink(out_file, dest)
+            # if dest already exists should be overwritten. see also resolve_deps and config_run
+            try:
+                os.symlink(out_file, dest)
+            except OSError, e:
+                if e.errno == errno.EEXIST:
+                    os.remove(dest)
+                    os.symlink(out_file, dest)
+                else:
+                    raise e
 
         return dest
 
@@ -1236,7 +1251,7 @@ class DdkTask(AbiFireTask):
         # make a link to _DDK of the 1WF file to ease the link in the dependencies
         wf_files = self.outdir.find_1wf_files()
         if not wf_files:
-            raise PostProcessError(self, "Couldn't link 1WF files.")
+            raise PostProcessError("Couldn't link 1WF files.")
         for f in wf_files:
             os.symlink(f.path, f.path+'_DDK')
 
@@ -1736,30 +1751,33 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         self.ddb_file = ddb_file
 
     def get_fws(self, multi_inp, task_class, deps, new_spec, ftm, nscf_fws=None):
-        new_spec = dict(new_spec)
         formula = multi_inp[0].structure.composition.reduced_formula
         fws = []
         fw_deps = defaultdict(list)
+        autoparal_spec = {}
         for i, inp in enumerate(multi_inp):
+            new_spec = dict(new_spec)
             start_task_index = 1
             if self.with_autoparal:
-                autoparal_dir = os.path.join(os.path.abspath('.'), "autoparal_{}_{}".format(task_class.__name__, str(i)))
-                optconf, qadapter_spec = self.run_autoparal(inp, autoparal_dir, ftm)
-                new_spec['_queueadapter'] = qadapter_spec
-                new_spec['mpi_ncpus'] = optconf['mpi_ncpus']
+                if not autoparal_spec:
+                    autoparal_dir = os.path.join(os.path.abspath('.'), "autoparal_{}_{}".format(task_class.__name__, str(i)))
+                    optconf, qadapter_spec, qadapter = self.run_autoparal(inp, autoparal_dir, ftm)
+                    autoparal_spec['_queueadapter'] = qadapter_spec
+                    autoparal_spec['mpi_ncpus'] = optconf['mpi_ncpus']
+                new_spec.update(autoparal_spec)
 
-            deps = dict(deps)
+            current_deps = dict(deps)
             parent_fw = None
             if nscf_fws:
                 qpt = inp['qpt']
                 for nscf_fw in nscf_fws:
                     if np.allclose(nscf_fw.tasks[0].abiinput['qpt'], qpt):
                         parent_fw = nscf_fw
-                        deps[nscf_fw.tasks[0].task_type] = "WFQ"
+                        current_deps[nscf_fw.tasks[0].task_type] = "WFQ"
                         break
 
 
-            task = task_class(inp, handlers=self.handlers, deps=deps, is_autoparal=False)
+            task = task_class(inp, handlers=self.handlers, deps=current_deps, is_autoparal=False)
             # this index is for the different task, each performing a different perturbation
             indexed_task_type = task_class.task_type + '_' + str(i)
             # this index is to index the restarts of the single task
@@ -1795,7 +1813,10 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
 
         initialization_info = fw_spec.get('initialization_info', {})
         initialization_info['input_factory'] = self.phonon_factory.as_dict()
-        new_spec = dict(previous_fws=fw_spec['previous_fws'], initialization_info=initialization_info)
+        new_spec = dict(previous_fws=fw_spec['previous_fws'], initialization_info=initialization_info,
+                        _preserve_fworker=True)
+        if '_fworker' in fw_spec:
+            new_spec['_fworker'] = fw_spec['_fworker']
 
         ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
         ddk_inputs = ph_inputs.filter_by_tags(DDK)
@@ -1806,10 +1827,12 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
 
         nscf_fws = []
         if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfFWTask, {}, new_spec, ftm)
+            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfFWTask,
+                                                 {self.previous_task_type: "WFK", self.previous_task_type: "DEN"}, new_spec, ftm)
 
         ph_fws = []
         if ph_q_pert_inputs:
+            ph_q_pert_inputs.set_vars(prtwf=-1)
             ph_fws, ph_fw_deps = self.get_fws(ph_q_pert_inputs, PhononTask, {self.previous_task_type: "WFK"}, new_spec,
                                               ftm, nscf_fws)
 
@@ -1819,11 +1842,13 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
 
         dde_fws = []
         if dde_inputs:
+            dde_inputs.set_vars(prtwf=-1)
             dde_fws, dde_fw_deps = self.get_fws(dde_inputs, DdeTask,
                                                 {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
 
         bec_fws = []
         if bec_inputs:
+            bec_inputs.set_vars(prtwf=-1)
             bec_fws, bec_fw_deps = self.get_fws(bec_inputs, BecTask,
                                                 {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
 

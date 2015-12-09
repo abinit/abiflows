@@ -143,6 +143,13 @@ class AbstractFWWorkflow(Workflow):
 
         return structure.composition.reduced_formula if structure else ""
 
+    def add_spec_to_all_fws(self, spec):
+        for fw in self.wf.fws:
+            fw.spec.update(spec)
+
+    def set_preserve_fworker(self):
+        self.add_spec_to_all_fws(dict(_preserve_fworker=True))
+
 
 class InputFWWorkflow(AbstractFWWorkflow):
     def __init__(self, abiinput, task_type=AbiFireTask, autoparal=False, spec={}, initialization_info={}):
@@ -340,18 +347,24 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
 class NscfFWWorkflow(AbstractFWWorkflow):
     def __init__(self, scf_input, nscf_input, autoparal=False, spec={}, initialization_info={}):
 
+        start_task_index = 1
         spec = dict(spec)
         spec['initialization_info'] = initialization_info
         if autoparal:
             spec = self.set_short_single_core_to_spec(spec)
+            start_task_index = "autoparal"
 
-        ion_task = ScfFWTask(scf_input, is_autoparal=autoparal)
-        self.ion_fw = Firework(ion_task, spec=spec)
+        spec['wf_task_index'] = 'scf_' + str(start_task_index)
+        scf_task = ScfFWTask(scf_input, is_autoparal=autoparal)
+        self.scf_fw = Firework(scf_task, spec=spec)
 
-        ioncell_task = NscfFWTask(nscf_input, deps={ion_task.task_type: 'DEN'}, is_autoparal=autoparal)
-        self.ioncell_fw = Firework(ioncell_task, spec=spec)
+        spec['wf_task_index'] = 'nscf_' + str(start_task_index)
+        nscf_task = NscfFWTask(nscf_input, deps={scf_task.task_type: 'DEN'}, is_autoparal=autoparal)
+        self.nscf_fw = Firework(nscf_task, spec=spec)
 
-        self.wf = Workflow([self.ion_fw, self.ioncell_fw], {self.ion_fw: [self.ioncell_fw]})
+        self.wf = Workflow([self.scf_fw, self.nscf_fw], {self.scf_fw: [self.nscf_fw]},
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
 
 
 class HybridOneShotFWWorkflow(AbstractFWWorkflow):
@@ -390,20 +403,20 @@ class HybridOneShotFWWorkflow(AbstractFWWorkflow):
         return cls(scf_fact, hybrid_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
 
 
-class NscfFWWorkflow(AbstractFWWorkflow):
-    def __init__(self, scf_input, nscf_input, autoparal=False, spec={}):
-
-        spec = dict(spec)
-        if autoparal:
-            spec = self.set_short_single_core_to_spec(spec)
-
-        ion_task = ScfFWTask(scf_input, is_autoparal=autoparal)
-        self.ion_fw = Firework(ion_task, spec=spec)
-
-        ioncell_task = NscfFWTask(nscf_input, deps={ion_task.task_type: 'DEN'}, is_autoparal=autoparal)
-        self.ioncell_fw = Firework(ioncell_task, spec=spec)
-
-        self.wf = Workflow([self.ion_fw, self.ioncell_fw], {self.ion_fw: [self.ioncell_fw]})
+# class NscfFWWorkflow(AbstractFWWorkflow):
+#     def __init__(self, scf_input, nscf_input, autoparal=False, spec={}):
+#
+#         spec = dict(spec)
+#         if autoparal:
+#             spec = self.set_short_single_core_to_spec(spec)
+#
+#         ion_task = ScfFWTask(scf_input, is_autoparal=autoparal)
+#         self.ion_fw = Firework(ion_task, spec=spec)
+#
+#         ioncell_task = NscfFWTask(nscf_input, deps={ion_task.task_type: 'DEN'}, is_autoparal=autoparal)
+#         self.ioncell_fw = Firework(ioncell_task, spec=spec)
+#
+#         self.wf = Workflow([self.ion_fw, self.ioncell_fw], {self.ion_fw: [self.ioncell_fw]})
 
 
 class PhononFWWorkflow(AbstractFWWorkflow):
