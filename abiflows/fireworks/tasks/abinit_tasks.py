@@ -21,13 +21,17 @@ from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 from collections import namedtuple, defaultdict
 from abiflows.fireworks.utils.task_history import TaskHistory
+from abiflows.fireworks.utils.fw_utils import links_dict_update
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
+from abiflows.fireworks.tasks.utility_tasks import SRC_TIMELIMIT_BUFFER, get_queue_adapter_update
 from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
+from pymatgen.io.abinit.qutils import time2slurm
 from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder, MSONable
-from abipy.abio.factories import InputFactory
+from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
@@ -39,14 +43,24 @@ from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, IND
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.utils.task_history import TaskHistory
-from abiflows.fireworks.tasks.utility_tasks import SRCFireworks
+from abiflows.fireworks.tasks.utility_tasks import createSRCFireworks
 
 logger = logging.getLogger(__name__)
 
 
 # files and folders names
 
-class BasicTaskMixin(object):
+#
+# class SRCTask(FireTaskBase):
+#
+#     def setupSRC(self):
+#         pass
+#
+#     def checkSRC(self):
+#         pass
+
+
+class BasicAbinitTaskMixin(object):
     task_type = ""
 
     @serialize_fw
@@ -223,8 +237,13 @@ class BasicTaskMixin(object):
     del Prefix, pj
 
 
+# class AbiSetupTask(SetupTask):
+# class AbiRunTask(RunTask):
+# class AbiCheckTask(CheckTask):
+
+
 @explicit_serialize
-class AbiFireTask(BasicTaskMixin, FireTaskBase):
+class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
 
     # List of `AbinitEvent` subclasses that are tested in the check_status method.
     # Subclasses should provide their own list if they need to check the converge status.
@@ -394,6 +413,11 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 if 'mpi_ncpus' in fw_spec:
                     command.extend(['-np', str(fw_spec['mpi_ncpus'])])
             command.append(self.ftm.fw_policy.abinit_cmd)
+            if self.use_SRC_scheme:
+                mytimelimit = fw_spec['qtk_queueadapter'].timelimit-SRC_TIMELIMIT_BUFFER
+                if mytimelimit < 120:
+                    raise ValueError('Abinit timelimit less than 2 min. Probably wrong queue/job configuration')
+                command.extend(['--timelimit', time2slurm(mytimelimit)])
             with open(self.files_file.path, 'r') as stdin, open(self.log_file.path, 'w') as stdout, \
                     open(self.stderr_file.path, 'w') as stderr:
                 self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
@@ -488,6 +512,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 if not_ok:
                     self.history.log_unconverged()
                     # hook
+                    if self.use_SRC_scheme:
+                        return self.prepare_restart(fw_spec)
                     local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec)
                     num_restarts = self.restart_info.num_restarts if self.restart_info else 0
                     if num_restarts < self.ftm.fw_policy.max_restarts:
@@ -507,6 +533,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                     if unconverged_params:
                         self.history.log_converge_params(unconverged_params, self.abiinput)
                         self.abiinput.set_vars(**unconverged_params)
+                        if self.use_SRC_scheme:
+                            return self.prepare_restart(fw_spec, reset=reset_restart)
                         local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec, reset=reset_restart)
                         num_restarts = self.restart_info.num_restarts if self.restart_info else 0
                         if num_restarts < self.ftm.fw_policy.max_restarts:
@@ -538,6 +566,8 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 # ABINIT errors, try to handle them
                 fixed, reset = self.fix_abicritical(fw_spec)
                 if fixed:
+                    if self.use_SRC_scheme:
+                        return self.prepare_restart(fw_spec, reset=reset)
                     local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec, reset=reset)
                     if local_restart:
                         return None
@@ -593,12 +623,26 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
             local_restart = True
 
         if self.use_SRC_scheme:
+            #TODO: The way we get the CheckTask's handlers and validators is very ugly here ...
+            #      If we go for SRC everywhere, this will obviously be changed as any restart would
+            #      be performed in the check task ...
+            wf = self.launchpad.get_wf_by_fw_id_lzyfw(self.fw_id)
+            run_children_ids = wf.links[self.fw_id]
+            if len(run_children_ids) != 1:
+                raise ValueError('Run Firework should have exactly one child in SRC scheme ...')
+            check_fw = self.launchpad.get_fw_by_id(run_children_ids[0])
+            check_task = check_fw.tasks[0]
             fw_task_index = int(fw_spec['wf_task_index'].split('_')[-1])
             new_index = fw_task_index + 1
-            SRC_fws = SRCFireworks(task_class=self, task_input=self.abiinput, spec=new_spec,
-                                   initialization_info=fw_spec['initialization_info'],
-                                   wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
-                                   current_task_index=new_index)
+            queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=fw_spec['qtk_queueadapter'],
+                                                            corrections=[])
+            SRC_fws = createSRCFireworks(task_class=self.__class__, task_input=self.abiinput, SRC_spec=new_spec,
+                                         initialization_info=fw_spec['initialization_info'],
+                                         wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
+                                         current_task_index=new_index,
+                                         handlers=check_task.handlers, validators=check_task.validators,
+                                         deps=self.deps, task_type=self.task_type,
+                                         queue_adapter_update=queue_adapter_update)
             wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
             return FWAction(detours=[wf])
 
@@ -772,26 +816,54 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
                 self.history = TaskHistory.from_dict(exception_details['history'])
 
     def run_task(self, fw_spec):
-        try:
-            self.setup_task(fw_spec)
-            if self.is_autoparal:
-                return self.autoparal(fw_spec)
-            else:
-                # loop to allow local restart
-                while True:
-                    self.config_run(fw_spec)
-                    self.run_abinit(fw_spec)
-                    action = self.task_analysis(fw_spec)
-                    if action:
+        if self.use_SRC_scheme:
+            try:
+                self.setup_task(fw_spec)
+                if self.is_autoparal:
+                    return self.setupSRC(fw_spec=fw_spec)
+                else:
+                    # loop to allow local restart
+                    while True:
+                        self.config_run(fw_spec)
+                        self.run_abinit(fw_spec)
+                        #SHOULD GET BACK OUTPUT_FILE, LOG_FILE, MPIABORT_FILE IN THE CHECK TASK
+                        #WHAT TO DO WITH self.CRITICAL_EVENTS => in checktask
+                        #WHAT TO DO WITH self.history => in checktask
+                        #WHAT TO DO WITH RestartInfo ? => in checktask ...
+                        action = FWAction(mod_spec={'_set': {'SRC_run_info': {'output_file'}}})
                         return action
-        except BaseException as exc:
-            # log the error in history and reraise
-            self.history.log_error(exc)
-            raise
-        finally:
-            # Always dump the history for automatic parsing of the folders
-            with open(HISTORY_JSON, "w") as f:
-                json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
+                        # action = self.task_analysis(fw_spec)
+                        # if action:
+                        #     return action
+            except BaseException as exc:
+                # log the error in history and reraise
+                self.history.log_error(exc)
+                raise
+            finally:
+                # Always dump the history for automatic parsing of the folders
+                with open(HISTORY_JSON, "w") as f:
+                    json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
+        else:
+            try:
+                self.setup_task(fw_spec)
+                if self.is_autoparal:
+                    return self.autoparal(fw_spec)
+                else:
+                    # loop to allow local restart
+                    while True:
+                        self.config_run(fw_spec)
+                        self.run_abinit(fw_spec)
+                        action = self.task_analysis(fw_spec)
+                        if action:
+                            return action
+            except BaseException as exc:
+                # log the error in history and reraise
+                self.history.log_error(exc)
+                raise
+            finally:
+                # Always dump the history for automatic parsing of the folders
+                with open(HISTORY_JSON, "w") as f:
+                    json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
 
     def restart(self):
         """
@@ -812,22 +884,48 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
     def current_task_info(self, fw_spec):
         return dict(dir=self.workdir, input=self.abiinput)
 
+    def setupSRC(self, fw_spec):
+        # Copy the appropriate dependencies in the in dir. needed in some cases
+        self.resolve_deps(fw_spec)
+
+        optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        #TODO: handle the update of the queue adapter more cleanly ...
+        if 'queue_adapter_update' in fw_spec:
+            for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
+                if qa_key == 'timelimit':
+                    qtk_qadapter.set_timelimit(qa_val)
+                elif qa_key == 'mem_per_proc':
+                    qtk_qadapter.set_mem_per_proc(qa_val)
+                elif qa_key == 'master_mem_overhead':
+                    qtk_qadapter.set_master_mem_overhead(qa_val)
+                else:
+                    raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
+
+        update_spec = None
+        if 'previous_fws' in fw_spec:
+            update_spec ={'previous_fws': fw_spec['previous_fws']}
+        return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
+                                           'mpi_ncpus': optconf['mpi_ncpus'],
+                                           'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
+                        update_spec=update_spec)
+
     def autoparal(self, fw_spec):
         # Copy the appropriate dependencies in the in dir. needed in some cases
         self.resolve_deps(fw_spec)
 
         optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
-        if self.use_SRC_scheme:
-            if 'current_memory_per_proc_mb' in fw_spec and fw_spec['current_memory_per_proc_mb'] is not None:
-                qtk_qadapter.set_mem_per_proc(fw_spec['current_memory_per_proc_mb'])
-            encoder = MontyEncoder()
-            update_spec = None
-            if 'previous_fws' in fw_spec:
-                update_spec ={'previous_fws': fw_spec['previous_fws']}
-            return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
-                                               'mpi_ncpus': optconf['mpi_ncpus'],
-                                               'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
-                            update_spec=update_spec)
+        # if self.use_SRC_scheme:
+        #     if 'current_memory_per_proc_mb' in fw_spec and fw_spec['current_memory_per_proc_mb'] is not None:
+        #         qtk_qadapter.set_mem_per_proc(fw_spec['current_memory_per_proc_mb'])
+        #     update_spec = None
+        #     if 'previous_fws' in fw_spec:
+        #         update_spec ={'previous_fws': fw_spec['previous_fws']}
+        #     if 'run_timelimit' in fw_spec:
+        #         qtk_qadapter.set_timelimit(fw_spec['run_timelimit'])
+        #     return FWAction(mod_spec={'_set': {'_queueadapter': qtk_qadapter.get_subs_dict(),
+        #                                        'mpi_ncpus': optconf['mpi_ncpus'],
+        #                                        'optconf': optconf, 'qtk_queueadapter': qtk_qadapter}},
+        #                     update_spec=update_spec)
         self.history.log_autoparal(optconf)
         self.abiinput.set_vars(optconf.vars)
 
@@ -1319,12 +1417,12 @@ class RelaxDilatmxFWTask(RelaxFWTask):
 
 
 @explicit_serialize
-class MergeDdbTask(BasicTaskMixin, FireTaskBase):
+class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     task_type = "mrgddb"
 
     #TODO: make it possible to use "any" task and in particular, this MergeDdbTask for the SRC
     # scheme (to be rationalized)
-    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None):
+    def __init__(self, ddb_source_task_types=None, delete_source_ddbs=True, num_ddbs=None, task_type=None):
         """
         ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.
         The default is [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
@@ -1342,14 +1440,25 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
         self.delete_source_ddbs = delete_source_ddbs
         self.num_ddbs = num_ddbs
 
+        if task_type is not None:
+            self.task_type = task_type
+
     def get_ddb_list(self, previous_fws, task_type):
         ddb_files = []
+        #TODO@DW: I make sure I dont pass twice the same directory here ... but I should check in my workflow why
+        # previous_fws contains duplicates ... (might be due to _push_all or SRC scheme somewhere)
+        mydirs = []
         for t in previous_fws.get(task_type, []):
+            #TODO@DW: I make sure I dont pass twice the same directory here ... but I should check in my workflow why
+            # previous_fws contains duplicates ... (might be due to _push_all or SRC scheme somewhere)
+            if t['dir'] in mydirs:
+                continue
             ddb = Directory(os.path.join(t['dir'], OUTDIR_NAME)).has_abiext('DDB')
             if not ddb:
                 msg = "One of the task of type {} (folder: {}) " \
                       "did not produce a DDB file!".format(task_type, t['dir'])
                 raise InitializationError(msg)
+            mydirs.append(t['dir'])
             ddb_files.append(ddb)
         return ddb_files
 
@@ -1442,7 +1551,7 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 
 
 @explicit_serialize
-class AnaDdbTask(BasicTaskMixin, FireTaskBase):
+class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     task_type = "anaddb"
 
     def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
@@ -1502,10 +1611,19 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
                 msg = "One of the task of type {} (folder: {}) " \
                       "did not produce a DDB file!".format(task_type, t['dir'])
     def resolve_deps_per_task_type(self, previous_tasks, deps_list):
+        #TODO@DW: I make sure I dont pass twice the same directory here ... but I should check in my workflow why
+        # previous_fws contains duplicates ... (might be due to _push_all or SRC scheme somewhere)
+        ddb_dirs = []
         for previous_task in previous_tasks:
             for d in deps_list:
                 source_dir = previous_task['dir']
                 if d == "DDB":
+                    #TODO@DW: I make sure I dont pass twice the same directory here ... but I should check in my
+                    # workflow why previous_fws contains duplicates ... (might be due to _push_all or SRC scheme
+                    # somewhere)
+                    if source_dir in ddb_dirs:
+                        continue
+                    ddb_dirs.append(source_dir)
                     self.ddb_filepath = self.link_ext(d, source_dir)
                 elif d == "GKK":
                     self.gkk_filepath = self.link_ext(d, source_dir)
@@ -1742,7 +1860,7 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 ##############################
 
 @explicit_serialize
-class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
+class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
         self.phonon_factory = phonon_factory
         self.previous_task_type = previous_task_type
@@ -1864,7 +1982,7 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         #TODO improve the handling of the priorities
         mrgddb_spec['_priority'] = 10
         num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
-        mrgddb_fw = Firework(MergeDdbTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
+        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
                              name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
 
         fws_deps = {}
@@ -1890,6 +2008,100 @@ class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
         stored_data = dict(finalized=True)
 
         return FWAction(stored_data=stored_data, detours=ph_wf)
+
+
+@explicit_serialize
+class GeneratePiezoElasticFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
+    def __init__(self, piezo_elastic_factory=None, previous_scf_task_type=ScfFWTask.task_type,
+                 previous_ddk_task_type=DdkTask.task_type,
+                 handlers=None, validators=None, mrgddb_task_type='mrgddb-strains', rf_tol=None):
+        if piezo_elastic_factory is None:
+            self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
+        else:
+            self.piezo_elastic_factory = piezo_elastic_factory
+        self.previous_scf_task_type = previous_scf_task_type
+        self.previous_ddk_task_type = previous_ddk_task_type
+        self.handlers = handlers
+        self.validators = validators
+        self.mrgddb_task_type = mrgddb_task_type
+        self.rf_tol = rf_tol
+
+    def run_task(self, fw_spec):
+        # Get the previous SCF input
+        previous_scf_input = fw_spec.get('previous_fws', {}).get(self.previous_scf_task_type,
+                                                                 [{}])[0].get('input', None)
+        if not previous_scf_input:
+            raise InitializationError('No input file available '
+                                      'from task of type {}'.format(self.previous_scf_task_type))
+        #previous_scf_input = AbinitInput.from_dict(previous_scf_input)
+
+        # # Get the previous DDK input
+        # previous_ddk_input = fw_spec.get('previous_fws', {}).get(self.previous_ddk_task_type,
+        #                                                          [{}])[0].get('input', None)
+        # if not previous_ddk_input:
+        #     raise InitializationError('No input file available '
+        #                               'from task of type {}'.format(self.previous_ddk_task_type))
+        # previous_ddk_input = AbinitInput.from_dict(previous_ddk_input)
+
+        ftm = self.get_fw_task_manager(fw_spec)
+        tasks._USER_CONFIG_TASKMANAGER = ftm.task_manager
+        # if self.with_autoparal:
+        #     if not ftm.has_task_manager():
+        #         msg = 'No task manager available: autoparal could not be performed.'
+        #         logger.error(msg)
+        #         raise InitializationError(msg)
+        #
+        #     # inject task manager
+        #     tasks._USER_CONFIG_TASKMANAGER = ftm.task_manager
+
+        # Get the strain RF inputs
+        piezo_elastic_inputs = self.piezo_elastic_factory.build_input(previous_scf_input)
+        rf_strain_inputs = piezo_elastic_inputs.filter_by_tags(STRAIN)
+
+        initialization_info = fw_spec.get('initialization_info', {})
+        initialization_info['input_factory'] = self.piezo_elastic_factory.as_dict()
+        new_spec = dict(previous_fws=fw_spec['previous_fws'], initialization_info=initialization_info)
+
+        # Get the initial queue_adapter_updates
+        queue_adapter_update = initialization_info.get('queue_adapter_update', None)
+
+        # Create the SRC fireworks for each perturbation
+        all_SRC_rf_fws = []
+        total_list_fws = []
+        fws_deps = {}
+        rf_strain_handlers = self.handlers['_all'] if self.handlers is not None else []
+        rf_strain_validators = self.validators['_all'] if self.validators is not None else []
+        for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
+            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_strain_input, SRC_spec=new_spec,
+                                            initialization_info=initialization_info,
+                                            wf_task_index_prefix='rfstrains-pert-{:d}'.format(istrain_pert+1),
+                                            handlers=rf_strain_handlers, validators=rf_strain_validators,
+                                            deps={self.previous_scf_task_type: 'WFK',
+                                                  self.previous_ddk_task_type: 'DDK'},
+                                            queue_adapter_update=queue_adapter_update)
+            all_SRC_rf_fws.append(SRC_rf_fws)
+            total_list_fws.extend(SRC_rf_fws['fws'])
+            links_dict_update(links_dict=fws_deps, links_update=SRC_rf_fws['links_dict'])
+
+        # Adding the MrgDdb Firework
+        mrgddb_spec = dict(new_spec)
+        mrgddb_spec['wf_task_index_prefix'] = 'mrgddb-rfstrains'
+        mrgddb_spec['wf_task_index'] = mrgddb_spec['wf_task_index_prefix']
+        mrgddb_spec = set_short_single_core_to_spec(mrgddb_spec)
+        mrgddb_spec['_priority'] = 10
+        num_ddbs_to_be_merged = len(all_SRC_rf_fws)
+        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=True,
+                                                task_type= self.mrgddb_task_type),
+                             spec=mrgddb_spec,
+                             name=mrgddb_spec['wf_task_index'])
+        total_list_fws.append(mrgddb_fw)
+        #Adding the dependencies
+        for src_fws in all_SRC_rf_fws:
+            links_dict_update(links_dict=fws_deps, links_update={src_fws['check_fw']: mrgddb_fw})
+
+        rf_strains_wf = Workflow(total_list_fws, fws_deps)
+
+        return FWAction(detours=rf_strains_wf)
 
 ##############################
 # Exceptions
