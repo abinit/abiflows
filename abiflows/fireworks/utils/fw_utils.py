@@ -79,7 +79,7 @@ def append_fw_to_wf(new_fw, wf):
     wf.fw_states[new_fw.fw_id] = new_fw.state
 
 
-def get_short_single_core_spec(fw_manager=None):
+def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0):
     if isinstance(fw_manager, FWTaskManager):
         ftm = fw_manager
     elif fw_manager:
@@ -95,6 +95,7 @@ def get_short_single_core_spec(fw_manager=None):
             tm.select_qadapter(pconf)
             #TODO make a FW_task_manager parameter
             tm.qadapter.set_timelimit(600)
+            tm.qadapter.set_master_mem_overhead(master_mem_overhead)
             qadapter_spec = tm.qadapter.get_subs_dict()
             return qadapter_spec
         except RuntimeError as e:
@@ -105,10 +106,10 @@ def get_short_single_core_spec(fw_manager=None):
     return {}
 
 
-def set_short_single_core_to_spec(spec={}):
+def set_short_single_core_to_spec(spec={}, master_mem_overhead=0):
         spec = dict(spec)
 
-        qadapter_spec = get_short_single_core_spec()
+        qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead)
         spec['mpi_ncpus'] = 1
         spec['_queueadapter'] = qadapter_spec
         return spec
@@ -255,3 +256,16 @@ def get_time_report_for_wf(wf):
                        contributed_cpu_time_per_tag=contributed_cpu_time_per_tag, worker=worker)
 
         return tr
+
+
+def links_dict_update(links_dict, links_update):
+    for parent_id, child_ids in links_update.items():
+        if isinstance(child_ids, int):
+                child_ids = [child_ids]
+        if parent_id in links_dict:
+            for child_id in child_ids:
+                if child_id in links_dict[parent_id]:
+                    raise ValueError('Child fireworks already defined for parent ...')
+                links_dict[parent_id].append(child_id)
+        else:
+            links_dict[parent_id] = child_ids
