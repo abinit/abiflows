@@ -170,6 +170,15 @@ class RunTask(FireTaskBase, SRCTaskMixin):
 
 
 @explicit_serialize
+class ControlTask(FireTaskBase, SRCTaskMixin):
+    src_type = 'control'
+
+    def __init__(self, control_barrier, max_restarts=10):
+        self.control_barrier = control_barrier
+        self.max_restarts = max_restarts
+
+
+@explicit_serialize
 class CheckTask(FireTaskBase, SRCTaskMixin):
 
     src_type = 'check'
@@ -404,10 +413,12 @@ class CheckTask(FireTaskBase, SRCTaskMixin):
         deps = run_task.deps
         setup_task = setup_fw.tasks[0]
 
+        check_task = self
+
         # Create the new Setup/Run/Check fireworks
         #TODO: do we need initialization info here ?
         #      do we need deps here ?
-        SRC_fws = createSRCFireworks(setup_task, run_task, handlers=self.handlers, validators=self.validators,
+        SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, check_task=check_task,
                                      spec=spec, initialization_info=initialization_info,
                                      task_index=task_index, deps=deps)
         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
@@ -442,13 +453,18 @@ class SRCTaskIndex(object):
                              'and the following characters : {}'.format(ac_str))
         self.task_type = task_type
 
-    def set_index(self, index):
+    @property
+    def index(self):
+        return self._index
+
+    @index.setter
+    def index(self, index):
         if isinstance(index, int):
-            self.index = index
+            self._index = index
         elif isinstance(index, str):
             try:
                 myindex = int(index)
-                self.index = myindex
+                self._index = myindex
             except:
                 raise ValueError('Index in SRCTaskIndex should be an integer or a string '
                                  'that can be cast into an integer')

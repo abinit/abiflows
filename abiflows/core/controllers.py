@@ -5,8 +5,12 @@ Error handlers and validators
 
 import copy
 
+from abiflows.core.mastermind_abc import Action
 from abiflows.core.mastermind_abc import Controller
+from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.core.mastermind_abc import ControlReport
+from abiflows.core.mastermind_abc import PRIORITY_HIGH
+from abiflows.core.mastermind_abc import PRIORITY_VERY_LOW
 
 from monty.json import MontyDecoder
 from pymatgen.io.abinit import events
@@ -34,7 +38,7 @@ class AbinitController(Controller):
         super(AbinitController, self).__init__()
         self.critical_events = critical_events
 
-        self.set_priority(self.PRIORITY_HIGH)
+        self.set_priority(PRIORITY_HIGH)
 
     def process(self, **kwargs):
         """
@@ -55,7 +59,7 @@ class AbinitController(Controller):
 
         if not os.path.exists(abinit_log_file):
             if not os.path.exists(abinit_mpi_abort_file):
-                return ControlReport(controller=self,
+                return ControllerNote(controller=self,
                                      state=ControlReport.FAILED_UNKNOWN_REASON,
                                      problems=['abinit_log_file and abinit_mpi_abort_file non-existent'],
                                      actions=None)
@@ -121,16 +125,13 @@ class WalltimeController(Controller):
         of the queue manager and the queue adapter used.
 
         Args:
-            job_rundir: Directory where the job was run.
-            qout_file: Standard output file of the queue manager.
-            qerr_file: Standard error file of the queue manager.
-            queue_adapter: Queue adapter used to submit the job.
-            max_timelimit: Maximum timelimit (in seconds) allowed by the resource manager for the queue.
+            max_timelimit: Maximum timelimit (in seconds).
             timelimit_increase: Amount of time (in seconds) to increase the timelimit.
         """
         super(WalltimeController, self).__init__()
         self.max_timelimit = max_timelimit
         self.timelimit_increase = timelimit_increase
+        self.set_priority(PRIORITY_VERY_LOW)
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
@@ -145,84 +146,81 @@ class WalltimeController(Controller):
                    timelimit_increase=d['timelimit_increase'])
 
     @property
-    def priority(self):
-        return self.PRIORITY_VERY_LOW
-
-    @property
     def skip_remaining_handlers(self):
         return True
 
-    def check(self):
+    @property
+    def skip_lower_priority_controllers(self):
+        return True
 
+    def process(self, **kwargs):
+        # Create the Controller Note
+        note = ControllerNote(controller=self)
+        # Get the file paths for the stderr and stdout of the resource manager system, as well as the queue_adapter
+        qerr_filepath = kwargs.get('qerr_filepath', None)
+        qout_filepath = kwargs.get('qout_filepath', None)
+        queue_adapter = kwargs.get('queue_adapter', None)
+        # Initialize the actions for everything that is passed to kwargs
+        actions = {key: None for key in kwargs}
         # Analyze the stderr and stdout files of the resource manager system.
         qerr_info = None
         qout_info = None
-        if os.path.exists(self.qerr_filepath):
-            with open(self.qerr_filepath, "r") as f:
+        if qerr_filepath is not None and os.path.exists(qerr_filepath):
+            with open(qerr_filepath, "r") as f:
                 qerr_info = f.read()
-        if os.path.exists(self.qout_filepath):
-            with open(self.qout_filepath, "r") as f:
+        if qout_filepath is not None and os.path.exists(qout_filepath):
+            with open(qout_filepath, "r") as f:
                 qout_info = f.read()
-
-        self.timelimit_error = None
-        self.queue_errors = None
         if qerr_info or qout_info:
             from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-            qtype = self.queue_adapter.QTYPE
-            scheduler_parser = get_parser(qtype, err_file=self.qerr_filepath,
-                                          out_file=self.qout_filepath)
+            qtype = queue_adapter.QTYPE
+            scheduler_parser = get_parser(qtype, err_file=qerr_filepath,
+                                          out_file=qout_filepath)
 
             if scheduler_parser is None:
                 raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
 
             scheduler_parser.parse()
-            self.queue_errors = scheduler_parser.errors
+            queue_errors = scheduler_parser.errors
 
-            for error in self.queue_errors:
+            # Get the timelimit error if there is one
+            timelimit_error = None
+            for error in queue_errors:
                 if isinstance(error, TimeCancelError):
                     logger.debug('found timelimit error.')
-                    self.timelimit_error = error
-                    return True
-        return False
+                    timelimit_error = error
+            if timelimit_error is None:
+                note.state(ControllerNote.NOTHING_FOUND)
+                return note
 
-    def correct(self):
-        if self.src_fw:
-            if len(self.fw_to_check.tasks) > 1:
-                raise ValueError('More than 1 task found in "memory-fizzled" firework, not yet supported')
-            logger.debug('adding SRC detour')
-            # Information about the update of the memory (master overhead or base mem per proc) in the queue adapter
-            queue_adapter_update = {}
-            # When max_timelimit is not set, automatically take the hard timelimit of the queue
             if self.max_timelimit is None:
-                max_timelimit = self.queue_adapter.timelimit_hard
+                max_timelimit = queue_adapter.timelimit_hard
             else:
                 max_timelimit = self.max_timelimit
             # When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue
             if self.timelimit_increase is None:
-                timelimit_increase = self.queue_adapter.timelimit_hard / 10
+                timelimit_increase = queue_adapter.timelimit_hard / 10
             else:
                 timelimit_increase = self.timelimit_increase
-            if isinstance(self.timelimit_error, TimeCancelError):
-                old_timelimit = self.queue_adapter.timelimit
-                if old_timelimit == max_timelimit:
-                    raise ValueError('Cannot increase beyond maximum timelimit ({:d} seconds) set in WalltimeHandler.'
-                                     'Hard time limit of '
-                                     'the queue is {:d} seconds'.format(max_timelimit,
-                                                                        self.queue_adapter.timelimit_hard))
-                new_timelimit = old_timelimit + timelimit_increase
-                # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
-                if new_timelimit > max_timelimit:
-                    new_timelimit = max_timelimit
-                queue_adapter_update['timelimit'] = new_timelimit
-            else:
-                raise ValueError('Should not be here ...')
-            return {'errors': [self.__class__.__name__],
-                    'actions': [{'action_type': 'modify_object',
-                                 'object': {'source': 'fw_spec', 'key': 'qtk_queueadapter'},
-                                 'action': {'_set': queue_adapter_update}}]}
+            old_timelimit = queue_adapter.timelimit
+            if old_timelimit == max_timelimit:
+                    # raise ValueError('Cannot increase beyond maximum timelimit ({:d} seconds) set in '
+                    #                  'WalltimeController. Hard time limit of '
+                    #                  'the queue is {:d} seconds'.format(max_timelimit,
+                    #                                                     queue_adapter.timelimit_hard))
+                note.state(ControllerNote.ERROR_UNRECOVERABLE)
+                return note
+            new_timelimit = old_timelimit + timelimit_increase
+            # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
+            if new_timelimit > max_timelimit:
+                new_timelimit = max_timelimit
+            actions['queue_adapter'] = Action(callable=QueueAdapter.set_timelimit,
+                                              timelimit=new_timelimit)
+            note.state(ControllerNote.ERROR_FIXSTOP)
         else:
-            raise NotImplementedError('This handler cannot be used without the SRC scheme')
-
+            note.state(ControllerNote.NOTHING_FOUND)
+        note.set_actions(actions)
+        return note
 
 
 # logger = logging.getLogger(__name__)
