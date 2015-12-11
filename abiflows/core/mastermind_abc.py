@@ -191,6 +191,7 @@ class ControlledItemType(MSONable):
                 'item_type': self._item_type}
 
 
+#class ControlStep(MSONable):
 class Controller(MSONable):
     """
     Abstract base class for controlling a task, an event, a result, an output, an object, ...
@@ -202,18 +203,24 @@ class Controller(MSONable):
     # Types of controllers
     # Combinations of the following are possible, e.g. some controller might be a monitor, a handler, a manager and a
     #  validator at the same time
-    # 1. Whether this is a monitoring controller (to be applied to tasks during their execution)
+    # 1. Monitor : Whether this controller is to be applied to tasks during their execution
+    #TODO: monitors are not yet implemented, see how to do with the process method and the associated ControllerNote
+    #      that is returned ... we dont want a ControllerNote everytime the monitor is applied during the RunTask ...
     is_monitor = False
-    # 2. Whether this is a controller that is supposed to handle errors
+    # 2. Handler : Whether this controller is supposed to handle errors
+    #              States that handlers can specify in their note : "NOTHING_FOUND", "ERROR_UNRECOVERABLE",
+    #                                                               "ERROR_NOFIX", "ERROR_FIXSTOP", "ERROR_FIXCONTINUE"
     is_handler = False
-    # 3. Whether this is a manager controller (being able to do some kind of high-level control, e.g. parameters
-    #     convergence or optimization, multiple-step goals, ...)
+    # 3. Manager : Whether this controller is able to do some kind of high-level control, e.g. parameters
+    #               convergence or optimization, multiple-step goals, ...)
+    #              States that managers can specify in their note : "ITERATIONS_COMPLETED", "ITERATIONS_ONGOING"
+
     is_manager = False
-    # 4. Whether this controller is used to validate the results/tasks/...
+    # 4. Validator : Whether this controller is used to validate the results/tasks/...
+    #                States that validators can specify in their note : "OK", "NOT_OK"
     is_validator = False
     # NB: - The distinction between handler and manager is thin and is actually more up to the user. At this moment,
-    #        they both are at the exact same level ...
-    #     - Only validator Controllers should be able to specify an "EVERYTHING_OK" state in their note.
+    #        they both are at the exact same level in the implementation ...
 
 
     def __init__(self):
@@ -286,8 +293,14 @@ class ControllerNote(MSONable):
     # State of a controlled task specifying that some error(s) was (were) detected by the controller and the controller
     #  adviced some action to fix the error. Other controllers (if any) might still be applied.
     ERROR_FIXCONTINUE = 'ERROR_FIXCONTINUE'
+    # State of a controlled task specifying that the iterations "required" by the (manager) controller are still
+    #  ongoing
+    LOOP_ONGOING = 'ITERATIONS_ONGOING'
+    # State of a controlled task specifying that the iterations "required" by the (manager) controller are completed
+    LOOP_COMPLETED = 'ITERATIONS_COMPLETED'
 
-    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_FIXSTOP, ERROR_FIXCONTINUE]
+    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_FIXSTOP, ERROR_FIXCONTINUE,
+              LOOP_ONGOING, LOOP_COMPLETED]
 
     def __init__(self, controller, state=None, problems=None, actions=None):
         self.controller = controller
@@ -397,6 +410,7 @@ class ControlReport(MSONable):
 
 
 #TODO: should this be MSONable ? Is that even possible with a callable object in self ?
+#class Instruction(MSONable):
 class Action(MSONable):
 
     def __init__(self, callable, **kwargs):
