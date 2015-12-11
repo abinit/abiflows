@@ -19,6 +19,7 @@ from monty.serialization import loadfn
 from abiflows.fireworks.utils.custodian_utils import MonitoringSRCErrorHandler
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.custodian_utils import SRCValidator
+from abiflows.core.mastermind_abc import ControlBarrier, ControlledItemType
 
 
 class SRCTaskMixin(object):
@@ -176,6 +177,102 @@ class ControlTask(FireTaskBase, SRCTaskMixin):
     def __init__(self, control_barrier, max_restarts=10):
         self.control_barrier = control_barrier
         self.max_restarts = max_restarts
+
+    def run_task(self, fw_spec):
+        # Get the setup and run fireworks
+        setup_and_run_fws = self.get_setup_and_run_fw(fw_spec=fw_spec)
+        setup_fw = setup_and_run_fws['setup_fw']
+        run_fw = setup_and_run_fws['run_fw']
+
+        # Specify the type of the task that is controlled:
+        #  - aborted : the task has been aborted due to a monitoring controller during the Run Task, the FW state
+        #              is COMPLETED
+        #  - completed : the task has completed, the FW state is COMPLETE
+        #  - failed : the task has failed, the FW state is FIZZLED
+        if run_fw.state == 'COMPLETED':
+            if 'src_run_task_aborted' in fw_spec:
+                self.control_barrier.set_controlled_item_type(ControlledItemType.task_aborted())
+            else:
+                self.control_barrier.set_controlled_item_type(ControlledItemType.task_completed())
+        elif run_fw.state == 'FIZZLED':
+            self.control_barrier.set_controlled_item_type(ControlledItemType.task_failed())
+        else:
+            raise RuntimeError('The state of the Run Firework is "{}" '
+                               'while it should be COMPLETED or FIZZLED'.format(run_fw.state))
+
+        # Get the keyword_arguments to be passed to the process method of the control_barrier
+        #TODO: how to do that kind of automatically ??
+        kwargs = {'queue_adapter': run_fw.spec['qtk_queueadapter']}
+        control_report = self.control_barrier.process(**kwargs)
+
+        if control_report.finalized:
+            # If everything is ok, update the spec of the children
+            stored_data = {'finalized': True}
+            update_spec = {}
+            mod_spec = []
+            for task_type, task_info in fw_spec['previous_fws'].items():
+                mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+            return FWAction(stored_data=stored_data)
+
+
+
+        # Validate the results if no error was found
+        self.validate()
+
+        # If everything is ok, update the spec of the children
+        stored_data = {}
+        update_spec = {}
+        mod_spec = []
+        #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
+        # next SRC group
+        for task_type, task_info in fw_spec['previous_fws'].items():
+            mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+        return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
+
+    def get_setup_and_run_fw(self, fw_spec):
+        # Get previous job information
+        previous_job_info = fw_spec['_job_info']
+        run_fw_id = previous_job_info['fw_id']
+        # Get the launchpad
+        if '_add_launchpad_and_fw_id' in fw_spec:
+            lp = self.launchpad
+            check_fw_id = self.fw_id
+        else:
+            try:
+                fw_dict = loadfn('FW.json')
+            except IOError:
+                try:
+                    fw_dict = loadfn('FW.yaml')
+                except IOError:
+                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+                                       "impossible to determine fw_id")
+            lp = LaunchPad.auto_load()
+            check_fw_id = fw_dict['fw_id']
+        # Check that this CheckTask has only one parent firework
+        this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(check_fw_id)
+        parents_fw_ids = this_lzy_wf.links.parent_links[check_fw_id]
+        if len(parents_fw_ids) != 1:
+            raise ValueError('CheckTask\'s Firework should have exactly one parent firework')
+        # Get the Run Firework and its state
+        run_fw = lp.get_fw_by_id(fw_id=run_fw_id)
+        run_is_fizzled = '_fizzled_parents' in fw_spec
+        if run_is_fizzled and not run_fw.state == 'FIZZLED':
+            raise ValueError('CheckTask has "_fizzled_parents" key but parent Run firework is not fizzled ...')
+        run_is_completed = run_fw.state == 'COMPLETED'
+        if run_is_completed and run_is_fizzled:
+            raise ValueError('Run firework is FIZZLED and COMPLETED ...')
+        if (not run_is_completed) and (not run_is_fizzled):
+            raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
+        # Get the Setup Firework
+        setup_job_info = run_fw.spec['_job_info']
+        setup_fw_id = setup_job_info['fw_id']
+        setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
+        return {'setup_fw': setup_fw, 'run_fw': run_fw}
+
+    @classmethod
+    def from_controllers(cls, controllers, max_restarts=10):
+        cb = ControlBarrier(controllers=controllers)
+        return cls(control_barrier=cb, max_restarts=max_restarts)
 
 
 @explicit_serialize
@@ -441,7 +538,7 @@ class SRCTaskIndex(object):
     ALLOWED_CHARS = ['-']
     def __init__(self, task_type, index=1):
         self.set_task_type(task_type=task_type)
-        self.set_index(index=index)
+        self.index = index
 
     def set_task_type(self, task_type):
         prefix_test_string = str(task_type)
@@ -473,6 +570,9 @@ class SRCTaskIndex(object):
                              'that can be cast into an integer')
 
     def increase_index(self):
+        self.index += 1
+
+    def __add__(self, other):
         self.index += 1
 
     def __str__(self):

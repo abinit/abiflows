@@ -51,18 +51,18 @@ class AbinitController(Controller):
         """
         queue_adapter = copy.deepcopy(kwargs.get('queue_adapter', None))
         abinit_input = copy.deepcopy(kwargs.get('abinit_input', None))
-        abinit_output_file = kwargs.get('abinit_output_file', None)
-        abinit_log_file = kwargs.get('abinit_log_file', None)
-        abinit_mpi_abort_file = kwargs.get('abinit_mpi_abort_file', None)
+        abinit_output_file = kwargs.get('abinit_output_filepath', None)
+        abinit_log_file = kwargs.get('abinit_log_filepath', None)
+        abinit_mpi_abort_file = kwargs.get('abinit_mpi_abort_filepath', None)
 
         parser = events.EventsParser()
 
         if not os.path.exists(abinit_log_file):
             if not os.path.exists(abinit_mpi_abort_file):
                 return ControllerNote(controller=self,
-                                     state=ControlReport.FAILED_UNKNOWN_REASON,
-                                     problems=['abinit_log_file and abinit_mpi_abort_file non-existent'],
-                                     actions=None)
+                                      state=ControlReport.FAILED_UNKNOWN_REASON,
+                                      problems=['abinit_log_file and abinit_mpi_abort_file non-existent'],
+                                      actions=None)
             else:
                 # ABINIT abort file without log!
                 abort_report = parser.parse(abinit_mpi_abort_file)
