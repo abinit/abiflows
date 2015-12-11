@@ -5,7 +5,6 @@ monitor and check tasks, events, results, objects, ...
 """
 
 import abc
-import copy
 import logging
 
 from monty.json import MontyDecoder
@@ -46,15 +45,22 @@ class ControlBarrier(MSONable):
     def __init__(self, controllers):
         self.controllers = []
         self.add_controllers(controllers=controllers)
+        self.controlled_item_type = None
 
-    def setup_controllers(self):
+    def set_controlled_item_type(self, controlled_item_type):
+        self.controlled_item_type = controlled_item_type
+
+    def setup_controllers(self, controlled_item_type):
         self.grouped_controllers = {}
-        for controller in self.controllers:
+        controllers = [controller for controller in self.controllers
+                       if controlled_item_type in controller.controlled_item_types]
+        for controller in controllers:
             if controller.priority in self.grouped_controllers:
                 self.grouped_controllers[controller.priority].append(controller)
             else:
                 self.grouped_controllers[controller.priority] = [controller]
         self.priorities = sorted(self.grouped_controllers.keys(), reverse=True)
+        self._ncontrollers = sum([len(v) for v in self.grouped_controllers.values()])
 
     def add_controller(self, controller):
         self.add_controllers(controllers=[controller])
@@ -70,17 +76,25 @@ class ControlBarrier(MSONable):
         else:
             raise ValueError('controllers should be either a list of subclasses of Controller or a single '
                              'subclass of Controller')
-        self.setup_controllers()
 
     def process(self, **kwargs):
+        self.setup_controllers(controlled_item_type=self.controlled_item_type)
+        report = ControlReport()
+        if self.ncontrollers == 0:
+            report.state = ControlReport.UNRECOVERABLE
+            return report
         for priority in self.priorities:
             skip_lower_priority = False
             for controller in self.grouped_controllers[priority]:
-                controller_report = controller.process(**kwargs)
-                if controller_report.skip_lower_priority_controllers:
+                controller_note = controller.process(**kwargs)
+                if controller_note.skip_lower_priority_controllers:
                     skip_lower_priority = True
             if skip_lower_priority:
                 break
+
+    @property
+    def ncontrollers(self):
+        return self._ncontrollers
 
     @classmethod
     def from_dict(cls, d):
@@ -181,7 +195,11 @@ class Controller(MSONable):
     """
 
     _priority = PRIORITY_MEDIUM
-    _controlled_items = None
+    _controlled_item_types = None
+
+    is_monitor = False
+    is_manager = False
+    is_handler = False
 
 
     def __init__(self):
@@ -219,6 +237,10 @@ class Controller(MSONable):
         return self._priority
 
     @property
+    def controlled_item_types(self):
+        return self._controlled_item_types
+
+    @property
     def skip_remaining_controllers(self):
         return False
 
@@ -251,11 +273,11 @@ class ControllerNote(MSONable):
     #  adviced some action to fix the error. Other controllers (if any) might still be applied.
     ERROR_FIXCONTINUE = 'ERROR_FIXCONTINUE'
 
-    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE]
+    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_FIXSTOP, ERROR_FIXCONTINUE]
 
     def __init__(self, controller, state=None, problems=None, actions=None):
         self.controller = controller
-        self.set_state(state)
+        self.state = state
         self.problems = problems
         self.set_actions(actions)
 
@@ -270,7 +292,6 @@ class ControllerNote(MSONable):
         else:
             self.problems.append(problem)
 
-
     @property
     def state(self):
         return self._state
@@ -282,8 +303,8 @@ class ControllerNote(MSONable):
         elif state in self.STATES:
             self._state = state
         else:
-            raise ValueError('"state" in set_state should be one of the following : '
-                             '{}'.format(', '.join([str(ii) for ii in self.STATES])))
+            raise ValueError('"state" in ControllerNote should be one of the following : '
+                             '{}'.format(', '.join(self.STATES)))
 
     @property
     def has_errors_recoverable(self):
@@ -301,18 +322,64 @@ class ControllerNote(MSONable):
     def has_errors(self):
         return True
 
+    @classmethod
+    def from_dict(cls, d):
+        raise NotImplementedError('SHOULD IMPLEMENT FROM_DICT')
+
+    def as_dict(self):
+        raise NotImplementedError('SHOULD IMPLEMENT AS_DICT')
+
 
 class ControlReport(MSONable):
 
-    def __init__(self, controller_notes):
-        self.controller_notes = controller_notes
+    # Status of an SRC trio that is completely finalized
+    FINALIZED = 'FINALIZED'
+    # Status of an SRC trio that has one or more errors that is (are) unrecoverable
+    UNRECOVERABLE = 'UNRECOVERABLE'
+    # Status of an SRC trio that has one or more errors that is (are) recoverable
+    RECOVERABLE = 'RECOVERABLE'
+    # Status of an SRC trio that is ongoing (for controllers taking care of non-error-related stuff, e.g. convergence,
+    #  accuracy goal achieved with multiple-steps such as relaxation with low ecut then high ecut, ...)
+    ONGOING = 'ONGOING'
+
+    STATES = [FINALIZED, UNRECOVERABLE, RECOVERABLE, ONGOING]
+
+    def __init__(self, controller_notes=None):
+        self.controller_notes = []
+        if controller_notes is not None:
+            self.add_controller_notes(controller_notes)
+
+    def add_controller_notes(self, controller_notes):
+        self.controller_notes.extend(controller_notes)
+
+    def add_controller_note(self, controller_note):
+        self.controller_notes.append(controller_note)
 
     @property
     def state(self):
-        return True
+        return self._state
 
-    def corrections(self):
-        return [cn.corrections() for cn in self.controller_notes]
+    @state.setter
+    def state(self, state):
+        if state not in self.STATES:
+            raise ValueError('"state" in ControlReport should be one of the following : '
+                             '{}'.format(', '.join(self.STATES)))
+        self._state = state
+
+    @property
+    def finalized(self):
+        return any([cn.state == ControllerNote.EVERYTHING_OK for cn in self.controller_notes])
+
+    def actions(self):
+        # TODO: should check whether actions are compatible here ...
+        return [cn.actions() for cn in self.controller_notes]
+
+    @classmethod
+    def from_dict(cls, d):
+        raise NotImplementedError('SHOULD IMPLEMENT FROM_DICT')
+
+    def as_dict(self):
+        raise NotImplementedError('SHOULD IMPLEMENT AS_DICT')
 
 
 #TODO: should this be MSONable ? Is that even possible with a callable object in self ?
@@ -332,3 +399,9 @@ class Action(MSONable):
     @abc.abstractmethod
     def as_dict(self):
         pass
+
+    @classmethod
+    def from_string(cls, callable_string, **kwargs):
+        #TODO: do this ?
+        callable = None
+        cls(callable=callable, **kwargs)
