@@ -40,7 +40,9 @@ PRIORITY_LOWEST = PRIORITIES['PRIORITY_LOWEST']
 # class ControlStage(MSONable):
 # class ControlStation(MSONable):
 # class ControlGate(MSONable):
-class ControlBarrier(MSONable):
+# class ControlProcess(MSONable):
+# class ControlBarrier(MSONable):
+class ControlProcedure(MSONable):
 
     def __init__(self, controllers):
         self.controllers = []
@@ -197,9 +199,20 @@ class Controller(MSONable):
     _priority = PRIORITY_MEDIUM
     _controlled_item_types = None
 
+    # Types of controllers
+    # Combinations of the following are possible, e.g. some controller might be a monitor, a handler, a manager and a
+    #  validator at the same time
+    # 1. Whether this is a monitoring controller (to be applied to tasks during their execution)
     is_monitor = False
-    is_manager = False
+    # 2. Whether this is a controller that is supposed to handle errors
     is_handler = False
+    # 3. Whether this is a manager controller (being able to do some kind of high-level control, e.g. parameters
+    #     convergence or optimization, multiple-step goals, ...)
+    is_manager = False
+    # 4. Whether this controller is used to validate the results/tasks/...
+    is_validator = False
+    # NB: The distinction between handler and manager is thin and is actually more up to the user. At this moment,
+    #      they both are at the exact same level ...
 
 
     def __init__(self):
@@ -219,7 +232,7 @@ class Controller(MSONable):
         Main function used to make the actual control/check of a list of inputs/outputs.
         The function should return a ControllerNote object containing the main conclusion of the controller, i.e.
          whether something important has been detected, as well as the possible actions/corrections to be done
-         in order to continue/restart a task.
+         in order to carry on/continue/restart a task.
         """
         pass
 
@@ -403,5 +416,8 @@ class Action(MSONable):
     @classmethod
     def from_string(cls, callable_string, **kwargs):
         #TODO: do this ?
-        callable = None
+        import importlib
+        mod_name, func_name = callable_string.rsplit('.',1)
+        mod = importlib.import_module(mod_name)
+        callable = getattr(mod, func_name)
         cls(callable=callable, **kwargs)
