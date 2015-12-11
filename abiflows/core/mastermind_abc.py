@@ -211,8 +211,9 @@ class Controller(MSONable):
     is_manager = False
     # 4. Whether this controller is used to validate the results/tasks/...
     is_validator = False
-    # NB: The distinction between handler and manager is thin and is actually more up to the user. At this moment,
-    #      they both are at the exact same level ...
+    # NB: - The distinction between handler and manager is thin and is actually more up to the user. At this moment,
+    #        they both are at the exact same level ...
+    #     - Only validator Controllers should be able to specify an "EVERYTHING_OK" state in their note.
 
 
     def __init__(self):

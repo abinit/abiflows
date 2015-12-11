@@ -11,6 +11,7 @@ from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.core.mastermind_abc import ControlReport
 from abiflows.core.mastermind_abc import PRIORITY_HIGH
 from abiflows.core.mastermind_abc import PRIORITY_VERY_LOW
+from abiflows.core.mastermind_abc import PRIORITY_LOWEST
 
 from monty.json import MontyDecoder
 from pymatgen.io.abinit import events
@@ -28,6 +29,10 @@ class AbinitController(Controller):
     """
     General handler for abinit's critical events handlers.
     """
+
+    is_handler = True
+    is_validator = True
+
     def __init__(self, critical_events=None):
         """
         Initializes the controller with the critical events to be tested/controlled
@@ -118,6 +123,8 @@ class WalltimeController(Controller):
     """
     Controller for walltime infringements of the resource manager.
     """
+
+    is_handler = True
 
     def __init__(self, max_timelimit=None, timelimit_increase=None):
         """
@@ -220,6 +227,42 @@ class WalltimeController(Controller):
         else:
             note.state(ControllerNote.NOTHING_FOUND)
         note.set_actions(actions)
+        return note
+
+
+class SimpleValidatorController(Controller):
+    """
+    Simple validator controller to be applied after all other ccontrollers (PRIORITY_LOWEST).
+    This validator controller can be used when no "real" validator exists, but just handlers/monitors
+    and that we suppose that if nothing is found by the handlers/monitors, then it means that it is ok.
+    """
+
+    is_handler = True
+
+    def __init__(self):
+        super(SimpleValidatorController, self).__init__()
+        self.set_priority(PRIORITY_LOWEST)
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls()
+
+    @property
+    def skip_remaining_handlers(self):
+        return True
+
+    @property
+    def skip_lower_priority_controllers(self):
+        return True
+
+    def process(self, **kwargs):
+        # Create the Controller Note
+        note = ControllerNote(controller=self)
+        note.state = ControllerNote.EVERYTHING_OK
         return note
 
 

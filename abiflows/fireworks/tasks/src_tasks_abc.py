@@ -195,14 +195,15 @@ class ControlTask(FireTaskBase, SRCTaskMixin):
         kwargs = {'queue_adapter': run_fw.spec['qtk_queueadapter']}
         control_report = self.control_procedure.process(**kwargs)
 
+        # If everything is ok, update the spec of the children
         if control_report.finalized:
-            # If everything is ok, update the spec of the children
             stored_data = {'finalized': True}
             update_spec = {}
             mod_spec = []
             for task_type, task_info in fw_spec['previous_fws'].items():
                 mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
-            return FWAction(stored_data=stored_data)
+            return FWAction(stored_data=stored_data, exit=False, update_spec=update_spec, mod_spec=mod_spec,
+                            additions=None, detours=None, defuse_children=False)
 
 
 
