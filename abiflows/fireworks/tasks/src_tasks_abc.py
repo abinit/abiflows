@@ -14,12 +14,13 @@ from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 
 from monty.json import MontyDecoder
+from monty.json import MSONable
 from monty.serialization import loadfn
 
 from abiflows.fireworks.utils.custodian_utils import MonitoringSRCErrorHandler
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.custodian_utils import SRCValidator
-from abiflows.core.mastermind_abc import ControlBarrier, ControlledItemType
+from abiflows.core.mastermind_abc import ControlProcedure, ControlledItemType
 
 
 class SRCTaskMixin(object):
@@ -104,6 +105,7 @@ class SetupTask(FireTaskBase, SRCTaskMixin):
         update_spec = {'src_directories': self.src_directories}
         return FWAction(update_spec=update_spec)
 
+# TODO: should the three following methods be abstract or should we let the developer chose to implement them or not ...
     @abc.abstractmethod
     def setup_run_parameters(self, fw_spec):
         pass
@@ -122,25 +124,13 @@ class RunTask(FireTaskBase, SRCTaskMixin):
 
     src_type = 'run'
 
-    def __init__(self, monitoring_handlers=None):
-        # TODO: evaluate the possibility to use
-        self.set_monitoring_handlers(monitoring_handlers=monitoring_handlers)
+    def __init__(self, control_procedure):
+        self.set_control_procedure(control_procedure=control_procedure)
 
-    def set_monitoring_handlers(self, monitoring_handlers):
-        if monitoring_handlers is None:
-            self.monitoring_handlers = []
-        elif issubclass(monitoring_handlers, MonitoringSRCErrorHandler):
-            self.monitoring_handlers = [monitoring_handlers]
-        elif isinstance(monitoring_handlers, (list, tuple)):
-            self.monitoring_handlers = []
-            for mh in monitoring_handlers:
-                if not issubclass(mh, MonitoringSRCErrorHandler):
-                    raise TypeError('One of items in "monitoring_handlers" does not derive from '
-                                    'MonitoringSRCErrorHandler')
-                self.monitoring_handlers.append(mh)
-        else:
-            raise TypeError('The monitoring_handlers argument is neither None, nor a MonitoringSRCErrorHandler, '
-                            'nor a list/tuple')
+    def set_control_procedure(self, control_procedure):
+        self.control_procedure = control_procedure
+        if any([controller.is_monitor for controller in control_procedure.controllers]):
+            raise NotImplementedError('Monitoring controllers not yet implemented in RunTask')
 
     def run_task(self, fw_spec):
         # The Run and Check tasks have to run on the same worker
@@ -174,8 +164,8 @@ class RunTask(FireTaskBase, SRCTaskMixin):
 class ControlTask(FireTaskBase, SRCTaskMixin):
     src_type = 'control'
 
-    def __init__(self, control_barrier, max_restarts=10):
-        self.control_barrier = control_barrier
+    def __init__(self, control_procedure, max_restarts=10):
+        self.control_procedure = control_procedure
         self.max_restarts = max_restarts
 
     def run_task(self, fw_spec):
@@ -191,28 +181,29 @@ class ControlTask(FireTaskBase, SRCTaskMixin):
         #  - failed : the task has failed, the FW state is FIZZLED
         if run_fw.state == 'COMPLETED':
             if 'src_run_task_aborted' in fw_spec:
-                self.control_barrier.set_controlled_item_type(ControlledItemType.task_aborted())
+                self.control_procedure.set_controlled_item_type(ControlledItemType.task_aborted())
             else:
-                self.control_barrier.set_controlled_item_type(ControlledItemType.task_completed())
+                self.control_procedure.set_controlled_item_type(ControlledItemType.task_completed())
         elif run_fw.state == 'FIZZLED':
-            self.control_barrier.set_controlled_item_type(ControlledItemType.task_failed())
+            self.control_procedure.set_controlled_item_type(ControlledItemType.task_failed())
         else:
             raise RuntimeError('The state of the Run Firework is "{}" '
                                'while it should be COMPLETED or FIZZLED'.format(run_fw.state))
 
-        # Get the keyword_arguments to be passed to the process method of the control_barrier
+        # Get the keyword_arguments to be passed to the process method of the control_procedure
         #TODO: how to do that kind of automatically ??
         kwargs = {'queue_adapter': run_fw.spec['qtk_queueadapter']}
-        control_report = self.control_barrier.process(**kwargs)
+        control_report = self.control_procedure.process(**kwargs)
 
+        # If everything is ok, update the spec of the children
         if control_report.finalized:
-            # If everything is ok, update the spec of the children
             stored_data = {'finalized': True}
             update_spec = {}
             mod_spec = []
             for task_type, task_info in fw_spec['previous_fws'].items():
                 mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
-            return FWAction(stored_data=stored_data)
+            return FWAction(stored_data=stored_data, exit=False, update_spec=update_spec, mod_spec=mod_spec,
+                            additions=None, detours=None, defuse_children=False)
 
 
 
@@ -271,8 +262,8 @@ class ControlTask(FireTaskBase, SRCTaskMixin):
 
     @classmethod
     def from_controllers(cls, controllers, max_restarts=10):
-        cb = ControlBarrier(controllers=controllers)
-        return cls(control_barrier=cb, max_restarts=max_restarts)
+        cp = ControlProcedure(controllers=controllers)
+        return cls(control_procedure=cp, max_restarts=max_restarts)
 
 
 @explicit_serialize
@@ -534,8 +525,10 @@ def createSRCFireworks(setup_task, run_task, check_task, spec=None, initializati
     pass
 
 
-class SRCTaskIndex(object):
+class SRCTaskIndex(MSONable):
+
     ALLOWED_CHARS = ['-']
+
     def __init__(self, task_type, index=1):
         self.set_task_type(task_type=task_type)
         self.index = index
@@ -573,7 +566,9 @@ class SRCTaskIndex(object):
         self.index += 1
 
     def __add__(self, other):
-        self.index += 1
+        if not isinstance(other, int):
+            raise ValueError('The __add__ method in SRCTaskIndex should be an integer')
+        self.index += other
 
     def __str__(self):
         return '_'.join([self.task_type, str(self.index)])
@@ -619,6 +614,16 @@ class SRCTaskIndex(object):
     @classmethod
     def from_task(cls, task):
         return cls(task_type=task.task_type)
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(task_type=d['task_type'], index=d['index'])
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'task_type': self.task_type,
+                'index': self.index}
 
 
 # def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf_task_index_prefix, current_task_index=1,
