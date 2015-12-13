@@ -1,3 +1,4 @@
+from __future__ import print_function, division, unicode_literals
 
 import abc
 import copy
@@ -49,7 +50,7 @@ class SRCTaskMixin(object):
 
     def setup_directories(self, fw_spec, create_dirs=False):
         if self.src_type == 'setup':
-            self.src_root_dir = fw_spec['_launch_dir']
+            self.src_root_dir = fw_spec.get('_launch_dir', os.getcwd())
         elif self.src_type in ['run', 'check']:
             self.src_root_dir = os.path.split(os.path.abspath(fw_spec['_launch_dir']))[0]
         else:
@@ -77,10 +78,12 @@ class SRCTaskMixin(object):
                 }
 
 
-@explicit_serialize
-class SetupTask(FireTaskBase, SRCTaskMixin):
+class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
+
+    def __init__(self):
+        pass
 
     def run_task(self, fw_spec):
         # The Setup and Run have to run on the same worker
@@ -96,12 +99,13 @@ class SetupTask(FireTaskBase, SRCTaskMixin):
         # Make the file transfers from another worker if needed
         self.file_transfers(fw_spec=fw_spec)
         # Setup the parameters for the run (number of cpus, time, memory, openmp, ...)
-        self.setup_run_parameters(fw_spec=fw_spec)
+        run_parameters = self.setup_run_parameters(fw_spec=fw_spec)
         # Prepare run (make links to output files from previous tasks, write input files, create the directory
         # tree of the program, ...)
         self.prepare_run(fw_spec=fw_spec)
 
-        update_spec = {'src_directories': self.src_directories}
+        update_spec = {'src_directories': self.src_directories, '_launch_dir': os.getcwd()}
+        update_spec.update(run_parameters)
         return FWAction(update_spec=update_spec)
 
     @abc.abstractmethod
@@ -117,8 +121,7 @@ class SetupTask(FireTaskBase, SRCTaskMixin):
         pass
 
 
-@explicit_serialize
-class RunTask(FireTaskBase, SRCTaskMixin):
+class RunTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'run'
 
@@ -143,6 +146,7 @@ class RunTask(FireTaskBase, SRCTaskMixin):
                             'nor a list/tuple')
 
     def run_task(self, fw_spec):
+        self.setup_directories(fw_spec=fw_spec, create_dirs=False)
         # The Run and Check tasks have to run on the same worker
         fw_spec['_preserve_fworker'] = True
         fw_spec['_pass_job_info'] = True
@@ -150,7 +154,13 @@ class RunTask(FireTaskBase, SRCTaskMixin):
         #      applied in check !
         self.config(fw_spec=fw_spec)
         self.run(fw_spec=fw_spec)
-        self.postrun(fw_spec=fw_spec)
+        update_spec = self.postrun(fw_spec=fw_spec)
+
+        if update_spec is None:
+            update_spec = {}
+
+        # pass spec info to the ControlTask
+        update_spec['_launch_dir'] = self.check_dir
 
         #TODO: the directory is passed thanks to _pass_job_info. Should we pass anything else ?
         return FWAction(stored_data=None, exit=False, update_spec=None, mod_spec=None,
@@ -170,8 +180,7 @@ class RunTask(FireTaskBase, SRCTaskMixin):
         pass
 
 
-@explicit_serialize
-class ControlTask(FireTaskBase, SRCTaskMixin):
+class ControlTask(SRCTaskMixin, FireTaskBase):
     src_type = 'control'
 
     def __init__(self, control_barrier, max_restarts=10):
@@ -275,8 +284,7 @@ class ControlTask(FireTaskBase, SRCTaskMixin):
         return cls(control_barrier=cb, max_restarts=max_restarts)
 
 
-@explicit_serialize
-class CheckTask(FireTaskBase, SRCTaskMixin):
+class CheckTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'check'
 
@@ -684,3 +692,23 @@ def get_queue_adapter_update(qtk_queueadapter, corrections, qa_params=None):
                 qa_update = action['action']['_set']
                 queue_adapter_update.update(qa_update)
     return queue_adapter_update
+
+
+################
+# Exceptions
+################
+
+class SRCError(Exception):
+    pass
+
+
+class SetupError(SRCError):
+    pass
+
+
+class RunError(SRCError):
+    pass
+
+
+class ControlError(SRCError):
+    pass

@@ -139,7 +139,8 @@ class FWTaskManager(object):
                               copy_deps=False,
                               walltime_command=None,
                               continue_unconverged_on_rerun=True,
-                              allow_local_restart=False)
+                              allow_local_restart=False,
+                              timelimit_buffer=120)
     FWPolicy = namedtuple("FWPolicy", fw_policy_defaults.keys())
 
     def __init__(self, **kwargs):

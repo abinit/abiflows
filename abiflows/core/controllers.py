@@ -4,6 +4,7 @@ Error handlers and validators
 """
 
 import copy
+from abipy.core import Structure
 
 from abiflows.core.mastermind_abc import Action
 from abiflows.core.mastermind_abc import Controller
@@ -19,6 +20,8 @@ from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancel
 from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import TimeCancelError
 from pymatgen.io.abinit.qadapters import QueueAdapter
+from pymatgen.io.abinit.utils import Directory, File
+from abipy.abio.inputs import AbinitInput
 import logging
 import os
 
@@ -26,58 +29,201 @@ logger = logging.getLogger(__name__)
 
 class AbinitController(Controller):
     """
-    General handler for abinit's critical events handlers.
+    General handler for abinit's events.
+    Determines whether the calculation ended correctly or not and fixes errors (including unconverged) if Abinit
+    error handlers are available.
     """
-    def __init__(self, critical_events=None):
+    def __init__(self, critical_events=None, handlers=None):
         """
-        Initializes the controller with the critical events to be tested/controlled
+        Initializes the controller with the critical events that trigger the restart and a list of ErrorHandlers
 
         Args:
-            job_rundir: Directory where the job was run.
+            critical_events: List of events that trigger a restart due to unconverged calculation
+            handlers: List of ErrorHandlers (pymatgen.io.abinit.events) used to handle specific events
         """
         super(AbinitController, self).__init__()
-        self.critical_events = critical_events
+
+        critical_events = [] if critical_events is None else critical_events
+        handlers = [] if handlers is None else handlers
+
+        self.critical_events = critical_events if isinstance(critical_events, (list, tuple)) else [critical_events]
+        self.handlers = handlers if isinstance(handlers, (list, tuple)) else [handlers]
 
         self.set_priority(PRIORITY_HIGH)
 
     def process(self, **kwargs):
         """
-        Main function used to make the actual control/check of a list of inputs/outputs.
-        The function could take several inputs.
-        If no action is required, the function should return False.
-        If something is detected without any actions possible, the function should return True.
-        If some actions, i.e. modification of one or several of the input arguments of the function, are possible,
-         the function should return the list of all input arguments, both the modified and unmodified.
+        Returns the ControllerNote
         """
+        for kw in ['abinit_input', 'abinit_output_filepath', 'abinit_log_filepath', 'abinit_mpi_abort_filepath',
+                   'abinit_outdir_path']:
+            if kw not in kwargs:
+                raise ValueError("kwarg {} is required to process abinit results".format(kw))
         queue_adapter = copy.deepcopy(kwargs.get('queue_adapter', None))
-        abinit_input = copy.deepcopy(kwargs.get('abinit_input', None))
-        abinit_output_file = kwargs.get('abinit_output_filepath', None)
-        abinit_log_file = kwargs.get('abinit_log_filepath', None)
-        abinit_mpi_abort_file = kwargs.get('abinit_mpi_abort_filepath', None)
+        abinit_input = copy.deepcopy(kwargs.get('abinit_input'))
+        abinit_output_file = File(kwargs.get('abinit_output_filepath'))
+        abinit_log_file = File(kwargs.get('abinit_log_filepath'))
+        abinit_mpi_abort_file = File(kwargs.get('abinit_mpi_abort_filepath'))
+        abinit_outdir_path = Directory(kwargs.get('abinit_outdir_path'))
+
+        note = ControllerNote(controller=self)
+        # Initialize the actions for everything that is passed to kwargs
+        actions = {key: None for key in kwargs}
+
+        report = None
+        try:
+            report = self.get_event_report(abinit_log_file, abinit_mpi_abort_file)
+        except Exception as exc:
+            msg = "%s exception while parsing event_report:\n%s" % (self, exc)
+            logger.critical(msg)
+
+        # If the calculation is ok, parse the outputs
+        if report is not None:
+            # the calculation finished without errors
+            if report.run_completed:
+                # Check if the calculation converged.
+                critical_events_found = report.filter_types(self.critical_events)
+                if critical_events_found:
+                    # self.history.log_unconverged()
+                    # hook
+                    # local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec)
+                    # num_restarts = self.restart_info.num_restarts if self.restart_info else 0
+                    # if num_restarts < self.ftm.fw_policy.max_restarts:
+                    #     if local_restart:
+                    #         return None
+                    #     else:
+                    #         stored_data['final_state'] = 'Unconverged'
+                    #         return FWAction(detours=restart_fw, stored_data=stored_data)
+                    # else:
+                    #     raise UnconvergedError(self, msg="Unconverged after {} restarts".format(num_restarts),
+                    #                            abiinput=self.abiinput, restart_info=self.restart_info,
+                    #                            history=self.history)
+                    # Calculation did not converge. A simple restart is enough
+                    note.state(ControllerNote.ERROR_FIXSTOP)
+                    note.restart(ControllerNote.SIMPLE_RESTART)
+                    note.add_problem('Unconverged: {}'.format(', '.join(e.name for e in critical_events_found)))
+                else:
+                    # calculation converged
+                    #TODO move to a different controler
+                    # check if there are custom parameters that should be converged
+                    # unconverged_params, reset_restart = self.check_parameters_convergence(fw_spec)
+                    # if unconverged_params:
+                    #     self.history.log_converge_params(unconverged_params, self.abiinput)
+                    #     self.abiinput.set_vars(**unconverged_params)
+                    #     local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec, reset=reset_restart)
+                    #     num_restarts = self.restart_info.num_restarts if self.restart_info else 0
+                    #     if num_restarts < self.ftm.fw_policy.max_restarts:
+                    #         if local_restart:
+                    #             return None
+                    #         else:
+                    #             stored_data['final_state'] = 'Unconverged_parameters'
+                    #             return FWAction(detours=restart_fw, stored_data=stored_data)
+                    #     else:
+                    #         raise UnconvergedParametersError(self, abiinput=self.abiinput,
+                    #                                          restart_info=self.restart_info, history=self.history)
+                    # else:
+                    #     # everything is ok. conclude the task
+                    #     # hook
+                    #     update_spec, mod_spec, stored_data = self.conclude_task(fw_spec)
+                    #     return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
+                    note.state(ControllerNote.EVERYTHING_OK)
+            elif report.errors:
+            # Abinit reported problems
+            # Check if the errors could be handled
+                logger.debug('Found errors in report')
+                # for error in report.errors:
+                #     logger.debug(str(error))
+                #     try:
+                #         self.abi_errors.append(error)
+                #     except AttributeError:
+                #         self.abi_errors = [error]
+
+                # ABINIT errors, try to handle them
+                fixed, reset, abiinput_actions = self.fix_abicritical(report=report, abiinput=abinit_input,
+                                                             queue_adapter=queue_adapter, outdir=abinit_outdir_path)
+
+                if fixed:
+                    note.state(ControllerNote.ERROR_FIXSTOP)
+                    if reset:
+                        note.restart(ControllerNote.RESET)
+                    else:
+                        note.restart(ControllerNote.SIMPLE_RESTART)
+
+                    actions['abinit_input'] = abiinput_actions
+                    #TODO if the queue_adapter can be modified by the handlers return it
+                    # actions['queue_adapter'] = queue_adapter_actions
+                else:
+                    msg = "Critical events couldn't be fixed by handlers."
+                    logger.info(msg)
+                    note.state(ControllerNote.ERROR_NOFIX)
+
+                for err in report.errors:
+                    note.add_problem(err)
+
+            else:
+            # Calculation not completed but no errors. No fix could be applied in this controller
+                note.state(ControllerNote.ERROR_NOFIX)
+                note.add_problem('Abinit calculation not completed but no errors in report.')
+
+        else:
+        # report does not exist. No fix could be applied in this controller
+            note.state(ControllerNote.ERROR_NOFIX)
+            note.add_problem('No Abinit report')
+
+        # No errors from abinit. No fix could be applied at this stage.
+        # The FW will be fizzled.
+        # Try to save the stderr file for Fortran runtime errors.
+        #TODO check if some cases could be handled here
+        # err_msg = None
+        # if self.stderr_file.exists:
+        #     #TODO length should always be enough, but maybe it's worth cutting the message if it's too long
+        #     err_msg = self.stderr_file.read()
+        #     # It happened that the text file contained non utf-8 characters.
+        #     # sanitize the text to avoid problems during database inserption
+        #     err_msg.decode("utf-8", "ignore")
+        # logger.error("return code {}".format(self.returncode))
+        # raise AbinitRuntimeError(self, err_msg)
+
+        note.set_actions(actions)
+        return note
+
+    @classmethod
+    def from_dict(cls, d):
+        dec = MontyDecoder()
+        return cls(critical_events=dec.process_decoded(d['critical_events']),
+                   error_handlers=dec.process_decoded(d['error_handlers']))
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__, '@module': self.__class__.__module__,
+                'critical_events': [ce.as_dict for ce in self.critical_events],
+                'error_handlers': [er.as_dict for er in self.handlers]
+                }
+
+    def get_event_report(self, ofile, mpiabort_file):
+        """
+        Analyzes the main output file for possible Errors or Warnings.
+
+        Returns:
+            :class:`EventReport` instance or None if the main output file does not exist.
+        """
 
         parser = events.EventsParser()
 
-        if not os.path.exists(abinit_log_file):
-            if not os.path.exists(abinit_mpi_abort_file):
-                return ControllerNote(controller=self,
-                                      state=ControlReport.FAILED_UNKNOWN_REASON,
-                                      problems=['abinit_log_file and abinit_mpi_abort_file non-existent'],
-                                      actions=None)
+        if not ofile.exists:
+            if not mpiabort_file.exists:
+                return None
             else:
                 # ABINIT abort file without log!
-                abort_report = parser.parse(abinit_mpi_abort_file)
-                return ControlReport(controller=self,
-                                     state=ControlReport.FAILED_UNKNOWN_REASON,
-                                     problems=[abort_report.select(AbinitEvent)],
-                                     actions=None)
+                abort_report = parser.parse(mpiabort_file.path)
+                return abort_report
 
         try:
-            report = parser.parse(abinit_log_file)
+            report = parser.parse(ofile.path)
 
             # Add events found in the ABI_MPIABORTFILE.
-            if os.path.exists(abinit_mpi_abort_file):
+            if mpiabort_file.exists:
                 logger.critical("Found ABI_MPIABORTFILE!")
-                abort_report = parser.parse(abinit_mpi_abort_file)
+                abort_report = parser.parse(mpiabort_file.path)
                 if len(abort_report) == 0:
                     logger.warning("ABI_MPIABORTFILE but empty")
                 else:
@@ -92,9 +238,7 @@ class AbinitController(Controller):
                     else:
                         report.append(last_abort_event)
 
-            return ControlReport(state=ControlReport.FAILED_UNKNOWN_REASON,
-                                 problems=['abinit_log_file and abinit_mpi_abort_file non-existent'],
-                                 actions=None)
+            return report
 
         #except parser.Error as exc:
         except Exception as exc:
@@ -102,16 +246,55 @@ class AbinitController(Controller):
             logger.critical("{}: Exception while parsing ABINIT events:\n {}".format(ofile, str(exc)))
             return parser.report_exception(ofile.path, exc)
 
-    @classmethod
-    def from_dict(cls, d):
-        dec = MontyDecoder()
-        return cls(critical_events=dec.process_decoded(d['critical_events']))
+    def fix_abicritical(self, report, abiinput, outdir, queue_adapter=None):
+        """
+        method to fix crashes/error caused by abinit
 
-    def as_dict(self):
-        return {'@class': self.__class__.__name__,
-                '@module': self.__class__.__module__,
-                'critical_events': self.critical_events
-                }
+        Returns:
+            retcode: 1 if task has been fixed else 0.
+            reset: True if at least one of the corrections applied requires a reset
+        """
+        if not self.handlers:
+            logger.info('Empty list of event handlers. Cannot fix abi_critical errors')
+            return 0, None, []
+
+        done = len(self.handlers) * [0]
+        corrections = []
+
+        for event in report:
+            for i, handler in enumerate(self.handlers):
+                if handler.can_handle(event) and not done[i]:
+                    logger.info("handler", handler, "will try to fix", event)
+                    try:
+                        #TODO pass the queueadapter to the handlers? the output should be modified in that case
+                        c = handler.handle_input_event(abiinput, outdir, event)
+                        if c:
+                            done[i] += 1
+                            corrections.append(c)
+
+                    except Exception as exc:
+                        logger.critical(str(exc))
+
+        if corrections:
+            reset = any(c.reset for c in corrections)
+            # self.history.log_corrections(corrections)
+            # convert the actions applied on the input to Actions
+            actions = []
+            for c in corrections:
+                # remove vars as a first action, in case incopatible variables have been set.
+                if '_pop' in c.actions:
+                    actions.append(Action(AbinitInput.remove_vars(c.actions['_pop'])))
+                if '_set' in c.actions:
+                    actions.append(Action(AbinitInput.set_vars(c.actions['_set'])))
+                if '_update' in c.actions:
+                    actions.append(Action(AbinitInput.set_vars(c.actions['_update'])))
+                if '_change_structure' in c.actions:
+                    actions.append(Action(AbinitInput.set_structure(c.actions['_change_structure'])))
+
+            return 1, reset, actions
+
+        logger.info('We encountered AbiCritical events that could not be fixed')
+        return 0, None, []
 
 
 class WalltimeController(Controller):

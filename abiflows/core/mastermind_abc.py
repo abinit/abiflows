@@ -275,15 +275,29 @@ class ControllerNote(MSONable):
 
     STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_FIXSTOP, ERROR_FIXCONTINUE]
 
-    def __init__(self, controller, state=None, problems=None, actions=None):
+    #TODO consider using increasing integers as values, so that we can take the lowest as a general value of the
+    # restart
+    # Restart from the very beginning of the calculation. Every intermediate result should be neglected
+    RESTART_FROM_SCRATCH = "RESTART_FROM_SCRATCH"
+
+    # Restart from the current step but don't make use previous informations
+    RESET = "RESET"
+
+    # Restart with the maximum amount of information available
+    SIMPLE_RESTART = "SIMPLE_RESTART"
+
+    RESTART_OPTIONS = [RESTART_FROM_SCRATCH, RESET, SIMPLE_RESTART]
+
+    def __init__(self, controller, state=None, problems=None, actions=None, restart=None):
         self.controller = controller
         self.state = state
         self.problems = problems
         self.set_actions(actions)
-
-
+        self.restart = restart
 
     def set_actions(self, actions):
+        if actions is None:
+            actions = []
         self.actions = actions
 
     def add_problem(self, problem):
@@ -321,6 +335,20 @@ class ControllerNote(MSONable):
     @property
     def has_errors(self):
         return True
+
+    @property
+    def restart(self):
+        return self._state
+
+    @restart.setter
+    def restart(self, restart):
+        if restart is None:
+            self._restart = None
+        elif restart in self.RESTART_OPTIONS:
+            self._restart = restart
+        else:
+            raise ValueError('"restart" in ControllerNote should be one of the following : '
+                             '{}'.format(', '.join(self.RESTART_OPTIONS)))
 
     @classmethod
     def from_dict(cls, d):
