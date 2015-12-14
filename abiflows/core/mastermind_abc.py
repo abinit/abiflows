@@ -257,6 +257,16 @@ class Controller(MSONable):
     def priority(self):
         return self._priority
 
+    @priority.setter
+    def priority(self, priority):
+        if priority in PRIORITIES.keys():
+            self._priority = PRIORITIES[priority]
+        elif issubclass(priority, int) and 0 <= priority <= 1000:
+            self._priority = priority
+        else:
+            raise ValueError('"priority" should be either an integer between 0 and 1000 or '
+                             'one of the following : {}'.format(', '.join([str(ii) for ii in PRIORITIES.keys()])))
+
     @property
     def controlled_item_types(self):
         return self._controlled_item_types
@@ -426,8 +436,15 @@ class ControlReport(MSONable):
         return any([cn.state == ControllerNote.EVERYTHING_OK for cn in self.controller_notes])
 
     def actions(self):
-        # TODO: should check whether actions are compatible here ...
-        return [cn.actions() for cn in self.controller_notes]
+        # TODO: should check whether actions are compatible here ... right now, two different controllers are not
+        #       allowed to modify the same object ...
+        actions = {}
+        for cn in self.controller_notes:
+            for target, action in cn.actions.items():
+                if target in actions:
+                    raise ValueError('Two controllers give actions to the same object!')
+                actions[target] = action
+        return actions
 
     @classmethod
     def from_dict(cls, d):

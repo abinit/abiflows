@@ -104,8 +104,8 @@ class AbinitController(Controller):
                     #                            abiinput=self.abiinput, restart_info=self.restart_info,
                     #                            history=self.history)
                     # Calculation did not converge. A simple restart is enough
-                    note.state(ControllerNote.ERROR_FIXSTOP)
-                    note.restart(ControllerNote.SIMPLE_RESTART)
+                    note.state = ControllerNote.ERROR_FIXSTOP
+                    note.restart = ControllerNote.SIMPLE_RESTART
                     note.add_problem('Unconverged: {}'.format(', '.join(e.name for e in critical_events_found)))
                 else:
                     # calculation converged
@@ -131,7 +131,7 @@ class AbinitController(Controller):
                     #     # hook
                     #     update_spec, mod_spec, stored_data = self.conclude_task(fw_spec)
                     #     return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
-                    note.state(ControllerNote.EVERYTHING_OK)
+                    note.state = ControllerNote.EVERYTHING_OK
             elif report.errors:
             # Abinit reported problems
             # Check if the errors could be handled
@@ -160,19 +160,19 @@ class AbinitController(Controller):
                 else:
                     msg = "Critical events couldn't be fixed by handlers."
                     logger.info(msg)
-                    note.state(ControllerNote.ERROR_NOFIX)
+                    note.state = ControllerNote.ERROR_NOFIX
 
                 for err in report.errors:
                     note.add_problem(err)
 
             else:
             # Calculation not completed but no errors. No fix could be applied in this controller
-                note.state(ControllerNote.ERROR_NOFIX)
+                note.state = ControllerNote.ERROR_NOFIX
                 note.add_problem('Abinit calculation not completed but no errors in report.')
 
         else:
         # report does not exist. No fix could be applied in this controller
-            note.state(ControllerNote.ERROR_NOFIX)
+            note.state = ControllerNote.ERROR_NOFIX
             note.add_problem('No Abinit report')
 
         # No errors from abinit. No fix could be applied at this stage.
@@ -321,7 +321,7 @@ class WalltimeController(Controller):
         super(WalltimeController, self).__init__()
         self.max_timelimit = max_timelimit
         self.timelimit_increase = timelimit_increase
-        self.set_priority(PRIORITY_VERY_LOW)
+        self.priority = PRIORITY_VERY_LOW
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
@@ -351,7 +351,7 @@ class WalltimeController(Controller):
         qout_filepath = kwargs.get('qout_filepath', None)
         queue_adapter = kwargs.get('queue_adapter', None)
         # Initialize the actions for everything that is passed to kwargs
-        actions = {key: None for key in kwargs}
+        actions = {}
         # Analyze the stderr and stdout files of the resource manager system.
         qerr_info = None
         qout_info = None
