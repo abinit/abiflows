@@ -45,7 +45,7 @@ PRIORITY_LOWEST = PRIORITIES['PRIORITY_LOWEST']
 # class ControlBarrier(MSONable):
 class ControlProcedure(MSONable):
 
-    def __init__(self, monitors, controllers, sorting=None):
+    def __init__(self, controllers, monitors=None, sorting=None):
         self.controllers = []
         self.add_controllers(controllers=controllers)
         self.controlled_item_type = None
