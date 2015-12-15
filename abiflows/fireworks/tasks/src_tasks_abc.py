@@ -13,7 +13,7 @@ from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 
-from monty.json import MontyDecoder
+from monty.json import MontyDecoder, MontyEncoder
 from monty.json import MSONable
 from monty.serialization import loadfn
 from monty.subprocess import Command
@@ -215,6 +215,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
     def __init__(self, control_procedure, manager=None, max_restarts=10):
         self.control_procedure = control_procedure
+        self.manager = manager
         self.max_restarts = max_restarts
 
     def run_task(self, fw_spec):
@@ -344,13 +345,15 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
     @serialize_fw
     def to_dict(self):
         return {'control_procedure': self.control_procedure.as_dict(),
+                'manager': self.manager.as_dict() if self.manager is not None else self.manager,
                 'max_restarts': self.max_restarts}
 
     @classmethod
     def from_dict(cls, d):
         control_procedure = ControlProcedure.from_dict(d['control_procedure'])
-        return cls(control_procedure=control_procedure, max_restarts=d['max_restarts'])
-
+        dec = MontyDecoder()
+        manager = dec.process_decoded(d['manager']),
+        return cls(control_procedure=control_procedure, manager=manager, max_restarts=d['max_restarts'])
 
 
 
