@@ -345,14 +345,17 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
     def to_dict(self):
         enc = MontyEncoder()
         return {'control_procedure': self.control_procedure.as_dict(),
-                'manager': enc.default(self.manager),
+                'manager': self.manager.as_dict() if self.manager is not None else None,
                 'max_restarts': self.max_restarts}
 
     @classmethod
     def from_dict(cls, d):
         control_procedure = ControlProcedure.from_dict(d['control_procedure'])
         dec = MontyDecoder()
-        manager = dec.process_decoded(d['manager']),
+        if d['manager'] is None:
+            manager = None
+        else:
+            manager = dec.process_decoded(d['manager']),
         return cls(control_procedure=control_procedure, manager=manager, max_restarts=d['max_restarts'])
 
 
