@@ -80,6 +80,7 @@ class SRCTaskMixin(object):
                 }
 
 
+@explicit_serialize
 class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
@@ -179,6 +180,7 @@ class RunTask(SRCTaskMixin, FireTaskBase):
         pass
 
 
+@explicit_serialize
 class ScriptRunTask(RunTask):
 
     task_type = 'script'
@@ -192,6 +194,7 @@ class ScriptRunTask(RunTask):
         cmd.run()
 
 
+@explicit_serialize
 class ControlTask(SRCTaskMixin, FireTaskBase):
     src_type = 'control'
 
