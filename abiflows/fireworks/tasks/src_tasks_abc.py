@@ -213,7 +213,7 @@ class ScriptRunTask(RunTask):
 class ControlTask(SRCTaskMixin, FireTaskBase):
     src_type = 'control'
 
-    def __init__(self, control_procedure, max_restarts=10):
+    def __init__(self, control_procedure, manager=None, max_restarts=10):
         self.control_procedure = control_procedure
         self.max_restarts = max_restarts
 
