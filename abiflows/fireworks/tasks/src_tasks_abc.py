@@ -339,6 +339,16 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         cp = ControlProcedure(controllers=controllers)
         return cls(control_procedure=cp, max_restarts=max_restarts)
 
+    @serialize_fw
+    def to_dict(self):
+        return {'control_procedure': self.control_procedure.as_dict(),
+                'max_restarts': self.max_restarts}
+
+    @classmethod
+    def from_dict(cls, d):
+        control_procedure = ControlProcedure.from_dict(d['control_procedure'])
+        return cls(control_procedure=control_procedure, max_restarts=d['max_restarts'])
+
 
 
 
