@@ -51,21 +51,23 @@ class SRCTaskMixin(object):
         return cls(**kwargs)
 
     def setup_directories(self, fw_spec, create_dirs=False):
-        if self.src_type == 'setup':
+        if 'src_directories' in fw_spec:
+            self.src_root_dir = fw_spec['src_directories']['src_root_dir']
+        elif self.src_type == 'setup':
             self.src_root_dir = fw_spec.get('_launch_dir', os.getcwd())
-        elif self.src_type in ['run', 'control']:
-            self.src_root_dir = os.path.split(os.path.abspath(fw_spec['_launch_dir']))[0]
+        # elif self.src_type in ['run', 'control']:
+        #     self.src_root_dir = os.path.split(os.path.abspath(fw_spec['_launch_dir']))[0]
         else:
             raise ValueError('Cannot setup directories for "src_type" = "{}"'.format(self.src_type))
         self.setup_dir = os.path.join(self.src_root_dir, 'setup')
         self.run_dir = os.path.join(self.src_root_dir, 'run')
         self.control_dir = os.path.join(self.src_root_dir, 'control')
-        if 'src_directories' in fw_spec:
-            if (self.src_root_dir != fw_spec['src_directories']['src_root_dir'] or
-                self.setup_dir != fw_spec['src_directories']['setup_dir'] or
-                self.run_dir != fw_spec['src_directories']['run_dir'] or
-                self.control_dir != fw_spec['src_directories']['control_dir']):
-                raise ValueError('src_directories in fw_spec do not match actual SRC directories ...')
+        # if 'src_directories' in fw_spec:
+        #     if (self.src_root_dir != fw_spec['src_directories']['src_root_dir'] or
+        #         self.setup_dir != fw_spec['src_directories']['setup_dir'] or
+        #         self.run_dir != fw_spec['src_directories']['run_dir'] or
+        #         self.control_dir != fw_spec['src_directories']['control_dir']):
+        #         raise ValueError('src_directories in fw_spec do not match actual SRC directories ...')
         if create_dirs:
             os.makedirs(self.setup_dir)
             os.makedirs(self.run_dir)

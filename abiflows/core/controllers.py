@@ -301,6 +301,10 @@ class AbinitController(Controller):
         logger.info('We encountered AbiCritical events that could not be fixed')
         return 0, None, []
 
+    @classmethod
+    def from_helper(cls, helper):
+        raise NotImplementedError()
+
 
 class WalltimeController(Controller):
     """
@@ -421,7 +425,7 @@ class WalltimeController(Controller):
 
 class SimpleValidatorController(Controller):
     """
-    Simple validator controller to be applied after all other ccontrollers (PRIORITY_LOWEST).
+    Simple validator controller to be applied after all other controllers (PRIORITY_LOWEST).
     This validator controller can be used when no "real" validator exists, but just handlers/monitors
     and that we suppose that if nothing is found by the handlers/monitors, then it means that it is ok.
     """
@@ -430,7 +434,7 @@ class SimpleValidatorController(Controller):
 
     def __init__(self):
         super(SimpleValidatorController, self).__init__()
-        self.set_priority(PRIORITY_LOWEST)
+        self.priority = PRIORITY_LOWEST
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
