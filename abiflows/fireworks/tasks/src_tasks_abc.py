@@ -81,7 +81,7 @@ class SRCTaskMixin(object):
 
 
 @explicit_serialize
-class SetupTask(SRCTaskMixin, FireTaskBase):
+class SetupTask(FireTaskBase, SRCTaskMixin):
 
     src_type = 'setup'
 
@@ -136,7 +136,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         pass
 
 
-class RunTask(SRCTaskMixin, FireTaskBase):
+class RunTask(FireTaskBase, SRCTaskMixin):
 
     src_type = 'run'
 
@@ -196,7 +196,7 @@ class ScriptRunTask(RunTask):
 
 
 @explicit_serialize
-class ControlTask(SRCTaskMixin, FireTaskBase):
+class ControlTask(FireTaskBase, SRCTaskMixin):
     src_type = 'control'
 
     def __init__(self, control_procedure, max_restarts=10):
@@ -354,7 +354,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     control_spec = copy.deepcopy(spec)
     control_spec = set_short_single_core_to_spec(control_spec)
     control_spec['SRC_task_index'] = src_task_index
-    control_fw = Firework(control_task, spec=run_spec, name=src_task_index.run_str)
+    control_fw = Firework(control_task, spec=run_spec, name=src_task_index.control_str)
 
     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
                   run_fw.fw_id: [control_fw.fw_id]}
