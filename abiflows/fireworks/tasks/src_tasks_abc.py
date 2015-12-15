@@ -151,10 +151,11 @@ class RunTask(SRCTaskMixin, FireTaskBase):
 
     def run_task(self, fw_spec):
         self.setup_directories(fw_spec=fw_spec, create_dirs=False)
+        launch_dir = os.getcwd()
         # Move to the run directory
         os.chdir(self.run_dir)
         f = open(os.path.join(self.run_dir, 'fw_info.txt'), 'a')
-        f.write('FW launch_directory :\n{}'.format(fw_spec['_launch_dir']))
+        f.write('FW launch_directory :\n{}'.format(launch_dir))
         f.close()
         # The Run and Control tasks have to run on the same worker
         fw_spec['_preserve_fworker'] = True
@@ -219,10 +220,11 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
     def run_task(self, fw_spec):
         self.setup_directories(fw_spec=fw_spec, create_dirs=False)
+        launch_dir = os.getcwd()
         # Move to the control directory
         os.chdir(self.control_dir)
         f = open(os.path.join(self.control_dir, 'fw_info.txt'), 'a')
-        f.write('FW launch_directory :\n{}'.format(fw_spec['_launch_dir']))
+        f.write('FW launch_directory :\n{}'.format(launch_dir))
         f.close()
         # Get the task index
         task_index = SRCTaskIndex.from_any(fw_spec['SRC_task_index'])
