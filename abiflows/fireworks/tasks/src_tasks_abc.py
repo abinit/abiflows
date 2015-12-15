@@ -181,6 +181,8 @@ class RunTask(SRCTaskMixin, FireTaskBase):
 
 class ScriptRunTask(RunTask):
 
+    task_type = 'script'
+
     def __init__(self, script_str, control_procedure):
         RunTask.__init__(self, control_procedure=control_procedure)
         self.script_str = script_str
