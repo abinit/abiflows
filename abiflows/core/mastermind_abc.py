@@ -262,7 +262,7 @@ class Controller(MSONable):
     def priority(self, priority):
         if priority in PRIORITIES.keys():
             self._priority = PRIORITIES[priority]
-        elif issubclass(priority, int) and 0 <= priority <= 1000:
+        elif isinstance(priority, int) and 0 <= priority <= 1000:
             self._priority = priority
         else:
             raise ValueError('"priority" should be either an integer between 0 and 1000 or '
