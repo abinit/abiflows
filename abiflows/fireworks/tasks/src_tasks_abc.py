@@ -227,8 +227,11 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         #TODO: how to do that kind of automatically ??
         # each key should have : how to get it from the run_fw/(setup_fw)
         #                        how to force/apply it to the next SRC (e.g. how do we say to setup that)
-        initial_objects = {'qtk_queueadapter': run_fw.spec['qtk_queueadapter'],
-                           '_queueadapter': run_fw.spec['_queueadapter']}
+        qerr_filepath = os.path.join(run_fw.launches[-1].launch_dir, 'queue.qerr')
+        qout_filepath = os.path.join(run_fw.launches[-1].launch_dir, 'queue.qout')
+        initial_objects = {'queue_adapter': run_fw.spec['qtk_queueadapter'],
+                           'qerr_filepath': qerr_filepath,
+                           'qout_filepath': qout_filepath}
         control_report = self.control_procedure.process(**initial_objects)
 
         # If everything is ok, update the spec of the children
@@ -251,7 +254,13 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # Apply the actions on the objects to get the modified objects (to be passed to SetupTask)
         modified_objects = {}
         for target, action in control_report.actions.items():
-            modified_objects[target] = action.apply(initial_objects[target])
+            # Special case right now for the queue adapter ...
+            if target == 'queue_adapter':
+                qtk_qadapter = action.apply(initial_objects[target])
+                modified_objects['qtk_queueadapter'] = qtk_qadapter
+                modified_objects['_queueadapter'] = qtk_qadapter
+            else:
+                modified_objects[target] = action.apply(initial_objects[target])
 
         # If everything is ok, update the spec of the children
         stored_data = {}

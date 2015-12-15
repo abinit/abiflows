@@ -350,6 +350,12 @@ class WalltimeController(Controller):
         qerr_filepath = kwargs.get('qerr_filepath', None)
         qout_filepath = kwargs.get('qout_filepath', None)
         queue_adapter = kwargs.get('queue_adapter', None)
+        if 'queue_adapter' is None:
+            raise ValueError('WalltimeController should have access to the queue_adapter')
+        if 'qerr_filepath' is None:
+            raise ValueError('WalltimeController should have access to the qerr_filepath')
+        if 'qout_filepath' is None:
+            raise ValueError('WalltimeController should have access to the qout_filepath')
         # Initialize the actions for everything that is passed to kwargs
         actions = {}
         # Analyze the stderr and stdout files of the resource manager system.
