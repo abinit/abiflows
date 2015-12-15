@@ -117,7 +117,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         #  setup_run_parameters and the modified_objects transferred directly from the Control Firework
         update_spec = {'src_directories': self.src_directories, '_launch_dir': os.getcwd()}
         update_spec.update(run_parameters)
-        update_spec.update(fw_spec['src_modified_objects'])
+        if 'src_modified_objects' in fw_spec:
+            update_spec.update(fw_spec['src_modified_objects'])
         return FWAction(update_spec=update_spec)
 
     def _setup_run_parameters(self, fw_spec, parameters):
