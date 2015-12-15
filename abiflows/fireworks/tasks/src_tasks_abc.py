@@ -5,8 +5,6 @@ import copy
 import inspect
 import os
 
-from custodian.ansible.interpreter import Modder
-
 from fireworks.core.firework import FireTaskBase
 from fireworks.core.firework import FWAction
 from fireworks.core.firework import Workflow
