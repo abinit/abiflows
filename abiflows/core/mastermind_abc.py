@@ -211,11 +211,12 @@ class Controller(MSONable):
     #              States that handlers can specify in their note : "NOTHING_FOUND", "ERROR_UNRECOVERABLE",
     #                                                               "ERROR_NOFIX", "ERROR_FIXSTOP", "ERROR_FIXCONTINUE"
     is_handler = False
+
     # 3. Manager : Whether this controller is able to do some kind of high-level control, e.g. parameters
     #               convergence or optimization, multiple-step goals, ...)
     #              States that managers can specify in their note : "ITERATIONS_COMPLETED", "ITERATIONS_ONGOING"
-
     is_manager = False
+
     # 4. Validator : Whether this controller is used to validate the results/tasks/...
     #                States that validators can specify in their note : "OK", "NOT_OK"
     is_validator = False
