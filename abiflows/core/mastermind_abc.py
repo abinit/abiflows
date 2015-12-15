@@ -456,6 +456,7 @@ class ControlReport(MSONable):
 
 #TODO: should this be MSONable ? Is that even possible with a callable object in self ?
 #class Instruction(MSONable):
+#class Directive(MSONable):
 class Action(MSONable):
 
     def __init__(self, callable, **kwargs):

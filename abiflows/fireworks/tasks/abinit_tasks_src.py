@@ -70,6 +70,8 @@ class AbinitSRCMixin(object):
 @explicit_serialize
 class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 
+    RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
+
     def __init__(self, abiinput, deps=None, task_helper=None, restart_info=None):
         self.abiinput = abiinput
 
@@ -93,19 +95,19 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         self.ftm = self.get_fw_task_manager(fw_spec)
         return super(AbinitSetupTask, self).__init__(fw_spec)
 
-    def setup_run_parameters(self, fw_spec):
+    def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
         optconf, qtk_qadapter = self.run_autoparal(self.abiinput, fw_spec)
 
-        if 'queue_adapter_update' in fw_spec:
-            for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
-                if qa_key == 'timelimit':
-                    qtk_qadapter.set_timelimit(qa_val)
-                elif qa_key == 'mem_per_proc':
-                    qtk_qadapter.set_mem_per_proc(qa_val)
-                elif qa_key == 'master_mem_overhead':
-                    qtk_qadapter.set_master_mem_overhead(qa_val)
-                else:
-                    raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
+        # if 'queue_adapter_update' in fw_spec:
+        #     for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
+        #         if qa_key == 'timelimit':
+        #             qtk_qadapter.set_timelimit(qa_val)
+        #         elif qa_key == 'mem_per_proc':
+        #             qtk_qadapter.set_mem_per_proc(qa_val)
+        #         elif qa_key == 'master_mem_overhead':
+        #             qtk_qadapter.set_master_mem_overhead(qa_val)
+        #         else:
+        #             raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
 
         return {'_queueadapter': qtk_qadapter.get_subs_dict(), 'qtk_queueadapter': qtk_qadapter}
 

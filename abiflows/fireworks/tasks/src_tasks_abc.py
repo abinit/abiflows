@@ -18,12 +18,13 @@ from fireworks.utilities.fw_serializers import serialize_fw
 from monty.json import MontyDecoder
 from monty.json import MSONable
 from monty.serialization import loadfn
+from monty.subprocess import Command
 
 from abiflows.fireworks.utils.custodian_utils import MonitoringSRCErrorHandler
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.custodian_utils import SRCValidator
 from abiflows.core.mastermind_abc import ControlProcedure, ControlledItemType
-from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get_short_single_core_spec
 
 
 class SRCTaskMixin(object):
@@ -85,6 +86,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
 
+    RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus']
+
     def __init__(self):
         pass
 
@@ -102,17 +105,29 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         # Make the file transfers from another worker if needed
         self.file_transfers(fw_spec=fw_spec)
         # Setup the parameters for the run (number of cpus, time, memory, openmp, ...)
-        run_parameters = self.setup_run_parameters(fw_spec=fw_spec)
+        params = list(self.RUN_PARAMETERS)
+        if 'src_modified_objects' in fw_spec:
+            for target, modified_object in fw_spec['src_modified_objects'].items():
+                params.remove(target)
+        run_parameters = self._setup_run_parameters(fw_spec=fw_spec, parameters=params)
         # Prepare run (make links to output files from previous tasks, write input files, create the directory
         # tree of the program, ...)
         self.prepare_run(fw_spec=fw_spec)
 
+        # Update the spec of the Run Firework with the directory tree, the run_parameters obtained from
+        #  setup_run_parameters and the modified_objects transferred directly from the Control Firework
         update_spec = {'src_directories': self.src_directories, '_launch_dir': os.getcwd()}
         update_spec.update(run_parameters)
+        update_spec.update(fw_spec['src_modified_objects'])
         return FWAction(update_spec=update_spec)
 
+    def _setup_run_parameters(self, fw_spec, parameters):
+        params = self.setup_run_parameters(fw_spec=fw_spec)
+        return {param: params[param] for param in parameters}
+
     def setup_run_parameters(self, fw_spec):
-        pass
+        qadapter_spec = get_short_single_core_spec()
+        return {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1}
 
     def file_transfers(self, fw_spec):
         pass
@@ -166,6 +181,17 @@ class RunTask(SRCTaskMixin, FireTaskBase):
         pass
 
 
+class ScriptRunTask(RunTask):
+
+    def __init__(self, script_str, control_procedure):
+        RunTask.__init__(self, control_procedure=control_procedure)
+        self.script_str = script_str
+
+    def run(self, fw_spec):
+        cmd = Command(self.script_str)
+        cmd.run()
+
+
 class ControlTask(SRCTaskMixin, FireTaskBase):
     src_type = 'control'
 
@@ -199,8 +225,11 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
         # Get the keyword_arguments to be passed to the process method of the control_procedure
         #TODO: how to do that kind of automatically ??
-        kwargs = {'queue_adapter': run_fw.spec['qtk_queueadapter']}
-        control_report = self.control_procedure.process(**kwargs)
+        # each key should have : how to get it from the run_fw/(setup_fw)
+        #                        how to force/apply it to the next SRC (e.g. how do we say to setup that)
+        initial_objects = {'qtk_queueadapter': run_fw.spec['qtk_queueadapter'],
+                           '_queueadapter': run_fw.spec['_queueadapter']}
+        control_report = self.control_procedure.process(**initial_objects)
 
         # If everything is ok, update the spec of the children
         if control_report.finalized:
@@ -219,12 +248,14 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # Increase the task_index
         task_index.increase_index()
 
+        # Apply the actions on the objects to get the modified objects (to be passed to SetupTask)
+        modified_objects = {}
         for target, action in control_report.actions.items():
-            pass
+            modified_objects[target] = action.apply(initial_objects[target])
 
         # If everything is ok, update the spec of the children
         stored_data = {}
-        update_spec = {}
+        update_spec = {'src_modified_objects': modified_objects}
         mod_spec = []
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
         # next SRC group
@@ -308,12 +339,12 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     control_spec = copy.deepcopy(spec)
     control_spec = set_short_single_core_to_spec(control_spec)
     control_spec['SRC_task_index'] = src_task_index
-    run_fw = Firework(control_task, spec=run_spec, name=src_task_index.run_str)
+    control_fw = Firework(control_task, spec=run_spec, name=src_task_index.run_str)
 
     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
                   run_fw.fw_id: [control_task.fw_id]}
-    return {'setup_fw': setup_fw, 'run_fw': run_fw, 'control_fw': control_task, 'links_dict': links_dict,
-            'fws': [setup_fw, run_fw, control_task]}
+    return {'setup_fw': setup_fw, 'run_fw': run_fw, 'control_fw': control_fw, 'links_dict': links_dict,
+            'fws': [setup_fw, run_fw, control_fw]}
 
 
 
