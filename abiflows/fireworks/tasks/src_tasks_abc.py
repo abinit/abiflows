@@ -115,7 +115,7 @@ class SetupTask(FireTaskBase, SRCTaskMixin):
 
         # Update the spec of the Run Firework with the directory tree, the run_parameters obtained from
         #  setup_run_parameters and the modified_objects transferred directly from the Control Firework
-        update_spec = {'src_directories': self.src_directories, '_launch_dir': self.run_dir}
+        update_spec = {'src_directories': self.src_directories}
         update_spec.update(run_parameters)
         if 'src_modified_objects' in fw_spec:
             update_spec.update(fw_spec['src_modified_objects'])
@@ -150,6 +150,11 @@ class RunTask(FireTaskBase, SRCTaskMixin):
 
     def run_task(self, fw_spec):
         self.setup_directories(fw_spec=fw_spec, create_dirs=False)
+        # Move to the run directory
+        os.chdir(self.run_dir)
+        f = open(os.path.join(self.run_dir, 'fw_info.txt'), 'a')
+        f.write('FW launch_directory :\n{}'.format(fw_spec['_launch_dir']))
+        f.close()
         # The Run and Control tasks have to run on the same worker
         fw_spec['_preserve_fworker'] = True
         fw_spec['_pass_job_info'] = True
@@ -161,9 +166,6 @@ class RunTask(FireTaskBase, SRCTaskMixin):
 
         if update_spec is None:
             update_spec = {}
-
-        # pass spec info to the ControlTask
-        update_spec['_launch_dir'] = self.control_dir
 
         #TODO: the directory is passed thanks to _pass_job_info. Should we pass anything else ?
         return FWAction(stored_data=None, exit=False, update_spec=None, mod_spec=None,
@@ -204,6 +206,12 @@ class ControlTask(FireTaskBase, SRCTaskMixin):
         self.max_restarts = max_restarts
 
     def run_task(self, fw_spec):
+        self.setup_directories(fw_spec=fw_spec, create_dirs=False)
+        # Move to the control directory
+        os.chdir(self.control_dir)
+        f = open(os.path.join(self.control_dir, 'fw_info.txt'), 'a')
+        f.write('FW launch_directory :\n{}'.format(fw_spec['_launch_dir']))
+        f.close()
         # Get the task index
         task_index = SRCTaskIndex.from_any(fw_spec['SRC_task_index'])
         # Get the setup and run fireworks
