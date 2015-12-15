@@ -353,7 +353,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     control_fw = Firework(control_task, spec=run_spec, name=src_task_index.run_str)
 
     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
-                  run_fw.fw_id: [control_task.fw_id]}
+                  run_fw.fw_id: [control_fw.fw_id]}
     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'control_fw': control_fw, 'links_dict': links_dict,
             'fws': [setup_fw, run_fw, control_fw]}
 
