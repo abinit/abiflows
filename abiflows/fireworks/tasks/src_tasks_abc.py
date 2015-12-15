@@ -147,8 +147,7 @@ class RunTask(SRCTaskMixin, FireTaskBase):
 
     def set_control_procedure(self, control_procedure):
         self.control_procedure = control_procedure
-        if any([controller.is_monitor for controller in control_procedure.controllers]):
-            raise NotImplementedError('Monitoring controllers not yet implemented in RunTask')
+        #TODO: check something here with the monitors ?
 
     def run_task(self, fw_spec):
         self.setup_directories(fw_spec=fw_spec, create_dirs=False)
