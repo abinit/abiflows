@@ -81,7 +81,7 @@ class SRCTaskMixin(object):
 
 
 @explicit_serialize
-class SetupTask(FireTaskBase, SRCTaskMixin):
+class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
 
@@ -136,7 +136,7 @@ class SetupTask(FireTaskBase, SRCTaskMixin):
         pass
 
 
-class RunTask(FireTaskBase, SRCTaskMixin):
+class RunTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'run'
 
@@ -196,9 +196,19 @@ class ScriptRunTask(RunTask):
         cmd = Command(self.script_str)
         cmd.run()
 
+    @serialize_fw
+    def to_dict(self):
+        return {'script_str': self.script_str,
+                'control_procedure': self.control_procedure.as_dict()}
+
+    @classmethod
+    def from_dict(cls, d):
+        control_procedure = ControlProcedure.from_dict(d['control_procedure'])
+        return cls(script_str=d['script_str'], control_procedure=control_procedure)
+
 
 @explicit_serialize
-class ControlTask(FireTaskBase, SRCTaskMixin):
+class ControlTask(SRCTaskMixin, FireTaskBase):
     src_type = 'control'
 
     def __init__(self, control_procedure, max_restarts=10):
