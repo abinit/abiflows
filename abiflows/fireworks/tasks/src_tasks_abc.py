@@ -258,7 +258,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             if target == 'queue_adapter':
                 qtk_qadapter = action.apply(initial_objects[target])
                 modified_objects['qtk_queueadapter'] = qtk_qadapter
-                modified_objects['_queueadapter'] = qtk_qadapter
+                modified_objects['_queueadapter'] = qtk_qadapter.get_subs_dict()
             else:
                 modified_objects[target] = action.apply(initial_objects[target])
 
