@@ -323,6 +323,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 def createSRCFireworks(setup_task, run_task, control_task, spec=None, initialization_info=None,
                        task_index=None, deps=None):
     # Make a full copy of the spec
+    if spec is None:
+        spec = {}
     spec = copy.deepcopy(spec)
     # Initialize the SRC task_index
     if task_index is not None:
