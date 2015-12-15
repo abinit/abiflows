@@ -70,10 +70,10 @@ class ControlProcedure(MSONable):
     def add_controllers(self, controllers):
         if isinstance(controllers, (list, tuple)):
             for controller in controllers:
-                if not issubclass(controller, Controller):
+                if not issubclass(controller.__class__, Controller):
                     raise ValueError('One of the controllers is not a subclass of Controller')
             self.controllers.extend(controllers)
-        elif issubclass(controllers, Controller):
+        elif issubclass(controllers.__class__, Controller):
             self.controllers.append(controllers)
         else:
             raise ValueError('controllers should be either a list of subclasses of Controller or a single '
