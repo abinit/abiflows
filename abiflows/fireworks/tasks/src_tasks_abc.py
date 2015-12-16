@@ -228,8 +228,16 @@ class ScriptRunTask(RunTask):
         self.script_str = script_str
 
     def run(self, fw_spec):
-        cmd = Command(self.script_str)
-        cmd.run()
+        f = open('script_run.log', 'w')
+        cmds_strs = self.script_str.split(';')
+        for cmd_str in cmds_strs:
+            cmd = Command(cmd_str)
+            cmd = cmd.run()
+            if cmd.output is not None:
+                if cmd.output != '':
+                    print(cmd.output)
+            f.write('{}\n'.format(str(cmd)))
+        f.close()
 
     @serialize_fw
     def to_dict(self):
