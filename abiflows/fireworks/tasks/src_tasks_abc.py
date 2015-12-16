@@ -101,6 +101,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         fw_spec['_pass_job_info'] = True
         # Set up and create the directory tree of the Setup/Run/Control trio
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
+        self.setup_run_and_control_dirs(self, fw_spec)
         # Move to the setup directory
         os.chdir(self.setup_dir)
         # Make the file transfers from another worker if needed
@@ -136,6 +137,35 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
 
     def prepare_run(self, fw_spec):
         pass
+
+    def setup_run_and_control_dirs(self, fw_spec):
+        # Get the launchpad
+        if '_add_launchpad_and_fw_id' in fw_spec:
+            lp = self.launchpad
+            setup_fw_id = self.fw_id
+        else:
+            try:
+                fw_dict = loadfn('FW.json')
+            except IOError:
+                try:
+                    fw_dict = loadfn('FW.yaml')
+                except IOError:
+                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+                                       "impossible to determine fw_id")
+            lp = LaunchPad.auto_load()
+            setup_fw_id = fw_dict['fw_id']
+        # Check that this ControlTask has only one parent firework
+        this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(setup_fw_id)
+        child_fw_ids = this_lzy_wf.links[setup_fw_id]
+        if len(child_fw_ids) != 1:
+            raise ValueError('SetupTask\'s Firework should have exactly one child firework')
+        run_fw_id = child_fw_ids[0]
+        child_run_fw_ids = this_lzy_wf.links[run_fw_id]
+        if len(child_run_fw_ids) != 1:
+            raise ValueError('RunTask\'s Firework should have exactly one child firework')
+        control_fw_id = child_run_fw_ids[0]
+        lp.update_spec(run_fw_id, {'_launch_dir': self.run_dir, 'src_directories': self.src_directories})
+        lp.update_spec(control_fw_id, {'_launch_dir': self.control_dir, 'src_directories': self.src_directories})
 
 
 class RunTask(SRCTaskMixin, FireTaskBase):
