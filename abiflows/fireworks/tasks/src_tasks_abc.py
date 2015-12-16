@@ -130,7 +130,11 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         return {param: params[param] for param in parameters}
 
     def setup_run_parameters(self, fw_spec):
-        qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True)
+        if 'run_timelimit' in fw_spec:
+            qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True,
+                                                                         timelimit=fw_spec['run_timelimit'])
+        else:
+            qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True)
         return {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
 
     def file_transfers(self, fw_spec):
@@ -140,6 +144,12 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         pass
 
     def _setup_run_and_control_dirs(self, fw_spec):
+        """
+        This method is used to update the spec of the run and control fireworks with the src_directories as well as
+        set the _launch_dir of the run and control fireworks to be the run_dir and control_dir respectively.
+        WARNING: This is a bit hackish!
+        :param fw_spec: Firework's spec
+        """
         # Get the launchpad
         if '_add_launchpad_and_fw_id' in fw_spec:
             lp = self.launchpad
