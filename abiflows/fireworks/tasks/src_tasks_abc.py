@@ -340,8 +340,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
     def get_setup_and_run_fw(self, fw_spec):
         # Get previous job information
-        previous_job_info = fw_spec['_job_info'][-1]
-        run_fw_id = previous_job_info['fw_id']
+        run_job_info = fw_spec['_job_info'][-1]
+        run_fw_id = run_job_info['fw_id']
         # Get the launchpad
         if '_add_launchpad_and_fw_id' in fw_spec:
             lp = self.launchpad
@@ -373,7 +373,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         if (not run_is_completed) and (not run_is_fizzled):
             raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
         # Get the Setup Firework
-        setup_job_info = run_fw.spec['_job_info']
+        setup_job_info = run_fw.spec['_job_info'][-1]
         setup_fw_id = setup_job_info['fw_id']
         setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
         return {'setup_fw': setup_fw, 'run_fw': run_fw}
