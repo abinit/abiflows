@@ -99,10 +99,10 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         #TODO: Be carefull here about preserver fworker when we recreate a new SRC trio ...
         fw_spec['_preserve_fworker'] = True
         fw_spec['_pass_job_info'] = True
-        # Set up and create the directory tree of the Setup/Run/Control trio, forward directory information to run and
-        #  control fireworks
+        # Set up and create the directory tree of the Setup/Run/Control trio,
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
-        self.setup_run_and_control_dirs(fw_spec=fw_spec)
+        #  Forward directory information to run and control fireworks #HACK in _setup_run_and_control_dirs
+        self._setup_run_and_control_dirs(fw_spec=fw_spec)
         # Move to the setup directory
         os.chdir(self.setup_dir)
         # Make the file transfers from another worker if needed
@@ -139,7 +139,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
     def prepare_run(self, fw_spec):
         pass
 
-    def setup_run_and_control_dirs(self, fw_spec):
+    def _setup_run_and_control_dirs(self, fw_spec):
         # Get the launchpad
         if '_add_launchpad_and_fw_id' in fw_spec:
             lp = self.launchpad
@@ -228,8 +228,9 @@ class ScriptRunTask(RunTask):
         self.script_str = script_str
 
     def run(self, fw_spec):
-        cmd = Command(self.script_str)
-        cmd.run()
+        # cmd = Command(self.script_str)
+        # cmd.run()
+        print('doing nothing ...')
 
     @serialize_fw
     def to_dict(self):
