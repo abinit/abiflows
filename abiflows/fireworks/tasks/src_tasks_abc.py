@@ -101,7 +101,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         fw_spec['_pass_job_info'] = True
         # Set up and create the directory tree of the Setup/Run/Control trio
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
-        self.setup_run_and_control_dirs(self, fw_spec)
+        self.setup_run_and_control_dirs(fw_spec=fw_spec)
         # Move to the setup directory
         os.chdir(self.setup_dir)
         # Make the file transfers from another worker if needed
