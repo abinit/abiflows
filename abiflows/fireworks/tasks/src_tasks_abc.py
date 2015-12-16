@@ -96,7 +96,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         # Set up and create the directory tree of the Setup/Run/Control trio,
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
         #  Forward directory information to run and control fireworks #HACK in _setup_run_and_control_dirs
-        self._setup_run_and_control_dirs(fw_spec=fw_spec)
+        self._setup_run_and_control_dirs_and_fworker(fw_spec=fw_spec)
         # Move to the setup directory
         os.chdir(self.setup_dir)
         # Make the file transfers from another worker if needed
@@ -137,7 +137,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
     def prepare_run(self, fw_spec):
         pass
 
-    def _setup_run_and_control_dirs(self, fw_spec):
+    def _setup_run_and_control_dirs_and_fworker(self, fw_spec):
         """
         This method is used to update the spec of the run and control fireworks with the src_directories as well as
         set the _launch_dir of the run and control fireworks to be the run_dir and control_dir respectively.
@@ -159,6 +159,10 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
                                        "impossible to determine fw_id")
             lp = LaunchPad.auto_load()
             setup_fw_id = fw_dict['fw_id']
+        if '_add_fworker' in fw_spec:
+            fworker = self.fworker
+        else:
+            raise ValueError('Should have access to the fworker in SetupTask ...')
         # Check that this ControlTask has only one parent firework
         this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(setup_fw_id)
         child_fw_ids = this_lzy_wf.links[setup_fw_id]
@@ -169,10 +173,14 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         if len(child_run_fw_ids) != 1:
             raise ValueError('RunTask\'s Firework should have exactly one child firework')
         control_fw_id = child_run_fw_ids[0]
+        spec_update = {'_launch_dir': self.run_dir,
+                       'src_directories': self.src_directories,
+                       '_fworker': fworker.name}
         lp.update_spec(fw_ids=[run_fw_id],
-                       spec_document={'_launch_dir': self.run_dir, 'src_directories': self.src_directories})
+                       spec_document=spec_update)
+        spec_update['_launch_dir'] = self.control_dir
         lp.update_spec(fw_ids=[control_fw_id],
-                       spec_document={'_launch_dir': self.control_dir, 'src_directories': self.src_directories})
+                       spec_document=spec_update)
 
 
 class RunTask(SRCTaskMixin, FireTaskBase):
@@ -342,9 +350,6 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
     def get_setup_and_run_fw(self, fw_spec):
-        # Get previous job information
-        run_job_info = fw_spec['_job_info'][-1]
-        run_fw_id = run_job_info['fw_id']
         # Get the launchpad
         if '_add_launchpad_and_fw_id' in fw_spec:
             lp = self.launchpad
@@ -365,6 +370,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         parents_fw_ids = this_lzy_wf.links.parent_links[control_fw_id]
         if len(parents_fw_ids) != 1:
             raise ValueError('ControlTask\'s Firework should have exactly one parent firework')
+        run_fw_id = parents_fw_ids[0]
         # Get the Run Firework and its state
         run_fw = lp.get_fw_by_id(fw_id=run_fw_id)
         run_is_fizzled = '_fizzled_parents' in fw_spec
@@ -411,6 +417,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     if spec is None:
         spec = {}
     spec = copy.deepcopy(spec)
+    spec['_add_launchpad_and_fw_id'] = True
     # Initialize the SRC task_index
     if task_index is not None:
         src_task_index = SRCTaskIndex.from_any(task_index)
@@ -431,6 +438,8 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     # RunTask
     run_spec = copy.deepcopy(spec)
     run_spec['SRC_task_index'] = src_task_index
+    #TODO: this is actually not ok ... if the run gets killed by an outsider (walltime reached, memory
+    # infringement, ...), then the fworker is not passed to the controller ... We should set that directly at the setup
     run_spec['_preserve_fworker'] = True
     run_spec['_pass_job_info'] = True
     run_fw = Firework(run_task, spec=run_spec, name=src_task_index.run_str)
