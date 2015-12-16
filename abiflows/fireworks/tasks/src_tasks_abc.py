@@ -93,12 +93,6 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         pass
 
     def run_task(self, fw_spec):
-        # The Setup and Run have to run on the same worker
-        #TODO: Check if this works ... I think it should ... is it clean ? ... Should'nt we put that in
-        #      the SRC factory function instead ?
-        #TODO: Be carefull here about preserver fworker when we recreate a new SRC trio ...
-        fw_spec['_preserve_fworker'] = True
-        fw_spec['_pass_job_info'] = True
         # Set up and create the directory tree of the Setup/Run/Control trio,
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
         #  Forward directory information to run and control fireworks #HACK in _setup_run_and_control_dirs
@@ -147,7 +141,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         """
         This method is used to update the spec of the run and control fireworks with the src_directories as well as
         set the _launch_dir of the run and control fireworks to be the run_dir and control_dir respectively.
-        WARNING: This is a bit hackish!
+        WARNING: This is a bit hackish! Do not change this unless you know exactly what you are doing!
         :param fw_spec: Firework's spec
         """
         # Get the launchpad
@@ -201,8 +195,7 @@ class RunTask(SRCTaskMixin, FireTaskBase):
         f.write('FW launch_directory :\n{}'.format(launch_dir))
         f.close()
         # The Run and Control tasks have to run on the same worker
-        fw_spec['_preserve_fworker'] = True
-        fw_spec['_pass_job_info'] = True
+
         #TODO: do something here with the monitoring controllers ...
         #      should stop the RunTask but the correction should be applied in control !
         self.config(fw_spec=fw_spec)
@@ -431,11 +424,15 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     setup_spec.pop('queue_adapter_update', None)
 
     setup_spec = set_short_single_core_to_spec(setup_spec)
+    setup_spec['_preserve_fworker'] = True
+    setup_spec['_pass_job_info'] = True
     setup_fw = Firework(setup_task, spec=setup_spec, name=src_task_index.setup_str)
 
     # RunTask
     run_spec = copy.deepcopy(spec)
     run_spec['SRC_task_index'] = src_task_index
+    run_spec['_preserve_fworker'] = True
+    run_spec['_pass_job_info'] = True
     run_fw = Firework(run_task, spec=run_spec, name=src_task_index.run_str)
 
     # ControlTask
