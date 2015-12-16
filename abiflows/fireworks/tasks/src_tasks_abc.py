@@ -436,6 +436,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     # RunTask
     run_spec = copy.deepcopy(spec)
     run_spec['SRC_task_index'] = src_task_index
+    run_spec['_allow_fizzled_parents'] = True
     run_fw = Firework(run_task, spec=run_spec, name=src_task_index.run_str)
 
     # ControlTask
