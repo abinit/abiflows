@@ -234,8 +234,7 @@ class ScriptRunTask(RunTask):
             cmd = Command(cmd_str)
             cmd = cmd.run()
             if cmd.output is not None:
-                if cmd.output != '':
-                    print(cmd.output)
+                print(cmd.output)
             f.write('{}\n'.format(str(cmd)))
         f.close()
 
