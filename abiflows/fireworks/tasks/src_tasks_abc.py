@@ -418,6 +418,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
         spec = {}
     spec = copy.deepcopy(spec)
     spec['_add_launchpad_and_fw_id'] = True
+    spec['_add_fworker'] = True
     # Initialize the SRC task_index
     if task_index is not None:
         src_task_index = SRCTaskIndex.from_any(task_index)
