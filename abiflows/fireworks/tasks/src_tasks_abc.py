@@ -228,9 +228,8 @@ class ScriptRunTask(RunTask):
         self.script_str = script_str
 
     def run(self, fw_spec):
-        # cmd = Command(self.script_str)
-        # cmd.run()
-        print('doing nothing ...')
+        cmd = Command(self.script_str)
+        cmd.run()
 
     @serialize_fw
     def to_dict(self):
