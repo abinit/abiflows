@@ -99,7 +99,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         #TODO: Be carefull here about preserver fworker when we recreate a new SRC trio ...
         fw_spec['_preserve_fworker'] = True
         fw_spec['_pass_job_info'] = True
-        # Set up and create the directory tree of the Setup/Run/Control trio
+        # Set up and create the directory tree of the Setup/Run/Control trio, forward directory information to run and
+        #  control fireworks
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
         self.setup_run_and_control_dirs(fw_spec=fw_spec)
         # Move to the setup directory
@@ -164,8 +165,10 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         if len(child_run_fw_ids) != 1:
             raise ValueError('RunTask\'s Firework should have exactly one child firework')
         control_fw_id = child_run_fw_ids[0]
-        lp.update_spec(run_fw_id, {'_launch_dir': self.run_dir, 'src_directories': self.src_directories})
-        lp.update_spec(control_fw_id, {'_launch_dir': self.control_dir, 'src_directories': self.src_directories})
+        lp.update_spec(fw_ids=[run_fw_id],
+                       spec_document={'_launch_dir': self.run_dir, 'src_directories': self.src_directories})
+        lp.update_spec(fw_ids=[control_fw_id],
+                       spec_document={'_launch_dir': self.control_dir, 'src_directories': self.src_directories})
 
 
 class RunTask(SRCTaskMixin, FireTaskBase):
