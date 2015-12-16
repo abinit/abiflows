@@ -333,7 +333,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
     def get_setup_and_run_fw(self, fw_spec):
         # Get previous job information
-        previous_job_info = fw_spec['_job_info']
+        previous_job_info = fw_spec['_job_info'][-1]
         run_fw_id = previous_job_info['fw_id']
         # Get the launchpad
         if '_add_launchpad_and_fw_id' in fw_spec:
