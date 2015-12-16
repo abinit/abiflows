@@ -79,7 +79,7 @@ def append_fw_to_wf(new_fw, wf):
     wf.fw_states[new_fw.fw_id] = new_fw.state
 
 
-def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0):
+def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0, return_qtk=False, timelimit=None):
     if isinstance(fw_manager, FWTaskManager):
         ftm = fw_manager
     elif fw_manager:
@@ -94,10 +94,16 @@ def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0):
             tm = ftm.task_manager
             tm.select_qadapter(pconf)
             #TODO make a FW_task_manager parameter
-            tm.qadapter.set_timelimit(600)
+            if timelimit is None:
+                tm.qadapter.set_timelimit(timelimit=600)
+            else:
+                tm.qadapter.set_timelimit(timelimit=timelimit)
             tm.qadapter.set_master_mem_overhead(master_mem_overhead)
             qadapter_spec = tm.qadapter.get_subs_dict()
-            return qadapter_spec
+            if return_qtk:
+                return qadapter_spec, tm.qadapter
+            else:
+                return qadapter_spec
         except RuntimeError as e:
             traceback.print_exc()
 

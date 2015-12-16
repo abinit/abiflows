@@ -87,7 +87,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
 
-    RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus']
+    RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus', 'qtk_queueadapter']
 
     def __init__(self):
         pass
@@ -130,8 +130,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         return {param: params[param] for param in parameters}
 
     def setup_run_parameters(self, fw_spec):
-        qadapter_spec = get_short_single_core_spec()
-        return {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1}
+        qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True)
+        return {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
 
     def file_transfers(self, fw_spec):
         pass
