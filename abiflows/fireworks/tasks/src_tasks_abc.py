@@ -51,10 +51,10 @@ class SRCTaskMixin(object):
         return cls(**kwargs)
 
     def setup_directories(self, fw_spec, create_dirs=False):
-        if 'src_directories' in fw_spec:
-            self.src_root_dir = fw_spec['src_directories']['src_root_dir']
-        elif self.src_type == 'setup':
+        if self.src_type == 'setup':
             self.src_root_dir = fw_spec.get('_launch_dir', os.getcwd())
+        elif 'src_directories' in fw_spec:
+            self.src_root_dir = fw_spec['src_directories']['src_root_dir']
         # elif self.src_type in ['run', 'control']:
         #     self.src_root_dir = os.path.split(os.path.abspath(fw_spec['_launch_dir']))[0]
         else:
@@ -347,6 +347,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         new_spec = copy.deepcopy(run_fw.spec)
         new_spec['src_modified_objects'] = modified_objects
         new_spec.pop('_launch_dir')
+        new_spec.pop('src_directories')
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
         # next SRC group
         if 'previous_fws' in fw_spec:
