@@ -330,7 +330,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
         # Apply the actions on the objects to get the modified objects (to be passed to SetupTask)
         modified_objects = {}
-        for target, action in control_report.actions.items():
+        actions = control_report.actions
+        for target, action in actions.items():
             # Special case right now for the queue adapter ...
             if target == 'queue_adapter':
                 qtk_qadapter = action.apply(initial_objects[target])
