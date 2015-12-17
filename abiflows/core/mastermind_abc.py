@@ -483,7 +483,7 @@ class ControlReport(MSONable):
 
     @property
     def finalized(self):
-        return self.state == self.UNRECOVERABLE
+        return self.state == self.FINALIZED
 
     @property
     def unrecoverable(self):
