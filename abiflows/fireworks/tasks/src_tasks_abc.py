@@ -336,7 +336,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         for target, action in control_report.actions.items():
             # Special case right now for the queue adapter ...
             if target == 'queue_adapter':
-                qtk_qadapter = action.apply(initial_objects[target])
+                qtk_qadapter = initial_objects[target]
+                action.apply(qtk_qadapter)
                 modified_objects['qtk_queueadapter'] = qtk_qadapter
                 modified_objects['_queueadapter'] = qtk_qadapter.get_subs_dict()
             else:
