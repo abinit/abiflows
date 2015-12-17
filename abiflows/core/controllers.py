@@ -416,7 +416,7 @@ class WalltimeController(Controller):
             # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
             if new_timelimit > max_timelimit:
                 new_timelimit = max_timelimit
-            actions['queue_adapter'] = Action(callable=QueueAdapter.set_timelimit,
+            actions['queue_adapter'] = Action(callable=queue_adapter.__class__.set_timelimit,
                                               timelimit=new_timelimit)
             note.state = ControllerNote.ERROR_RECOVERABLE
         else:
