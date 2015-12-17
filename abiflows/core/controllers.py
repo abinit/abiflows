@@ -10,6 +10,7 @@ from abiflows.core.mastermind_abc import Action
 from abiflows.core.mastermind_abc import Controller
 from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.core.mastermind_abc import ControlReport
+from abiflows.core.mastermind_abc import ControlledItemType
 from abiflows.core.mastermind_abc import PRIORITY_HIGH
 from abiflows.core.mastermind_abc import PRIORITY_VERY_LOW
 from abiflows.core.mastermind_abc import PRIORITY_LOWEST
@@ -312,6 +313,7 @@ class WalltimeController(Controller):
     """
 
     is_handler = True
+    _controlled_item_types = [ControlledItemType.task_failed()]
 
     def __init__(self, max_timelimit=None, timelimit_increase=None):
         """
@@ -430,7 +432,8 @@ class SimpleValidatorController(Controller):
     and that we suppose that if nothing is found by the handlers/monitors, then it means that it is ok.
     """
 
-    is_handler = True
+    can_validate = True
+    _controlled_item_types = [ControlledItemType.task_completed()]
 
     def __init__(self):
         super(SimpleValidatorController, self).__init__()
@@ -457,6 +460,10 @@ class SimpleValidatorController(Controller):
         note = ControllerNote(controller=self)
         note.state = ControllerNote.EVERYTHING_OK
         return note
+
+    @property
+    def validated(self):
+        return True
 
 
 # logger = logging.getLogger(__name__)
