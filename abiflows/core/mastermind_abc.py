@@ -182,6 +182,12 @@ class ControlledItemType(MSONable):
     def object(cls):
         return cls(item_type='OBJECT')
 
+    def __eq__(self, other):
+        return self._item_type == other._item_type
+
+    def __hash__(self):
+        return self._item_type
+
     @classmethod
     def from_dict(cls, d):
         return cls(item_type=d['item_type'])
