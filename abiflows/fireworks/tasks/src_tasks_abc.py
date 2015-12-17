@@ -346,6 +346,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # Pass the modified objects to the next SetupTask
         new_spec = copy.deepcopy(run_fw.spec)
         new_spec['src_modified_objects'] = modified_objects
+        new_spec.pop('_launch_dir')
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
         # next SRC group
         if 'previous_fws' in fw_spec:
