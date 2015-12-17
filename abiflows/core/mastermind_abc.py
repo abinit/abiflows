@@ -422,10 +422,21 @@ class ControllerNote(MSONable):
 
     @classmethod
     def from_dict(cls, d):
-        raise NotImplementedError('SHOULD IMPLEMENT FROM_DICT')
+        dec = MontyDecoder()
+        return cls(controller=dec.process_decoded(d['controller']),
+                   state=d['state'], problems=d['problems'],
+                   actions=dec.process_decoded(d['actions']),
+                   restart=d['restart'], is_valid=d['is_valid'])
 
     def as_dict(self):
-        raise NotImplementedError('SHOULD IMPLEMENT AS_DICT')
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'controller': self.controller.as_dict(),
+                'state': self.state,
+                'problems': self.problems,
+                'actions': {key: action.as_dict() for key, action in self.actions.items()},
+                'restart': self.restart,
+                'is_valid': self.is_valid}
 
 
 class ControlReport(MSONable):
@@ -503,10 +514,12 @@ class ControlReport(MSONable):
 
     @classmethod
     def from_dict(cls, d):
-        raise NotImplementedError('SHOULD IMPLEMENT FROM_DICT')
+        return cls(controller_notes=[ControllerNote.from_dict(cndict) for cndict in d['controller_notes']])
 
     def as_dict(self):
-        raise NotImplementedError('SHOULD IMPLEMENT AS_DICT')
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'controller_notes': [cn.as_dict() for cn in self.controller_notes]}
 
 
 #TODO: should this be MSONable ? Is that even possible with a callable object in self ?
@@ -521,13 +534,15 @@ class Action(MSONable):
     def apply(self, object):
         self.callable(object, **self.kwargs)
 
-    @abc.abstractmethod
+    # TODO: improve from_dict and as_dict of action !
+    @classmethod
     def from_dict(cls, d):
-        pass
+        return cls(callable=d['callable'])
 
-    @abc.abstractmethod
     def as_dict(self):
-        pass
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'callable': '{}'.format(self.callable.im_func.func_name)}
 
     @classmethod
     def from_string(cls, callable_string, **kwargs):
