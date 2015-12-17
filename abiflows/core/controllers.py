@@ -105,7 +105,7 @@ class AbinitController(Controller):
                     #                            abiinput=self.abiinput, restart_info=self.restart_info,
                     #                            history=self.history)
                     # Calculation did not converge. A simple restart is enough
-                    note.state = ControllerNote.ERROR_FIXSTOP
+                    note.state = ControllerNote.ERROR_RECOVERABLE
                     note.restart = ControllerNote.SIMPLE_RESTART
                     note.add_problem('Unconverged: {}'.format(', '.join(e.name for e in critical_events_found)))
                 else:
@@ -149,7 +149,7 @@ class AbinitController(Controller):
                                                              queue_adapter=queue_adapter, outdir=abinit_outdir_path)
 
                 if fixed:
-                    note.state = ControllerNote.ERROR_FIXSTOP
+                    note.state = ControllerNote.ERROR_RECOVERABLE
                     if reset:
                         note.restart(ControllerNote.RESET)
                     else:
@@ -418,7 +418,7 @@ class WalltimeController(Controller):
                 new_timelimit = max_timelimit
             actions['queue_adapter'] = Action(callable=QueueAdapter.set_timelimit,
                                               timelimit=new_timelimit)
-            note.state = ControllerNote.ERROR_FIXSTOP
+            note.state = ControllerNote.ERROR_RECOVERABLE
         else:
             note.state = ControllerNote.NOTHING_FOUND
         note.set_actions(actions)

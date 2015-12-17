@@ -95,6 +95,7 @@ class ControlProcedure(MSONable):
                     skip_lower_priority = True
             if skip_lower_priority:
                 break
+        report.set_state_from_controller_notes()
         return report
 
     @property
@@ -321,17 +322,17 @@ class ControllerNote(MSONable):
     ERROR_NOFIX = 'ERROR_NOFIX'
     # State of a controlled task specifying that some error(s) was (were) detected by the controller and the controller
     #  adviced some action to fix the error. No other controller should be applied.
-    ERROR_FIXSTOP = 'ERROR_FIXSTOP'
-    # State of a controlled task specifying that some error(s) was (were) detected by the controller and the controller
-    #  adviced some action to fix the error. Other controllers (if any) might still be applied.
-    ERROR_FIXCONTINUE = 'ERROR_FIXCONTINUE'
+    ERROR_RECOVERABLE = 'ERROR_RECOVERABLE'
+    # # State of a controlled task specifying that some error(s) was (were) detected by the controller and the controller
+    # #  adviced some action to fix the error. Other controllers (if any) might still be applied.
+    # ERROR_FIXCONTINUE = 'ERROR_FIXCONTINUE'
     # State of a controlled task specifying that the iterations "required" by the (manager) controller are still
     #  ongoing
     LOOP_ONGOING = 'ITERATIONS_ONGOING'
     # State of a controlled task specifying that the iterations "required" by the (manager) controller are completed
     LOOP_COMPLETED = 'ITERATIONS_COMPLETED'
 
-    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_FIXSTOP, ERROR_FIXCONTINUE,
+    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_RECOVERABLE,
               LOOP_ONGOING, LOOP_COMPLETED]
 
     #TODO consider using increasing integers as values, so that we can take the lowest as a general value of the
@@ -347,12 +348,13 @@ class ControllerNote(MSONable):
 
     RESTART_OPTIONS = [RESTART_FROM_SCRATCH, RESET, SIMPLE_RESTART]
 
-    def __init__(self, controller, state=None, problems=None, actions=None, restart=None):
+    def __init__(self, controller, state=None, problems=None, actions=None, restart=None, is_valid=None):
         self.controller = controller
         self.state = state
         self.problems = problems
         self.set_actions(actions)
         self.restart = restart
+        self.is_valid = is_valid
 
     def set_actions(self, actions):
         if actions is None:
@@ -399,6 +401,16 @@ class ControllerNote(MSONable):
     def restart(self):
         return self._state
 
+    @property
+    def is_valid(self):
+        if not self.controller.can_validate:
+            raise ValueError('This ControllerNote comes from a controller that cannot validate !')
+        return self._is_valid
+
+    @is_valid.setter
+    def is_valid(self, is_valid):
+        self._is_valid = is_valid
+
     @restart.setter
     def restart(self, restart):
         if restart is None:
@@ -435,12 +447,15 @@ class ControlReport(MSONable):
         self.controller_notes = []
         if controller_notes is not None:
             self.add_controller_notes(controller_notes)
+        self.update_state_from_controller_notes()
 
     def add_controller_notes(self, controller_notes):
         self.controller_notes.extend(controller_notes)
+        self.update_state_from_controller_notes()
 
     def add_controller_note(self, controller_note):
         self.controller_notes.append(controller_note)
+        self.update_state_from_controller_notes()
 
     @property
     def state(self):
@@ -453,9 +468,22 @@ class ControlReport(MSONable):
                              '{}'.format(', '.join(self.STATES)))
         self._state = state
 
+    def update_state_from_controller_notes(self):
+        if len(self.controller_notes) == 0:
+            self.state = None
+        elif any([cn.state == ControllerNote.ERROR_UNRECOVERABLE for cn in self.controller_notes]):
+            self.state = self.UNRECOVERABLE
+        elif any([cn.state == ControllerNote.ERROR_RECOVERABLE for cn in self.controller_notes]):
+            self.state = self.RECOVERABLE
+        elif all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate]):
+            self.state = self.FINALIZED
+        else:
+            # If no controller says it is recoverable/unrecoverable/valid/... then we set it to unrecoverable ?
+            self.state = self.UNRECOVERABLE
+
     @property
     def finalized(self):
-        return any([cn.state == ControllerNote.EVERYTHING_OK for cn in self.controller_notes])
+        return self.state == self.UNRECOVERABLE
 
     @property
     def unrecoverable(self):
