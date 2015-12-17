@@ -398,7 +398,7 @@ class ControllerNote(MSONable):
 
     @property
     def restart(self):
-        return self._state
+        return self._restart
 
     @property
     def is_valid(self):
