@@ -95,7 +95,6 @@ class ControlProcedure(MSONable):
                     skip_lower_priority = True
             if skip_lower_priority:
                 break
-        report.set_state_from_controller_notes()
         return report
 
     @property
