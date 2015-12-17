@@ -440,8 +440,9 @@ class ControlReport(MSONable):
     # Status of an SRC trio that is ongoing (for controllers taking care of non-error-related stuff, e.g. convergence,
     #  accuracy goal achieved with multiple-steps such as relaxation with low ecut then high ecut, ...)
     ONGOING = 'ONGOING'
+    NONE = 'NONE'
 
-    STATES = [FINALIZED, UNRECOVERABLE, RECOVERABLE, ONGOING]
+    STATES = [FINALIZED, UNRECOVERABLE, RECOVERABLE, ONGOING, NONE]
 
     def __init__(self, controller_notes=None):
         self.controller_notes = []
@@ -464,13 +465,13 @@ class ControlReport(MSONable):
     @state.setter
     def state(self, state):
         if state not in self.STATES:
-            raise ValueError('"state" in ControlReport should be one of the following : '
-                             '{}'.format(', '.join(self.STATES)))
+            raise ValueError('"state" in ControlReport is "{}" should be one of the following : '
+                             '{}'.format(str(state), ', '.join(self.STATES)))
         self._state = state
 
     def update_state_from_controller_notes(self):
         if len(self.controller_notes) == 0:
-            self.state = None
+            self.state = self.NONE
         elif any([cn.state == ControllerNote.ERROR_UNRECOVERABLE for cn in self.controller_notes]):
             self.state = self.UNRECOVERABLE
         elif any([cn.state == ControllerNote.ERROR_RECOVERABLE for cn in self.controller_notes]):

@@ -459,6 +459,7 @@ class SimpleValidatorController(Controller):
         # Create the Controller Note
         note = ControllerNote(controller=self)
         note.state = ControllerNote.EVERYTHING_OK
+        note.is_valid = True
         return note
 
     @property
