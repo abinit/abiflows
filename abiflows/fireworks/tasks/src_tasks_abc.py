@@ -330,8 +330,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
         # Apply the actions on the objects to get the modified objects (to be passed to SetupTask)
         modified_objects = {}
-        actions = control_report.actions
-        for target, action in actions.items():
+        for target, action in control_report.actions.items():
             # Special case right now for the queue adapter ...
             if target == 'queue_adapter':
                 qtk_qadapter = action.apply(initial_objects[target])
@@ -340,15 +339,20 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             else:
                 modified_objects[target] = action.apply(initial_objects[target])
 
-        # If everything is ok, update the spec of the children
-        stored_data = {}
-        update_spec = {'src_modified_objects': modified_objects}
-        mod_spec = []
+        # Pass the modified objects to the next SetupTask
+        new_spec = copy.deepcopy(run_fw.spec)
+        new_spec['src_modified_objects'] = modified_objects
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
         # next SRC group
-        for task_type, task_info in fw_spec['previous_fws'].items():
-            mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
-        return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
+        if 'previous_fws' in fw_spec:
+            new_spec['previous_fws'] = fw_spec['previous_fws']
+        # Create the new SRC trio
+        # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
+        new_SRC_fws = createSRCFireworks(setup_task=setup_fw.tasks, run_task=run_fw.tasks, control_task=self,
+                                         spec=new_spec, initialization_info=None, task_index=task_index, deps=None)
+        wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
+        return FWAction(detours=[wf])
+        # return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
     def get_setup_and_run_fw(self, fw_spec):
         # Get the launchpad
