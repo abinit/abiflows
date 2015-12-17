@@ -449,6 +449,7 @@ class ControlReport(MSONable):
     def finalized(self):
         return any([cn.state == ControllerNote.EVERYTHING_OK for cn in self.controller_notes])
 
+    @property
     def actions(self):
         # TODO: should check whether actions are compatible here ... right now, two different controllers are not
         #       allowed to modify the same object ...
