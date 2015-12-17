@@ -319,8 +319,11 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             stored_data = {'control_report': control_report, 'finalized': True}
             update_spec = {}
             mod_spec = []
-            for task_type, task_info in fw_spec['previous_fws'].items():
-                mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+            if 'previous_fws' in fw_spec:
+                #TODO: We actually dont need that here, but we should add something to pass info from this SRC
+                # to the next if needed
+                for task_type, task_info in fw_spec['previous_fws'].items():
+                    mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
             return FWAction(stored_data=stored_data, exit=False, update_spec=update_spec, mod_spec=mod_spec,
                             additions=None, detours=None, defuse_children=False)
 
