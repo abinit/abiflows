@@ -149,7 +149,7 @@ class AbinitController(Controller):
                                                              queue_adapter=queue_adapter, outdir=abinit_outdir_path)
 
                 if fixed:
-                    note.state(ControllerNote.ERROR_FIXSTOP)
+                    note.state = ControllerNote.ERROR_FIXSTOP
                     if reset:
                         note.restart(ControllerNote.RESET)
                     else:
@@ -392,7 +392,7 @@ class WalltimeController(Controller):
                     logger.debug('found timelimit error.')
                     timelimit_error = error
             if timelimit_error is None:
-                note.state(ControllerNote.NOTHING_FOUND)
+                note.state = ControllerNote.NOTHING_FOUND
                 return note
 
             if self.max_timelimit is None:
@@ -410,7 +410,7 @@ class WalltimeController(Controller):
                     #                  'WalltimeController. Hard time limit of '
                     #                  'the queue is {:d} seconds'.format(max_timelimit,
                     #                                                     queue_adapter.timelimit_hard))
-                note.state(ControllerNote.ERROR_UNRECOVERABLE)
+                note.state = ControllerNote.ERROR_UNRECOVERABLE
                 return note
             new_timelimit = old_timelimit + timelimit_increase
             # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
@@ -418,9 +418,9 @@ class WalltimeController(Controller):
                 new_timelimit = max_timelimit
             actions['queue_adapter'] = Action(callable=QueueAdapter.set_timelimit,
                                               timelimit=new_timelimit)
-            note.state(ControllerNote.ERROR_FIXSTOP)
+            note.state = ControllerNote.ERROR_FIXSTOP
         else:
-            note.state(ControllerNote.NOTHING_FOUND)
+            note.state = ControllerNote.NOTHING_FOUND
         note.set_actions(actions)
         return note
 
