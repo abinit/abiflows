@@ -311,6 +311,9 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                            'qout_filepath': qout_filepath}
         control_report = self.control_procedure.process(**initial_objects)
 
+        if control_report.unrecoverable:
+            raise ValueError('Errors are unrecoverable')
+
         # If everything is ok, update the spec of the children
         if control_report.finalized:
             stored_data = {'control_report': control_report, 'finalized': True}

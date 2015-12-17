@@ -90,10 +90,12 @@ class ControlProcedure(MSONable):
             skip_lower_priority = False
             for controller in self.grouped_controllers[priority]:
                 controller_note = controller.process(**kwargs)
-                if controller_note.skip_lower_priority_controllers:
+                report.add_controller_note(controller_note=controller_note)
+                if controller.skip_lower_priority_controllers:
                     skip_lower_priority = True
             if skip_lower_priority:
                 break
+        return report
 
     @property
     def ncontrollers(self):
@@ -454,6 +456,10 @@ class ControlReport(MSONable):
     @property
     def finalized(self):
         return any([cn.state == ControllerNote.EVERYTHING_OK for cn in self.controller_notes])
+
+    @property
+    def unrecoverable(self):
+        return self.state == self.UNRECOVERABLE
 
     @property
     def actions(self):
