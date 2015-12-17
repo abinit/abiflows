@@ -357,7 +357,7 @@ class ControllerNote(MSONable):
 
     def set_actions(self, actions):
         if actions is None:
-            actions = []
+            actions = {}
         self.actions = actions
 
     def add_problem(self, problem):
