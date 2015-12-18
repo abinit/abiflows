@@ -351,6 +351,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         new_spec['src_modified_objects'] = modified_objects
         new_spec.pop('_launch_dir')
         new_spec.pop('src_directories')
+        new_spec['previous_src'] = {'src_directories': self.src_directories}
         if '_queueadapter' in modified_objects:
             new_spec['_queueadapter'] = modified_objects['_queueadapter']
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the

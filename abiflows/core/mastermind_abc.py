@@ -340,25 +340,28 @@ class ControllerNote(MSONable):
     RESTART_FROM_SCRATCH = "RESTART_FROM_SCRATCH"
 
     # Restart from the current step but don't make use previous informations
-    RESET = "RESET"
+    RESET_RESTART = "RESET_RESTART"
 
     # Restart with the maximum amount of information available
     SIMPLE_RESTART = "SIMPLE_RESTART"
-
-    RESTART_OPTIONS = [RESTART_FROM_SCRATCH, RESET, SIMPLE_RESTART]
 
     def __init__(self, controller, state=None, problems=None, actions=None, restart=None, is_valid=None):
         self.controller = controller
         self.state = state
         self.problems = problems
-        self.set_actions(actions)
+        self.actions = actions
         self.restart = restart
         self.is_valid = is_valid
 
-    def set_actions(self, actions):
+    @property
+    def actions(self):
+        return self._actions
+
+    @actions.setter
+    def actions(self, actions):
         if actions is None:
             actions = {}
-        self.actions = actions
+        self._actions = actions
 
     def add_problem(self, problem):
         if self.problems is None:
@@ -397,10 +400,6 @@ class ControllerNote(MSONable):
         return True
 
     @property
-    def restart(self):
-        return self._restart
-
-    @property
     def is_valid(self):
         if not self.controller.can_validate:
             raise ValueError('This ControllerNote comes from a controller that cannot validate !')
@@ -410,15 +409,17 @@ class ControllerNote(MSONable):
     def is_valid(self, is_valid):
         self._is_valid = is_valid
 
-    @restart.setter
-    def restart(self, restart):
-        if restart is None:
-            self._restart = None
-        elif restart in self.RESTART_OPTIONS:
-            self._restart = restart
-        else:
-            raise ValueError('"restart" in ControllerNote should be one of the following : '
-                             '{}'.format(', '.join(self.RESTART_OPTIONS)))
+    def set_restart(self, restart):
+        self.restart = restart
+
+    def simple_restart(self):
+        self.restart = self.SIMPLE_RESTART
+
+    def reset_restart(self):
+        self.restart = self.RESET_RESTART
+
+    def restart_from_scratch(self):
+        self.restart = self.RESTART_FROM_SCRATCH
 
     @classmethod
     def from_dict(cls, d):
