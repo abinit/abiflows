@@ -120,16 +120,22 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         return FWAction(update_spec=update_spec)
 
     def _setup_run_parameters(self, fw_spec, parameters):
-        params = self.setup_run_parameters(fw_spec=fw_spec)
+        qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True)
+        if 'initial_parameters' in fw_spec and fw_spec['SRC_task_index'].index == 1:
+            initial_parameters = fw_spec['initial_parameters']
+            if 'run_timelimit' in initial_parameters:
+                qtk_queueadapter.set_timelimit(timelimit=initial_parameters['run_timelimit'])
+            if 'run_mem_per_proc' in initial_parameters:
+                qtk_queueadapter.set_mem_per_proc(mem_mb=initial_parameters['run_mem_per_proc'])
+            if 'run_mpi_ncpus' in initial_parameters:
+                qtk_queueadapter.set_mpi_procs(mpi_procs=initial_parameters['run_mpi_ncpus'])
+        params = {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
+        setup_params = self.setup_run_parameters(fw_spec=fw_spec)
+        params.update(setup_params)
         return {param: params[param] for param in parameters}
 
     def setup_run_parameters(self, fw_spec):
-        if 'run_timelimit' in fw_spec:
-            qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True,
-                                                                         timelimit=fw_spec['run_timelimit'])
-        else:
-            qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True)
-        return {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
+        return {}
 
     def file_transfers(self, fw_spec):
         pass
