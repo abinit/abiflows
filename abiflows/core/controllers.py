@@ -307,7 +307,47 @@ class AbinitController(Controller):
         raise NotImplementedError()
 
 
-class WalltimeController(Controller):
+class QueueControllerMixin(object):
+
+    def get_queue_errors(self, **kwargs):
+        # Get the file paths for the stderr and stdout of the resource manager system, as well as the queue_adapter
+        qerr_filepath = kwargs.get('qerr_filepath', None)
+        qout_filepath = kwargs.get('qout_filepath', None)
+        queue_adapter = kwargs.get('queue_adapter', None)
+        memory_policy = kwargs.get('memory_policy', None)
+        #TODO: deal with the memory policy in the scheduler parser (whether it is vmem or mem in PBS for example ...)
+        if 'queue_adapter' is None:
+            raise ValueError('WalltimeController should have access to the queue_adapter')
+        if 'qerr_filepath' is None:
+            raise ValueError('WalltimeController should have access to the qerr_filepath')
+        if 'qout_filepath' is None:
+            raise ValueError('WalltimeController should have access to the qout_filepath')
+        # Analyze the stderr and stdout files of the resource manager system.
+        qerr_info = None
+        qout_info = None
+        if qerr_filepath is not None and os.path.exists(qerr_filepath):
+            with open(qerr_filepath, "r") as f:
+                qerr_info = f.read()
+        if qout_filepath is not None and os.path.exists(qout_filepath):
+            with open(qout_filepath, "r") as f:
+                qout_info = f.read()
+        if qerr_info or qout_info:
+            from pymatgen.io.abinit.scheduler_error_parsers import get_parser
+            qtype = queue_adapter.QTYPE
+            scheduler_parser = get_parser(qtype, err_file=qerr_filepath,
+                                          out_file=qout_filepath)
+
+            if scheduler_parser is None:
+                raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
+
+            scheduler_parser.parse()
+            queue_errors = scheduler_parser.errors
+            return queue_errors
+        else:
+            return None
+
+
+class WalltimeController(Controller, QueueControllerMixin):
     """
     Controller for walltime infringements of the resource manager.
     """
@@ -350,79 +390,283 @@ class WalltimeController(Controller):
         return True
 
     def process(self, **kwargs):
-        # Create the Controller Note
-        note = ControllerNote(controller=self)
-        # Get the file paths for the stderr and stdout of the resource manager system, as well as the queue_adapter
-        qerr_filepath = kwargs.get('qerr_filepath', None)
-        qout_filepath = kwargs.get('qout_filepath', None)
+        # Get the Queue Adapter and the queue errors
         queue_adapter = kwargs.get('queue_adapter', None)
-        if 'queue_adapter' is None:
-            raise ValueError('WalltimeController should have access to the queue_adapter')
-        if 'qerr_filepath' is None:
-            raise ValueError('WalltimeController should have access to the qerr_filepath')
-        if 'qout_filepath' is None:
-            raise ValueError('WalltimeController should have access to the qout_filepath')
-        # Initialize the actions for everything that is passed to kwargs
+        if queue_adapter is None:
+            raise ValueError('No queue adapter passed to the WalltimeController')
+        queue_errors = self.get_queue_errors(**kwargs)
+
+        # Create the Controller Note and the actions
+        note = ControllerNote(controller=self)
         actions = {}
-        # Analyze the stderr and stdout files of the resource manager system.
-        qerr_info = None
-        qout_info = None
-        if qerr_filepath is not None and os.path.exists(qerr_filepath):
-            with open(qerr_filepath, "r") as f:
-                qerr_info = f.read()
-        if qout_filepath is not None and os.path.exists(qout_filepath):
-            with open(qout_filepath, "r") as f:
-                qout_info = f.read()
-        if qerr_info or qout_info:
-            from pymatgen.io.abinit.scheduler_error_parsers import get_parser
-            qtype = queue_adapter.QTYPE
-            scheduler_parser = get_parser(qtype, err_file=qerr_filepath,
-                                          out_file=qout_filepath)
 
-            if scheduler_parser is None:
-                raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
-
-            scheduler_parser.parse()
-            queue_errors = scheduler_parser.errors
-
-            # Get the timelimit error if there is one
-            timelimit_error = None
-            for error in queue_errors:
-                if isinstance(error, TimeCancelError):
-                    logger.debug('found timelimit error.')
-                    timelimit_error = error
-            if timelimit_error is None:
-                note.state = ControllerNote.NOTHING_FOUND
-                return note
-
-            if self.max_timelimit is None:
-                max_timelimit = queue_adapter.timelimit_hard
-            else:
-                max_timelimit = self.max_timelimit
-            # When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue
-            if self.timelimit_increase is None:
-                timelimit_increase = queue_adapter.timelimit_hard / 10
-            else:
-                timelimit_increase = self.timelimit_increase
-            old_timelimit = queue_adapter.timelimit
-            if old_timelimit == max_timelimit:
-                    # raise ValueError('Cannot increase beyond maximum timelimit ({:d} seconds) set in '
-                    #                  'WalltimeController. Hard time limit of '
-                    #                  'the queue is {:d} seconds'.format(max_timelimit,
-                    #                                                     queue_adapter.timelimit_hard))
-                note.state = ControllerNote.ERROR_UNRECOVERABLE
-                return note
-            new_timelimit = old_timelimit + timelimit_increase
-            # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
-            if new_timelimit > max_timelimit:
-                new_timelimit = max_timelimit
-            actions['queue_adapter'] = Action(callable=queue_adapter.__class__.set_timelimit,
-                                              timelimit=new_timelimit)
-            note.state = ControllerNote.ERROR_RECOVERABLE
-        else:
+        # No errors found
+        if queue_errors is None:
             note.state = ControllerNote.NOTHING_FOUND
-        note.set_actions(actions)
+            return note
+
+        # Get the timelimit error if there is one
+        timelimit_error = None
+        for error in queue_errors:
+            if isinstance(error, TimeCancelError):
+                logger.debug('found timelimit error.')
+                timelimit_error = error
+
+        # No timelimit error found
+        if timelimit_error is None:
+            note.state = ControllerNote.NOTHING_FOUND
+            return note
+
+        # Setup the new timelimit
+        note.add_problem('Task has been stopped due to timelimit')
+        if self.max_timelimit is None:
+            max_timelimit = queue_adapter.timelimit_hard
+        else:
+            max_timelimit = self.max_timelimit
+        # When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue
+        if self.timelimit_increase is None:
+            timelimit_increase = queue_adapter.timelimit_hard / 10
+        else:
+            timelimit_increase = self.timelimit_increase
+        old_timelimit = queue_adapter.timelimit
+        if old_timelimit == max_timelimit:
+            note.state = ControllerNote.ERROR_UNRECOVERABLE
+            note.add_problem('Maximum timelimit has been reached, cannot increase further')
+            return note
+        new_timelimit = old_timelimit + timelimit_increase
+        # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
+        if new_timelimit > max_timelimit:
+            new_timelimit = max_timelimit
+
+        # Set the actions to be performed, the state and the type of restart
+        actions['queue_adapter'] = Action(callable=queue_adapter.__class__.set_timelimit,
+                                          timelimit=new_timelimit)
+        note.state = ControllerNote.ERROR_RECOVERABLE
+        note.actions = actions
+        note.simple_restart()
         return note
+
+
+class MemoryController(Controller, QueueControllerMixin):
+    """
+    Controller for memory infringements of the resource manager. The handler should be able to handle the possible
+    overhead of the master process.
+    """
+
+    is_handler = True
+    _controlled_item_types = [ControlledItemType.task_failed()]
+
+#
+#     def __init__(self, job_rundir='.', qout_file='queue.qout', qerr_file='queue.qerr', queue_adapter=None,
+#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
+#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):
+
+    def __init__(self, max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
+                       max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
+                       memory_policy='physical_memory'):
+        """
+        Initializes the handler with the directory where the job was run, the standard output and error files
+        of the queue manager and the queue adapter used.
+
+        Args:
+            max_mem_per_proc_mb: Maximum memory per process in megabytes.
+            mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.
+            max_master_mem_overhead_mb: Maximum overhead memory for the master process in megabytes.
+            master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process
+                                             in megabytes.
+            memory_policy: Policy for the memory (some weird clusters sometimes use the virtual memory to stop jobs
+                           that overcome some virtual memory limit)
+        """
+        super(MemoryController, self).__init__()
+        self.max_mem_per_proc_mb = max_mem_per_proc_mb
+        self.mem_per_proc_increase_mb = mem_per_proc_increase_mb
+        self.max_master_mem_overhead_mb = max_master_mem_overhead_mb
+        self.master_mem_overhead_increase_mb = master_mem_overhead_increase_mb
+        self.memory_policy = memory_policy
+        self.priority = PRIORITY_VERY_LOW
+
+    @property
+    def memory_policy(self):
+        return self._memory_policy
+
+    @memory_policy.setter
+    def memory_policy(self, memory_policy):
+        if memory_policy not in ['physical_memory', 'virtual_memory']:
+            raise ValueError('Memory policy is "{}" in MemoryController while itshould be either "physical_memory"'
+                             'or "virtual_memory"'.format(memory_policy))
+        self._memory_policy = memory_policy
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'max_mem_per_proc_mb': self.max_mem_per_proc_mb,
+                'mem_per_proc_increase_mb': self.mem_per_proc_increase_mb,
+                'max_master_mem_overhead_mb': self.max_master_mem_overhead_mb,
+                'master_mem_overhead_increase_mb': self.master_mem_overhead_increase_mb,
+                'memory_policy': self.memory_policy
+                }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(max_mem_per_proc_mb=d['max_mem_per_proc_mb'],
+                   mem_per_proc_increase_mb=d['mem_per_proc_increase_mb'],
+                   max_master_mem_overhead_mb=d['max_master_mem_overhead_mb'],
+                   master_mem_overhead_increase_mb=d['master_mem_overhead_increase_mb'],
+                   memory_policy=d['memory_policy'])
+
+    @property
+    def skip_remaining_handlers(self):
+        return True
+
+    @property
+    def skip_lower_priority_controllers(self):
+        return True
+
+    def process(self, **kwargs):
+        # Get the Queue Adapter and the queue errors
+        queue_adapter = kwargs.get('queue_adapter', None)
+        if queue_adapter is None:
+            raise ValueError('No queue adapter passed to the MemoryController')
+        queue_errors = self.get_queue_errors(memory_policy=self.memory_policy, **kwargs)
+
+        # Create the Controller Note and the actions
+        note = ControllerNote(controller=self)
+        actions = {}
+
+        # No errors found
+        if queue_errors is None:
+            note.state = ControllerNote.NOTHING_FOUND
+            return note
+
+        # Get the memory error if there is one
+        memory_error = None
+        master_memory_error = None
+        slave_memory_error = None
+        for error in queue_errors:
+            if isinstance(error, MemoryCancelError):
+                logger.debug('found memory error.')
+                memory_error = error
+            elif isinstance(error, MasterProcessMemoryCancelError):
+                logger.debug('found master memory error.')
+                master_memory_error = error
+            elif isinstance(error, SlaveProcessMemoryCancelError):
+                logger.debug('found slave memory error.')
+                slave_memory_error = error
+
+        # No memory error found
+        if all(err is None for err in [memory_error, master_memory_error, slave_memory_error]):
+            note.state = ControllerNote.NOTHING_FOUND
+            return note
+
+        # TODO: allow the possibility to have multiple actions here ? If both the master and the slave gets the error ?
+        if memory_error or slave_memory_error:
+            note.add_problem('Task has been stopped due to memory infringement'
+                             '{}'.format('' if memory_error else ' by a slave process'))
+            old_mem_per_proc = queue_adapter.mem_per_proc
+            if old_mem_per_proc == self.max_mem_per_proc_mb:
+                note.state = ControllerNote.ERROR_UNRECOVERABLE
+                note.add_problem('Maximum mem_per_proc has been reached, cannot increase further')
+                return note
+            new_mem_per_proc = old_mem_per_proc + self.mem_per_proc_increase_mb
+            if new_mem_per_proc > self.max_mem_per_proc_mb:
+                new_mem_per_proc = self.max_mem_per_proc_mb
+            actions['queue_adapter'] = Action(callable=queue_adapter.__class__.set_mem_per_proc,
+                                              mem_mb=new_mem_per_proc)
+        if master_memory_error:
+            note.add_problem('Task has been stopped due to memory infringement by the master process')
+            old_mem_overhead = self.queue_adapter.master_mem_overhead
+            if old_mem_overhead == self.max_master_mem_overhead_mb:
+                note.state = ControllerNote.ERROR_UNRECOVERABLE
+                note.add_problem('Maximum master_mem_overhead has been reached, cannot increase further')
+                return note
+            new_mem_overhead = old_mem_overhead + self.master_mem_overhead_increase_mb
+            if new_mem_overhead > self.max_master_mem_overhead_mb:
+                new_mem_overhead = self.max_master_mem_overhead_mb
+            actions['queue_adapter'] = Action(callable=queue_adapter.__class__.set_master_mem_overhead,
+                                              mem_mb=new_mem_overhead)
+
+        # Set the actions to be performed, the state and the type of restart
+        note.state = ControllerNote.ERROR_RECOVERABLE
+        note.actions = actions
+        note.simple_restart()
+        return note
+
+
+    # def process(self, **kwargs):
+    #     # Create the Controller Note
+    #     note = ControllerNote(controller=self)
+    #     # Get the file paths for the stderr and stdout of the resource manager system, as well as the queue_adapter
+    #     qerr_filepath = kwargs.get('qerr_filepath', None)
+    #     qout_filepath = kwargs.get('qout_filepath', None)
+    #     queue_adapter = kwargs.get('queue_adapter', None)
+    #     if 'queue_adapter' is None:
+    #         raise ValueError('WalltimeController should have access to the queue_adapter')
+    #     if 'qerr_filepath' is None:
+    #         raise ValueError('WalltimeController should have access to the qerr_filepath')
+    #     if 'qout_filepath' is None:
+    #         raise ValueError('WalltimeController should have access to the qout_filepath')
+    #     # Initialize the actions for everything that is passed to kwargs
+    #     actions = {}
+    #     # Analyze the stderr and stdout files of the resource manager system.
+    #     qerr_info = None
+    #     qout_info = None
+    #     if qerr_filepath is not None and os.path.exists(qerr_filepath):
+    #         with open(qerr_filepath, "r") as f:
+    #             qerr_info = f.read()
+    #     if qout_filepath is not None and os.path.exists(qout_filepath):
+    #         with open(qout_filepath, "r") as f:
+    #             qout_info = f.read()
+    #     if qerr_info or qout_info:
+    #         from pymatgen.io.abinit.scheduler_error_parsers import get_parser
+    #         qtype = queue_adapter.QTYPE
+    #         scheduler_parser = get_parser(qtype, err_file=qerr_filepath,
+    #                                       out_file=qout_filepath)
+    #
+    #         if scheduler_parser is None:
+    #             raise ValueError('Cannot find scheduler_parser for qtype {}'.format(qtype))
+    #
+    #         scheduler_parser.parse()
+    #         queue_errors = scheduler_parser.errors
+    #
+    #         # Get the timelimit error if there is one
+    #         timelimit_error = None
+    #         for error in queue_errors:
+    #             if isinstance(error, TimeCancelError):
+    #                 logger.debug('found timelimit error.')
+    #                 timelimit_error = error
+    #         if timelimit_error is None:
+    #             note.state = ControllerNote.NOTHING_FOUND
+    #             return note
+    #
+    #         if self.max_timelimit is None:
+    #             max_timelimit = queue_adapter.timelimit_hard
+    #         else:
+    #             max_timelimit = self.max_timelimit
+    #         # When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue
+    #         if self.timelimit_increase is None:
+    #             timelimit_increase = queue_adapter.timelimit_hard / 10
+    #         else:
+    #             timelimit_increase = self.timelimit_increase
+    #         old_timelimit = queue_adapter.timelimit
+    #         if old_timelimit == max_timelimit:
+    #                 # raise ValueError('Cannot increase beyond maximum timelimit ({:d} seconds) set in '
+    #                 #                  'WalltimeController. Hard time limit of '
+    #                 #                  'the queue is {:d} seconds'.format(max_timelimit,
+    #                 #                                                     queue_adapter.timelimit_hard))
+    #             note.state = ControllerNote.ERROR_UNRECOVERABLE
+    #             return note
+    #         new_timelimit = old_timelimit + timelimit_increase
+    #         # If the new timelimit exceeds the max timelimit, just put it to the max timelimit
+    #         if new_timelimit > max_timelimit:
+    #             new_timelimit = max_timelimit
+    #         actions['queue_adapter'] = Action(callable=queue_adapter.__class__.set_timelimit,
+    #                                           timelimit=new_timelimit)
+    #         note.state = ControllerNote.ERROR_RECOVERABLE
+    #     else:
+    #         note.state = ControllerNote.NOTHING_FOUND
+    #     note.actions = actions
+    #     note.simple_restart()
+    #     return note
 
 
 class SimpleValidatorController(Controller):

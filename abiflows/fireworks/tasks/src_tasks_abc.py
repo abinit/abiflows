@@ -360,11 +360,10 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             new_spec['previous_fws'] = fw_spec['previous_fws']
         # Create the new SRC trio
         # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
-        new_SRC_fws = createSRCFireworks(setup_task=setup_fw.tasks, run_task=run_fw.tasks, control_task=self,
+        new_SRC_fws = createSRCFireworks(setup_task=setup_fw.tasks[-1], run_task=run_fw.tasks[-1], control_task=self,
                                          spec=new_spec, initialization_info=None, task_index=task_index, deps=None)
         wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
         return FWAction(detours=[wf])
-        # return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
 
     def get_setup_and_run_fw(self, fw_spec):
         # Get the launchpad
