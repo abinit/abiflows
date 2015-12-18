@@ -129,6 +129,7 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
                 qtk_queueadapter.set_mem_per_proc(mem_mb=initial_parameters['run_mem_per_proc'])
             if 'run_mpi_ncpus' in initial_parameters:
                 qtk_queueadapter.set_mpi_procs(mpi_procs=initial_parameters['run_mpi_ncpus'])
+            qadapter_spec = qtk_queueadapter.get_subs_dict()
         params = {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
         setup_params = self.setup_run_parameters(fw_spec=fw_spec)
         params.update(setup_params)
