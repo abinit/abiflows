@@ -314,7 +314,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         initial_objects = self.get_initial_objects()
         qerr_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qerr')
         qout_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qout')
-        initial_objects.update({'queue_adapter': run_fw.spec['qtk_queueadapter'],
+        initial_objects.update({'queue_adapter': self.run_fw.spec['qtk_queueadapter'],
                            'qerr_filepath': qerr_filepath,
                            'qout_filepath': qout_filepath})
         control_report = self.control_procedure.process(**initial_objects)
