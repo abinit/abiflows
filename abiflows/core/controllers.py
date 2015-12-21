@@ -199,12 +199,12 @@ class AbinitController(Controller):
     def from_dict(cls, d):
         dec = MontyDecoder()
         return cls(critical_events=dec.process_decoded(d['critical_events']),
-                   error_handlers=dec.process_decoded(d['error_handlers']))
+                   handlers=dec.process_decoded(d['handlers']))
 
     def as_dict(self):
         return {'@class': self.__class__.__name__, '@module': self.__class__.__module__,
                 'critical_events': [ce.as_dict for ce in self.critical_events],
-                'error_handlers': [er.as_dict for er in self.handlers]
+                'handlers': [er.as_dict for er in self.handlers]
                 }
 
     def get_event_report(self, ofile, mpiabort_file):
