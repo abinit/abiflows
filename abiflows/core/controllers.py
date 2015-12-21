@@ -198,12 +198,21 @@ class AbinitController(Controller):
     @classmethod
     def from_dict(cls, d):
         dec = MontyDecoder()
-        return cls(critical_events=dec.process_decoded(d['critical_events']),
+        import importlib
+        critical_events = []
+        for ced in d['critical_events']:
+            mod = importlib.import_module(ced['module'])
+            ce = getattr(mod, ced['name'])
+            critical_events.append(ce)
+        return cls(critical_events=critical_events,
+                   # critical_events=dec.process_decoded(d['critical_events']),
                    handlers=dec.process_decoded(d['handlers']))
 
     def as_dict(self):
+        critical_events = [{'module': ce.__module__, 'name': ce.__name__} for ce in self.critical_events]
         return {'@class': self.__class__.__name__, '@module': self.__class__.__module__,
-                'critical_events': [ce.as_dict() for ce in self.critical_events],
+                # 'critical_events': [ce.as_dict() for ce in self.critical_events],
+                'critical_events': critical_events,
                 'handlers': [er.as_dict() for er in self.handlers]
                 }
 
