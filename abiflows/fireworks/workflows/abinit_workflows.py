@@ -177,8 +177,8 @@ class ScfFWWorkflowSRC(AbstractFWWorkflow):
         control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
                                                           WalltimeController(), MemoryController()])
         setup_task = AbinitSetupTask(abiinput=abiinput, task_helper=scf_helper)
-        run_task = AbinitRunTask(control_procedure=control_procedure)
-        control_task = AbinitControlTask(control_procedure=control_procedure)
+        run_task = AbinitRunTask(control_procedure=control_procedure, task_helper=scf_helper)
+        control_task = AbinitControlTask(control_procedure=control_procedure, task_helper=scf_helper)
 
         scf_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task)
 
