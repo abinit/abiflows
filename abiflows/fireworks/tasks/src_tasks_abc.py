@@ -397,7 +397,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                         modified_objects[update['key']] = mod
                     else:
                         new_spec[update['key']] = target_object
-                        modified_objects[update['key']] = mod
+                        modified_objects[update['key']] = target_object
                 elif update['target'] == 'setup_fw_spec':
                     if 'mod' in update:
                         mod = getattr(target_object, update['mod'])()
