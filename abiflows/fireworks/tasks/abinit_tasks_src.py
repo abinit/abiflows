@@ -9,6 +9,7 @@ import threading
 import subprocess
 from monty.json import MSONable
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask, SetupError
+from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
@@ -22,6 +23,9 @@ from pymatgen.io.abinit.qutils import time2slurm
 from abipy.abio.factories import InputFactory
 from abipy.abio.inputs import AbinitInput
 
+RESET_RESTART = ControllerNote.RESET_RESTART
+SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
+RESTART_FROM_SCRATCH = ControllerNote.RESTART_FROM_SCRATCH
 
 logger = logging.getLogger(__name__)
 
@@ -598,7 +602,7 @@ class ScfTaskHelper(GsTaskHelper):
     def restart(self, restart_info):
         """SCF calculations can be restarted if we have either the WFK file or the DEN file."""
         # Prefer WFK over DEN files since we can reuse the wavefunctions.
-        if restart_info.reset:
+        if restart_info == RESET_RESTART:
             # remove non reset keys that may have been added in a previous restart
             self.task.remove_restart_vars(["WFK", "DEN"])
         else:
