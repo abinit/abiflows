@@ -94,7 +94,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         #TODO create a initialize_setup abstract function in SetupTask and put it there? or move somewhere else?
         #setup the FWTaskManager
         self.ftm = self.get_fw_task_manager(fw_spec)
-        return super(AbinitSetupTask, self).__init__(fw_spec)
+        return super(AbinitSetupTask, self).run_task(fw_spec)
 
     def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
         optconf, qtk_qadapter = self.run_autoparal(self.abiinput, fw_spec)
