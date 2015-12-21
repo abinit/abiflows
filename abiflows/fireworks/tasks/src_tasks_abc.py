@@ -93,6 +93,9 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
     def __init__(self, restart_info=None):
         self.restart_info = restart_info
 
+    def set_restart_info(self, restart_info=None):
+        self.restart_info = restart_info
+
     def run_task(self, fw_spec):
         # Set up and create the directory tree of the Setup/Run/Control trio,
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
@@ -252,6 +255,8 @@ class ScriptRunTask(RunTask):
         for cmd_str in cmds_strs:
             cmd = Command(cmd_str)
             cmd = cmd.run()
+            if cmd.retcode != 0:
+                raise ValueError('Command "{}" returned exit code {:d}'.format(cmd_str, cmd.retcode))
             if cmd.output is not None:
                 print(cmd.output)
             f.write('{}\n'.format(str(cmd)))

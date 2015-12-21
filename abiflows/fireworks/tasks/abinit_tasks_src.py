@@ -89,9 +89,6 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         self.task_helper = task_helper
         self.task_helper.set_task = self
 
-    def set_restart_info(self, restart_info=None):
-        self.restart_info = restart_info
-
     def run_task(self, fw_spec):
         #TODO create a initialize_setup abstract function in SetupTask and put it there? or move somewhere else?
         #setup the FWTaskManager
