@@ -288,34 +288,35 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         task_index = SRCTaskIndex.from_any(fw_spec['SRC_task_index'])
         # Get the setup and run fireworks
         setup_and_run_fws = self.get_setup_and_run_fw(fw_spec=fw_spec)
-        setup_fw = setup_and_run_fws['setup_fw']
-        run_fw = setup_and_run_fws['run_fw']
+        self.setup_fw = setup_and_run_fws['setup_fw']
+        self.run_fw = setup_and_run_fws['run_fw']
 
         # Specify the type of the task that is controlled:
         #  - aborted : the task has been aborted due to a monitoring controller during the Run Task, the FW state
         #              is COMPLETED
         #  - completed : the task has completed, the FW state is COMPLETE
         #  - failed : the task has failed, the FW state is FIZZLED
-        if run_fw.state == 'COMPLETED':
+        if self.run_fw.state == 'COMPLETED':
             if 'src_run_task_aborted' in fw_spec:
                 self.control_procedure.set_controlled_item_type(ControlledItemType.task_aborted())
             else:
                 self.control_procedure.set_controlled_item_type(ControlledItemType.task_completed())
-        elif run_fw.state == 'FIZZLED':
+        elif self.run_fw.state == 'FIZZLED':
             self.control_procedure.set_controlled_item_type(ControlledItemType.task_failed())
         else:
             raise RuntimeError('The state of the Run Firework is "{}" '
-                               'while it should be COMPLETED or FIZZLED'.format(run_fw.state))
+                               'while it should be COMPLETED or FIZZLED'.format(self.run_fw.state))
 
         # Get the keyword_arguments to be passed to the process method of the control_procedure
         #TODO: how to do that kind of automatically ??
         # each key should have : how to get it from the run_fw/(setup_fw)
         #                        how to force/apply it to the next SRC (e.g. how do we say to setup that)
-        qerr_filepath = os.path.join(run_fw.launches[-1].launch_dir, 'queue.qerr')
-        qout_filepath = os.path.join(run_fw.launches[-1].launch_dir, 'queue.qout')
-        initial_objects = {'queue_adapter': run_fw.spec['qtk_queueadapter'],
+        initial_objects = self.get_initial_objects()
+        qerr_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qerr')
+        qout_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qout')
+        initial_objects.update({'queue_adapter': run_fw.spec['qtk_queueadapter'],
                            'qerr_filepath': qerr_filepath,
-                           'qout_filepath': qout_filepath}
+                           'qout_filepath': qout_filepath})
         control_report = self.control_procedure.process(**initial_objects)
 
         if control_report.unrecoverable:
@@ -354,7 +355,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                 modified_objects[target] = action.apply(initial_objects[target])
 
         # Pass the modified objects to the next SetupTask
-        new_spec = copy.deepcopy(run_fw.spec)
+        new_spec = copy.deepcopy(self.run_fw.spec)
         new_spec['src_modified_objects'] = modified_objects
         new_spec.pop('_launch_dir')
         new_spec.pop('src_directories')
@@ -367,7 +368,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             new_spec['previous_fws'] = fw_spec['previous_fws']
         # Create the new SRC trio
         # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
-        new_SRC_fws = createSRCFireworks(setup_task=setup_fw.tasks[-1], run_task=run_fw.tasks[-1], control_task=self,
+        new_SRC_fws = createSRCFireworks(setup_task=self.setup_fw.tasks[-1], run_task=self.run_fw.tasks[-1],
+                                         control_task=self,
                                          spec=new_spec, initialization_info=None, task_index=task_index, deps=None)
         wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
         return FWAction(detours=[wf])
@@ -409,6 +411,9 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         setup_fw_id = setup_job_info['fw_id']
         setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
         return {'setup_fw': setup_fw, 'run_fw': run_fw}
+
+    def get_initial_objects(self):
+        return {}
 
     @classmethod
     def from_controllers(cls, controllers, max_restarts=10):
