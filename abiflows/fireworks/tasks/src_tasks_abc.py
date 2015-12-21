@@ -5,24 +5,26 @@ import copy
 import inspect
 import os
 
-from custodian.ansible.interpreter import Modder
-
 from fireworks.core.firework import FireTaskBase
 from fireworks.core.firework import FWAction
 from fireworks.core.firework import Workflow
+from fireworks.core.firework import Firework
 from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 
-from monty.json import MontyDecoder
+from monty.json import MontyDecoder, MontyEncoder
 from monty.json import MSONable
 from monty.serialization import loadfn
+from monty.subprocess import Command
 
-from abiflows.fireworks.utils.custodian_utils import MonitoringSRCErrorHandler
-from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
-from abiflows.fireworks.utils.custodian_utils import SRCValidator
 from abiflows.core.mastermind_abc import ControlProcedure, ControlledItemType
+from abiflows.core.mastermind_abc import ControllerNote
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get_short_single_core_spec
 
+RESTART_FROM_SCRATCH = ControllerNote.RESTART_FROM_SCRATCH
+RESET_RESTART = ControllerNote.RESET_RESTART
+SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
 
 class SRCTaskMixin(object):
 
@@ -52,75 +54,144 @@ class SRCTaskMixin(object):
     def setup_directories(self, fw_spec, create_dirs=False):
         if self.src_type == 'setup':
             self.src_root_dir = fw_spec.get('_launch_dir', os.getcwd())
-        elif self.src_type in ['run', 'check']:
-            self.src_root_dir = os.path.split(os.path.abspath(fw_spec['_launch_dir']))[0]
+        elif 'src_directories' in fw_spec:
+            self.src_root_dir = fw_spec['src_directories']['src_root_dir']
+        # elif self.src_type in ['run', 'control']:
+        #     self.src_root_dir = os.path.split(os.path.abspath(fw_spec['_launch_dir']))[0]
         else:
             raise ValueError('Cannot setup directories for "src_type" = "{}"'.format(self.src_type))
         self.setup_dir = os.path.join(self.src_root_dir, 'setup')
         self.run_dir = os.path.join(self.src_root_dir, 'run')
-        self.check_dir = os.path.join(self.src_root_dir, 'check')
-        if 'src_directories' in fw_spec:
-            if (self.src_root_dir != fw_spec['src_directories']['src_root_dir'] or
-                self.setup_dir != fw_spec['src_directories']['setup_dir'] or
-                self.run_dir != fw_spec['src_directories']['run_dir'] or
-                self.check_dir != fw_spec['src_directories']['check_dir']):
-                raise ValueError('src_directories in fw_spec do not match actual SRC directories ...')
+        self.control_dir = os.path.join(self.src_root_dir, 'control')
+        # if 'src_directories' in fw_spec:
+        #     if (self.src_root_dir != fw_spec['src_directories']['src_root_dir'] or
+        #         self.setup_dir != fw_spec['src_directories']['setup_dir'] or
+        #         self.run_dir != fw_spec['src_directories']['run_dir'] or
+        #         self.control_dir != fw_spec['src_directories']['control_dir']):
+        #         raise ValueError('src_directories in fw_spec do not match actual SRC directories ...')
         if create_dirs:
             os.makedirs(self.setup_dir)
             os.makedirs(self.run_dir)
-            os.makedirs(self.check_dir)
+            os.makedirs(self.control_dir)
 
     @property
     def src_directories(self):
         return {'src_root_dir': self.src_root_dir,
                 'setup_dir': self.setup_dir,
                 'run_dir': self.run_dir,
-                'check_dir': self.check_dir
+                'control_dir': self.control_dir
                 }
 
 
+@explicit_serialize
 class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
 
-    def __init__(self):
-        pass
+    RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus', 'qtk_queueadapter']
+
+    def __init__(self, restart_info=None):
+        self.restart_info = restart_info
+
+    def set_restart_info(self, restart_info=None):
+        self.restart_info = restart_info
 
     def run_task(self, fw_spec):
-        # The Setup and Run have to run on the same worker
-        #TODO: Check if this works ... I think it should ... is it clean ? ... Should'nt we put that in
-        #      the SRC factory function instead ?
-        #TODO: Be carefull here about preserver fworker when we recreate a new SRC trio ...
-        fw_spec['_preserve_fworker'] = True
-        fw_spec['_pass_job_info'] = True
-        # Set up and create the directory tree of the Setup/Run/Check trio
+        # Set up and create the directory tree of the Setup/Run/Control trio,
         self.setup_directories(fw_spec=fw_spec, create_dirs=True)
+        #  Forward directory information to run and control fireworks #HACK in _setup_run_and_control_dirs
+        self._setup_run_and_control_dirs_and_fworker(fw_spec=fw_spec)
         # Move to the setup directory
         os.chdir(self.setup_dir)
         # Make the file transfers from another worker if needed
         self.file_transfers(fw_spec=fw_spec)
         # Setup the parameters for the run (number of cpus, time, memory, openmp, ...)
-        run_parameters = self.setup_run_parameters(fw_spec=fw_spec)
+        params = list(self.RUN_PARAMETERS)
+        if 'src_modified_objects' in fw_spec:
+            for target, modified_object in fw_spec['src_modified_objects'].items():
+                params.remove(target)
+        run_parameters = self._setup_run_parameters(fw_spec=fw_spec, parameters=params)
         # Prepare run (make links to output files from previous tasks, write input files, create the directory
         # tree of the program, ...)
         self.prepare_run(fw_spec=fw_spec)
 
-        update_spec = {'src_directories': self.src_directories, '_launch_dir': os.getcwd()}
+        # Update the spec of the Run Firework with the directory tree, the run_parameters obtained from
+        #  setup_run_parameters and the modified_objects transferred directly from the Control Firework
+        update_spec = {'src_directories': self.src_directories}
         update_spec.update(run_parameters)
+        if 'src_modified_objects' in fw_spec:
+            update_spec.update(fw_spec['src_modified_objects'])
         return FWAction(update_spec=update_spec)
 
-# TODO: should the three following methods be abstract or should we let the developer chose to implement them or not ...
-    @abc.abstractmethod
-    def setup_run_parameters(self, fw_spec):
-        pass
+    def _setup_run_parameters(self, fw_spec, parameters):
+        qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True)
+        if 'initial_parameters' in fw_spec and fw_spec['SRC_task_index'].index == 1:
+            initial_parameters = fw_spec['initial_parameters']
+            if 'run_timelimit' in initial_parameters:
+                qtk_queueadapter.set_timelimit(timelimit=initial_parameters['run_timelimit'])
+            if 'run_mem_per_proc' in initial_parameters:
+                qtk_queueadapter.set_mem_per_proc(mem_mb=initial_parameters['run_mem_per_proc'])
+            if 'run_mpi_ncpus' in initial_parameters:
+                qtk_queueadapter.set_mpi_procs(mpi_procs=initial_parameters['run_mpi_ncpus'])
+            qadapter_spec = qtk_queueadapter.get_subs_dict()
+        params = {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
+        setup_params = self.setup_run_parameters(fw_spec=fw_spec)
+        params.update(setup_params)
+        return {param: params[param] for param in parameters}
 
-    @abc.abstractmethod
+    def setup_run_parameters(self, fw_spec):
+        return {}
+
     def file_transfers(self, fw_spec):
         pass
 
-    @abc.abstractmethod
     def prepare_run(self, fw_spec):
         pass
+
+    def _setup_run_and_control_dirs_and_fworker(self, fw_spec):
+        """
+        This method is used to update the spec of the run and control fireworks with the src_directories as well as
+        set the _launch_dir of the run and control fireworks to be the run_dir and control_dir respectively.
+        WARNING: This is a bit hackish! Do not change this unless you know exactly what you are doing!
+        :param fw_spec: Firework's spec
+        """
+        # Get the launchpad
+        if '_add_launchpad_and_fw_id' in fw_spec:
+            lp = self.launchpad
+            setup_fw_id = self.fw_id
+        else:
+            try:
+                fw_dict = loadfn('FW.json')
+            except IOError:
+                try:
+                    fw_dict = loadfn('FW.yaml')
+                except IOError:
+                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+                                       "impossible to determine fw_id")
+            lp = LaunchPad.auto_load()
+            setup_fw_id = fw_dict['fw_id']
+        if '_add_fworker' in fw_spec:
+            fworker = self.fworker
+        else:
+            raise ValueError('Should have access to the fworker in SetupTask ...')
+        # Check that this ControlTask has only one parent firework
+        this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(setup_fw_id)
+        child_fw_ids = this_lzy_wf.links[setup_fw_id]
+        if len(child_fw_ids) != 1:
+            raise ValueError('SetupTask\'s Firework should have exactly one child firework')
+        run_fw_id = child_fw_ids[0]
+        child_run_fw_ids = this_lzy_wf.links[run_fw_id]
+        if len(child_run_fw_ids) != 1:
+            raise ValueError('RunTask\'s Firework should have exactly one child firework')
+        control_fw_id = child_run_fw_ids[0]
+        spec_update = {'_launch_dir': self.run_dir,
+                       'src_directories': self.src_directories,
+                       '_fworker': fworker.name}
+        lp.update_spec(fw_ids=[run_fw_id],
+                       spec_document=spec_update)
+        spec_update['_launch_dir'] = self.control_dir
+        lp.update_spec(fw_ids=[control_fw_id],
+                       spec_document=spec_update)
 
 
 class RunTask(SRCTaskMixin, FireTaskBase):
@@ -132,16 +203,20 @@ class RunTask(SRCTaskMixin, FireTaskBase):
 
     def set_control_procedure(self, control_procedure):
         self.control_procedure = control_procedure
-        if any([controller.is_monitor for controller in control_procedure.controllers]):
-            raise NotImplementedError('Monitoring controllers not yet implemented in RunTask')
+        #TODO: check something here with the monitors ?
 
     def run_task(self, fw_spec):
         self.setup_directories(fw_spec=fw_spec, create_dirs=False)
-        # The Run and Check tasks have to run on the same worker
-        fw_spec['_preserve_fworker'] = True
-        fw_spec['_pass_job_info'] = True
-        #TODO: do something here with the monitoring handlers ... should stop the RunTask but the correction should be
-        #      applied in check !
+        launch_dir = os.getcwd()
+        # Move to the run directory
+        os.chdir(self.run_dir)
+        f = open(os.path.join(self.run_dir, 'fw_info.txt'), 'a')
+        f.write('FW launch_directory :\n{}'.format(launch_dir))
+        f.close()
+        # The Run and Control tasks have to run on the same worker
+
+        #TODO: do something here with the monitoring controllers ...
+        #      should stop the RunTask but the correction should be applied in control !
         self.config(fw_spec=fw_spec)
         self.run(fw_spec=fw_spec)
         update_spec = self.postrun(fw_spec=fw_spec)
@@ -149,94 +224,230 @@ class RunTask(SRCTaskMixin, FireTaskBase):
         if update_spec is None:
             update_spec = {}
 
-        # pass spec info to the ControlTask
-        update_spec['_launch_dir'] = self.check_dir
-
         #TODO: the directory is passed thanks to _pass_job_info. Should we pass anything else ?
         return FWAction(stored_data=None, exit=False, update_spec=None, mod_spec=None,
                         additions=None, detours=None,
                         defuse_children=False)
 
-    @abc.abstractmethod
     def config(self, fw_spec):
         pass
 
     @abc.abstractmethod
     def run(self, fw_spec):
-            pass
+        pass
 
-    @abc.abstractmethod
     def postrun(self, fw_spec):
         pass
 
 
+@explicit_serialize
+class ScriptRunTask(RunTask):
+
+    task_type = 'script'
+
+    def __init__(self, script_str, control_procedure):
+        RunTask.__init__(self, control_procedure=control_procedure)
+        self.script_str = script_str
+
+    def run(self, fw_spec):
+        f = open('script_run.log', 'w')
+        cmds_strs = self.script_str.split(';')
+        for cmd_str in cmds_strs:
+            cmd = Command(cmd_str)
+            cmd = cmd.run()
+            if cmd.retcode != 0:
+                raise ValueError('Command "{}" returned exit code {:d}'.format(cmd_str, cmd.retcode))
+            if cmd.output is not None:
+                print(cmd.output)
+            f.write('{}\n'.format(str(cmd)))
+        f.close()
+
+    @serialize_fw
+    def to_dict(self):
+        return {'script_str': self.script_str,
+                'control_procedure': self.control_procedure.as_dict()}
+
+    @classmethod
+    def from_dict(cls, d):
+        control_procedure = ControlProcedure.from_dict(d['control_procedure'])
+        return cls(script_str=d['script_str'], control_procedure=control_procedure)
+
+
+@explicit_serialize
 class ControlTask(SRCTaskMixin, FireTaskBase):
     src_type = 'control'
 
-    def __init__(self, control_procedure, max_restarts=10):
+    def __init__(self, control_procedure, manager=None, max_restarts=10):
         self.control_procedure = control_procedure
+        self.manager = manager
         self.max_restarts = max_restarts
 
     def run_task(self, fw_spec):
+        self.setup_directories(fw_spec=fw_spec, create_dirs=False)
+        launch_dir = os.getcwd()
+        # Move to the control directory
+        os.chdir(self.control_dir)
+        f = open(os.path.join(self.control_dir, 'fw_info.txt'), 'a')
+        f.write('FW launch_directory :\n{}'.format(launch_dir))
+        f.close()
+        # Get the task index
+        task_index = SRCTaskIndex.from_any(fw_spec['SRC_task_index'])
         # Get the setup and run fireworks
         setup_and_run_fws = self.get_setup_and_run_fw(fw_spec=fw_spec)
-        setup_fw = setup_and_run_fws['setup_fw']
-        run_fw = setup_and_run_fws['run_fw']
+        self.setup_fw = setup_and_run_fws['setup_fw']
+        self.run_fw = setup_and_run_fws['run_fw']
 
         # Specify the type of the task that is controlled:
         #  - aborted : the task has been aborted due to a monitoring controller during the Run Task, the FW state
         #              is COMPLETED
         #  - completed : the task has completed, the FW state is COMPLETE
         #  - failed : the task has failed, the FW state is FIZZLED
-        if run_fw.state == 'COMPLETED':
+        if self.run_fw.state == 'COMPLETED':
             if 'src_run_task_aborted' in fw_spec:
                 self.control_procedure.set_controlled_item_type(ControlledItemType.task_aborted())
             else:
                 self.control_procedure.set_controlled_item_type(ControlledItemType.task_completed())
-        elif run_fw.state == 'FIZZLED':
+        elif self.run_fw.state == 'FIZZLED':
             self.control_procedure.set_controlled_item_type(ControlledItemType.task_failed())
         else:
             raise RuntimeError('The state of the Run Firework is "{}" '
-                               'while it should be COMPLETED or FIZZLED'.format(run_fw.state))
+                               'while it should be COMPLETED or FIZZLED'.format(self.run_fw.state))
 
         # Get the keyword_arguments to be passed to the process method of the control_procedure
         #TODO: how to do that kind of automatically ??
-        kwargs = {'queue_adapter': run_fw.spec['qtk_queueadapter']}
-        control_report = self.control_procedure.process(**kwargs)
+        # each key should have : how to get it from the run_fw/(setup_fw)
+        #                        how to force/apply it to the next SRC (e.g. how do we say to setup that)
+        # Actually, the object, can come from : the setup_fw or from the run_fw (from the setup_spec, from the run_spec,
+        # from the setup_task or the run_task (or in general one of the tasks ...
+        # even multiple tasks is not yet supported ... should it be ? or should we stay with only one task allways ?)
+        # If it is modified, it should update the corresponding bit (setup_spec and/or run_spec and/or
+        # setup_task and/or run_task)
+        initial_objects_info = self.get_initial_objects_info()
+        qerr_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qerr')
+        qout_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qout')
+        initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
+                                                       'updates': [{'target': 'fw_spec',
+                                                                    'key': 'qtk_queueadapter'},
+                                                                   {'target': 'fw_spec',
+                                                                    'key': '_queueadapter',
+                                                                    'mod': 'get_subs_dict'}]},
+                                     'qerr_filepath': {'object': qerr_filepath},
+                                     'qout_filepath': {'object': qout_filepath}})
+        initial_objects = {name: obj_info['object'] for name, obj_info in initial_objects_info.items()}
+        control_report = self.control_procedure.process(**initial_objects)
+
+        if control_report.unrecoverable:
+            raise ValueError('Errors are unrecoverable')
 
         # If everything is ok, update the spec of the children
         if control_report.finalized:
-            stored_data = {'finalized': True}
+            stored_data = {'control_report': control_report, 'finalized': True}
             update_spec = {}
             mod_spec = []
-            for task_type, task_info in fw_spec['previous_fws'].items():
-                mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+            if 'previous_fws' in fw_spec:
+                #TODO: We actually dont need that here, but we should add something to pass info from this SRC
+                # to the next if needed
+                for task_type, task_info in fw_spec['previous_fws'].items():
+                    mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
             return FWAction(stored_data=stored_data, exit=False, update_spec=update_spec, mod_spec=mod_spec,
                             additions=None, detours=None, defuse_children=False)
 
+        # Check the maximum number of restarts
+        if task_index.index == self.max_restarts:
+            raise ValueError('Maximum number of restarts ({:d}) reached'.format(self.max_restarts))
 
+        # Increase the task_index
+        task_index.increase_index()
 
-        # Validate the results if no error was found
-        self.validate()
+        # Apply the actions on the objects to get the modified objects (to be passed to SetupTask)
+        # modified_objects = {}
+        # for target, action in control_report.actions.items():
+        #     # Special case right now for the queue adapter ...
+        #     if target == 'queue_adapter':
+        #         qtk_qadapter = initial_objects[target]
+        #         action.apply(qtk_qadapter)
+        #         modified_objects['qtk_queueadapter'] = qtk_qadapter
+        #         modified_objects['_queueadapter'] = qtk_qadapter.get_subs_dict()
+        #     else:
+        #         modified_objects[target] = action.apply(initial_objects[target])
 
-        # If everything is ok, update the spec of the children
-        stored_data = {}
-        update_spec = {}
-        mod_spec = []
+        # New spec
+        new_spec = copy.deepcopy(self.run_fw.spec)
+
+        # New tasks
+        setup_task = self.setup_fw.tasks[-1]
+        run_task = self.run_fw.tasks[-1]
+        control_task = self
+
+        modified_objects = {}
+        setup_spec_update = {}
+        run_spec_update = {}
+        for target, action in control_report.actions.items():
+            target_object = initial_objects[target]
+            action.apply(target_object)
+            if target not in initial_objects_info:
+                raise ValueError('Object "{}" to be modified was not in the initial_objects'.format(target))
+            if 'updates' not in initial_objects_info[target]:
+                raise ValueError('Update information not present for object "{}"'.format(target))
+            for update in initial_objects_info[target]['updates']:
+                if update['target'] == 'fw_spec':
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        new_spec[update['key']] = mod
+                        modified_objects[update['key']] = mod
+                    else:
+                        new_spec[update['key']] = target_object
+                        modified_objects[update['key']] = target_object
+                elif update['target'] == 'setup_fw_spec':
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        setup_spec_update[update['key']] = mod
+                    else:
+                        setup_spec_update[update['key']] = target_object
+                elif update['target'] == 'run_fw_spec':
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        run_spec_update[update['key']] = mod
+                    else:
+                        run_spec_update[update['key']] = target_object
+                elif update['target'] in ['setup_task', 'run_task']:
+                    task = setup_task if update['target'] == 'setup_task' else run_task
+                    attr = getattr(task, update['attribute'])
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        attr = mod
+                    else:
+                        attr = target_object
+                else:
+                    raise ValueError('Only changes to fw_spec, setup_task and run_task are allowed right now ...')
+
+        # Set the restart_info
+        setup_task.set_restart_info(control_report.restart_info)
+
+        # Pass the modified objects to the next SetupTask
+        new_spec['src_modified_objects'] = modified_objects
+        new_spec.pop('_launch_dir')
+        new_spec.pop('src_directories')
+        new_spec['previous_src'] = {'src_directories': self.src_directories}
+        # if '_queueadapter' in modified_objects:
+        #     new_spec['_queueadapter'] = modified_objects['_queueadapter']
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
         # next SRC group
-        for task_type, task_info in fw_spec['previous_fws'].items():
-            mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
-        return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
+        if 'previous_fws' in fw_spec:
+            new_spec['previous_fws'] = fw_spec['previous_fws']
+        # Create the new SRC trio
+        # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
+        new_SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task,
+                                         spec=new_spec, initialization_info=None, task_index=task_index, deps=None,
+                                         run_spec_update=run_spec_update, setup_spec_update=setup_spec_update)
+        wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
+        return FWAction(detours=[wf])
 
     def get_setup_and_run_fw(self, fw_spec):
-        # Get previous job information
-        previous_job_info = fw_spec['_job_info']
-        run_fw_id = previous_job_info['fw_id']
         # Get the launchpad
         if '_add_launchpad_and_fw_id' in fw_spec:
             lp = self.launchpad
-            check_fw_id = self.fw_id
+            control_fw_id = self.fw_id
         else:
             try:
                 fw_dict = loadfn('FW.json')
@@ -247,290 +458,147 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                     raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
                                        "impossible to determine fw_id")
             lp = LaunchPad.auto_load()
-            check_fw_id = fw_dict['fw_id']
-        # Check that this CheckTask has only one parent firework
-        this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(check_fw_id)
-        parents_fw_ids = this_lzy_wf.links.parent_links[check_fw_id]
+            control_fw_id = fw_dict['fw_id']
+        # Check that this ControlTask has only one parent firework
+        this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(control_fw_id)
+        parents_fw_ids = this_lzy_wf.links.parent_links[control_fw_id]
         if len(parents_fw_ids) != 1:
-            raise ValueError('CheckTask\'s Firework should have exactly one parent firework')
+            raise ValueError('ControlTask\'s Firework should have exactly one parent firework')
+        run_fw_id = parents_fw_ids[0]
         # Get the Run Firework and its state
         run_fw = lp.get_fw_by_id(fw_id=run_fw_id)
         run_is_fizzled = '_fizzled_parents' in fw_spec
         if run_is_fizzled and not run_fw.state == 'FIZZLED':
-            raise ValueError('CheckTask has "_fizzled_parents" key but parent Run firework is not fizzled ...')
+            raise ValueError('ControlTask has "_fizzled_parents" key but parent Run firework is not fizzled ...')
         run_is_completed = run_fw.state == 'COMPLETED'
         if run_is_completed and run_is_fizzled:
             raise ValueError('Run firework is FIZZLED and COMPLETED ...')
         if (not run_is_completed) and (not run_is_fizzled):
             raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
         # Get the Setup Firework
-        setup_job_info = run_fw.spec['_job_info']
+        setup_job_info = run_fw.spec['_job_info'][-1]
         setup_fw_id = setup_job_info['fw_id']
         setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
         return {'setup_fw': setup_fw, 'run_fw': run_fw}
+
+    def get_initial_objects_info(self):
+        return {}
 
     @classmethod
     def from_controllers(cls, controllers, max_restarts=10):
         cp = ControlProcedure(controllers=controllers)
         return cls(control_procedure=cp, max_restarts=max_restarts)
 
+    @serialize_fw
+    def to_dict(self):
+        return {'control_procedure': self.control_procedure.as_dict(),
+                'manager': self.manager.as_dict() if self.manager is not None else None,
+                'max_restarts': self.max_restarts}
 
-class CheckTask(SRCTaskMixin, FireTaskBase):
-
-    src_type = 'check'
-
-    def __init__(self, handlers=None, validators=None, max_restarts=10):
-        self.set_handlers(handlers=handlers)
-        self.set_validators(validators=validators)
-
-        self.max_restarts = max_restarts
-
-    def set_handlers(self, handlers):
-        if handlers is None:
-            self.handlers = []
-        elif issubclass(handlers, SRCErrorHandler):
-            self.handlers = [handlers]
-        elif isinstance(handlers, (list, tuple)):
-            self.handlers = []
-            for handler in handlers:
-                if not issubclass(handler, SRCErrorHandler):
-                    raise TypeError('One of items in "handlers" does not derive from '
-                                    'SRCErrorHandler')
-                self.handlers.append(handler)
+    @classmethod
+    def from_dict(cls, d):
+        control_procedure = ControlProcedure.from_dict(d['control_procedure'])
+        dec = MontyDecoder()
+        if d['manager'] is None:
+            manager = None
         else:
-            raise TypeError('The handlers argument is neither None, nor a SRCErrorHandler, '
-                            'nor a list/tuple')
-        # Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)
-        # and sort handlers by their priority
-        if self.handlers is not None:
-            h_priorities = [h.handler_priority for h in self.handlers]
-            nhfirst = h_priorities.count(SRCErrorHandler.PRIORITY_FIRST)
-            nhlast = h_priorities.count(SRCErrorHandler.PRIORITY_LAST)
-            if nhfirst > 1 or nhlast > 1:
-                raise ValueError('More than one first or last handler :\n'
-                                 ' - nfirst : {:d}\n - nlast : {:d}'.format(nhfirst,
-                                                                            nhlast))
-            self.handlers = sorted([h for h in self.handlers if h.allow_completed],
-                                         key=lambda x: x.handler_priority)
-
-    def set_validators(self, validators):
-        if validators is None:
-            self.validators = []
-        elif issubclass(validators, SRCValidator):
-            self.validators = [validators]
-        elif isinstance(validators, (list, tuple)):
-            self.validators = []
-            for validator in validators:
-                if not issubclass(validators, SRCValidator):
-                    raise TypeError('One of items in "validators" does not derive from '
-                                    'SRCValidator')
-                self.validators.append(validator)
-        else:
-            raise TypeError('The validators argument is neither None, nor a SRCValidator, '
-                            'nor a list/tuple')
-        # Check that there is only one FIRST and one LAST validator (PRIORITY_FIRST and PRIORITY_LAST)
-        # and sort validators by their priority
-        if self.validators is not None:
-            v_priorities = [v.validator_priority for v in self.validators]
-            nvfirst = v_priorities.count(SRCValidator.PRIORITY_FIRST)
-            nvlast = v_priorities.count(SRCValidator.PRIORITY_LAST)
-            if nvfirst > 1 or nvlast > 1:
-                raise ValueError('More than one first or last validator :\n'
-                                 ' - nfirst : {:d}\n - nlast : {:d}'.format(nvfirst,
-                                                                            nvlast))
-            self.validators = sorted([v for v in self.validators],
-                                         key=lambda x: x.validator_priority)
-
-    def run_task(self, fw_spec):
-        # Get the setup and run fireworks
-        setup_and_run_fws = self.get_setup_and_run_fw(fw_spec=fw_spec)
-        setup_fw = setup_and_run_fws['setup_fw']
-        run_fw = setup_and_run_fws['run_fw']
-        # Get the handlers
-        handlers = self.get_handlers(run_fw=run_fw)
-
-        # Check/detect errors and get the corrections
-        corrections = self.get_corrections(fw_spec=fw_spec, run_fw=run_fw, handlers=handlers)
-
-        # In case of a fizzled parent, at least one correction is needed !
-        if run_fw.state == 'FIZZLED' and len(corrections) == 0:
-            # TODO: should we do something else here ? like return a FWAction with defuse_childrens = True ??
-            raise RuntimeError('No corrections found for fizzled firework ...')
-
-        # If some errors were found, apply the corrections and return the FWAction
-        if len(corrections) > 0:
-            fw_action = self.apply_corrections(setup_fw=setup_fw, run_fw=run_fw, corrections=corrections)
-            return fw_action
-
-        # Validate the results if no error was found
-        self.validate()
-
-        # If everything is ok, update the spec of the children
-        stored_data = {}
-        update_spec = {}
-        mod_spec = []
-        #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
-        # next SRC group
-        for task_type, task_info in fw_spec['previous_fws'].items():
-            mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
-        return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
-
-    def get_setup_and_run_fw(self, fw_spec):
-        # Get previous job information
-        previous_job_info = fw_spec['_job_info']
-        run_fw_id = previous_job_info['fw_id']
-        # Get the launchpad
-        if '_add_launchpad_and_fw_id' in fw_spec:
-            lp = self.launchpad
-            check_fw_id = self.fw_id
-        else:
-            try:
-                fw_dict = loadfn('FW.json')
-            except IOError:
-                try:
-                    fw_dict = loadfn('FW.yaml')
-                except IOError:
-                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
-                                       "impossible to determine fw_id")
-            lp = LaunchPad.auto_load()
-            check_fw_id = fw_dict['fw_id']
-        # Check that this CheckTask has only one parent firework
-        this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(check_fw_id)
-        parents_fw_ids = this_lzy_wf.links.parent_links[check_fw_id]
-        if len(parents_fw_ids) != 1:
-            raise ValueError('CheckTask\'s Firework should have exactly one parent firework')
-        # Get the Run Firework and its state
-        run_fw = lp.get_fw_by_id(fw_id=run_fw_id)
-        run_is_fizzled = '_fizzled_parents' in fw_spec
-        if run_is_fizzled and not run_fw.state == 'FIZZLED':
-            raise ValueError('CheckTask has "_fizzled_parents" key but parent Run firework is not fizzled ...')
-        run_is_completed = run_fw.state == 'COMPLETED'
-        if run_is_completed and run_is_fizzled:
-            raise ValueError('Run firework is FIZZLED and COMPLETED ...')
-        if (not run_is_completed) and (not run_is_fizzled):
-            raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
-        # Get the Setup Firework
-        setup_job_info = run_fw.spec['_job_info']
-        setup_fw_id = setup_job_info['fw_id']
-        setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
-        return {'setup_fw': setup_fw, 'run_fw': run_fw}
-
-    def get_handlers(self, run_fw):
-        if run_fw.state == 'FIZZLED':
-            handlers = [h for h in self.handlers if h.allow_fizzled]
-        elif run_fw.state == 'COMPLETED':
-            handlers = [h for h in self.handlers if h.allow_completed]
-        else:
-            raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
-        return handlers
-
-    def get_corrections(self, fw_spec, run_fw, handlers):
-        #TODO: we should add here something about the corrections that have already been applied and that cannot
-        #      be applied anymore ...
-        corrections = []
-        for handler in handlers:
-            # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
-            handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
-            if handler.check():
-                corrections.append(handler.correct())
-                if handler.skip_remaining_handlers:
-                    break
-        return corrections
-
-    # def get_corrections(self, fw_spec, run_fw, handlers):
-    #     #TODO: we should add here something about the corrections that have already been applied and that cannot
-    #     #      be applied anymore ...
-    #     corrections = []
-    #     for handler in handlers:
-    #         # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
-    #         handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
-    #         if handler.check():
-    #             # TODO: add something whether we have a possible correction here or not ? has_correction() in handler ?
-    #             if handler.has_correction():
-    #                 corrections.append(handler.correct())
-    #                 if handler.skip_remaining_handlers:
-    #                     break
-    #             else:
-    #                 if handler.correction_is_required():
-    #                     raise ValueError('No correction found for error while correction is required ...')
-    #     return corrections
-
-    def validate(self):
-        validators = self.validators if self.validators is not None else []
-        for validator in validators:
-            if not validator.check():
-                raise RuntimeError('Validator invalidate results ...')
-
-    def apply_corrections(self, setup_fw, run_fw, corrections):
-        spec = copy.deepcopy(run_fw.spec)
-        modder = Modder()
-        for correction in corrections:
-            actions = correction['actions']
-            for action in actions:
-                if action['action_type'] == 'modify_object':
-                    if action['object']['source'] == 'fw_spec':
-                        myobject = spec[action['object']['key']]
-                    else:
-                        raise NotImplementedError('Object source "{}" not implemented in '
-                                                  'CheckTask'.format(action['object']['source']))
-                    newobj = modder.modify_object(action['action'], myobject)
-                    spec[action['object']['key']] = newobj
-                elif action['action_type'] == 'modify_dict':
-                    if action['dict']['source'] == 'fw_spec':
-                        mydict = spec[action['dict']['key']]
-                    else:
-                        raise NotImplementedError('Dict source "{}" not implemented in '
-                                                  'CheckTask'.format(action['dict']['source']))
-                    modder.modify(action['action'], mydict)
-                else:
-                    raise NotImplementedError('Action type "{}" not implemented in '
-                                              'CheckTask'.format(action['action_type']))
-        # Keep track of the corrections that have been applied
-        if 'SRC_check_corrections' in spec:
-            spec['SRC_check_corrections'].extend(corrections)
-        else:
-            spec['SRC_check_corrections'] = corrections
-
-        # Update the task index
-        task_index = SRCTaskIndex.from_any(spec['SRC_task_index'])
-        task_index.increase_index()
-
-        #TODO: in the future, see whether the FW queueadapter might be replaced by the qtk_queueadapter ?
-        #      ... to be discussed with Anubhav, when the qtk queueadapter is in a qtk toolkit and not anymore
-        #          in pymatgen/io/abinit
-        #      in that case, this part will not be needed anymore ...
-        spec['_queueadapter'] = spec['qtk_queueadapter'].get_subs_dict()
-        #TODO: why do we need this again ??
-        queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=spec['qtk_queueadapter'],
-                                                        corrections=corrections)
-
-        run_task = run_fw.tasks[0]
-        initialization_info = run_task.spec['initialization_info']
-        deps = run_task.deps
-        setup_task = setup_fw.tasks[0]
-
-        check_task = self
-
-        # Create the new Setup/Run/Check fireworks
-        #TODO: do we need initialization info here ?
-        #      do we need deps here ?
-        SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, check_task=check_task,
-                                     spec=spec, initialization_info=initialization_info,
-                                     task_index=task_index, deps=deps)
-        wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
-        return FWAction(detours=[wf])
+            manager = dec.process_decoded(d['manager']),
+        return cls(control_procedure=control_procedure, manager=manager, max_restarts=d['max_restarts'])
 
 
-def createSRCFireworks(setup_task, run_task, check_task, spec=None, initialization_info=None,
-                       task_index=None, deps=None):
+
+def createSRCFireworks(setup_task, run_task, control_task, spec=None, initialization_info=None,
+                       task_index=None, deps=None, setup_spec_update=None, run_spec_update=None):
+    # Make a full copy of the spec
+    if spec is None:
+        spec = {}
     spec = copy.deepcopy(spec)
+    spec['_add_launchpad_and_fw_id'] = True
+    spec['_add_fworker'] = True
+    # Initialize the SRC task_index
     if task_index is not None:
         src_task_index = SRCTaskIndex.from_any(task_index)
     else:
-        src_task_index = SRCTaskIndex.from_task(run_task)
+        src_task_index = SRCTaskIndex.from_any('unknown-task')
+    #     src_task_index = SRCTaskIndex.from_task(run_task)
+    spec['SRC_task_index'] = src_task_index
+
+    # SetupTask
     setup_spec = copy.deepcopy(spec)
-    setup_spec['SRC_task_index'] = src_task_index
-    pass
+    # Remove any initial queue_adapter_update from the spec
+    setup_spec.pop('queue_adapter_update', None)
+
+    setup_spec = set_short_single_core_to_spec(setup_spec)
+    setup_spec['_preserve_fworker'] = True
+    setup_spec['_pass_job_info'] = True
+    setup_spec.update({} if setup_spec_update is None else setup_spec_update)
+    setup_fw = Firework(setup_task, spec=setup_spec, name=src_task_index.setup_str)
+
+    # RunTask
+    run_spec = copy.deepcopy(spec)
+    run_spec['SRC_task_index'] = src_task_index
+    run_spec['_preserve_fworker'] = True
+    run_spec['_pass_job_info'] = True
+    run_spec.update({} if run_spec_update is None else run_spec_update)
+    run_fw = Firework(run_task, spec=run_spec, name=src_task_index.run_str)
+
+    # ControlTask
+    control_spec = copy.deepcopy(spec)
+    control_spec = set_short_single_core_to_spec(control_spec)
+    control_spec['SRC_task_index'] = src_task_index
+    control_spec['_allow_fizzled_parents'] = True
+    control_fw = Firework(control_task, spec=control_spec, name=src_task_index.control_str)
+
+    links_dict = {setup_fw.fw_id: [run_fw.fw_id],
+                  run_fw.fw_id: [control_fw.fw_id]}
+    return {'setup_fw': setup_fw, 'run_fw': run_fw, 'control_fw': control_fw, 'links_dict': links_dict,
+            'fws': [setup_fw, run_fw, control_fw]}
+
+
+
+# def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf_task_index_prefix, current_task_index=1,
+#                        handlers=None, validators=None,
+#                        deps=None, task_type=None, queue_adapter_update=None):
+#     SRC_spec = copy.deepcopy(SRC_spec)
+#     SRC_spec['initialization_info'] = initialization_info
+#     SRC_spec['_add_launchpad_and_fw_id'] = True
+#     SRC_spec['SRCScheme'] = True
+#     prefix_allowed_chars = ['-']
+#     prefix_test_string = str(wf_task_index_prefix)
+#     for allowed_char in prefix_allowed_chars:
+#         prefix_test_string = prefix_test_string.replace(allowed_char, "")
+#     if not prefix_test_string.isalnum():
+#         raise ValueError('wf_task_index_prefix should only contain letters '
+#                          'and the following characters : {}'.format(prefix_test_string))
+#     SRC_spec['wf_task_index_prefix'] = wf_task_index_prefix
+#
+#     # Remove any initial queue_adapter_update from the spec
+#     SRC_spec.pop('queue_adapter_update', None)
+#     if queue_adapter_update is not None:
+#         SRC_spec['queue_adapter_update'] = queue_adapter_update
+#
+#     # Setup (Autoparal) run
+#     SRC_spec_setup = copy.deepcopy(SRC_spec)
+#     SRC_spec_setup = set_short_single_core_to_spec(SRC_spec_setup)
+#     SRC_spec_setup['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
+#     setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
+#     setup_fw = Firework(setup_task, spec=SRC_spec_setup, name=SRC_spec_setup['wf_task_index'])
+#     # Actual run of simulation
+#     SRC_spec_run = copy.deepcopy(SRC_spec)
+#     SRC_spec_run['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
+#     run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
+#     run_fw = Firework(run_task, spec=SRC_spec_run, name=SRC_spec_run['wf_task_index'])
+#     # Check memory firework
+#     SRC_spec_check = copy.deepcopy(SRC_spec)
+#     SRC_spec_check = set_short_single_core_to_spec(SRC_spec_check)
+#     SRC_spec_check['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
+#     check_task = CheckTask(handlers=handlers, validators=validators)
+#     SRC_spec_check['_allow_fizzled_parents'] = True
+#     check_fw = Firework(check_task, spec=SRC_spec_check, name=SRC_spec_check['wf_task_index'])
+#     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
+#                   run_fw.fw_id: [check_fw.fw_id]}
+#     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
+#             'fws': [setup_fw, run_fw, check_fw]}
 
 
 class SRCTaskIndex(MSONable):
@@ -590,28 +658,30 @@ class SRCTaskIndex(MSONable):
         return '_'.join(['run', self.__str__()])
 
     @property
-    def check_str(self):
-        return '_'.join(['check', self.__str__()])
+    def control_str(self):
+        return '_'.join(['control', self.__str__()])
 
     @classmethod
     def from_string(cls, SRC_task_index_string):
         sp = SRC_task_index_string.split('_')
-        if len(sp) not in [2, 3]:
-            raise ValueError('SRC_task_index_string should contain 1 or 2 underscores ("_") '
-                             'while it contains {:d}'.format(len(sp)-1))
+        # if len(sp) not in [2, 3]:
+        #     raise ValueError('SRC_task_index_string should contain 1 or 2 underscores ("_") '
+        #                      'while it contains {:d}'.format(len(sp)-1))
+        if len(sp) == 1:
+            return cls(task_type=sp[0])
         if any([len(part) == 0 for part in sp]):
             raise ValueError('SRC_task_index_string has an empty part when separated by underscores ...')
         if len(sp) == 2:
             return cls(task_type=sp[0], index=sp[1])
         elif len(sp) == 3:
-            if sp[0] not in ['setup', 'run', 'check']:
-                raise ValueError('SRC_task_index_string should start with "setup", "run" or "check" when 3 parts are '
+            if sp[0] not in ['setup', 'run', 'control']:
+                raise ValueError('SRC_task_index_string should start with "setup", "run" or "control" when 3 parts are '
                                  'identified')
             return cls(task_type=sp[1], index=sp[2])
 
     @classmethod
     def from_any(cls, SRC_task_index):
-        if isinstance(SRC_task_index, str):
+        if isinstance(SRC_task_index, (str, unicode)):
             return cls.from_string(SRC_task_index)
         elif isinstance(SRC_task_index, SRCTaskIndex):
             return cls(task_type=SRC_task_index.task_type, index=SRC_task_index.index)
@@ -634,49 +704,6 @@ class SRCTaskIndex(MSONable):
                 'index': self.index}
 
 
-# def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf_task_index_prefix, current_task_index=1,
-#                        handlers=None, validators=None,
-#                        deps=None, task_type=None, queue_adapter_update=None):
-#     SRC_spec = copy.deepcopy(SRC_spec)
-#     SRC_spec['initialization_info'] = initialization_info
-#     SRC_spec['_add_launchpad_and_fw_id'] = True
-#     SRC_spec['SRCScheme'] = True
-#     prefix_allowed_chars = ['-']
-#     prefix_test_string = str(wf_task_index_prefix)
-#     for allowed_char in prefix_allowed_chars:
-#         prefix_test_string = prefix_test_string.replace(allowed_char, "")
-#     if not prefix_test_string.isalnum():
-#         raise ValueError('wf_task_index_prefix should only contain letters '
-#                          'and the following characters : {}'.format(prefix_test_string))
-#     SRC_spec['wf_task_index_prefix'] = wf_task_index_prefix
-#
-#     # Remove any initial queue_adapter_update from the spec
-#     SRC_spec.pop('queue_adapter_update', None)
-#     if queue_adapter_update is not None:
-#         SRC_spec['queue_adapter_update'] = queue_adapter_update
-#
-#     # Setup (Autoparal) run
-#     SRC_spec_setup = copy.deepcopy(SRC_spec)
-#     SRC_spec_setup = set_short_single_core_to_spec(SRC_spec_setup)
-#     SRC_spec_setup['wf_task_index'] = '_'.join(['setup', wf_task_index_prefix, str(current_task_index)])
-#     setup_task = task_class(task_input, is_autoparal=True, use_SRC_scheme=True, deps=deps, task_type=task_type)
-#     setup_fw = Firework(setup_task, spec=SRC_spec_setup, name=SRC_spec_setup['wf_task_index'])
-#     # Actual run of simulation
-#     SRC_spec_run = copy.deepcopy(SRC_spec)
-#     SRC_spec_run['wf_task_index'] = '_'.join(['run', wf_task_index_prefix, str(current_task_index)])
-#     run_task = task_class(task_input, is_autoparal=False, use_SRC_scheme=True, deps=deps, task_type=task_type)
-#     run_fw = Firework(run_task, spec=SRC_spec_run, name=SRC_spec_run['wf_task_index'])
-#     # Check memory firework
-#     SRC_spec_check = copy.deepcopy(SRC_spec)
-#     SRC_spec_check = set_short_single_core_to_spec(SRC_spec_check)
-#     SRC_spec_check['wf_task_index'] = '_'.join(['check', wf_task_index_prefix, str(current_task_index)])
-#     check_task = CheckTask(handlers=handlers, validators=validators)
-#     SRC_spec_check['_allow_fizzled_parents'] = True
-#     check_fw = Firework(check_task, spec=SRC_spec_check, name=SRC_spec_check['wf_task_index'])
-#     links_dict = {setup_fw.fw_id: [run_fw.fw_id],
-#                   run_fw.fw_id: [check_fw.fw_id]}
-#     return {'setup_fw': setup_fw, 'run_fw': run_fw, 'check_fw': check_fw, 'links_dict': links_dict,
-#             'fws': [setup_fw, run_fw, check_fw]}
 
 def get_queue_adapter_update(qtk_queueadapter, corrections, qa_params=None):
     if qa_params is None:
@@ -717,3 +744,251 @@ class RunError(SRCError):
 
 class ControlError(SRCError):
     pass
+
+
+# TODO: Remove the following when the new SRC is working ...
+#
+# class CheckTask(SRCTaskMixin, FireTaskBase):
+#
+#     src_type = 'check'
+#
+#     def __init__(self, handlers=None, validators=None, max_restarts=10):
+#         self.set_handlers(handlers=handlers)
+#         self.set_validators(validators=validators)
+#
+#         self.max_restarts = max_restarts
+#
+#     def set_handlers(self, handlers):
+#         if handlers is None:
+#             self.handlers = []
+#         elif issubclass(handlers, SRCErrorHandler):
+#             self.handlers = [handlers]
+#         elif isinstance(handlers, (list, tuple)):
+#             self.handlers = []
+#             for handler in handlers:
+#                 if not issubclass(handler, SRCErrorHandler):
+#                     raise TypeError('One of items in "handlers" does not derive from '
+#                                     'SRCErrorHandler')
+#                 self.handlers.append(handler)
+#         else:
+#             raise TypeError('The handlers argument is neither None, nor a SRCErrorHandler, '
+#                             'nor a list/tuple')
+#         # Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)
+#         # and sort handlers by their priority
+#         if self.handlers is not None:
+#             h_priorities = [h.handler_priority for h in self.handlers]
+#             nhfirst = h_priorities.count(SRCErrorHandler.PRIORITY_FIRST)
+#             nhlast = h_priorities.count(SRCErrorHandler.PRIORITY_LAST)
+#             if nhfirst > 1 or nhlast > 1:
+#                 raise ValueError('More than one first or last handler :\n'
+#                                  ' - nfirst : {:d}\n - nlast : {:d}'.format(nhfirst,
+#                                                                             nhlast))
+#             self.handlers = sorted([h for h in self.handlers if h.allow_completed],
+#                                          key=lambda x: x.handler_priority)
+#
+#     def set_validators(self, validators):
+#         if validators is None:
+#             self.validators = []
+#         elif issubclass(validators, SRCValidator):
+#             self.validators = [validators]
+#         elif isinstance(validators, (list, tuple)):
+#             self.validators = []
+#             for validator in validators:
+#                 if not issubclass(validators, SRCValidator):
+#                     raise TypeError('One of items in "validators" does not derive from '
+#                                     'SRCValidator')
+#                 self.validators.append(validator)
+#         else:
+#             raise TypeError('The validators argument is neither None, nor a SRCValidator, '
+#                             'nor a list/tuple')
+#         # Check that there is only one FIRST and one LAST validator (PRIORITY_FIRST and PRIORITY_LAST)
+#         # and sort validators by their priority
+#         if self.validators is not None:
+#             v_priorities = [v.validator_priority for v in self.validators]
+#             nvfirst = v_priorities.count(SRCValidator.PRIORITY_FIRST)
+#             nvlast = v_priorities.count(SRCValidator.PRIORITY_LAST)
+#             if nvfirst > 1 or nvlast > 1:
+#                 raise ValueError('More than one first or last validator :\n'
+#                                  ' - nfirst : {:d}\n - nlast : {:d}'.format(nvfirst,
+#                                                                             nvlast))
+#             self.validators = sorted([v for v in self.validators],
+#                                          key=lambda x: x.validator_priority)
+#
+#     def run_task(self, fw_spec):
+#         # Get the setup and run fireworks
+#         setup_and_run_fws = self.get_setup_and_run_fw(fw_spec=fw_spec)
+#         setup_fw = setup_and_run_fws['setup_fw']
+#         run_fw = setup_and_run_fws['run_fw']
+#         # Get the handlers
+#         handlers = self.get_handlers(run_fw=run_fw)
+#
+#         # Check/detect errors and get the corrections
+#         corrections = self.get_corrections(fw_spec=fw_spec, run_fw=run_fw, handlers=handlers)
+#
+#         # In case of a fizzled parent, at least one correction is needed !
+#         if run_fw.state == 'FIZZLED' and len(corrections) == 0:
+#             # TODO: should we do something else here ? like return a FWAction with defuse_childrens = True ??
+#             raise RuntimeError('No corrections found for fizzled firework ...')
+#
+#         # If some errors were found, apply the corrections and return the FWAction
+#         if len(corrections) > 0:
+#             fw_action = self.apply_corrections(setup_fw=setup_fw, run_fw=run_fw, corrections=corrections)
+#             return fw_action
+#
+#         # Validate the results if no error was found
+#         self.validate()
+#
+#         # If everything is ok, update the spec of the children
+#         stored_data = {}
+#         update_spec = {}
+#         mod_spec = []
+#         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
+#         # next SRC group
+#         for task_type, task_info in fw_spec['previous_fws'].items():
+#             mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+#         return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
+#
+#     def get_setup_and_run_fw(self, fw_spec):
+#         # Get previous job information
+#         previous_job_info = fw_spec['_job_info']
+#         run_fw_id = previous_job_info['fw_id']
+#         # Get the launchpad
+#         if '_add_launchpad_and_fw_id' in fw_spec:
+#             lp = self.launchpad
+#             check_fw_id = self.fw_id
+#         else:
+#             try:
+#                 fw_dict = loadfn('FW.json')
+#             except IOError:
+#                 try:
+#                     fw_dict = loadfn('FW.yaml')
+#                 except IOError:
+#                     raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+#                                        "impossible to determine fw_id")
+#             lp = LaunchPad.auto_load()
+#             check_fw_id = fw_dict['fw_id']
+#         # Check that this CheckTask has only one parent firework
+#         this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(check_fw_id)
+#         parents_fw_ids = this_lzy_wf.links.parent_links[check_fw_id]
+#         if len(parents_fw_ids) != 1:
+#             raise ValueError('CheckTask\'s Firework should have exactly one parent firework')
+#         # Get the Run Firework and its state
+#         run_fw = lp.get_fw_by_id(fw_id=run_fw_id)
+#         run_is_fizzled = '_fizzled_parents' in fw_spec
+#         if run_is_fizzled and not run_fw.state == 'FIZZLED':
+#             raise ValueError('CheckTask has "_fizzled_parents" key but parent Run firework is not fizzled ...')
+#         run_is_completed = run_fw.state == 'COMPLETED'
+#         if run_is_completed and run_is_fizzled:
+#             raise ValueError('Run firework is FIZZLED and COMPLETED ...')
+#         if (not run_is_completed) and (not run_is_fizzled):
+#             raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
+#         # Get the Setup Firework
+#         setup_job_info = run_fw.spec['_job_info']
+#         setup_fw_id = setup_job_info['fw_id']
+#         setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
+#         return {'setup_fw': setup_fw, 'run_fw': run_fw}
+#
+#     def get_handlers(self, run_fw):
+#         if run_fw.state == 'FIZZLED':
+#             handlers = [h for h in self.handlers if h.allow_fizzled]
+#         elif run_fw.state == 'COMPLETED':
+#             handlers = [h for h in self.handlers if h.allow_completed]
+#         else:
+#             raise ValueError('Run firework is neither FIZZLED nor COMPLETED ...')
+#         return handlers
+#
+#     def get_corrections(self, fw_spec, run_fw, handlers):
+#         #TODO: we should add here something about the corrections that have already been applied and that cannot
+#         #      be applied anymore ...
+#         corrections = []
+#         for handler in handlers:
+#             # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
+#             handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
+#             if handler.check():
+#                 corrections.append(handler.correct())
+#                 if handler.skip_remaining_handlers:
+#                     break
+#         return corrections
+#
+#     # def get_corrections(self, fw_spec, run_fw, handlers):
+#     #     #TODO: we should add here something about the corrections that have already been applied and that cannot
+#     #     #      be applied anymore ...
+#     #     corrections = []
+#     #     for handler in handlers:
+#     #         # Set needed data for the handlers (the spec of this check task/fw and the fw that has to be checked)
+#     #         handler.src_setup(fw_spec=fw_spec, fw_to_check=run_fw)
+#     #         if handler.check():
+#     #             # TODO: add something whether we have a possible correction here or not ? has_correction() in handler ?
+#     #             if handler.has_correction():
+#     #                 corrections.append(handler.correct())
+#     #                 if handler.skip_remaining_handlers:
+#     #                     break
+#     #             else:
+#     #                 if handler.correction_is_required():
+#     #                     raise ValueError('No correction found for error while correction is required ...')
+#     #     return corrections
+#
+#     def validate(self):
+#         validators = self.validators if self.validators is not None else []
+#         for validator in validators:
+#             if not validator.check():
+#                 raise RuntimeError('Validator invalidate results ...')
+#
+#     def apply_corrections(self, setup_fw, run_fw, corrections):
+#         spec = copy.deepcopy(run_fw.spec)
+#         modder = Modder()
+#         for correction in corrections:
+#             actions = correction['actions']
+#             for action in actions:
+#                 if action['action_type'] == 'modify_object':
+#                     if action['object']['source'] == 'fw_spec':
+#                         myobject = spec[action['object']['key']]
+#                     else:
+#                         raise NotImplementedError('Object source "{}" not implemented in '
+#                                                   'CheckTask'.format(action['object']['source']))
+#                     newobj = modder.modify_object(action['action'], myobject)
+#                     spec[action['object']['key']] = newobj
+#                 elif action['action_type'] == 'modify_dict':
+#                     if action['dict']['source'] == 'fw_spec':
+#                         mydict = spec[action['dict']['key']]
+#                     else:
+#                         raise NotImplementedError('Dict source "{}" not implemented in '
+#                                                   'CheckTask'.format(action['dict']['source']))
+#                     modder.modify(action['action'], mydict)
+#                 else:
+#                     raise NotImplementedError('Action type "{}" not implemented in '
+#                                               'CheckTask'.format(action['action_type']))
+#         # Keep track of the corrections that have been applied
+#         if 'SRC_check_corrections' in spec:
+#             spec['SRC_check_corrections'].extend(corrections)
+#         else:
+#             spec['SRC_check_corrections'] = corrections
+#
+#         # Update the task index
+#         task_index = SRCTaskIndex.from_any(spec['SRC_task_index'])
+#         task_index.increase_index()
+#
+#         #TODO: in the future, see whether the FW queueadapter might be replaced by the qtk_queueadapter ?
+#         #      ... to be discussed with Anubhav, when the qtk queueadapter is in a qtk toolkit and not anymore
+#         #          in pymatgen/io/abinit
+#         #      in that case, this part will not be needed anymore ...
+#         spec['_queueadapter'] = spec['qtk_queueadapter'].get_subs_dict()
+#         #TODO: why do we need this again ??
+#         queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=spec['qtk_queueadapter'],
+#                                                         corrections=corrections)
+#
+#         run_task = run_fw.tasks[0]
+#         initialization_info = run_task.spec['initialization_info']
+#         deps = run_task.deps
+#         setup_task = setup_fw.tasks[0]
+#
+#         check_task = self
+#
+#         # Create the new Setup/Run/Check fireworks
+#         #TODO: do we need initialization info here ?
+#         #      do we need deps here ?
+#         SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, check_task=check_task,
+#                                      spec=spec, initialization_info=initialization_info,
+#                                      task_index=task_index, deps=deps)
+#         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
+#         return FWAction(detours=[wf])

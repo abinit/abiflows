@@ -9,6 +9,7 @@ import threading
 import subprocess
 from monty.json import MSONable
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask, SetupError
+from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
@@ -22,6 +23,9 @@ from pymatgen.io.abinit.qutils import time2slurm
 from abipy.abio.factories import InputFactory
 from abipy.abio.inputs import AbinitInput
 
+RESET_RESTART = ControllerNote.RESET_RESTART
+SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
+RESTART_FROM_SCRATCH = ControllerNote.RESTART_FROM_SCRATCH
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +74,10 @@ class AbinitSRCMixin(object):
 @explicit_serialize
 class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 
+    RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
+
     def __init__(self, abiinput, deps=None, task_helper=None, restart_info=None):
+        SetupTask.__init__(self, restart_info=restart_info)
         self.abiinput = abiinput
 
         # deps are transformed to be a list or a dict of lists
@@ -84,28 +91,30 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         self.deps = deps
 
         self.task_helper = task_helper
-        self.task_helper.set_task = self
-        self.restart_info = restart_info
+        self.task_helper.set_task(self)
 
     def run_task(self, fw_spec):
         #TODO create a initialize_setup abstract function in SetupTask and put it there? or move somewhere else?
         #setup the FWTaskManager
         self.ftm = self.get_fw_task_manager(fw_spec)
-        return super(AbinitSetupTask, self).__init__(fw_spec)
+        if 'previous_src' in fw_spec:
+            self.prev_outdir = Directory(os.path.join(fw_spec['previous_src']['src_directories']['run_dir'],
+                                                      OUTDIR_NAME))
+        return super(AbinitSetupTask, self).run_task(fw_spec)
 
-    def setup_run_parameters(self, fw_spec):
+    def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
         optconf, qtk_qadapter = self.run_autoparal(self.abiinput, fw_spec)
 
-        if 'queue_adapter_update' in fw_spec:
-            for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
-                if qa_key == 'timelimit':
-                    qtk_qadapter.set_timelimit(qa_val)
-                elif qa_key == 'mem_per_proc':
-                    qtk_qadapter.set_mem_per_proc(qa_val)
-                elif qa_key == 'master_mem_overhead':
-                    qtk_qadapter.set_master_mem_overhead(qa_val)
-                else:
-                    raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
+        # if 'queue_adapter_update' in fw_spec:
+        #     for qa_key, qa_val in fw_spec['queue_adapter_update'].items():
+        #         if qa_key == 'timelimit':
+        #             qtk_qadapter.set_timelimit(qa_val)
+        #         elif qa_key == 'mem_per_proc':
+        #             qtk_qadapter.set_mem_per_proc(qa_val)
+        #         elif qa_key == 'master_mem_overhead':
+        #             qtk_qadapter.set_master_mem_overhead(qa_val)
+        #         else:
+        #             raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
 
         return {'_queueadapter': qtk_qadapter.get_subs_dict(), 'qtk_queueadapter': qtk_qadapter}
 
@@ -447,6 +456,11 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 @explicit_serialize
 class AbinitRunTask(AbinitSRCMixin, RunTask):
 
+
+    def __init__(self, control_procedure, task_helper):
+        RunTask.__init__(self, control_procedure=control_procedure)
+        self.task_helper = task_helper
+
     def config(self, fw_spec):
         self.ftm = self.get_fw_task_manager(fw_spec)
         self.setup_rundir(self.run_dir, create_dirs=False)
@@ -485,8 +499,28 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
 
 
 @explicit_serialize
-class AbinitCheckTask(AbinitSRCMixin, ControlTask):
-    pass
+class AbinitControlTask(AbinitSRCMixin, ControlTask):
+
+    def __init__(self, control_procedure, manager=None, max_restarts=10, task_helper=None):
+        ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts)
+        self.task_helper = task_helper
+
+    def get_initial_objects_info(self):
+        return {'abinit_input': {'object': self.setup_fw.tasks[-1].abiinput,
+                                 'updates': [{'target': 'setup_task',
+                                              'attribute': 'abiinput'}]},
+                'abinit_output_filepath': {'object': os.path.join(self.run_dir, OUTPUT_FILE_NAME)},
+                'abinit_log_filepath': {'object': os.path.join(self.run_dir, LOG_FILE_NAME)},
+                'abinit_mpi_abort_filepath': {'object': os.path.join(self.run_dir, MPIABORTFILE)},
+                'abinit_outdir_path': {'object': os.path.join(self.run_dir, OUTDIR_NAME)}}
+
+            # initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
+            #                                            'updates': [{'target': 'fw_spec',
+            #                                                         'key': 'qtk_queueadapter'},
+            #                                                        {'target': 'fw_spec',
+            #                                                         'key': '_queueadapter',
+            #                                                         'mod': 'get_subs_dict'}]},
+
 
 ####################
 # Helpers
@@ -571,7 +605,7 @@ class ScfTaskHelper(GsTaskHelper):
     def restart(self, restart_info):
         """SCF calculations can be restarted if we have either the WFK file or the DEN file."""
         # Prefer WFK over DEN files since we can reuse the wavefunctions.
-        if restart_info.reset:
+        if restart_info == RESET_RESTART:
             # remove non reset keys that may have been added in a previous restart
             self.task.remove_restart_vars(["WFK", "DEN"])
         else:

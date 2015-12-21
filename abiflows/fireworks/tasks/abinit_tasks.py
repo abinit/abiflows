@@ -43,7 +43,7 @@ from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, IND
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.utils.task_history import TaskHistory
-from abiflows.fireworks.tasks.utility_tasks import createSRCFireworks
+from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld
 
 logger = logging.getLogger(__name__)
 
@@ -636,13 +636,13 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
             new_index = fw_task_index + 1
             queue_adapter_update = get_queue_adapter_update(qtk_queueadapter=fw_spec['qtk_queueadapter'],
                                                             corrections=[])
-            SRC_fws = createSRCFireworks(task_class=self.__class__, task_input=self.abiinput, SRC_spec=new_spec,
-                                         initialization_info=fw_spec['initialization_info'],
-                                         wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
-                                         current_task_index=new_index,
-                                         handlers=check_task.handlers, validators=check_task.validators,
-                                         deps=self.deps, task_type=self.task_type,
-                                         queue_adapter_update=queue_adapter_update)
+            SRC_fws = createSRCFireworksOld(task_class=self.__class__, task_input=self.abiinput, SRC_spec=new_spec,
+                                            initialization_info=fw_spec['initialization_info'],
+                                            wf_task_index_prefix=fw_spec['wf_task_index_prefix'],
+                                            current_task_index=new_index,
+                                            handlers=check_task.handlers, validators=check_task.validators,
+                                            deps=self.deps, task_type=self.task_type,
+                                            queue_adapter_update=queue_adapter_update)
             wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
             return FWAction(detours=[wf])
 
@@ -2072,13 +2072,13 @@ class GeneratePiezoElasticFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         rf_strain_handlers = self.handlers['_all'] if self.handlers is not None else []
         rf_strain_validators = self.validators['_all'] if self.validators is not None else []
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
-            SRC_rf_fws = createSRCFireworks(task_class=StrainPertTask, task_input=rf_strain_input, SRC_spec=new_spec,
-                                            initialization_info=initialization_info,
-                                            wf_task_index_prefix='rfstrains-pert-{:d}'.format(istrain_pert+1),
-                                            handlers=rf_strain_handlers, validators=rf_strain_validators,
-                                            deps={self.previous_scf_task_type: 'WFK',
+            SRC_rf_fws = createSRCFireworksOld(task_class=StrainPertTask, task_input=rf_strain_input, SRC_spec=new_spec,
+                                               initialization_info=initialization_info,
+                                               wf_task_index_prefix='rfstrains-pert-{:d}'.format(istrain_pert+1),
+                                               handlers=rf_strain_handlers, validators=rf_strain_validators,
+                                               deps={self.previous_scf_task_type: 'WFK',
                                                   self.previous_ddk_task_type: 'DDK'},
-                                            queue_adapter_update=queue_adapter_update)
+                                               queue_adapter_update=queue_adapter_update)
             all_SRC_rf_fws.append(SRC_rf_fws)
             total_list_fws.extend(SRC_rf_fws['fws'])
             links_dict_update(links_dict=fws_deps, links_update=SRC_rf_fws['links_dict'])
