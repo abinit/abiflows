@@ -418,20 +418,28 @@ class ControllerNote(MSONable):
     @classmethod
     def from_dict(cls, d):
         dec = MontyDecoder()
-        return cls(controller=dec.process_decoded(d['controller']),
-                   state=d['state'], problems=d['problems'],
-                   actions=dec.process_decoded(d['actions']),
-                   restart=d['restart'], is_valid=d['is_valid'])
+        if 'is_valid' in d:
+            return cls(controller=dec.process_decoded(d['controller']),
+                       state=d['state'], problems=d['problems'],
+                       actions=dec.process_decoded(d['actions']),
+                       restart=d['restart'], is_valid=d['is_valid'])
+        else:
+            return cls(controller=dec.process_decoded(d['controller']),
+                       state=d['state'], problems=d['problems'],
+                       actions=dec.process_decoded(d['actions']),
+                       restart=d['restart'])
 
     def as_dict(self):
-        return {'@class': self.__class__.__name__,
-                '@module': self.__class__.__module__,
-                'controller': self.controller.as_dict(),
-                'state': self.state,
-                'problems': self.problems,
-                'actions': {key: action.as_dict() for key, action in self.actions.items()},
-                'restart': self.restart,
-                'is_valid': self.is_valid}
+        dd = {'@class': self.__class__.__name__,
+              '@module': self.__class__.__module__,
+              'controller': self.controller.as_dict(),
+              'state': self.state,
+              'problems': self.problems,
+              'actions': {key: action.as_dict() for key, action in self.actions.items()},
+              'restart': self.restart}
+        if self.controller.can_validate:
+            dd['is_valid'] = self.is_valid
+        return dd
 
 
 class ControlReport(MSONable):
