@@ -203,8 +203,8 @@ class AbinitController(Controller):
 
     def as_dict(self):
         return {'@class': self.__class__.__name__, '@module': self.__class__.__module__,
-                'critical_events': [ce.as_dict for ce in self.critical_events],
-                'handlers': [er.as_dict for er in self.handlers]
+                'critical_events': [ce.as_dict() for ce in self.critical_events],
+                'handlers': [er.as_dict() for er in self.handlers]
                 }
 
     def get_event_report(self, ofile, mpiabort_file):
