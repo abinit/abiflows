@@ -380,6 +380,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         control_task = self
 
         modified_objects = {}
+        setup_spec_update = {}
+        run_spec_update = {}
         for target, action in control_report.actions.items():
             target_object = initial_objects[target]
             action.apply(target_object)
@@ -394,6 +396,18 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                         new_spec[update['key']] = mod
                     else:
                         new_spec[update['key']] = target_object
+                elif update['target'] == 'setup_fw_spec':
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        setup_spec_update[update['key']] = mod
+                    else:
+                        setup_spec_update[update['key']] = target_object
+                elif update['target'] == 'run_fw_spec':
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        run_spec_update[update['key']] = mod
+                    else:
+                        run_spec_update[update['key']] = target_object
                 elif update['target'] in ['setup_task', 'run_task']:
                     task = setup_task if update['target'] == 'setup_task' else run_task
                     attr = getattr(task, update['attribute'])
@@ -422,7 +436,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # Create the new SRC trio
         # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
         new_SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task,
-                                         spec=new_spec, initialization_info=None, task_index=task_index, deps=None)
+                                         spec=new_spec, initialization_info=None, task_index=task_index, deps=None,
+                                         run_spec_update=run_spec_update, setup_spec_update=setup_spec_update)
         wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
         return FWAction(detours=[wf])
 
@@ -491,7 +506,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
 
 def createSRCFireworks(setup_task, run_task, control_task, spec=None, initialization_info=None,
-                       task_index=None, deps=None):
+                       task_index=None, deps=None, setup_spec_update=None, run_spec_update=None):
     # Make a full copy of the spec
     if spec is None:
         spec = {}
@@ -514,6 +529,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     setup_spec = set_short_single_core_to_spec(setup_spec)
     setup_spec['_preserve_fworker'] = True
     setup_spec['_pass_job_info'] = True
+    setup_spec.update({} if setup_spec_update is None else setup_spec_update)
     setup_fw = Firework(setup_task, spec=setup_spec, name=src_task_index.setup_str)
 
     # RunTask
@@ -523,6 +539,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     # infringement, ...), then the fworker is not passed to the controller ... We should set that directly at the setup
     run_spec['_preserve_fworker'] = True
     run_spec['_pass_job_info'] = True
+    run_spec.update({} if run_spec_update is None else run_spec_update)
     run_fw = Firework(run_task, spec=run_spec, name=src_task_index.run_str)
 
     # ControlTask
