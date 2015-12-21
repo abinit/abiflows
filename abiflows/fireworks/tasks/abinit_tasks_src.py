@@ -98,7 +98,8 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         #setup the FWTaskManager
         self.ftm = self.get_fw_task_manager(fw_spec)
         if 'previous_src' in fw_spec:
-            self.prev_outdir = Directory(fw_spec['previous_src']['src_directories']['run_dir'])
+            self.prev_outdir = Directory(os.path.join(fw_spec['previous_src']['src_directories']['run_dir'],
+                                                      OUTDIR_NAME))
         return super(AbinitSetupTask, self).run_task(fw_spec)
 
     def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
