@@ -499,7 +499,7 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
         self.task_helper = task_helper
 
     def get_initial_objects(self):
-        return {'abinit_input': self.setup_fw.tasks[-1].abinit_input,
+        return {'abinit_input': self.setup_fw.tasks[-1].abiinput,
                 'abinit_output_filepath': os.path.join(self.run_dir, OUTPUT_FILE_NAME),
                 'abinit_log_filepath': os.path.join(self.run_dir, LOG_FILE_NAME),
                 'abinit_mpi_abort_filepath': os.path.join(self.run_dir, MPIABORTFILE),
