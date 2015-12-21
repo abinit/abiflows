@@ -306,7 +306,7 @@ class AbinitController(Controller):
 
     @classmethod
     def from_helper(cls, helper):
-        raise NotImplementedError()
+        return cls(critical_events=helper.CRITICAL_EVENTS, handlers=None)
 
 
 class QueueControllerMixin(object):
