@@ -515,6 +515,14 @@ class ControlReport(MSONable):
                 actions[target] = action
         return actions
 
+    @property
+    def restart_info(self):
+        if any([cn.restart == ControllerNote.RESTART_FROM_SCRATCH for cn in self.controller_notes]):
+            return ControllerNote.RESTART_FROM_SCRATCH
+        if any([cn.restart == ControllerNote.RESET_RESTART for cn in self.controller_notes]):
+            return ControllerNote.RESET_RESTART
+        return ControllerNote.SIMPLE_RESTART
+
     @classmethod
     def from_dict(cls, d):
         return cls(controller_notes=[ControllerNote.from_dict(cndict) for cndict in d['controller_notes']])
@@ -537,15 +545,21 @@ class Action(MSONable):
     def apply(self, object):
         self.callable(object, **self.kwargs)
 
-    # TODO: improve from_dict and as_dict of action !
     @classmethod
     def from_dict(cls, d):
-        return cls(callable=d['callable'])
+        import importlib
+        mod = importlib.import_module(d['callable']['module'])
+        class_ = getattr(mod, d['callable']['class'])
+        callable = getattr(class_, d['callable']['func_name'])
+        return cls(callable=callable)
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
                 '@module': self.__class__.__module__,
-                'callable': '{}'.format(self.callable.im_func.func_name)}
+                'callable': {'module': self.callable.im_class.__module__,
+                             'class': self.callable.im_class.__name__,
+                             'func_name': self.callable.im_func.func_name}
+                }
 
     @classmethod
     def from_string(cls, callable_string, **kwargs):

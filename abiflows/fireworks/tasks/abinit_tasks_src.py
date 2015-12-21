@@ -73,6 +73,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
     RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
 
     def __init__(self, abiinput, deps=None, task_helper=None, restart_info=None):
+        SetupTask.__init__(self, restart_info=restart_info)
         self.abiinput = abiinput
 
         # deps are transformed to be a list or a dict of lists
@@ -87,6 +88,8 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 
         self.task_helper = task_helper
         self.task_helper.set_task = self
+
+    def set_restart_info(self, restart_info=None):
         self.restart_info = restart_info
 
     def run_task(self, fw_spec):
@@ -498,12 +501,21 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
         ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts)
         self.task_helper = task_helper
 
-    def get_initial_objects(self):
-        return {'abinit_input': self.setup_fw.tasks[-1].abiinput,
-                'abinit_output_filepath': os.path.join(self.run_dir, OUTPUT_FILE_NAME),
-                'abinit_log_filepath': os.path.join(self.run_dir, LOG_FILE_NAME),
-                'abinit_mpi_abort_filepath': os.path.join(self.run_dir, MPIABORTFILE),
-                'abinit_outdir_path': os.path.join(self.run_dir, OUTDIR_NAME)}
+    def get_initial_objects_info(self):
+        return {'abinit_input': {'object': self.setup_fw.tasks[-1].abiinput,
+                                 'updates': [{'target': 'setup_task',
+                                              'attribute': 'abiinput'}]},
+                'abinit_output_filepath': {'object': os.path.join(self.run_dir, OUTPUT_FILE_NAME)},
+                'abinit_log_filepath': {'object': os.path.join(self.run_dir, LOG_FILE_NAME)},
+                'abinit_mpi_abort_filepath': {'object': os.path.join(self.run_dir, MPIABORTFILE)},
+                'abinit_outdir_path': {'object': os.path.join(self.run_dir, OUTDIR_NAME)}}
+
+            # initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
+            #                                            'updates': [{'target': 'fw_spec',
+            #                                                         'key': 'qtk_queueadapter'},
+            #                                                        {'target': 'fw_spec',
+            #                                                         'key': '_queueadapter',
+            #                                                         'mod': 'get_subs_dict'}]},
 
 
 ####################

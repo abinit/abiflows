@@ -18,12 +18,13 @@ from monty.json import MSONable
 from monty.serialization import loadfn
 from monty.subprocess import Command
 
-# from abiflows.fireworks.utils.custodian_utils import MonitoringSRCErrorHandler
-# from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
-# from abiflows.fireworks.utils.custodian_utils import SRCValidator
 from abiflows.core.mastermind_abc import ControlProcedure, ControlledItemType
+from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get_short_single_core_spec
 
+RESTART_FROM_SCRATCH = ControllerNote.RESTART_FROM_SCRATCH
+RESET_RESTART = ControllerNote.RESET_RESTART
+SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
 
 class SRCTaskMixin(object):
 
@@ -89,8 +90,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
 
     RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus', 'qtk_queueadapter']
 
-    def __init__(self):
-        pass
+    def __init__(self, restart_info=None):
+        self.restart_info = restart_info
 
     def run_task(self, fw_spec):
         # Set up and create the directory tree of the Setup/Run/Control trio,
@@ -311,12 +312,23 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         #TODO: how to do that kind of automatically ??
         # each key should have : how to get it from the run_fw/(setup_fw)
         #                        how to force/apply it to the next SRC (e.g. how do we say to setup that)
-        initial_objects = self.get_initial_objects()
+        # Actually, the object, can come from : the setup_fw or from the run_fw (from the setup_spec, from the run_spec,
+        # from the setup_task or the run_task (or in general one of the tasks ...
+        # even multiple tasks is not yet supported ... should it be ? or should we stay with only one task allways ?)
+        # If it is modified, it should update the corresponding bit (setup_spec and/or run_spec and/or
+        # setup_task and/or run_task)
+        initial_objects_info = self.get_initial_objects_info()
         qerr_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qerr')
         qout_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qout')
-        initial_objects.update({'queue_adapter': self.run_fw.spec['qtk_queueadapter'],
-                           'qerr_filepath': qerr_filepath,
-                           'qout_filepath': qout_filepath})
+        initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
+                                                       'updates': [{'target': 'fw_spec',
+                                                                    'key': 'qtk_queueadapter'},
+                                                                   {'target': 'fw_spec',
+                                                                    'key': '_queueadapter',
+                                                                    'mod': 'get_subs_dict'}]},
+                                     'qerr_filepath': {'object': qerr_filepath},
+                                     'qout_filepath': {'object': qout_filepath}})
+        initial_objects = {name: obj_info['object'] for name, obj_info in initial_objects_info.items()}
         control_report = self.control_procedure.process(**initial_objects)
 
         if control_report.unrecoverable:
@@ -343,33 +355,68 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         task_index.increase_index()
 
         # Apply the actions on the objects to get the modified objects (to be passed to SetupTask)
+        # modified_objects = {}
+        # for target, action in control_report.actions.items():
+        #     # Special case right now for the queue adapter ...
+        #     if target == 'queue_adapter':
+        #         qtk_qadapter = initial_objects[target]
+        #         action.apply(qtk_qadapter)
+        #         modified_objects['qtk_queueadapter'] = qtk_qadapter
+        #         modified_objects['_queueadapter'] = qtk_qadapter.get_subs_dict()
+        #     else:
+        #         modified_objects[target] = action.apply(initial_objects[target])
+
+        # New spec
+        new_spec = copy.deepcopy(self.run_fw.spec)
+
+        # New tasks
+        setup_task = self.setup_fw.tasks[-1]
+        run_task = self.run_fw.tasks[-1]
+        control_task = self
+
         modified_objects = {}
         for target, action in control_report.actions.items():
-            # Special case right now for the queue adapter ...
-            if target == 'queue_adapter':
-                qtk_qadapter = initial_objects[target]
-                action.apply(qtk_qadapter)
-                modified_objects['qtk_queueadapter'] = qtk_qadapter
-                modified_objects['_queueadapter'] = qtk_qadapter.get_subs_dict()
-            else:
-                modified_objects[target] = action.apply(initial_objects[target])
+            target_object = initial_objects[target]
+            action.apply(target_object)
+            if target not in initial_objects_info:
+                raise ValueError('Object "{}" to be modified was not in the initial_objects'.format(target))
+            if 'updates' not in initial_objects_info[target]:
+                raise ValueError('Update information not present for object "{}"'.format(target))
+            for update in initial_objects_info[target]['updates']:
+                if update['target'] == 'fw_spec':
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        new_spec[update['key']] = mod
+                    else:
+                        new_spec[update['key']] = target_object
+                elif update['target'] in ['setup_task', 'run_task']:
+                    task = setup_task if update['target'] == 'setup_task' else run_task
+                    attr = getattr(task, update['attribute'])
+                    if 'mod' in update:
+                        mod = getattr(target_object, update['mod'])()
+                        attr = mod
+                    else:
+                        attr = target_object
+                else:
+                    raise ValueError('Only changes to fw_spec, setup_task and run_task are allowed right now ...')
+
+        # Set the restart_info
+        setup_task.set_restart_info(control_report.restart_info)
 
         # Pass the modified objects to the next SetupTask
-        new_spec = copy.deepcopy(self.run_fw.spec)
         new_spec['src_modified_objects'] = modified_objects
         new_spec.pop('_launch_dir')
         new_spec.pop('src_directories')
         new_spec['previous_src'] = {'src_directories': self.src_directories}
-        if '_queueadapter' in modified_objects:
-            new_spec['_queueadapter'] = modified_objects['_queueadapter']
+        # if '_queueadapter' in modified_objects:
+        #     new_spec['_queueadapter'] = modified_objects['_queueadapter']
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
         # next SRC group
         if 'previous_fws' in fw_spec:
             new_spec['previous_fws'] = fw_spec['previous_fws']
         # Create the new SRC trio
         # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
-        new_SRC_fws = createSRCFireworks(setup_task=self.setup_fw.tasks[-1], run_task=self.run_fw.tasks[-1],
-                                         control_task=self,
+        new_SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task,
                                          spec=new_spec, initialization_info=None, task_index=task_index, deps=None)
         wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
         return FWAction(detours=[wf])
@@ -412,7 +459,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
         return {'setup_fw': setup_fw, 'run_fw': run_fw}
 
-    def get_initial_objects(self):
+    def get_initial_objects_info(self):
         return {}
 
     @classmethod
