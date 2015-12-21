@@ -33,9 +33,9 @@ SRC_TIMELIMIT_BUFFER = 120
 
 #TODO: make it possible to use "any" task and in particular, MergeDdbTask, AnaDdbTask, ...
 # within the SRC scheme (to be rationalized), as well as Task not related to abinit ...
-def createSRCFireworks(task_class, task_input, SRC_spec, initialization_info, wf_task_index_prefix, current_task_index=1,
-                       handlers=None, validators=None,
-                       deps=None, task_type=None, queue_adapter_update=None):
+def createSRCFireworksOld(task_class, task_input, SRC_spec, initialization_info, wf_task_index_prefix, current_task_index=1,
+                          handlers=None, validators=None,
+                          deps=None, task_type=None, queue_adapter_update=None):
     SRC_spec = copy.deepcopy(SRC_spec)
     SRC_spec['initialization_info'] = initialization_info
     SRC_spec['_add_launchpad_and_fw_id'] = True
@@ -522,13 +522,13 @@ class CheckTask(FireTaskBase):
         deps = mytask.deps
 
         # Create the new Setup/Run/Check fireworks
-        SRC_fws = createSRCFireworks(task_class=task_class, task_input=task_input, SRC_spec=spec,
-                                     initialization_info=initialization_info,
-                                     wf_task_index_prefix=spec['wf_task_index_prefix'],
-                                     current_task_index=new_index,
-                                     handlers=self.handlers, validators=self.validators,
-                                     deps=deps,
-                                     task_type=mytask.task_type, queue_adapter_update=queue_adapter_update)
+        SRC_fws = createSRCFireworksOld(task_class=task_class, task_input=task_input, SRC_spec=spec,
+                                        initialization_info=initialization_info,
+                                        wf_task_index_prefix=spec['wf_task_index_prefix'],
+                                        current_task_index=new_index,
+                                        handlers=self.handlers, validators=self.validators,
+                                        deps=deps,
+                                        task_type=mytask.task_type, queue_adapter_update=queue_adapter_update)
         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
         return FWAction(detours=[wf])
 

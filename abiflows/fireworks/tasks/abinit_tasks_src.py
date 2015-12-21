@@ -487,7 +487,7 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
 
 
 @explicit_serialize
-class AbinitCheckTask(AbinitSRCMixin, ControlTask):
+class AbinitControlTask(AbinitSRCMixin, ControlTask):
     pass
 
 ####################

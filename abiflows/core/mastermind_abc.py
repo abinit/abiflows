@@ -325,14 +325,8 @@ class ControllerNote(MSONable):
     # # State of a controlled task specifying that some error(s) was (were) detected by the controller and the controller
     # #  adviced some action to fix the error. Other controllers (if any) might still be applied.
     # ERROR_FIXCONTINUE = 'ERROR_FIXCONTINUE'
-    # State of a controlled task specifying that the iterations "required" by the (manager) controller are still
-    #  ongoing
-    LOOP_ONGOING = 'ITERATIONS_ONGOING'
-    # State of a controlled task specifying that the iterations "required" by the (manager) controller are completed
-    LOOP_COMPLETED = 'ITERATIONS_COMPLETED'
 
-    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_RECOVERABLE,
-              LOOP_ONGOING, LOOP_COMPLETED]
+    STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_RECOVERABLE]
 
     #TODO consider using increasing integers as values, so that we can take the lowest as a general value of the
     # restart

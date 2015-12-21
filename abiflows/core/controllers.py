@@ -38,6 +38,7 @@ class AbinitController(Controller):
 
     is_handler = True
     is_validator = True
+    _controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]
 
     def __init__(self, critical_events=None, handlers=None):
         """
@@ -74,7 +75,7 @@ class AbinitController(Controller):
 
         note = ControllerNote(controller=self)
         # Initialize the actions for everything that is passed to kwargs
-        actions = {key: None for key in kwargs}
+        actions = {}
 
         report = None
         try:
@@ -106,7 +107,7 @@ class AbinitController(Controller):
                     #                            history=self.history)
                     # Calculation did not converge. A simple restart is enough
                     note.state = ControllerNote.ERROR_RECOVERABLE
-                    note.restart = ControllerNote.SIMPLE_RESTART
+                    note.simple_restart()
                     note.add_problem('Unconverged: {}'.format(', '.join(e.name for e in critical_events_found)))
                 else:
                     # calculation converged
@@ -146,14 +147,15 @@ class AbinitController(Controller):
 
                 # ABINIT errors, try to handle them
                 fixed, reset, abiinput_actions = self.fix_abicritical(report=report, abiinput=abinit_input,
-                                                             queue_adapter=queue_adapter, outdir=abinit_outdir_path)
+                                                                      queue_adapter=queue_adapter,
+                                                                      outdir=abinit_outdir_path)
 
                 if fixed:
                     note.state = ControllerNote.ERROR_RECOVERABLE
                     if reset:
-                        note.restart(ControllerNote.RESET)
+                        note.reset_restart()
                     else:
-                        note.restart(ControllerNote.SIMPLE_RESTART)
+                        note.simple_restart()
 
                     actions['abinit_input'] = abiinput_actions
                     #TODO if the queue_adapter can be modified by the handlers return it
@@ -190,7 +192,7 @@ class AbinitController(Controller):
         # logger.error("return code {}".format(self.returncode))
         # raise AbinitRuntimeError(self, err_msg)
 
-        note.set_actions(actions)
+        note.actions = actions
         return note
 
     @classmethod
