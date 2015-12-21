@@ -394,8 +394,10 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                     if 'mod' in update:
                         mod = getattr(target_object, update['mod'])()
                         new_spec[update['key']] = mod
+                        modified_objects[update['key']] = mod
                     else:
                         new_spec[update['key']] = target_object
+                        modified_objects[update['key']] = mod
                 elif update['target'] == 'setup_fw_spec':
                     if 'mod' in update:
                         mod = getattr(target_object, update['mod'])()
@@ -535,8 +537,6 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     # RunTask
     run_spec = copy.deepcopy(spec)
     run_spec['SRC_task_index'] = src_task_index
-    #TODO: this is actually not ok ... if the run gets killed by an outsider (walltime reached, memory
-    # infringement, ...), then the fworker is not passed to the controller ... We should set that directly at the setup
     run_spec['_preserve_fworker'] = True
     run_spec['_pass_job_info'] = True
     run_spec.update({} if run_spec_update is None else run_spec_update)
