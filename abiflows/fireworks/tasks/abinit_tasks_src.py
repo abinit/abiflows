@@ -91,7 +91,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         self.deps = deps
 
         self.task_helper = task_helper
-        self.task_helper.set_task = self
+        self.task_helper.set_task(self)
 
     def run_task(self, fw_spec):
         #TODO create a initialize_setup abstract function in SetupTask and put it there? or move somewhere else?
