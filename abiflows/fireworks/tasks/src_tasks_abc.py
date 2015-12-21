@@ -607,7 +607,7 @@ class SRCTaskIndex(MSONable):
 
     @classmethod
     def from_any(cls, SRC_task_index):
-        if isinstance(SRC_task_index, str):
+        if isinstance(SRC_task_index, (str, unicode)):
             return cls.from_string(SRC_task_index)
         elif isinstance(SRC_task_index, SRCTaskIndex):
             return cls(task_type=SRC_task_index.task_type, index=SRC_task_index.index)
