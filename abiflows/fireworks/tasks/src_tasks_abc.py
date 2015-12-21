@@ -417,7 +417,6 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
     @serialize_fw
     def to_dict(self):
-        enc = MontyEncoder()
         return {'control_procedure': self.control_procedure.as_dict(),
                 'manager': self.manager.as_dict() if self.manager is not None else None,
                 'max_restarts': self.max_restarts}

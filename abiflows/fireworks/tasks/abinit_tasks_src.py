@@ -88,7 +88,6 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         self.task_helper = task_helper
         self.task_helper.set_task = self
         self.restart_info = restart_info
-        self.task_type = task_helper.task_type
 
     def run_task(self, fw_spec):
         #TODO create a initialize_setup abstract function in SetupTask and put it there? or move somewhere else?
@@ -453,7 +452,6 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
 
     def __init__(self, control_procedure, task_helper):
         RunTask.__init__(self, control_procedure=control_procedure)
-        self.task_type = task_helper.task_type
         self.task_helper = task_helper
 
     def config(self, fw_spec):
@@ -498,7 +496,6 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
 
     def __init__(self, control_procedure, manager=None, max_restarts=10, task_helper=None):
         ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts)
-        self.task_type = task_helper.task_type
         self.task_helper = task_helper
 
 ####################
