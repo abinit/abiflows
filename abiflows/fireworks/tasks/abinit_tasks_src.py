@@ -454,6 +454,7 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
     def __init__(self, control_procedure, task_helper):
         RunTask.__init__(self, control_procedure=control_procedure)
         self.task_type = task_helper.task_type
+        self.task_helper = task_helper
 
     def config(self, fw_spec):
         self.ftm = self.get_fw_task_manager(fw_spec)
@@ -498,6 +499,7 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
     def __init__(self, control_procedure, manager=None, max_restarts=10, task_helper=None):
         ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts)
         self.task_type = task_helper.task_type
+        self.task_helper = task_helper
 
 ####################
 # Helpers
