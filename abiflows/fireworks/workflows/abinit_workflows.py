@@ -174,7 +174,7 @@ class ScfFWWorkflowSRC(AbstractFWWorkflow):
     def __init__(self, abiinput, spec={}, initialization_info={}):
 
         scf_helper = ScfTaskHelper()
-        control_procedure = ControlProcedure(controllers=[AbinitController.from_dict(scf_helper),
+        control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
                                                           WalltimeController(), MemoryController()])
         setup_task = AbinitSetupTask(abiinput=abiinput, task_helper=scf_helper)
         run_task = AbinitRunTask(control_procedure=control_procedure)
