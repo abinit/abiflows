@@ -163,14 +163,14 @@ class AbinitController(Controller):
                 else:
                     msg = "Critical events couldn't be fixed by handlers."
                     logger.info(msg)
-                    note.state = ControllerNote.ERROR_NOFIX
+                    note.state = ControllerNote.ERROR_UNRECOVERABLE
 
                 for err in report.errors:
                     note.add_problem(err)
 
             else:
             # Calculation not completed but no errors. No fix could be applied in this controller
-                note.state = ControllerNote.ERROR_NOFIX
+                note.state = ControllerNote.ERROR_UNRECOVERABLE
                 note.add_problem('Abinit calculation not completed but no errors in report.')
 
         else:
