@@ -177,7 +177,7 @@ class AbinitController(Controller):
 
         else:
         # report does not exist. No fix could be applied in this controller
-            note.state = ControllerNote.ERROR_NOFIX
+            note.state = ControllerNote.NOTHING_FOUND
             note.add_problem('No Abinit report')
 
         # No errors from abinit. No fix could be applied at this stage.

@@ -505,14 +505,15 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
         ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts)
         self.task_helper = task_helper
 
-    def get_initial_objects_info(self):
-        return {'abinit_input': {'object': self.setup_fw.tasks[-1].abiinput,
+    def get_initial_objects_info(self, setup_fw, run_fw, src_directories):
+        run_dir = src_directories['run_dir']
+        return {'abinit_input': {'object': setup_fw.tasks[-1].abiinput,
                                  'updates': [{'target': 'setup_task',
                                               'attribute': 'abiinput'}]},
-                'abinit_output_filepath': {'object': os.path.join(self.run_dir, OUTPUT_FILE_NAME)},
-                'abinit_log_filepath': {'object': os.path.join(self.run_dir, LOG_FILE_NAME)},
-                'abinit_mpi_abort_filepath': {'object': os.path.join(self.run_dir, MPIABORTFILE)},
-                'abinit_outdir_path': {'object': os.path.join(self.run_dir, OUTDIR_NAME)}}
+                'abinit_output_filepath': {'object': os.path.join(run_dir, OUTPUT_FILE_NAME)},
+                'abinit_log_filepath': {'object': os.path.join(run_dir, LOG_FILE_NAME)},
+                'abinit_mpi_abort_filepath': {'object': os.path.join(run_dir, MPIABORTFILE)},
+                'abinit_outdir_path': {'object': os.path.join(run_dir, OUTDIR_NAME)}}
 
             # initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
             #                                            'updates': [{'target': 'fw_spec',

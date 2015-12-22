@@ -323,7 +323,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # even multiple tasks is not yet supported ... should it be ? or should we stay with only one task allways ?)
         # If it is modified, it should update the corresponding bit (setup_spec and/or run_spec and/or
         # setup_task and/or run_task)
-        initial_objects_info = self.get_initial_objects_info()
+        initial_objects_info = self.get_initial_objects_info(setup_fw=self.setup_fw, run_fw= self.run_fw,
+                                                             src_directories=self.src_directories)
         qerr_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qerr')
         qout_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qout')
         initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
@@ -485,7 +486,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
         return {'setup_fw': setup_fw, 'run_fw': run_fw}
 
-    def get_initial_objects_info(self):
+    def get_initial_objects_info(self, setup_fw, run_fw, src_directories):
         return {}
 
     @classmethod
