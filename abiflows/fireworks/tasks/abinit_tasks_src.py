@@ -642,12 +642,12 @@ class NscfTaskHelper(GsTaskHelper):
 
     def restart(self, restart_info):
         """NSCF calculations can be restarted only if we have the WFK file."""
-        if restart_info.reset:
+        if restart_info == RESET_RESTART:
             # remove non reset keys that may have been added in a previous restart
             self.task.remove_restart_vars(["WFK"])
         else:
             ext = "WFK"
-            restart_file = restart_info.prev_outdir.has_abiext(ext)
+            restart_file = self.task.prev_outdir.has_abiext(ext)
             if not restart_file:
                 msg = "Cannot find the WFK file to restart from."
                 logger.error(msg)
