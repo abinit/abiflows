@@ -351,12 +351,16 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
             # If it is a restart, link the one from the previous task.
             # If it's in the same dir, it is assumed that the dependencies have been corretly resolved in the previous
             # run. So do nothing
-            if self.restart_info.previous_dir == self.run_dir:
+            # if self.restart_info.previous_dir == self.run_dir:
+            previous_run_dir = fw_spec['previous_src']['src_directories']['run_dir']
+            #TODO: remove this ?
+            if previous_run_dir == self.run_dir:
                 logger.info('rerunning in the same dir, no action on the deps')
                 return
 
             #just link everything from the indata folder of the previous run. files needed for restart will be overwritten
-            prev_indata = os.path.join(self.restart_info.previous_dir, INDIR_NAME)
+
+            prev_indata = os.path.join(previous_run_dir, INDIR_NAME)
             for f in os.listdir(prev_indata):
                 # if the target is already a link, link to the source to avoid many nested levels of linking
                 source = os.path.join(prev_indata, f)
@@ -457,10 +461,11 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 class AbinitRunTask(AbinitSRCMixin, RunTask):
 
 
-    def __init__(self, control_procedure, task_helper):
-        RunTask.__init__(self, control_procedure=control_procedure)
+    def __init__(self, control_procedure, task_helper, task_type=None):
+        if task_type is None:
+            task_type = self.task_helper.task_type
+        RunTask.__init__(self, control_procedure=control_procedure, task_type=task_type)
         self.task_helper = task_helper
-        self.task_type = self.task_helper.task_type
 
     def config(self, fw_spec):
         self.ftm = self.get_fw_task_manager(fw_spec)

@@ -211,9 +211,12 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
 class RunTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'run'
+    task_type = 'unknown'
 
-    def __init__(self, control_procedure):
+    def __init__(self, control_procedure, task_type=None):
         self.set_control_procedure(control_procedure=control_procedure)
+        if task_type is not None:
+            self.task_type = task_type
 
     def set_control_procedure(self, control_procedure):
         self.control_procedure = control_procedure
