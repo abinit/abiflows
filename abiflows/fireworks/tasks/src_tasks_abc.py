@@ -91,7 +91,20 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
 
     RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus', 'qtk_queueadapter']
 
-    def __init__(self, restart_info=None):
+    def __init__(self, deps=None, restart_info=None):
+
+        # TODO: if at some point, this is not enough (as for the ddk, or for the structure, or for anything else,
+        #       we could thing of an object ?
+        # deps are transformed to be a list or a dict of lists
+        if isinstance(deps, dict):
+            deps = dict(deps)
+            for k, v in deps.items():
+                if not isinstance(v, (list, tuple)):
+                    deps[k] = [v]
+        elif deps and not isinstance(deps, (list, tuple)):
+            deps = [deps]
+        self.deps = deps
+
         self.restart_info = restart_info
 
     def set_restart_info(self, restart_info=None):
@@ -448,7 +461,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # Create the new SRC trio
         # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
         new_SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task,
-                                         spec=new_spec, initialization_info=None, task_index=task_index, deps=None,
+                                         spec=new_spec, initialization_info=None, task_index=task_index,
                                          run_spec_update=run_spec_update, setup_spec_update=setup_spec_update)
         wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
         return FWAction(stored_data={'control_report': control_report}, detours=[wf])
@@ -518,7 +531,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
 
 
 def createSRCFireworks(setup_task, run_task, control_task, spec=None, initialization_info=None,
-                       task_index=None, deps=None, setup_spec_update=None, run_spec_update=None):
+                       task_index=None, setup_spec_update=None, run_spec_update=None):
     # Make a full copy of the spec
     if spec is None:
         spec = {}

@@ -414,7 +414,8 @@ class NscfFWWorkflowSRC(AbstractFWWorkflow):
         nscf_helper = NscfTaskHelper()
         nscf_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(nscf_helper),
                                                                WalltimeController(), MemoryController()])
-        setup_nscf_task = AbinitSetupTask(abiinput=nscf_input, task_helper=nscf_helper)
+        setup_nscf_task = AbinitSetupTask(abiinput=nscf_input, task_helper=nscf_helper,
+                                          deps={run_scf_task.task_type: 'DEN'})
         run_nscf_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
         control_nscf_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
 

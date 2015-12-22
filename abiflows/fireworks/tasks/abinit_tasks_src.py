@@ -77,18 +77,18 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
     RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
 
     def __init__(self, abiinput, deps=None, task_helper=None, restart_info=None):
-        SetupTask.__init__(self, restart_info=restart_info)
+        SetupTask.__init__(self, deps=deps, restart_info=restart_info)
         self.abiinput = abiinput
 
-        # deps are transformed to be a list or a dict of lists
-        if isinstance(deps, dict):
-            deps = dict(deps)
-            for k, v in deps.items():
-                if not isinstance(v, (list, tuple)):
-                    deps[k] = [v]
-        elif deps and not isinstance(deps, (list, tuple)):
-            deps = [deps]
-        self.deps = deps
+        # # deps are transformed to be a list or a dict of lists
+        # if isinstance(deps, dict):
+        #     deps = dict(deps)
+        #     for k, v in deps.items():
+        #         if not isinstance(v, (list, tuple)):
+        #             deps[k] = [v]
+        # elif deps and not isinstance(deps, (list, tuple)):
+        #     deps = [deps]
+        # self.deps = deps
 
         self.task_helper = task_helper
         self.task_helper.set_task(self)
