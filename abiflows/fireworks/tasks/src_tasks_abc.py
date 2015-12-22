@@ -3,6 +3,7 @@ from __future__ import print_function, division, unicode_literals
 import abc
 import copy
 import inspect
+import json
 import os
 
 from fireworks.core.firework import FireTaskBase
@@ -337,7 +338,10 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         control_report = self.control_procedure.process(**initial_objects)
 
         if control_report.unrecoverable:
-            raise ValueError('Errors are unrecoverable')
+            f = open(os.path.join(self.control_dir, 'control_report.json'), 'w')
+            json.dump(control_report.as_dict(), f)
+            f.close()
+            raise ValueError('Errors are unrecoverable. Control report written in "control_report.json"')
 
         # If everything is ok, update the spec of the children
         if control_report.finalized:
