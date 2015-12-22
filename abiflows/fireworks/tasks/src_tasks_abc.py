@@ -240,6 +240,9 @@ class RunTask(SRCTaskMixin, FireTaskBase):
     def postrun(self, fw_spec):
         pass
 
+    def task_info(self):
+        return {}
+
 
 @explicit_serialize
 class ScriptRunTask(RunTask):
@@ -349,11 +352,13 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             stored_data = {'control_report': control_report, 'finalized': True}
             update_spec = {}
             mod_spec = []
-            if 'previous_fws' in fw_spec:
-                #TODO: We actually dont need that here, but we should add something to pass info from this SRC
-                # to the next if needed
-                for task_type, task_info in fw_spec['previous_fws'].items():
-                    mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+            run_task = self.run_fw.tasks[-1]
+            task_type = run_task.task_type
+            #TODO: should we also add here the cluster in which the calculation was performed so that if the next
+            #      SRC trio starts on another cluster, it should fetch the needed files from the run_dir of this cluster
+            task_info = {'dir': self.run_dir}
+            task_info.update(run_task.task_info())
+            mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
             return FWAction(stored_data=stored_data, exit=False, update_spec=update_spec, mod_spec=mod_spec,
                             additions=None, detours=None, defuse_children=False)
 
