@@ -489,7 +489,8 @@ class ControlReport(MSONable):
             self.state = self.UNRECOVERABLE
         elif any([cn.state == ControllerNote.ERROR_RECOVERABLE for cn in self.controller_notes]):
             self.state = self.RECOVERABLE
-        elif all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate]):
+        elif (len([cn for cn in self.controller_notes if cn.controller.can_validate]) and
+                  all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate])):
             self.state = self.FINALIZED
         else:
             # If no controller says it is recoverable/unrecoverable/valid/... then we set it to unrecoverable ?

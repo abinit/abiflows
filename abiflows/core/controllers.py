@@ -38,6 +38,7 @@ class AbinitController(Controller):
 
     is_handler = True
     is_validator = True
+    can_validate = True
     _controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]
 
     def __init__(self, critical_events=None, handlers=None):
@@ -134,6 +135,7 @@ class AbinitController(Controller):
                     #     update_spec, mod_spec, stored_data = self.conclude_task(fw_spec)
                     #     return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)
                     note.state = ControllerNote.EVERYTHING_OK
+                    note.is_valid = True
             elif report.errors:
             # Abinit reported problems
             # Check if the errors could be handled
