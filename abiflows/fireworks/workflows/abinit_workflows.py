@@ -22,7 +22,7 @@ from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask
 from abiflows.fireworks.tasks.abinit_tasks_src import AbinitSetupTask, AbinitRunTask, AbinitControlTask
-from abiflows.fireworks.tasks.abinit_tasks_src import ScfTaskHelper
+from abiflows.fireworks.tasks.abinit_tasks_src import ScfTaskHelper, NscfTaskHelper
 from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTask, DdkTask, MergeDdbAbinitTask
@@ -376,6 +376,59 @@ class NscfFWWorkflow(AbstractFWWorkflow):
         self.wf = Workflow([self.scf_fw, self.nscf_fw], {self.scf_fw: [self.nscf_fw]},
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module})
+
+
+class NscfFWWorkflowSRC(AbstractFWWorkflow):
+
+    def __init__(self, scf_input, nscf_input, spec={}, initialization_info={}):
+
+        # Initializes fws list and links_dict
+        fws = []
+        links_dict = {}
+
+        # Self-consistent calculation
+        scf_helper = ScfTaskHelper()
+        scf_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
+                                                              WalltimeController(), MemoryController()])
+        setup_scf_task = AbinitSetupTask(abiinput=scf_input, task_helper=scf_helper)
+        run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+        control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+
+        scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
+                                     task_index=scf_helper.task_type,
+                                     spec=spec, initialization_info=initialization_info)
+
+        fws.extend(scf_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
+
+
+        # Non self-consistent calculation
+        nscf_helper = NscfTaskHelper()
+        nscf_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(nscf_helper),
+                                                               WalltimeController(), MemoryController()])
+        setup_nscf_task = AbinitSetupTask(abiinput=nscf_input, task_helper=nscf_helper)
+        run_nscf_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
+        control_nscf_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
+
+        nscf_fws = createSRCFireworks(setup_task=setup_nscf_task, run_task=run_nscf_task,
+                                      control_task=control_nscf_task, task_index=nscf_helper.task_type, spec=spec,
+                                      initialization_info=initialization_info)
+
+        fws.extend(nscf_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=nscf_fws['links_dict'])
+        #Link with previous SCF
+        links_dict_update(links_dict=links_dict,
+                          links_update={scf_fws['check_fw'].fw_id: nscf_fws['setup_fw'].fw_id})
+
+        self.wf = Workflow(fireworks=fws, links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+
+    @classmethod
+    def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
+                     spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
+                     shift_mode="Monkhorst-Pack", extra_abivars={}, decorators=[], autoparal=False, spec={}):
+        raise NotImplementedError('from_factory class method not yet implemented for NscfWorkflowSRC')
 
 
 class HybridOneShotFWWorkflow(AbstractFWWorkflow):
