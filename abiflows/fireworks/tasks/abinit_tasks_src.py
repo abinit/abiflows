@@ -234,7 +234,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
     def link_ext(self, ext, source_dir, strict=True):
         source = os.path.join(source_dir, self.prefix.odata + "_" + ext)
         logger.info("Need path {} with ext {}".format(source, ext))
-        dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext)
+        dest = os.path.join(self.run_dir, self.prefix.idata + "_" + ext)
         if not os.path.exists(source):
             # Try netcdf file. TODO: this case should be treated in a cleaner way.
             source += "-etsf.nc"
@@ -351,7 +351,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
             # If it is a restart, link the one from the previous task.
             # If it's in the same dir, it is assumed that the dependencies have been corretly resolved in the previous
             # run. So do nothing
-            if self.restart_info.previous_dir == self.workdir:
+            if self.restart_info.previous_dir == self.run_dir:
                 logger.info('rerunning in the same dir, no action on the deps')
                 return
 
@@ -362,7 +362,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                 source = os.path.join(prev_indata, f)
                 if os.path.islink(source):
                     source = os.readlink(source)
-                os.symlink(source, os.path.join(self.workdir, INDIR_NAME, f))
+                os.symlink(source, os.path.join(self.run_dir, INDIR_NAME, f))
 
     @property
     def filesfile_string(self):
