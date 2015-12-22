@@ -418,7 +418,7 @@ class NscfFWWorkflowSRC(AbstractFWWorkflow):
         links_dict_update(links_dict=links_dict, links_update=nscf_fws['links_dict'])
         #Link with previous SCF
         links_dict_update(links_dict=links_dict,
-                          links_update={scf_fws['check_fw'].fw_id: nscf_fws['setup_fw'].fw_id})
+                          links_update={scf_fws['control_fw'].fw_id: nscf_fws['setup_fw'].fw_id})
 
         self.wf = Workflow(fireworks=fws, links_dict=links_dict,
                            metadata={'workflow_class': self.workflow_class,
