@@ -463,7 +463,7 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
 
     def __init__(self, control_procedure, task_helper, task_type=None):
         if task_type is None:
-            task_type = self.task_helper.task_type
+            task_type = task_helper.task_type
         RunTask.__init__(self, control_procedure=control_procedure, task_type=task_type)
         self.task_helper = task_helper
 
