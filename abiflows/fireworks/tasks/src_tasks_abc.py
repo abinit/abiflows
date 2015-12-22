@@ -174,8 +174,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
             fworker = self.fworker
         else:
             raise ValueError('Should have access to the fworker in SetupTask ...')
-        # Check that this ControlTask has only one parent firework
         this_lzy_wf = lp.get_wf_by_fw_id_lzyfw(setup_fw_id)
+        # Check that SetupTask and RunTask have only one child firework
         child_fw_ids = this_lzy_wf.links[setup_fw_id]
         if len(child_fw_ids) != 1:
             raise ValueError('SetupTask\'s Firework should have exactly one child firework')

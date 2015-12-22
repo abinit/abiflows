@@ -627,7 +627,31 @@ class ScfTaskHelper(GsTaskHelper):
 
 
 class NscfTaskHelper(GsTaskHelper):
-    pass
+    task_type = "nscf"
+
+    CRITICAL_EVENTS = [
+        events.NscfConvergenceWarning,
+    ]
+
+    def restart(self, restart_info):
+        """NSCF calculations can be restarted only if we have the WFK file."""
+        if restart_info.reset:
+            # remove non reset keys that may have been added in a previous restart
+            self.task.remove_restart_vars(["WFK"])
+        else:
+            ext = "WFK"
+            restart_file = restart_info.prev_outdir.has_abiext(ext)
+            if not restart_file:
+                msg = "Cannot find the WFK file to restart from."
+                logger.error(msg)
+                raise RestartError(msg)
+
+            # Move out --> in.
+            self.task.out_to_in(restart_file)
+
+            # Add the appropriate variable for restarting.
+            irdvars = irdvars_for_ext(ext)
+            self.task.abiinput.set_vars(irdvars)
 
 
 class RelaxTaskHelper(GsTaskHelper):
