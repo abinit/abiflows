@@ -445,7 +445,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                                          spec=new_spec, initialization_info=None, task_index=task_index, deps=None,
                                          run_spec_update=run_spec_update, setup_spec_update=setup_spec_update)
         wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
-        return FWAction(detours=[wf])
+        return FWAction(stored_data={'control_report': control_report}, detours=[wf])
 
     def get_setup_and_run_fw(self, fw_spec):
         # Get the launchpad
