@@ -171,6 +171,10 @@ class ScfFWWorkflow(AbstractFWWorkflow):
 
 
 class ScfFWWorkflowSRC(AbstractFWWorkflow):
+
+    workflow_class = 'ScfFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
     def __init__(self, abiinput, spec={}, initialization_info={}):
 
         scf_helper = ScfTaskHelper()
@@ -182,7 +186,9 @@ class ScfFWWorkflowSRC(AbstractFWWorkflow):
 
         scf_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task)
 
-        self.wf = Workflow(fireworks=scf_fws['fws'], links_dict=scf_fws['links_dict'])
+        self.wf = Workflow(fireworks=scf_fws['fws'], links_dict=scf_fws['links_dict'],
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
 
     @classmethod
     def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
@@ -379,6 +385,8 @@ class NscfFWWorkflow(AbstractFWWorkflow):
 
 
 class NscfFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'NscfFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
     def __init__(self, scf_input, nscf_input, spec={}, initialization_info={}):
 
