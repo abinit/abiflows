@@ -644,7 +644,7 @@ class SRCTaskIndex(MSONable):
         prefix_test_string = str(task_type)
         for allowed_char in self.ALLOWED_CHARS:
             prefix_test_string = prefix_test_string.replace(allowed_char, "")
-        if not prefix_test_string.isalpha():
+        if not prefix_test_string.isalnum():
             ac_str = ', '.join(['"{}"'.format(ac) for ac in self.ALLOWED_CHARS])
             raise ValueError('task_type should only contain letters '
                              'and the following characters : {}'.format(ac_str))
