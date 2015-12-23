@@ -871,7 +871,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         fws.extend(scffbz_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=scffbz_fws['links_dict'])
         #Link with the IBZ SCF run
-        links_dict_update(links_dict=links_dict, links_update={scf_fws['control_fw']: scffbz_fws['setup_fw']})
+        links_dict_update(links_dict=links_dict,
+                          links_update={scf_fws['control_fw'].fw_id: scffbz_fws['setup_fw'].fw_id})
 
         #3. DDK calculation
         if ddk_split:
@@ -893,7 +894,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             fws.extend(ddk_fws['fws'])
             links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
             #Link with the IBZ SCF run
-            links_dict_update(links_dict=links_dict, links_update={scf_fws['control_fw']: ddk_fws['setup_fw']})
+            links_dict_update(links_dict=links_dict,
+                              links_update={scf_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
 
         #4. Response-Function calculation(s) of the elastic constants
         rf_ddb_source_task_type = 'mrgddb-strains'
