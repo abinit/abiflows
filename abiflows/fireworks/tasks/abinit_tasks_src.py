@@ -746,7 +746,7 @@ class BecTaskHelper(DfptTaskHelper):
 
 
 class StrainPertTaskHelper(DfptTaskHelper):
-    pass
+    task_type = "strain-pert"
 
 
 ####################
