@@ -861,7 +861,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         setup_scffbz_task = AbinitSetupTask(abiinput=scf_inp_fbz, task_helper=scf_helper,
                                             deps={run_scf_task.task_type: ['WFK', 'DEN']})
         run_scffbz_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
-                                        task_type='scfibz')
+                                        task_type='scffbz')
         control_scffbz_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
 
         scffbz_fws = createSRCFireworks(setup_task=setup_scffbz_task, run_task=run_scffbz_task,
