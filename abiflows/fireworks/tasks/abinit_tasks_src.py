@@ -466,6 +466,7 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
             task_type = task_helper.task_type
         RunTask.__init__(self, control_procedure=control_procedure, task_type=task_type)
         self.task_helper = task_helper
+        self.task_helper.set_task(self)
 
     def config(self, fw_spec):
         self.ftm = self.get_fw_task_manager(fw_spec)
@@ -501,6 +502,7 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
 
     def postrun(self, fw_spec):
         #TODO should this be a general feature of the SRC?
+        self.task_helper.conclude_task()
         return {'qtk_queueadapter' :fw_spec['qtk_queueadapter']}
 
 
@@ -709,15 +711,26 @@ class DfptTaskHelper(AbinitTaskHelper):
             raise RestartError(msg)
 
         # Move file.
-        for f in restart_files:
-            self.task.out_to_in(f)
+        for restart_file in restart_files:
+            self.task.out_to_in(restart_file)
 
         # Add the appropriate variable for restarting.
         self.task.abiinput.set_vars(irdvars)
 
 
 class DdkTaskHelper(DfptTaskHelper):
-    pass
+
+    task_type = "ddk"
+
+    def conclude_task(self):
+        # make a link to _DDK of the 1WF file to ease the link in the dependencies
+        wf_files = self.task.outdir.find_1wf_files()
+        if not wf_files:
+            raise HelperError("Couldn't link 1WF files.")
+        for f in wf_files:
+            os.symlink(f.path, f.path+'_DDK')
+
+        super(DdkTaskHelper, self).conclude_task()
 
 
 class DdeTaskHelper(DfptTaskHelper):
