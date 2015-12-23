@@ -871,6 +871,14 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                   if k in inspect.getargspec(cls.__init__).args}
         return cls(**kwargs)
 
+    def get_fw_task_manager(self, fw_spec):
+        if 'ftm_file' in fw_spec:
+            ftm = FWTaskManager.from_file(fw_spec['ftm_file'])
+        else:
+            ftm = FWTaskManager.from_user_config()
+        ftm.update_fw_policy(fw_spec.get('fw_policy', {}))
+        return ftm
+
 
 
 
