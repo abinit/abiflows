@@ -545,8 +545,8 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     if task_index is not None:
         src_task_index = SRCTaskIndex.from_any(task_index)
     else:
-        src_task_index = SRCTaskIndex.from_any('unknown-task')
-    #     src_task_index = SRCTaskIndex.from_task(run_task)
+        # src_task_index = SRCTaskIndex.from_any('unknown-task')
+        src_task_index = SRCTaskIndex.from_task(run_task)
     spec['SRC_task_index'] = src_task_index
 
     # SetupTask
