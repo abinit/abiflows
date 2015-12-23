@@ -207,6 +207,9 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         lp.update_spec(fw_ids=[control_fw_id],
                        spec_document=spec_update)
 
+    def additional_task_info(self):
+        return {}
+
 
 class RunTask(SRCTaskMixin, FireTaskBase):
 
@@ -256,7 +259,7 @@ class RunTask(SRCTaskMixin, FireTaskBase):
     def postrun(self, fw_spec):
         pass
 
-    def task_info(self):
+    def additional_task_info(self):
         return {}
 
 
@@ -369,11 +372,13 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             update_spec = {}
             mod_spec = []
             run_task = self.run_fw.tasks[-1]
+            setup_task = self.setup_fw.tasks[-1]
             task_type = run_task.task_type
             #TODO: should we also add here the cluster in which the calculation was performed so that if the next
             #      SRC trio starts on another cluster, it should fetch the needed files from the run_dir of this cluster
             task_info = {'dir': self.run_dir}
-            task_info.update(run_task.task_info())
+            task_info.update(run_task.additional_task_info())
+            task_info.update(setup_task.additional_task_info())
             mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
             return FWAction(stored_data=stored_data, exit=False, update_spec=update_spec, mod_spec=mod_spec,
                             additions=None, detours=None, defuse_children=False)

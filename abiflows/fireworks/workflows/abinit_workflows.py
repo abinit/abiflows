@@ -843,7 +843,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         scf_helper = ScfTaskHelper()
         scf_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
                                                               WalltimeController(), MemoryController()])
-        setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper)
+        setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
         run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
                                      task_type='scfibz')
         control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)

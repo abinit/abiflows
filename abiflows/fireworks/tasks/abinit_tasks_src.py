@@ -84,9 +84,10 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 
     RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
 
-    def __init__(self, abiinput, deps=None, task_helper=None, restart_info=None):
+    def __init__(self, abiinput, deps=None, task_helper=None, restart_info=None, pass_input=False):
         SetupTask.__init__(self, deps=deps, restart_info=restart_info)
         self.abiinput = abiinput
+        self.pass_input = pass_input
 
         # # deps are transformed to be a list or a dict of lists
         # if isinstance(deps, dict):
@@ -463,6 +464,12 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         remove_vars = [v for e in exts for v in irdvars_for_ext(e).keys()]
         self.abiinput.remove_vars(remove_vars, strict=False)
         logger.info("Removing variables {} from input".format(remove_vars))
+
+    def additional_task_info(self):
+        if self.pass_input:
+            return {'input': self.abiinput}
+        else:
+            return {}
 
 
 @explicit_serialize
