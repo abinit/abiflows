@@ -788,7 +788,8 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         if control_procedure is None:
             self.control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(self.helper),
                                                                    WalltimeController(), MemoryController()])
-        self.control_procedure = control_procedure
+        else:
+            self.control_procedure = control_procedure
         self.mrgddb_task_type = mrgddb_task_type
         self.rf_tol = rf_tol
 
