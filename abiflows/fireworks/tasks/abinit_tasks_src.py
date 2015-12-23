@@ -2,26 +2,34 @@ from __future__ import print_function, division, unicode_literals
 
 import os
 import shutil
+import inspect
 import logging
 import collections
 import errno
 import threading
 import subprocess
 from monty.json import MSONable
-from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask, SetupError
-from abiflows.core.mastermind_abc import ControllerNote
-from abiflows.fireworks.utils.fw_utils import FWTaskManager
+from monty.json import MontyDecoder
+from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask, SetupError, createSRCFireworks
+from abiflows.core.mastermind_abc import ControllerNote, ControlProcedure
+from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
+from abiflows.fireworks.utils.fw_utils import FWTaskManager, links_dict_update, set_short_single_core_to_spec
+from abiflows.fireworks.tasks.abinit_tasks import MergeDdbAbinitTask
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
 from fireworks import explicit_serialize
+from fireworks.utilities.fw_serializers import serialize_fw
+from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
 from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit import events
 from pymatgen.io.abinit.qutils import time2slurm
 from abipy.abio.factories import InputFactory
+from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
+from abipy.abio.input_tags import STRAIN
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
@@ -749,11 +757,125 @@ class StrainPertTaskHelper(DfptTaskHelper):
     task_type = "strain-pert"
 
 
+##############################
+# Generation tasks
+##############################
+
+
+@explicit_serialize
+class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
+    def __init__(self, piezo_elastic_factory=None, helper=None, previous_scf_task_type=ScfTaskHelper.task_type,
+                 previous_ddk_task_type=DdkTaskHelper.task_type, control_procedure=None,
+                 mrgddb_task_type='mrgddb-strains',
+                 rf_tol=None):
+        if piezo_elastic_factory is None:
+            self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
+        else:
+            self.piezo_elastic_factory = piezo_elastic_factory
+        if helper is None:
+            self.helper = StrainPertTaskHelper()
+        else:
+            self.helper = helper
+        self.previous_scf_task_type = previous_scf_task_type
+        self.previous_ddk_task_type = previous_ddk_task_type
+        if control_procedure is None:
+            self.control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(self.helper),
+                                                                   WalltimeController(), MemoryController()])
+        self.control_procedure = control_procedure
+        self.mrgddb_task_type = mrgddb_task_type
+        self.rf_tol = rf_tol
+
+    def run_task(self, fw_spec):
+
+        # Get the previous SCF input
+        previous_scf_input = fw_spec.get('previous_fws', {}).get(self.previous_scf_task_type,
+                                                                 [{}])[0].get('input', None)
+        if not previous_scf_input:
+            raise InitializationError('No input file available '
+                                      'from task of type {}'.format(self.previous_scf_task_type))
+        from pymatgen.io.abinit import tasks
+        ftm = self.get_fw_task_manager(fw_spec)
+        tasks._USER_CONFIG_TASKMANAGER = ftm.task_manager
+
+        # Get the strain RF inputs
+        piezo_elastic_inputs = self.piezo_elastic_factory.build_input(previous_scf_input)
+        rf_strain_inputs = piezo_elastic_inputs.filter_by_tags(STRAIN)
+
+        initialization_info = fw_spec.get('initialization_info', {})
+        initialization_info['input_factory'] = self.piezo_elastic_factory.as_dict()
+        new_spec = dict(initialization_info=initialization_info)
+
+        # Create the SRC fireworks for each perturbation
+        all_SRC_rf_fws = []
+        total_list_fws = []
+        fws_deps = {}
+
+        for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
+            setup_rf_task = AbinitSetupTask(abiinput=rf_strain_input, task_helper=self.helper,
+                                            deps={self.previous_scf_task_type: 'WFK',
+                                                  self.previous_ddk_task_type: 'DDK'})
+            run_rf_task = AbinitRunTask(control_procedure=self.control_procedure, task_helper=self.helper,
+                                        task_type='strain-pert-{:d}'.format(istrain_pert+1))
+            control_rf_task = AbinitControlTask(control_procedure=self.control_procedure, task_helper=self.helper)
+
+            rf_fws = createSRCFireworks(setup_task=setup_rf_task, run_task=run_rf_task,
+                                        control_task=control_rf_task,
+                                        spec=new_spec, initialization_info=initialization_info)
+            all_SRC_rf_fws.append(rf_fws)
+            total_list_fws.extend(rf_fws['fws'])
+            links_dict_update(links_dict=fws_deps, links_update=rf_fws['links_dict'])
+
+
+        # Adding the MrgDdb Firework
+        mrgddb_spec = dict(new_spec)
+        mrgddb_spec = set_short_single_core_to_spec(mrgddb_spec)
+        mrgddb_spec['_priority'] = 10
+        num_ddbs_to_be_merged = len(all_SRC_rf_fws)
+        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=True,
+                                                task_type= self.mrgddb_task_type),
+                             spec=mrgddb_spec, name='mrgddb-strains')
+        total_list_fws.append(mrgddb_fw)
+        #Adding the dependencies
+        for src_fws in all_SRC_rf_fws:
+            links_dict_update(links_dict=fws_deps, links_update={src_fws['control_fw']: mrgddb_fw})
+
+        rf_strains_wf = Workflow(total_list_fws, fws_deps)
+
+        return FWAction(detours=rf_strains_wf)
+
+    @serialize_fw
+    def to_dict(self):
+        d = {}
+        for arg in inspect.getargspec(self.__init__).args:
+            if arg != "self":
+                val = self.__getattribute__(arg)
+                if hasattr(val, "as_dict"):
+                    val = val.as_dict()
+                elif isinstance(val, (tuple, list)):
+                    val = [v.as_dict() if hasattr(v, "as_dict") else v for v in val]
+                d[arg] = val
+
+        return d
+
+    @classmethod
+    def from_dict(cls, d):
+        dec = MontyDecoder()
+        kwargs = {k: dec.process_decoded(v) for k, v in d.items()
+                  if k in inspect.getargspec(cls.__init__).args}
+        return cls(**kwargs)
+
+
+
+
 ####################
 # Exceptions
 ####################
 
 class HelperError(Exception):
+    pass
+
+
+class InitializationError(Exception):
     pass
 
 

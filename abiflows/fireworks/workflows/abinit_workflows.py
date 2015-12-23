@@ -23,6 +23,7 @@ from abiflows.core.controllers import AbinitController, WalltimeController, Memo
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask
 from abiflows.fireworks.tasks.abinit_tasks_src import AbinitSetupTask, AbinitRunTask, AbinitControlTask
 from abiflows.fireworks.tasks.abinit_tasks_src import ScfTaskHelper, NscfTaskHelper, DdkTaskHelper
+from abiflows.fireworks.tasks.abinit_tasks_src import GeneratePiezoElasticFlowFWSRCAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTask, DdkTask, MergeDdbAbinitTask
@@ -895,37 +896,42 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             links_dict_update(links_dict=links_dict, links_update={scf_fws['control_fw']: ddk_fws['setup_fw']})
 
         #4. Response-Function calculation(s) of the elastic constants
-        if rf_split:
-            rf_ddb_source_task_type = 'mrgddb-strains'
-            scf_task_type = SRC_scf_ibz_fws['run_fw'].tasks[0].task_type
-            ddk_task_type = SRC_ddk_fws['run_fw'].tasks[0].task_type
-            gen_task = GeneratePiezoElasticFlowFWAbinitTask(previous_scf_task_type=scf_task_type,
+        gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=scf_task_type,
                                                             previous_ddk_task_type=ddk_task_type,
                                                             handlers=handlers, validators=validators,
                                                             mrgddb_task_type=rf_ddb_source_task_type)
-            genrfstrains_spec = set_short_single_core_to_spec(spec)
-            gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
-            fws.append(gen_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: gen_fw.fw_id,
-                                            SRC_ddk_fws['check_fw'].fw_id: gen_fw.fw_id})
-            rf_ddb_src_fw = gen_fw
-        else:
-            SRC_rf_fws = createSRCFireworksOld(task_class=StrainPertTask, task_input=rf_inp, SRC_spec=spec,
-                                               initialization_info=initialization_info,
-                                               wf_task_index_prefix='rf',
-                                               handlers=handlers['_all'], validators=validators['_all'],
-                                               deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
-                                                  SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
-                                               queue_adapter_update=queue_adapter_update)
-            fws.extend(SRC_rf_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
-            #Link with the IBZ SCF run and the DDK run
-            links_dict_update(links_dict=links_dict,
-                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id,
-                                            SRC_ddk_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id})
-            rf_ddb_source_task_type = SRC_rf_fws['run_fw'].tasks[0].task_type
-            rf_ddb_src_fw = SRC_rf_fws['check_fw']
+
+        # if rf_split:
+        #     rf_ddb_source_task_type = 'mrgddb-strains'
+        #     scf_task_type = SRC_scf_ibz_fws['run_fw'].tasks[0].task_type
+        #     ddk_task_type = SRC_ddk_fws['run_fw'].tasks[0].task_type
+        #     gen_task = GeneratePiezoElasticFlowFWAbinitTask(previous_scf_task_type=scf_task_type,
+        #                                                     previous_ddk_task_type=ddk_task_type,
+        #                                                     handlers=handlers, validators=validators,
+        #                                                     mrgddb_task_type=rf_ddb_source_task_type)
+        #     genrfstrains_spec = set_short_single_core_to_spec(spec)
+        #     gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
+        #     fws.append(gen_fw)
+        #     links_dict_update(links_dict=links_dict,
+        #                       links_update={SRC_scf_ibz_fws['check_fw'].fw_id: gen_fw.fw_id,
+        #                                     SRC_ddk_fws['check_fw'].fw_id: gen_fw.fw_id})
+        #     rf_ddb_src_fw = gen_fw
+        # else:
+        #     SRC_rf_fws = createSRCFireworksOld(task_class=StrainPertTask, task_input=rf_inp, SRC_spec=spec,
+        #                                        initialization_info=initialization_info,
+        #                                        wf_task_index_prefix='rf',
+        #                                        handlers=handlers['_all'], validators=validators['_all'],
+        #                                        deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
+        #                                           SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
+        #                                        queue_adapter_update=queue_adapter_update)
+        #     fws.extend(SRC_rf_fws['fws'])
+        #     links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
+        #     #Link with the IBZ SCF run and the DDK run
+        #     links_dict_update(links_dict=links_dict,
+        #                       links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id,
+        #                                     SRC_ddk_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id})
+        #     rf_ddb_source_task_type = SRC_rf_fws['run_fw'].tasks[0].task_type
+        #     rf_ddb_src_fw = SRC_rf_fws['check_fw']
 
         #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
         # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
