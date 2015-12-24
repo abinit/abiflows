@@ -816,14 +816,16 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         # Create the SRC fireworks for each perturbation
         all_SRC_rf_fws = []
         total_list_fws = []
+        strain_task_types = []
         fws_deps = {}
 
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
+            strain_task_type = 'strain-pert-{:d}'.format(istrain_pert+1)
             setup_rf_task = AbinitSetupTask(abiinput=rf_strain_input, task_helper=self.helper,
                                             deps={self.previous_scf_task_type: 'WFK',
                                                   self.previous_ddk_task_type: 'DDK'})
             run_rf_task = AbinitRunTask(control_procedure=self.control_procedure, task_helper=self.helper,
-                                        task_type='strain-pert-{:d}'.format(istrain_pert+1))
+                                        task_type=strain_task_type)
             control_rf_task = AbinitControlTask(control_procedure=self.control_procedure, task_helper=self.helper)
 
             rf_fws = createSRCFireworks(setup_task=setup_rf_task, run_task=run_rf_task,
@@ -831,6 +833,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                                         spec=new_spec, initialization_info=initialization_info)
             all_SRC_rf_fws.append(rf_fws)
             total_list_fws.extend(rf_fws['fws'])
+            strain_task_types.append(strain_task_type)
             links_dict_update(links_dict=fws_deps, links_update=rf_fws['links_dict'])
 
 
@@ -839,7 +842,9 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         mrgddb_spec = set_short_single_core_to_spec(mrgddb_spec)
         mrgddb_spec['_priority'] = 10
         num_ddbs_to_be_merged = len(all_SRC_rf_fws)
-        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=True,
+        mrgddb_fw = Firework(MergeDdbAbinitTask(ddb_source_task_types=strain_task_types,
+                                                num_ddbs=num_ddbs_to_be_merged,
+                                                delete_source_ddbs=True,
                                                 task_type= self.mrgddb_task_type),
                              spec=mrgddb_spec, name='mrgddb-strains')
         total_list_fws.append(mrgddb_fw)
