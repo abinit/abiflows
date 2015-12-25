@@ -778,7 +778,6 @@ class RunError(SRCError):
 class ControlError(SRCError):
     pass
 
-
 # TODO: Remove the following when the new SRC is working ...
 #
 # class CheckTask(SRCTaskMixin, FireTaskBase):
@@ -1025,8 +1024,6 @@ class ControlError(SRCError):
 #                                      task_index=task_index, deps=deps)
 #         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
 #         return FWAction(detours=[wf])
-
-
 class SRCModification(MSONable):
 
     def __init__(self, type=None, complete=True):
