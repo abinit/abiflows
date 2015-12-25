@@ -1025,3 +1025,43 @@ class ControlError(SRCError):
 #                                      task_index=task_index, deps=deps)
 #         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
 #         return FWAction(detours=[wf])
+
+
+class SRCModification(MSONable):
+
+    def __init__(self, type=None, complete=True):
+        self.type = type
+        self.complete = complete
+
+
+class SRCFWSpecModification(SRCModification):
+
+    def __init__(self, complete=True):
+        super(SRCFWSpecModification, self).__init__(type='fw_spec', complete=complete)
+
+    def as_dict(self):
+        return {'@module': self.__class__.__module__,
+                '@class': self.__class__.__name__,
+                'complete': self.complete}
+
+
+class SRCSetupTaskModification(SRCModification):
+
+    def __init__(self, complete=True):
+        super(SRCSetupTaskModification, self).__init__(type='setup_task', complete=complete)
+
+    def as_dict(self):
+        return {'@module': self.__class__.__module__,
+                '@class': self.__class__.__name__,
+                'complete': self.complete}
+
+
+class SRCRunTaskModification(SRCModification):
+
+    def __init__(self, complete=True):
+        super(SRCRunTaskModification, self).__init__(type='run_task', complete=complete)
+
+    def as_dict(self):
+        return {'@module': self.__class__.__module__,
+                '@class': self.__class__.__name__,
+                'complete': self.complete}

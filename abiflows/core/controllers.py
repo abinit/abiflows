@@ -456,7 +456,7 @@ class WalltimeController(Controller, QueueControllerMixin):
                                           timelimit=new_timelimit)
         note.state = ControllerNote.ERROR_RECOVERABLE
         note.actions = actions
-        note.simple_restart()
+        note.reset_restart()
         return note
 
 
@@ -601,7 +601,7 @@ class MemoryController(Controller, QueueControllerMixin):
         # Set the actions to be performed, the state and the type of restart
         note.state = ControllerNote.ERROR_RECOVERABLE
         note.actions = actions
-        note.simple_restart()
+        note.reset_restart()
         return note
 
 
