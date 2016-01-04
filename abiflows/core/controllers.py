@@ -36,7 +36,8 @@ class AbinitController(Controller):
     is_handler = True
     is_validator = True
     can_validate = True
-    _controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]
+    #_controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]
+    _controlled_item_types = [ControlledItemType.task_completed()]
 
     def __init__(self, critical_events=None, handlers=None):
         """
