@@ -796,6 +796,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             self.control_procedure = ControlProcedure(controllers=controllers)
         else:
             self.control_procedure = control_procedure
+        self.additional_controllers = additional_controllers
         self.mrgddb_task_type = mrgddb_task_type
         self.rf_tol = rf_tol
 
