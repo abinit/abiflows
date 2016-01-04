@@ -699,38 +699,42 @@ class DfptTaskHelper(AbinitTaskHelper):
         # Abinit adds the idir-ipert index at the end of the file and this breaks the extension
         # e.g. out_1WF4, out_DEN4. find_1wf_files and find_1den_files returns the list of files found
         #TODO check for reset
-        restart_files, irdvars = None, None
+        if restart_info == RESET_RESTART:
+            # remove non reset keys that may have been added in a previous restart
+            self.task.remove_restart_vars(["1WF", "1DEN"])
+        else:
+            restart_files, irdvars = None, None
 
-        # Highest priority to the 1WF file because restart is more efficient.
-        wf_files = self.task.prev_outdir.find_1wf_files()
-        if wf_files is not None:
-            restart_files = [f.path for f in wf_files]
-            irdvars = irdvars_for_ext("1WF")
-            # if len(wf_files) != 1:
-            #     restart_files = None
-            #     logger.critical("Found more than one 1WF file. Restart is ambiguous!")
-
-        if restart_files is None:
-            den_files = self.task.prev_outdir.find_1den_files()
-            if den_files is not None:
-                restart_files = [f.path for f in den_files]
-                irdvars = {"ird1den": 1}
-                # if len(den_files) != 1:
+            # Highest priority to the 1WF file because restart is more efficient.
+            wf_files = self.task.prev_outdir.find_1wf_files()
+            if wf_files is not None:
+                restart_files = [f.path for f in wf_files]
+                irdvars = irdvars_for_ext("1WF")
+                # if len(wf_files) != 1:
                 #     restart_files = None
-                #     logger.critical("Found more than one 1DEN file. Restart is ambiguous!")
+                #     logger.critical("Found more than one 1WF file. Restart is ambiguous!")
 
-        if not restart_files:
-            # Raise because otherwise restart is equivalent to a run from scratch --> infinite loop!
-            msg = "Cannot find the 1WF|1DEN file to restart from."
-            logger.error(msg)
-            raise RestartError(msg)
+            if restart_files is None:
+                den_files = self.task.prev_outdir.find_1den_files()
+                if den_files is not None:
+                    restart_files = [f.path for f in den_files]
+                    irdvars = {"ird1den": 1}
+                    # if len(den_files) != 1:
+                    #     restart_files = None
+                    #     logger.critical("Found more than one 1DEN file. Restart is ambiguous!")
 
-        # Move file.
-        for restart_file in restart_files:
-            self.task.out_to_in(restart_file)
+            if not restart_files:
+                # Raise because otherwise restart is equivalent to a run from scratch --> infinite loop!
+                msg = "Cannot find the 1WF|1DEN file to restart from."
+                logger.error(msg)
+                raise RestartError(msg)
 
-        # Add the appropriate variable for restarting.
-        self.task.abiinput.set_vars(irdvars)
+            # Move file.
+            for restart_file in restart_files:
+                self.task.out_to_in(restart_file)
+
+            # Add the appropriate variable for restarting.
+            self.task.abiinput.set_vars(irdvars)
 
 
 class DdkTaskHelper(DfptTaskHelper):
