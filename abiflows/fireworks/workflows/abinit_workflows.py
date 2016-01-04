@@ -837,7 +837,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    
+
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
                  ddk_split=False, rf_split=False, additional_controllers=None):
 
@@ -845,9 +845,9 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         links_dict = {}
 
         if additional_controllers is None:
-            additional_controllers = additional_controllers
-        else:
             additional_controllers = [WalltimeController(), MemoryController()]
+        else:
+            additional_controllers = additional_controllers
 
         #1. First SCF run in the irreducible Brillouin Zone
         scf_helper = ScfTaskHelper()
