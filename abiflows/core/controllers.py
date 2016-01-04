@@ -412,7 +412,7 @@ class WalltimeController(Controller, QueueControllerMixin):
         actions = {}
 
         # No errors found
-        if queue_errors is None:
+        if not queue_errors:
             note.state = ControllerNote.NOTHING_FOUND
             return note
 
@@ -546,7 +546,7 @@ class MemoryController(Controller, QueueControllerMixin):
         actions = {}
 
         # No errors found
-        if queue_errors is None:
+        if not queue_errors:
             note.state = ControllerNote.NOTHING_FOUND
             return note
 
@@ -770,7 +770,7 @@ class UltimateMemoryController(Controller, QueueControllerMixin):
         actions = {}
 
         # No errors found
-        if queue_errors is not None:
+        if queue_errors:
             raise ValueError('Error should have been caught by another controller ...')
 
         # No memory error found
