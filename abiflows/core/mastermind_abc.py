@@ -88,20 +88,20 @@ class ControlProcedure(MSONable):
             return report
         for priority in self.priorities:
             skip_lower_priority = False
-            skip_other_controllers = False
+            #skip_other_controllers = False
             for controller in self.grouped_controllers[priority]:
                 controller_note = controller.process(**kwargs)
                 # TODO: clean up this ...
                 report.add_controller_note(controller_note=controller_note)
-                if controller_note.state in ControllerNote.ERROR_STATES:
-                    skip_other_controllers = True
-                    break
+            #    if controller_note.state in ControllerNote.ERROR_STATES:
+            #        skip_other_controllers = True
+            #        break
                 if controller.skip_lower_priority_controllers:
                     skip_lower_priority = True
             if skip_lower_priority:
                 break
-            if skip_other_controllers:
-                break
+            #if skip_other_controllers:
+            #    break
         return report
 
     @property
