@@ -465,7 +465,8 @@ class MemoryController(Controller, QueueControllerMixin):
     """
 
     is_handler = True
-    _controlled_item_types = [ControlledItemType.task_failed()]
+    #_controlled_item_types = [ControlledItemType.task_failed()]
+    _controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]
 
 #
 #     def __init__(self, job_rundir='.', qout_file='queue.qout', qerr_file='queue.qerr', queue_adapter=None,
@@ -687,7 +688,9 @@ class UltimateMemoryController(Controller, QueueControllerMixin):
     """
 
     is_handler = True
-    _controlled_item_types = [ControlledItemType.task_failed()]
+    #_controlled_item_types = [ControlledItemType.task_failed()]
+    _controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]
+    _only_unfinalized = True
 
 #
 #     def __init__(self, job_rundir='.', qout_file='queue.qout', qerr_file='queue.qerr', queue_adapter=None,

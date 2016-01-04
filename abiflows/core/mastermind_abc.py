@@ -90,13 +90,16 @@ class ControlProcedure(MSONable):
             skip_lower_priority = False
             #skip_other_controllers = False
             for controller in self.grouped_controllers[priority]:
+                if controller._only_unfinalized and report.finalized:
+                    #TODO: clean up here ... otherwise the ultimate could always be applied .....
+                    continue
                 controller_note = controller.process(**kwargs)
                 # TODO: clean up this ...
                 report.add_controller_note(controller_note=controller_note)
             #    if controller_note.state in ControllerNote.ERROR_STATES:
             #        skip_other_controllers = True
             #        break
-                if controller.skip_lower_priority_controllers:
+                if report.state == ControlReport.RECOVERABLE and controller.skip_lower_priority_controllers:
                     skip_lower_priority = True
             if skip_lower_priority:
                 break
@@ -221,6 +224,8 @@ class Controller(MSONable):
 
     _priority = PRIORITY_MEDIUM
     _controlled_item_types = None
+    #TODO: try to make this cleaner ...
+    _only_unfinalized = False
 
     # Types of controllers
     # Combinations of the following are possible, e.g. some controller might be a monitor, a handler, a manager and a
