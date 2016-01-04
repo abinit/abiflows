@@ -773,6 +773,7 @@ class StrainPertTaskHelper(DfptTaskHelper):
 class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
     def __init__(self, piezo_elastic_factory=None, helper=None, previous_scf_task_type=ScfTaskHelper.task_type,
                  previous_ddk_task_type=DdkTaskHelper.task_type, control_procedure=None,
+                 additional_controllers=None,
                  mrgddb_task_type='mrgddb-strains',
                  rf_tol=None):
         if piezo_elastic_factory is None:
@@ -786,8 +787,13 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         self.previous_scf_task_type = previous_scf_task_type
         self.previous_ddk_task_type = previous_ddk_task_type
         if control_procedure is None:
-            self.control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(self.helper),
-                                                                   WalltimeController(), MemoryController()])
+            if additional_controllers is None:
+                controllers = [AbinitController.from_helper(self.helper),
+                               WalltimeController(), MemoryController()]
+            else:
+                controllers = [AbinitController.from_helper(self.helper)]
+                controllers.extend(additional_controllers)
+            self.control_procedure = ControlProcedure(controllers=controllers)
         else:
             self.control_procedure = control_procedure
         self.mrgddb_task_type = mrgddb_task_type

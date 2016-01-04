@@ -395,10 +395,16 @@ class NscfFWWorkflowSRC(AbstractFWWorkflow):
         fws = []
         links_dict = {}
 
+        if 'additional_controllers' in spec:
+            additional_controllers = spec['additional_controllers']
+            spec.pop('additional_controllers')
+        else:
+            additional_controllers = [WalltimeController(), MemoryController()]
         # Self-consistent calculation
         scf_helper = ScfTaskHelper()
-        scf_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
-                                                              WalltimeController(), MemoryController()])
+        scf_controllers = [AbinitController.from_helper(scf_helper)]
+        scf_controllers.extend(additional_controllers)
+        scf_control_procedure = ControlProcedure(controllers=scf_controllers)
         setup_scf_task = AbinitSetupTask(abiinput=scf_input, task_helper=scf_helper)
         run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
         control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
@@ -413,8 +419,9 @@ class NscfFWWorkflowSRC(AbstractFWWorkflow):
 
         # Non self-consistent calculation
         nscf_helper = NscfTaskHelper()
-        nscf_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(nscf_helper),
-                                                               WalltimeController(), MemoryController()])
+        nscf_controllers = [AbinitController.from_helper(nscf_helper)]
+        nscf_controllers.extend(additional_controllers)
+        nscf_control_procedure = ControlProcedure(controllers=nscf_controllers)
         setup_nscf_task = AbinitSetupTask(abiinput=nscf_input, task_helper=nscf_helper,
                                           deps={run_scf_task.task_type: 'DEN'})
         run_nscf_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
@@ -830,19 +837,23 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    STANDARD_HANDLERS = {'_all': [MemoryHandler(), WalltimeHandler()]}
-    STANDARD_VALIDATORS = {'_all': []}
-
+    
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
-                 ddk_split=False, rf_split=False):
+                 ddk_split=False, rf_split=False, additional_controllers=None):
 
         fws = []
         links_dict = {}
 
+        if additional_controllers is None:
+            additional_controllers = additional_controllers
+        else:
+            additional_controllers = [WalltimeController(), MemoryController()]
+
         #1. First SCF run in the irreducible Brillouin Zone
         scf_helper = ScfTaskHelper()
-        scf_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
-                                                              WalltimeController(), MemoryController()])
+        scf_controllers = [AbinitController.from_helper(scf_helper)]
+        scf_controllers.extend(additional_controllers)
+        scf_control_procedure = ControlProcedure(controllers=scf_controllers)
         setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
         run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
                                      task_type='scfibz')
@@ -879,8 +890,9 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
         else:
             ddk_helper = DdkTaskHelper()
-            ddk_control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(ddk_helper),
-                                                                  WalltimeController(), MemoryController()])
+            ddk_controllers = [AbinitController.from_helper(ddk_helper)]
+            ddk_controllers.extend(additional_controllers)
+            ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
             setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
                                              deps={run_scf_task.task_type: 'WFK'})
             run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
@@ -901,7 +913,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         rf_ddb_source_task_type = 'mrgddb-strains'
         gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_scf_task.task_type,
                                                            previous_ddk_task_type=run_ddk_task.task_type,
-                                                           mrgddb_task_type=rf_ddb_source_task_type)
+                                                           mrgddb_task_type=rf_ddb_source_task_type,
+                                                           additional_controllers=additional_controllers)
         genrfstrains_spec = set_short_single_core_to_spec(spec)
         gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
         fws.append(gen_fw)

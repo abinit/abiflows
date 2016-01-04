@@ -1,15 +1,13 @@
 # coding: utf-8
 """
-Error handlers and validators
+Controllers
 """
 
 import copy
-from abipy.core import Structure
 
 from abiflows.core.mastermind_abc import Action
 from abiflows.core.mastermind_abc import Controller
 from abiflows.core.mastermind_abc import ControllerNote
-from abiflows.core.mastermind_abc import ControlReport
 from abiflows.core.mastermind_abc import ControlledItemType
 from abiflows.core.mastermind_abc import PRIORITY_HIGH
 from abiflows.core.mastermind_abc import PRIORITY_VERY_LOW
@@ -21,7 +19,6 @@ from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import TimeCancelError
-from pymatgen.io.abinit.qadapters import QueueAdapter
 from pymatgen.io.abinit.utils import Directory, File
 from abipy.abio.inputs import AbinitInput
 import logging
@@ -718,7 +715,7 @@ class UltimateMemoryController(Controller, QueueControllerMixin):
         self.max_master_mem_overhead_mb = max_master_mem_overhead_mb
         self.master_mem_overhead_increase_mb = master_mem_overhead_increase_mb
         self.memory_policy = memory_policy
-        self.priority = PRIORITY_VERY_LOW
+        self.priority = PRIORITY_LOWEST
 
     @property
     def memory_policy(self):
