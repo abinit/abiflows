@@ -876,6 +876,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             nscf_inp_fbz.set_vars({'tolwfr': 1.0e-20,
                                    'kptopt': 2,
                                    'iscf': -2})
+            # Adding buffer to help convergence ...
+            if 'nbdbuf' not in nscf_inp_fbz:
+                nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
+                nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
             setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
                                                 deps={run_scf_task.task_type: ['WFK', 'DEN']})
             run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
