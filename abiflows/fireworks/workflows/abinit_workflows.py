@@ -739,7 +739,7 @@ class PiezoElasticFWWorkflowSRCOld(AbstractFWWorkflow):
                                                wf_task_index_prefix='rf',
                                                handlers=handlers['_all'], validators=validators['_all'],
                                                deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
-                                                  SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
+                                                     SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
                                                queue_adapter_update=queue_adapter_update)
             fws.extend(SRC_rf_fws['fws'])
             links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
@@ -881,14 +881,14 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
                 nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
             setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
-                                                deps={run_scf_task.task_type: ['WFK', 'DEN']})
+                                                 deps={run_scf_task.task_type: ['DEN']})
             run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
-                                            task_type='nscffbz')
+                                             task_type='nscffbz')
             control_nscffbz_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
 
             nscffbz_fws = createSRCFireworks(setup_task=setup_nscffbz_task, run_task=run_nscffbz_task,
-                                            control_task=control_nscffbz_task,
-                                            spec=spec, initialization_info=initialization_info)
+                                             control_task=control_nscffbz_task,
+                                             spec=spec, initialization_info=initialization_info)
 
             fws.extend(nscffbz_fws['fws'])
             links_dict_update(links_dict=links_dict, links_update=nscffbz_fws['links_dict'])
