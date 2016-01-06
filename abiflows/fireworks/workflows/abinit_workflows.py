@@ -75,7 +75,8 @@ class AbstractFWWorkflow(Workflow):
 
         append_fw_to_wf(cleanup_fw, self.wf)
 
-    def add_db_insert_and_cleanup(self, mongo_database, out_exts=["WFK"], insertion_data=None, criteria=None):
+    def add_db_insert_and_cleanup(self, mongo_database, out_exts=["WFK", "1WF", "DEN"], insertion_data=None,
+                                  criteria=None):
         if insertion_data is None:
             insertion_data = {'structure': 'get_final_structure_and_history'}
         spec = self.set_short_single_core_to_spec()
@@ -881,7 +882,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
                 nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
             setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
-                                                 deps={run_scf_task.task_type: ['DEN']})
+                                                 deps={run_scf_task.task_type: ['DEN']}, pass_input=True)
             run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
                                              task_type='nscffbz')
             control_nscffbz_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
