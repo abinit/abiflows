@@ -875,7 +875,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             nscf_control_procedure = ControlProcedure(controllers=nscf_controllers)
             nscf_inp_fbz = scf_inp_ibz.deepcopy()
             nscf_inp_fbz.set_vars({'tolwfr': 1.0e-20,
-                                   'kptopt': 2,
+                                   'kptopt': 3,
                                    'iscf': -2})
             # Adding buffer to help convergence ...
             if 'nbdbuf' not in nscf_inp_fbz:
