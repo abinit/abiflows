@@ -905,6 +905,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 ddk_controllers = [AbinitController.from_helper(ddk_helper)]
                 ddk_controllers.extend(additional_controllers)
                 ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
+                ddk_inp.set_vars({'kptopt': 3})
                 setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
                                                  deps={run_nscffbz_task.task_type: 'WFK'})
                 run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
