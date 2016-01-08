@@ -23,6 +23,7 @@ from abiflows.core.controllers import AbinitController, WalltimeController, Memo
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask
 from abiflows.fireworks.tasks.abinit_tasks_src import AbinitSetupTask, AbinitRunTask, AbinitControlTask
 from abiflows.fireworks.tasks.abinit_tasks_src import ScfTaskHelper, NscfTaskHelper, DdkTaskHelper
+from abiflows.fireworks.tasks.abinit_tasks_src import RelaxTaskHelper
 from abiflows.fireworks.tasks.abinit_tasks_src import GeneratePiezoElasticFlowFWSRCAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask
@@ -298,7 +299,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
                    target_dilatmx=target_dilatmx)
 
 
-class RelaxFWWorkflowSRC(AbstractFWWorkflow):
+class RelaxFWWorkflowSRCOld(AbstractFWWorkflow):
     workflow_class = 'RelaxFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
@@ -349,6 +350,88 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
                         continue
                     if this_ioncell > ioncell:
                         ioncell = this_ioncell
+                        final_fw_id = fw_id
+        if final_fw_id is None:
+            raise RuntimeError('Final structure not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
+        structure = myfw.tasks[-1].get_final_structure()
+        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+
+        return {'structure': structure.as_dict(), 'history': history}
+
+
+class RelaxFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'RelaxFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    def __init__(self, ion_input, ioncell_input, spec={}, initialization_info={}, additional_controllers=None):
+
+        fws = []
+        links_dict = {}
+
+        if additional_controllers is None:
+            additional_controllers = [WalltimeController(), MemoryController()]
+        else:
+            additional_controllers = additional_controllers
+
+        #1. Relax run at fixed cell
+        relax_helper = RelaxTaskHelper()
+        relax_controllers = [AbinitController.from_helper(relax_helper)]
+        relax_controllers.extend(additional_controllers)
+        relax_control_procedure = ControlProcedure(controllers=relax_controllers)
+        setup_relax_ions_task = AbinitSetupTask(abiinput=ion_input, task_helper=relax_helper)
+        run_relax_ions_task = AbinitRunTask(control_procedure=relax_control_procedure, task_helper=relax_helper,
+                                            task_type='ion')
+        control_relax_ions_task = AbinitControlTask(control_procedure=relax_control_procedure,
+                                                    task_helper=relax_helper)
+
+        relax_ions_fws = createSRCFireworks(setup_task=setup_relax_ions_task, run_task=run_relax_ions_task,
+                                            control_task=control_relax_ions_task,
+                                            spec=spec, initialization_info=initialization_info)
+
+        fws.extend(relax_ions_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=relax_ions_fws['links_dict'])
+
+        #2. Relax run with cell relaxation
+        setup_relax_ions_cell_task = AbinitSetupTask(abiinput=ioncell_input, task_helper=relax_helper,
+                                                     deps={relax_ions_fws['run_fw'].tasks[0].task_type: '@structure'})
+        run_relax_ions_cell_task = AbinitRunTask(control_procedure=relax_control_procedure, task_helper=relax_helper,
+                                                 task_type='ioncell')
+        control_relax_ions_cell_task = AbinitControlTask(control_procedure=relax_control_procedure,
+                                                         task_helper=relax_helper)
+
+        relax_ions_cell_fws = createSRCFireworks(setup_task=setup_relax_ions_cell_task,
+                                                 run_task=run_relax_ions_cell_task,
+                                                 control_task=control_relax_ions_cell_task,
+                                                 spec=spec, initialization_info=initialization_info)
+
+        fws.extend(relax_ions_cell_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=relax_ions_cell_fws['links_dict'])
+
+        links_dict.update({relax_ions_fws['control_fw']: relax_ions_cell_fws['setup_fw']})
+
+        self.wf = Workflow(fireworks=fws,
+                           links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+
+
+    @classmethod
+    def get_final_structure_and_history(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+        ioncell = -1
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if 'SRC_task_index' in fw.spec:
+                task_index = fw.spec['SRC_task_index']
+                if task_index.task_type == 'ioncell':
+                    if task_index.index > ioncell:
+                        ioncell = task_index.index
                         final_fw_id = fw_id
         if final_fw_id is None:
             raise RuntimeError('Final structure not found ...')

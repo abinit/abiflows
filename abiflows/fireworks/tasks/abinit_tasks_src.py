@@ -679,7 +679,95 @@ class NscfTaskHelper(GsTaskHelper):
 
 
 class RelaxTaskHelper(GsTaskHelper):
-    pass
+    task_type = "relax"
+
+    CRITICAL_EVENTS = [
+        events.RelaxConvergenceWarning,
+    ]
+
+    def get_final_structure(self):
+        """Read the final structure from the GSR file."""
+        try:
+            with self.open_gsr() as gsr:
+                return gsr.structure
+        except AttributeError:
+            msg = "Cannot find the GSR file with the final structure to restart from."
+            logger.error(msg)
+            raise PostProcessError(msg)
+
+    def prepare_restart(self):
+        self.task.abiinput.set_structure(self.get_final_structure())
+
+        return super(RelaxTaskHelper, self).prepare_restart()
+
+    def restart(self, restart_info):
+        """
+        Restart the structural relaxation.
+
+        See original RelaxTask for more details
+        """
+
+        if restart_info.reset:
+            # remove non reset keys that may have been added in a previous restart
+            self.task.remove_restart_vars(["WFK", "DEN"])
+        else:
+            # for optcell > 0 it may fail to restart if paral_kgb == 0. Do not use DEN or WFK in this case
+            #FIXME fix when Matteo makes the restart possible for paral_kgb == 0
+            paral_kgb = self.task.abiinput.get('paral_kgb', 0)
+            optcell = self.task.abiinput.get('optcell', 0)
+
+            if optcell == 0 or paral_kgb == 1:
+                restart_file = None
+
+                # Try to restart from the WFK file if possible.
+                # FIXME: This part has been disabled because WFK=IO is a mess if paral_kgb == 1
+                # This is also the reason why I wrote my own MPI-IO code for the GW part!
+                wfk_file = self.task.prev_outdir.has_abiext("WFK")
+                if False and wfk_file:
+                    irdvars = irdvars_for_ext("WFK")
+                    restart_file = self.task.out_to_in(wfk_file)
+
+                # Fallback to DEN file. Note that here we look for out_DEN instead of out_TIM?_DEN
+                # This happens when the previous run completed and task.on_done has been performed.
+                # ********************************************************************************
+                # Note that it's possible to have an undected error if we have multiple restarts
+                # and the last relax died badly. In this case indeed out_DEN is the file produced
+                # by the last run that has executed on_done.
+                # ********************************************************************************
+                if restart_file is None:
+                    out_den = self.task.prev_outdir.path_in("out_DEN")
+                    if os.path.exists(out_den):
+                        irdvars = irdvars_for_ext("DEN")
+                        restart_file = self.task.out_to_in(out_den)
+
+                if restart_file is None:
+                    # Try to restart from the last TIM?_DEN file.
+                    # This should happen if the previous run didn't complete in clean way.
+                    # Find the last TIM?_DEN file.
+                    last_timden = self.task.prev_outdir.find_last_timden_file()
+                    if last_timden is not None:
+                        ofile = self.task.prev_outdir.path_in("out_DEN")
+                        os.rename(last_timden.path, ofile)
+                        restart_file = self.task.out_to_in(ofile)
+                        irdvars = irdvars_for_ext("DEN")
+
+                if restart_file is None:
+                    # Don't raise RestartError as the structure has been updated
+                    logger.warning("Cannot find the WFK|DEN|TIM?_DEN file to restart from.")
+                else:
+                    # Add the appropriate variable for restarting.
+                    self.task.abiinput.set_vars(irdvars)
+                    logger.info("Will restart from %s", restart_file)
+
+    # def current_task_info(self, fw_spec):
+    #     d = super(RelaxTaskHelper, self).current_task_info(fw_spec)
+    #     d['structure'] = self.get_final_structure()
+    #     return d
+
+    # def conclude_task(self, fw_spec):
+    #     update_spec, mod_spec, stored_data = super(RelaxFWTask, self).conclude_task(fw_spec)
+    #     update_spec['previous_run']['structure'] = self.get_final_structure()
+    #     return update_spec, mod_spec, stored_data
 
 
 class DfptTaskHelper(AbinitTaskHelper):
@@ -912,6 +1000,10 @@ class InitializationError(Exception):
 
 
 class RestartError(Exception):
+    pass
+
+
+class PostProcessError(Exception):
     pass
 
 ##############################

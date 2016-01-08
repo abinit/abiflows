@@ -5,7 +5,11 @@ monitor and check tasks, events, results, objects, ...
 """
 
 import abc
+import fnmatch
 import logging
+import os
+import shutil
+import traceback
 
 from six import add_metaclass
 from monty.json import MontyDecoder
@@ -45,10 +49,11 @@ PRIORITY_LOWEST = PRIORITIES['PRIORITY_LOWEST']
 # class ControlBarrier(MSONable):
 class ControlProcedure(MSONable):
 
-    def __init__(self, controllers, monitors=None, sorting=None):
+    def __init__(self, controllers, monitors=None, sorting=None, cleaner=None):
         self.controllers = []
         self.add_controllers(controllers=controllers)
         self.controlled_item_type = None
+        self.cleaner = cleaner
 
     def set_controlled_item_type(self, controlled_item_type):
         self.controlled_item_type = controlled_item_type
@@ -105,6 +110,8 @@ class ControlProcedure(MSONable):
                 break
             #if skip_other_controllers:
             #    break
+        if report.finalized and self.cleaner is not None:
+            self.cleaner.clean()
         return report
 
     @property
@@ -114,12 +121,17 @@ class ControlProcedure(MSONable):
     @classmethod
     def from_dict(cls, d):
         dec = MontyDecoder()
+        if 'cleaner' in d:
+            cleaner = Cleaner.from_dict(d['cleaner']) if d['cleaner'] is not None else None
+        else:
+            cleaner = None
         return cls(controllers=dec.process_decoded(d['controllers']))
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
                 '@module': self.__class__.__module__,
-                'controllers': [controller.as_dict() for controller in self.controllers]}
+                'controllers': [controller.as_dict() for controller in self.controllers],
+                'cleaner': self.cleaner.as_dict() if self.cleaner is not None else None}
 
 
 class ControlledItemType(MSONable):
@@ -303,6 +315,64 @@ class Controller(MSONable):
     @property
     def validated(self):
         return None
+
+
+class Cleaner(MSONable):
+    def __init__(self, dirs_and_patterns):
+        """
+        Initializes a Cleaner object used to delete files. The cleaner takes a simple list of dict described below
+        :param dirs_and_patterns: list of dicts with keys "directory" and "patterns". for each item in the list, any
+                                  file or directory present in the "directory" and matching one of the "patterns" will
+                                  be deleted.
+        Example : dirs_and_patterns = [{'directory': 'out',
+                                        'patterns': ['*.log', '*.backup']},
+                                       {'directory': 'tmp',
+                                        'patterns': ['*']}]
+                  will remove all files ending with ".log" or ".backup" in the "out" directory and all files in the
+                  "tmp" directory.
+
+        """
+        self.dirs_and_patterns = dirs_and_patterns
+
+    def clean(self):
+        deleted_files = []
+        for dir_and_patterns in self.dirs_and_patterns:
+            if os.path.isabs(dir_and_patterns['directory']):
+                directory = dir_and_patterns['directory']
+            else:
+                directory = os.path.join(os.getcwd(), dir_and_patterns['directory'])
+            if os.path.isdir(directory):
+                for file in os.listdir(directory):
+                    for patt in dir_and_patterns['patterns']:
+                        if fnmatch.fnmatch(file, patt):
+                            fp = os.path.join(directory, file)
+                            try:
+                                if os.path.isfile(fp):
+                                    os.unlink(fp)
+                                elif os.path.isdir(fp):
+                                    shutil.rmtree(fp)
+                                deleted_files.append(fp)
+                                break
+                            except:
+                                logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
+        pass
+
+    # def delete_files(d, exts=None):
+    #     deleted_files = []
+    #     if os.path.isdir(d):
+    #         for f in os.listdir(d):
+    #             if exts is None or "*" in exts or any(ext in f for ext in exts):
+    #                 fp = os.path.join(d, f)
+    #                 try:
+    #                     if os.path.isfile(fp):
+    #                         os.unlink(fp)
+    #                     elif os.path.isdir(fp):
+    #                         shutil.rmtree(fp)
+    #                     deleted_files.append(fp)
+    #                 except:
+    #                     logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
+    #
+    #     return deleted_files
 
 
 @add_metaclass(abc.ABCMeta)
