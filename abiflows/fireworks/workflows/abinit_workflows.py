@@ -398,7 +398,7 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
 
         #2. Relax run with cell relaxation
         setup_relax_ions_cell_task = AbinitSetupTask(abiinput=ioncell_input, task_helper=relax_helper,
-                                                     deps={relax_ions_fws['run_fw'].tasks[0].task_type: '@structure'})
+                                                     deps={run_relax_ions_task.task_type: '@structure'})
         run_relax_ions_cell_task = AbinitRunTask(control_procedure=relax_control_procedure, task_helper=relax_helper,
                                                  task_type='ioncell')
         control_relax_ions_cell_task = AbinitControlTask(control_procedure=relax_control_procedure,
