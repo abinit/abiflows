@@ -119,6 +119,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         os.chdir(self.setup_dir)
         # Make the file transfers from another worker if needed
         self.file_transfers(fw_spec=fw_spec)
+        # Get back information from the previous runs
+        self.fetch_previous_info(fw_spec=fw_spec)
         # Setup the parameters for the run (number of cpus, time, memory, openmp, ...)
         params = list(self.RUN_PARAMETERS)
         if 'src_modified_objects' in fw_spec:
@@ -159,6 +161,9 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         return {}
 
     def file_transfers(self, fw_spec):
+        pass
+
+    def fetch_previous_info(self, fw_spec):
         pass
 
     def prepare_run(self, fw_spec):

@@ -27,9 +27,11 @@ from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit import events
 from pymatgen.io.abinit.qutils import time2slurm
 from abipy.abio.factories import InputFactory
+
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.abio.input_tags import STRAIN
+from abipy.electrons.gsr import GsrFile
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
@@ -102,6 +104,10 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         self.task_helper = task_helper
         self.task_helper.set_task(self)
 
+    def setup_directories(self, fw_spec, create_dirs=False):
+        SetupTask.setup_directories(self, fw_spec=fw_spec, create_dirs=create_dirs)
+        self.setup_rundir(rundir=self.run_dir, create_dirs=create_dirs)
+
     def run_task(self, fw_spec):
         #TODO create a initialize_setup abstract function in SetupTask and put it there? or move somewhere else?
         #setup the FWTaskManager
@@ -129,6 +135,10 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 
     def file_transfers(self, fw_spec):
         pass
+
+    def fetch_previous_info(self, fw_spec):
+        # Copy the appropriate dependencies in the in dir
+        self.resolve_deps(fw_spec)
 
     def prepare_run(self, fw_spec):
         # if the input is a factory, dynamically create the abinit input. From now on the code will expect an
@@ -179,10 +189,12 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         # if 'previous_fws' in fw_spec and not self.restart_info:
         #     self.load_previous_fws_data(fw_spec)
 
-        self.setup_rundir(rundir=self.run_dir, create_dirs=True)
+        # THE FOLLOWING HAS BEEN MOVED TO setup_directories
+        # self.setup_rundir(rundir=self.run_dir, create_dirs=True)
 
+        # THE FOLLOWING HAS BEEN MOVED TO fetch_previous_info
         # Copy the appropriate dependencies in the in dir
-        self.resolve_deps(fw_spec)
+        # self.resolve_deps(fw_spec)
 
         # if it's the restart of a previous task, perform specific task updates.
         # perform these updates before writing the input, but after creating the dirs.
@@ -291,11 +303,14 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         for previous_task in previous_tasks:
             for d in deps_list:
                 if d.startswith('@structure'):
-                    if 'structure' not in previous_task:
-                        msg = "previous_fws does not contain the structure."
-                        logger.error(msg)
-                        raise SetupError(msg)
-                    self.abiinput.set_structure(previous_task['structure'])
+                    source_dir = previous_task['dir']
+                    gsr_file = GsrFile(os.path.join(source_dir, 'outdata', 'out_GSR.nc'))
+                    self.abiinput.set_structure(gsr_file.structure)
+                    # if 'structure' not in previous_task:
+                    #     msg = "previous_fws does not contain the structure."
+                    #     logger.error(msg)
+                    #     raise SetupError(msg)
+                    # self.abiinput.set_structure(previous_task['structure'])
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
@@ -695,10 +710,10 @@ class RelaxTaskHelper(GsTaskHelper):
             logger.error(msg)
             raise PostProcessError(msg)
 
-    def prepare_restart(self):
-        self.task.abiinput.set_structure(self.get_final_structure())
-
-        return super(RelaxTaskHelper, self).prepare_restart()
+    # def prepare_restart(self):
+    #     self.task.abiinput.set_structure(self.get_final_structure())
+    #
+    #     return super(RelaxTaskHelper, self).prepare_restart()
 
     def restart(self, restart_info):
         """
