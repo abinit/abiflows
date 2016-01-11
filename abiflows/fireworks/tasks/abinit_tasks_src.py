@@ -722,7 +722,7 @@ class RelaxTaskHelper(GsTaskHelper):
         See original RelaxTask for more details
         """
 
-        if restart_info.reset:
+        if restart_info == RESET_RESTART:
             # remove non reset keys that may have been added in a previous restart
             self.task.remove_restart_vars(["WFK", "DEN"])
         else:
