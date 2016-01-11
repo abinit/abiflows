@@ -427,9 +427,9 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
         ioncell = -1
         final_fw_id = None
         for fw_id, fw in wf.id_fw.items():
-            if fw.tasks[-1].src_type != 'run':
-                continue
             if 'SRC_task_index' in fw.spec:
+                if fw.tasks[-1].src_type != 'run':
+                    continue
                 task_index = fw.spec['SRC_task_index']
                 if task_index.task_type == 'ioncell':
                     if task_index.index > ioncell:
