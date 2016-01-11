@@ -443,9 +443,11 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
         last_launch = (myfw.archived_launches + myfw.launches)[-1]
         #TODO add a cycle to find the instance of AbiFireTask?
         # myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
-        mytask.setup_rundir(last_launch.launch_dir, create_dirs=False)
-        helper = mytask.task_helper
+        # mytask.setup_rundir(last_launch.launch_dir, create_dirs=False)
+        helper = RelaxTaskHelper()
         helper.set_task(mytask)
+        helper.task.setup_rundir(last_launch.launch_dir, create_dirs=False)
+        # helper.set_task(mytask)
 
         structure = helper.get_final_structure()
         history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
