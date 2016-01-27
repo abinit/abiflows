@@ -1469,7 +1469,7 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         ext = '_DDB'
 
         files = []
-        for f in self.list_filepaths():
+        for f in filepaths:
             if f.endswith(ext):
                 files.append(f)
 
