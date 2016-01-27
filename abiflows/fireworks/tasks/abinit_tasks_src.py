@@ -539,8 +539,9 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
 @explicit_serialize
 class AbinitControlTask(AbinitSRCMixin, ControlTask):
 
-    def __init__(self, control_procedure, manager=None, max_restarts=10, task_helper=None):
-        ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts)
+    def __init__(self, control_procedure, manager=None, max_restarts=10, src_cleaning=None, task_helper=None):
+        ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts,
+                             src_cleaning=src_cleaning)
         self.task_helper = task_helper
 
     def get_initial_objects_info(self, setup_fw, run_fw, src_directories):
