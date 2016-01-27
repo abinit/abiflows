@@ -109,8 +109,8 @@ class ControlProcedure(MSONable):
                 break
             #if skip_other_controllers:
             #    break
-        if report.finalized and self.cleaner is not None:
-            self.cleaner.clean()
+        # if report.finalized and self.cleaner is not None:
+        #     self.cleaner.clean()
         return report
 
     @property
