@@ -1048,10 +1048,13 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
             #4. Response-Function calculation(s) of the elastic constants
             rf_ddb_source_task_type = 'mrgddb-strains'
+            rf_tolvar, value = rf_inp.scf_tolvar
+            rf_tol = {rf_tolvar: value}
             gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
                                                                previous_ddk_task_type=run_ddk_task.task_type,
                                                                mrgddb_task_type=rf_ddb_source_task_type,
-                                                               additional_controllers=additional_controllers)
+                                                               additional_controllers=additional_controllers,
+                                                               rf_tol=rf_tol)
             genrfstrains_spec = set_short_single_core_to_spec(spec)
             gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
             fws.append(gen_fw)

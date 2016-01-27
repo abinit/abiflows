@@ -49,11 +49,10 @@ PRIORITY_LOWEST = PRIORITIES['PRIORITY_LOWEST']
 # class ControlBarrier(MSONable):
 class ControlProcedure(MSONable):
 
-    def __init__(self, controllers, monitors=None, sorting=None, cleaner=None):
+    def __init__(self, controllers, monitors=None, sorting=None):
         self.controllers = []
         self.add_controllers(controllers=controllers)
         self.controlled_item_type = None
-        self.cleaner = cleaner
 
     def set_controlled_item_type(self, controlled_item_type):
         self.controlled_item_type = controlled_item_type
@@ -121,17 +120,12 @@ class ControlProcedure(MSONable):
     @classmethod
     def from_dict(cls, d):
         dec = MontyDecoder()
-        if 'cleaner' in d:
-            cleaner = Cleaner.from_dict(d['cleaner']) if d['cleaner'] is not None else None
-        else:
-            cleaner = None
         return cls(controllers=dec.process_decoded(d['controllers']))
 
     def as_dict(self):
         return {'@class': self.__class__.__name__,
                 '@module': self.__class__.__module__,
-                'controllers': [controller.as_dict() for controller in self.controllers],
-                'cleaner': self.cleaner.as_dict() if self.cleaner is not None else None}
+                'controllers': [controller.as_dict() for controller in self.controllers]}
 
 
 class ControlledItemType(MSONable):
@@ -332,15 +326,18 @@ class Cleaner(MSONable):
                   "tmp" directory.
 
         """
+        for dir_and_patterns in dirs_and_patterns:
+            if os.path.isabs(dir_and_patterns['directory']):
+                raise ValueError('The definition of the directories to clean should be as relative paths and not '
+                                 'absolute paths')
         self.dirs_and_patterns = dirs_and_patterns
 
-    def clean(self):
+    def clean(self, root_directory):
+        if not os.path.isabs(root_directory):
+            raise ValueError('The root directory to clean should be defined with an absolute path')
         deleted_files = []
         for dir_and_patterns in self.dirs_and_patterns:
-            if os.path.isabs(dir_and_patterns['directory']):
-                directory = dir_and_patterns['directory']
-            else:
-                directory = os.path.join(os.getcwd(), dir_and_patterns['directory'])
+            directory = os.path.join(root_directory, dir_and_patterns['directory'])
             if os.path.isdir(directory):
                 for file in os.listdir(directory):
                     for patt in dir_and_patterns['patterns']:
