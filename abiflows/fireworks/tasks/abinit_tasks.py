@@ -1453,7 +1453,9 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
             # previous_fws contains duplicates ... (might be due to _push_all or SRC scheme somewhere)
             if t['dir'] in mydirs:
                 continue
-            ddb = Directory(os.path.join(t['dir'], OUTDIR_NAME)).has_abiext('DDB')
+            filepaths = Directory(os.path.join(t['dir'], OUTDIR_NAME)).list_filepaths()
+            # ddb = Directory(os.path.join(t['dir'], OUTDIR_NAME)).has_abiext('DDB')
+            ddb = self.get_ddb_from_filepaths(filepaths=filepaths)
             if not ddb:
                 msg = "One of the task of type {} (folder: {}) " \
                       "did not produce a DDB file!".format(task_type, t['dir'])
@@ -1461,6 +1463,25 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
             mydirs.append(t['dir'])
             ddb_files.append(ddb)
         return ddb_files
+
+    def get_ddb_from_filepaths(self, filepaths):
+        #TODO: temporary fix due to new DDB.nc in addition to DDB ... then has_abiext finds multiple multiple files ...
+        ext = '_DDB'
+
+        files = []
+        for f in self.list_filepaths():
+            if f.endswith(ext):
+                files.append(f)
+
+        if not files:
+            return None
+
+        if len(files) > 1:
+            # ABINIT users must learn that multiple datasets are bad!
+            err_msg = "Found multiple files with the same extensions:\n %s\nPlease avoid the use of mutiple datasets!" % files
+            raise ValueError(err_msg)
+
+        return files[0]
 
     def get_event_report(self, ofile_name="mrgddb.stdout"):
         ofile = File(os.path.join(self.workdir, ofile_name))
