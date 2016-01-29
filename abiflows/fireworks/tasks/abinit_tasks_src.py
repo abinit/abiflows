@@ -554,7 +554,8 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
                 'abinit_output_filepath': {'object': os.path.join(run_dir, OUTPUT_FILE_NAME)},
                 'abinit_log_filepath': {'object': os.path.join(run_dir, LOG_FILE_NAME)},
                 'abinit_mpi_abort_filepath': {'object': os.path.join(run_dir, MPIABORTFILE)},
-                'abinit_outdir_path': {'object': os.path.join(run_dir, OUTDIR_NAME)}}
+                'abinit_outdir_path': {'object': os.path.join(run_dir, OUTDIR_NAME)},
+                'abinit_err_filepath': {'object': os.path.join(run_dir, STDERR_FILE_NAME)}}
 
             # initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
             #                                            'updates': [{'target': 'fw_spec',
