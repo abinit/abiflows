@@ -118,6 +118,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         return super(AbinitSetupTask, self).run_task(fw_spec)
 
     def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
+        self.abiinput.remove_vars(['npkpt', 'npspinor', 'npband', 'npfft', 'bandpp'], strict=False)
         optconf, qtk_qadapter = self.run_autoparal(self.abiinput, fw_spec)
 
         # if 'queue_adapter_update' in fw_spec:
@@ -130,6 +131,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         #             qtk_qadapter.set_master_mem_overhead(qa_val)
         #         else:
         #             raise ValueError('queue_adapter update "{}" is not valid'.format(qa_key))
+        self.abiinput.set_vars(optconf.vars)
 
         return {'_queueadapter': qtk_qadapter.get_subs_dict(), 'qtk_queueadapter': qtk_qadapter}
 
