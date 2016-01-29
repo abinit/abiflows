@@ -929,6 +929,9 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         initialization_info = fw_spec.get('initialization_info', {})
         initialization_info['input_factory'] = self.piezo_elastic_factory.as_dict()
         new_spec = dict(initialization_info=initialization_info, previous_fws=fw_spec.get('previous_fws', {}))
+        initial_parameters = fw_spec.get('initial_parameters', None)
+        if initial_parameters:
+            new_spec['initial_parameters'] = initial_parameters
 
         # Create the SRC fireworks for each perturbation
         all_SRC_rf_fws = []
