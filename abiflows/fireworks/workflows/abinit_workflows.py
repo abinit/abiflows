@@ -114,7 +114,6 @@ class AbstractFWWorkflow(Workflow):
         if den_task_type_source is None:
             den_task_type_source = 'scf'
         # Find the Firework that should compute the DEN file
-        den_fw_id = None
         den_fw = None
         control_fw_id = None
         for fw_id, fw in self.wf.id_fw.items():
@@ -150,7 +149,8 @@ class AbstractFWWorkflow(Workflow):
         self.wf.append_wf(new_wf=Workflow.from_Firework(bader_fw), fw_ids=[control_fw_id],
                           detour=False, pull_spec_mods=False)
 
-    def get_bader_charges(self, wf):
+    @classmethod
+    def get_bader_charges(cls, wf):
         # I dont think we need that here ...
         # assert wf.metadata['workflow_class'] == self.workflow_class
         # assert wf.metadata['workflow_module'] == self.workflow_module
@@ -169,7 +169,11 @@ class AbstractFWWorkflow(Workflow):
         #TODO add a cycle to find the instance of AbiFireTask?
         myfw.tasks[-1].setup_rundir(rundir=last_launch.launch_dir)
         bader_data = myfw.tasks[-1].get_bader_data()
-        abinit_input = myfw.spec['previous_fws'][myfw['den_task_type_source']]['input']
+        if len(myfw.spec['previous_fws'][myfw.spec['den_task_type_source']]) != 1:
+            raise ValueError('Found "{:d}" previous fws with task_type "{}" while there should be only '
+                             'one.'.format(len(myfw.spec['previous_fws'][myfw.spec['den_task_type_source']]),
+                                           myfw.spec['den_task_type_source']))
+        abinit_input = myfw.spec['previous_fws'][myfw.spec['den_task_type_source']][0]['input']
         psp_valences = abinit_input.valence_electrons_per_atom()
         bader_charges = [atom['CHARGE'] for atom in bader_data]
         bader_charges_transfer = [psp_valences[iatom]-bader_charges[iatom] for iatom in range(len(psp_valences))]
