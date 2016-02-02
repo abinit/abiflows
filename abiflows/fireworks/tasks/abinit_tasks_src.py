@@ -1128,7 +1128,9 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
             command = []
             #consider the case of serial execution
             command.append(bader_exe)
-            command.append(self.cube_filepath)
+            (cube_dirpath, cube_filename) = os.path.split(self.cube_filepath)
+            os.symlink(self.cube_filepath, cube_filename)
+            command.append(cube_filename)
             with open(self.bader_log_file, 'w') as stdout, open(self.bader_err_file, 'w') as stderr:
                 self.process = subprocess.Popen(command, stdout=stdout, stderr=stderr)
 
