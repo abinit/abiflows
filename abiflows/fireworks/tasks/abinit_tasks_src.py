@@ -11,6 +11,7 @@ import subprocess
 import time
 from monty.json import MSONable
 from monty.json import MontyDecoder
+from monty.os.path import which
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask, SetupError, createSRCFireworks
 from abiflows.core.mastermind_abc import ControllerNote, ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
@@ -1034,11 +1035,12 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
 
         self.resolve_deps(fw_spec=fw_spec)
 
+        cube_filename = 'density.cube'
         # TODO: make this more general ?
-        cut3d_input = Cut3DInput.den_to_cube(self.files['density'], cube_filename='density.cube')
+        cut3d_input = Cut3DInput.den_to_cube(self.files['density'], cube_filename=cube_filename)
         cut3d_input.write_input(self.cut3d_input_file)
         self.run_cut3d()
-        return FWAction(update_spec={'cut3d_directory': self.workdir})
+        return FWAction(update_spec={'cut3d_directory': self.workdir, 'cube_filename': cube_filename})
 
     @classmethod
     def den_to_cube(cls, deps, task_type=None):
@@ -1080,17 +1082,84 @@ class BaderTask(FireTaskBase):
     task_type = "bader"
 
 
-    def __init__(self, cube_filepath):
+    def __init__(self, bader_log_file='bader.log', bader_err_file='bader.err'):
         """
         General constructor for Cut3D task.
         """
-        self.cube_filepath = cube_filepath
+
+        self.bader_log_file = bader_log_file
+        self.bader_err_file = bader_err_file
 
     def set_workdir(self, workdir):
         self.workdir = workdir
 
+    def run_bader(self):
+        """
+        executes bader and waits for the end of the process.
+        """
+
+        bader_exe = which('bader')
+        if bader_exe is None:
+            raise ValueError('The bader executable is not in the PATH')
+        def bader_process():
+            command = []
+            #consider the case of serial execution
+            command.append(bader_exe)
+            command.append(self.cube_filepath)
+            with open(self.bader_log_file, 'w') as stdout, open(self.bader_err_file, 'w') as stderr:
+                self.process = subprocess.Popen(command, stdout=stdout, stderr=stderr)
+
+            (stdoutdata, stderrdata) = self.process.communicate()
+            self.returncode = self.process.returncode
+
+        # initialize returncode to avoid missing references in case of exception in the other thread
+        self.returncode = None
+
+        thread = threading.Thread(target=bader_process)
+        # the amount of time left plus a buffer of 2 minutes
+        timeout = (self.walltime - (time.time() - self.start_time) - 120) if self.walltime else None
+        thread.start()
+        thread.join(timeout)
+        if thread.is_alive():
+            self.process.terminate()
+            thread.join()
+            raise WalltimeError("The cut3d task couldn't be terminated within the time limit. Killed.")
+
+    def setup_rundir(self, rundir):
+        # Directories with input|output|temporary data.
+        self.bader_dir = Directory(os.path.join(rundir, 'bader'))
+        self.rundir = self.bader_dir.path
+
+        # Create dir for bader
+        self.bader_dir.makedirs()
+
     def run_task(self, fw_spec):
-        pass
+        self.cube_filepath = os.path.join(fw_spec['cut3d_directory'], fw_spec['cube_filename'])
+        self.setup_rundir(os.getcwd())
+        os.chdir(self.rundir)
+        self.run_bader()
+        return FWAction(update_spec={'bader_directory': self.rundir})
+
+    @serialize_fw
+    def to_dict(self):
+        d = {}
+        for arg in inspect.getargspec(self.__init__).args:
+            if arg != "self":
+                val = self.__getattribute__(arg)
+                if hasattr(val, "as_dict"):
+                    val = val.as_dict()
+                elif isinstance(val, (tuple, list)):
+                    val = [v.as_dict() if hasattr(v, "as_dict") else v for v in val]
+                d[arg] = val
+
+        return d
+
+    @classmethod
+    def from_dict(cls, d):
+        dec = MontyDecoder()
+        kwargs = {k: dec.process_decoded(v) for k, v in d.items()
+                  if k in inspect.getargspec(cls.__init__).args}
+        return cls(**kwargs)
 
 
 
