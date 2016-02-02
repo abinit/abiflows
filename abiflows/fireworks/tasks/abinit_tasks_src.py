@@ -1093,6 +1093,29 @@ class BaderTask(FireTaskBase):
     def set_workdir(self, workdir):
         self.workdir = workdir
 
+    def setup_task(self, fw_spec):
+        self.start_time = time.time()
+
+        # self.set_logger()
+
+        # load the FWTaskManager to get configuration parameters
+        self.ftm = self.get_fw_task_manager(fw_spec)
+
+        # set walltime, if possible
+        self.walltime = None
+        if self.ftm.fw_policy.walltime_command:
+            try:
+                p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err =p.communicate()
+                status = p.returncode
+                if status == 0:
+                    self.walltime = int(out)
+                else:
+                    logger.warning("Impossible to get the walltime: " + err)
+            except Exception as e:
+                logger.warning("Impossible to get the walltime: ", exc_info=True)
+
     def run_bader(self):
         """
         executes bader and waits for the end of the process.
@@ -1134,6 +1157,7 @@ class BaderTask(FireTaskBase):
         self.bader_dir.makedirs()
 
     def run_task(self, fw_spec):
+        self.setup_task(fw_spec=fw_spec)
         self.cube_filepath = os.path.join(fw_spec['cut3d_directory'], fw_spec['cube_filename'])
         self.setup_rundir(os.getcwd())
         os.chdir(self.rundir)
