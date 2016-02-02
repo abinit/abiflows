@@ -141,6 +141,7 @@ class FWTaskManager(object):
                               abinit_cmd='abinit',
                               mrgddb_cmd='mrgddb',
                               anaddb_cmd='anaddb',
+                              cut3d_cmd='cut3d',
                               mpirun_cmd='mpirun',
                               copy_deps=False,
                               walltime_command=None,
