@@ -116,6 +116,7 @@ class AbstractFWWorkflow(Workflow):
         # Find the Firework that should compute the DEN file
         den_fw_id = None
         den_fw = None
+        control_fw_id = None
         for fw_id, fw in self.wf.id_fw.items():
             for task in fw.tasks:
                 if isinstance(task, AbinitSetupTask):
@@ -123,6 +124,14 @@ class AbstractFWWorkflow(Workflow):
                         if den_fw is None:
                             den_fw = fw
                             den_fw_id = fw_id
+                            if len(self.wf.links[den_fw_id]) != 1:
+                                raise ValueError('AbinitSetupTask has {:d} children while it should have exactly '
+                                                 'one'.format(len(self.wf.links[den_fw_id])))
+                            run_fw_id = self.wf.links[den_fw_id][0].fw_id
+                            if len(self.wf.links[run_fw_id]) != 1:
+                                raise ValueError('AbinitRunTask has {:d} children while it should have exactly '
+                                                 'one'.format(len(self.wf.links[run_fw_id])))
+                            control_fw_id = self.wf.links[run_fw_id][0].fw_id
                         else:
                             raise ValueError('Found more than one Firework with Abinit '
                                              'task_type "{}".'.format(den_task_type_source))
@@ -138,7 +147,7 @@ class AbstractFWWorkflow(Workflow):
         bader_fw = Firework([cut3d_task, bader_task], spec=spec,
                             name=("bader")[:15])
 
-        self.wf.append_wf(new_wf=Workflow.from_Firework(bader_fw), fw_ids=[den_fw_id],
+        self.wf.append_wf(new_wf=Workflow.from_Firework(bader_fw), fw_ids=[control_fw_id],
                           detour=False, pull_spec_mods=False)
 
     def get_bader_charges(self, wf):
