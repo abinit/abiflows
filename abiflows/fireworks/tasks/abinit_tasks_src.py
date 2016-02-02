@@ -1078,7 +1078,7 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
 
 
 @explicit_serialize
-class BaderTask(FireTaskBase):
+class BaderTask(AbinitSRCMixin, FireTaskBase):
     task_type = "bader"
 
 
