@@ -28,7 +28,8 @@ class Cut3DInput(object):
     def den_to_cube(cls, density_filepath, cube_filename):
         input = [density_filepath]          # Path to the _DEN file
         input.append('1')                   # _DEN file is a binary file
+        input.append('0')                   # Use the total density
         input.append('14')                  # Option to convert _DEN file to a .cube file
         input.append(cube_filename)         # Name of the output .cube file
         input.append('0')                   # No more analysis
-        cls(cut3d_input=input)
+        return cls(cut3d_input=input)

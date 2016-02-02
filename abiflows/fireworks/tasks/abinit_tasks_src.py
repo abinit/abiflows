@@ -916,7 +916,7 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
             #consider the case of serial execution
             command.append(self.ftm.fw_policy.cut3d_cmd)
             with open(self.cut3d_input_file, 'r') as stdin, open(self.cut3d_log_file, 'w') as stdout, \
-                    open(self.stderr_file.path, 'w') as stderr:
+                    open(self.cut3d_err_file, 'w') as stderr:
                 self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
 
             (stdoutdata, stderrdata) = self.process.communicate()
@@ -938,7 +938,7 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
     def setup_task(self, fw_spec):
         self.start_time = time.time()
 
-        self.set_logger()
+        # self.set_logger()
 
         # load the FWTaskManager to get configuration parameters
         self.ftm = self.get_fw_task_manager(fw_spec)
@@ -1030,6 +1030,7 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
     def run_task(self, fw_spec):
         self.setup_task(fw_spec=fw_spec)
         self.setup_rundir(rundir=os.getcwd(), create_dirs=True, directories_only=True)
+        self.workdir = os.getcwd()
 
         self.resolve_deps(fw_spec=fw_spec)
 
