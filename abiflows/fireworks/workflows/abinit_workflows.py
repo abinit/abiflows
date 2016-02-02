@@ -112,14 +112,62 @@ class AbstractFWWorkflow(Workflow):
     def add_bader_task(self, den_task_type_source=None):
         spec = self.set_short_single_core_to_spec()
         if den_task_type_source is None:
-            cut3d_task = Cut3DAbinitTask.den_to_cube(deps=['DEN'])
-            bader_task = BaderTask()
-            bader_fw = Firework([cut3d_task, bader_task], spec=spec,
-                                name=(self.wf.name+"bader")[:15])
-        else:
-            raise NotImplementedError('Bader from specified task_type source not yet implemented')
+            den_task_type_source = 'scf'
+        # Find the Firework that should compute the DEN file
+        den_fw_id = None
+        den_fw = None
+        for fw_id, fw in self.wf.id_fw.items():
+            for task in fw.tasks:
+                if isinstance(task, AbinitSetupTask):
+                    if task.task_type == den_task_type_source:
+                        if den_fw is None:
+                            den_fw = fw
+                            den_fw_id = fw_id
+                        else:
+                            raise ValueError('Found more than one Firework with Abinit '
+                                             'task_type "{}".'.format(den_task_type_source))
+        if den_fw is None:
+            raise ValueError('Firework with Abinit task_type "{}" not found.'.format(den_task_type_source))
+        # Set the pass_input variable of the task to True (needed to get the pseudo valence electrons)
+        for task in den_fw.tasks:
+            if isinstance(task, AbinitSetupTask):
+                task.pass_input = True
+        spec['den_task_type_source'] = den_task_type_source
+        cut3d_task = Cut3DAbinitTask.den_to_cube(deps=['DEN'])
+        bader_task = BaderTask()
+        bader_fw = Firework([cut3d_task, bader_task], spec=spec,
+                            name=("bader")[:15])
 
-        append_fw_to_wf(bader_fw, self.wf)
+        self.wf.append_wf(new_wf=Workflow.from_Firework(bader_fw), fw_ids=[den_fw_id],
+                          detour=False, pull_spec_mods=False)
+
+    def get_bader_charges(self, wf):
+        # I dont think we need that here ...
+        # assert wf.metadata['workflow_class'] == self.workflow_class
+        # assert wf.metadata['workflow_module'] == self.workflow_module
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if fw.name == 'bader':
+                if not final_fw_id:
+                    final_fw_id = fw_id
+                else:
+                    raise ValueError('Multiple Fireworks found with name equal to "bader"')
+        if final_fw_id is None:
+            raise RuntimeError('Bader analysis not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        myfw.tasks[-1].setup_rundir(rundir=last_launch.launch_dir)
+        bader_data = myfw.tasks[-1].get_bader_data()
+        abinit_input = myfw.spec['previous_fws'][myfw['den_task_type_source']]['input']
+        psp_valences = abinit_input.valence_electrons_per_atom()
+        bader_charges = [atom['CHARGE'] for atom in bader_data]
+        bader_charges_transfer = [psp_valences[iatom]-bader_charges[iatom] for iatom in range(len(psp_valences))]
+
+        return {'bader_analysis': {'pseudo_valence_charges': abinit_input.valence_electrons_per_atom(),
+                                   'bader_charges': bader_charges,
+                                   'bader_charges_transfer': bader_charges_transfer}}
 
     def add_metadata(self, structure=None, additional_metadata={}):
         metadata = dict(wf_type = self.__class__.__name__)

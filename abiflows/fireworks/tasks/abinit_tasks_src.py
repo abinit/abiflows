@@ -90,8 +90,10 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 
     RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
 
-    def __init__(self, abiinput, deps=None, task_helper=None, restart_info=None, pass_input=False):
-        SetupTask.__init__(self, deps=deps, restart_info=restart_info)
+    def __init__(self, abiinput, deps=None, task_helper=None, task_type=None, restart_info=None, pass_input=False):
+        if task_type is None:
+            task_type = task_helper.task_type
+        SetupTask.__init__(self, deps=deps, restart_info=restart_info, task_type=task_type)
         self.abiinput = abiinput
         self.pass_input = pass_input
 
@@ -1150,13 +1152,14 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
             thread.join()
             raise WalltimeError("The cut3d task couldn't be terminated within the time limit. Killed.")
 
-    def setup_rundir(self, rundir):
+    def setup_rundir(self, rundir, create_dirs=True, directories_only=False):
         # Directories with input|output|temporary data.
         self.bader_dir = Directory(os.path.join(rundir, 'bader'))
         self.rundir = self.bader_dir.path
 
         # Create dir for bader
-        self.bader_dir.makedirs()
+        if create_dirs:
+            self.bader_dir.makedirs()
 
     def run_task(self, fw_spec):
         self.setup_task(fw_spec=fw_spec)
@@ -1165,6 +1168,29 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
         os.chdir(self.rundir)
         self.run_bader()
         return FWAction(update_spec={'bader_directory': self.rundir})
+
+    def get_bader_data(self):
+        os.chdir(self.rundir)
+        data = []
+        with open("ACF.dat") as f:
+            raw = f.readlines()
+            headers = [s.lower() for s in raw.pop(0).split()]
+            raw.pop(0)
+            while True:
+                l = raw.pop(0).strip()
+                if l.startswith("-"):
+                    break
+                vals = map(float, l.split()[1:])
+                data.append(dict(zip(headers[1:], vals)))
+            for l in raw:
+                toks = l.strip().split(":")
+                if toks[0] == "VACUUM CHARGE":
+                    self.vacuum_charge = float(toks[1])
+                elif toks[0] == "VACUUM VOLUME":
+                    self.vacuum_volume = float(toks[1])
+                elif toks[0] == "NUMBER OF ELECTRONS":
+                    self.nelectrons = float(toks[1])
+        return data
 
     @serialize_fw
     def to_dict(self):

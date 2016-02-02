@@ -89,10 +89,11 @@ class SRCTaskMixin(object):
 class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
+    task_type = 'unknown'
 
     RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus', 'qtk_queueadapter']
 
-    def __init__(self, deps=None, restart_info=None):
+    def __init__(self, deps=None, restart_info=None, task_type=None):
 
         # TODO: if at some point, this is not enough (as for the ddk, or for the structure, or for anything else,
         #       we could thing of an object ?
@@ -107,6 +108,9 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         self.deps = deps
 
         self.restart_info = restart_info
+
+        if task_type is not None:
+            self.task_type = task_type
 
     def set_restart_info(self, restart_info=None):
         self.restart_info = restart_info
