@@ -75,6 +75,7 @@ class AbstractFWWorkflow(Workflow):
         spec['_priority'] = 100
         cleanup_fw = Firework(FinalCleanUpTask(out_exts=out_exts), spec=spec,
                               name=(self.wf.name+"_cleanup")[:15])
+        spec['_add_launchpad_and_fw_id'] = True
 
         append_fw_to_wf(cleanup_fw, self.wf)
 
@@ -84,6 +85,7 @@ class AbstractFWWorkflow(Workflow):
             insertion_data = {'structure': 'get_final_structure_and_history'}
         spec = self.set_short_single_core_to_spec()
         spec['mongo_database'] = mongo_database.as_dict()
+        spec['_add_launchpad_and_fw_id'] = True
         insert_and_cleanup_fw = Firework([DatabaseInsertTask(insertion_data=insertion_data, criteria=criteria),
                                           FinalCleanUpTask(out_exts=out_exts)],
                                          spec=spec,
