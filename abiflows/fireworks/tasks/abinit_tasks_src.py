@@ -1045,6 +1045,27 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
             task_type = 'cut3d-den-to-cube'
         return cls(cut3d_option='den_to_cube', deps=deps, task_type=task_type)
 
+    @serialize_fw
+    def to_dict(self):
+        d = {}
+        for arg in inspect.getargspec(self.__init__).args:
+            if arg != "self":
+                val = self.__getattribute__(arg)
+                if hasattr(val, "as_dict"):
+                    val = val.as_dict()
+                elif isinstance(val, (tuple, list)):
+                    val = [v.as_dict() if hasattr(v, "as_dict") else v for v in val]
+                d[arg] = val
+
+        return d
+
+    @classmethod
+    def from_dict(cls, d):
+        dec = MontyDecoder()
+        kwargs = {k: dec.process_decoded(v) for k, v in d.items()
+                  if k in inspect.getargspec(cls.__init__).args}
+        return cls(**kwargs)
+
     # Prefixes for Abinit (input, output, temporary) files.
     Prefix = collections.namedtuple("Prefix", "idata odata tdata")
     pj = os.path.join
