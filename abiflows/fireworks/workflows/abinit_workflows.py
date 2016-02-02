@@ -127,11 +127,11 @@ class AbstractFWWorkflow(Workflow):
                             if len(self.wf.links[den_fw_id]) != 1:
                                 raise ValueError('AbinitSetupTask has {:d} children while it should have exactly '
                                                  'one'.format(len(self.wf.links[den_fw_id])))
-                            run_fw_id = self.wf.links[den_fw_id][0].fw_id
+                            run_fw_id = self.wf.links[den_fw_id][0]
                             if len(self.wf.links[run_fw_id]) != 1:
                                 raise ValueError('AbinitRunTask has {:d} children while it should have exactly '
                                                  'one'.format(len(self.wf.links[run_fw_id])))
-                            control_fw_id = self.wf.links[run_fw_id][0].fw_id
+                            control_fw_id = self.wf.links[run_fw_id][0]
                         else:
                             raise ValueError('Found more than one Firework with Abinit '
                                              'task_type "{}".'.format(den_task_type_source))
