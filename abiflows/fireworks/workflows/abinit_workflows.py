@@ -101,6 +101,7 @@ class AbstractFWWorkflow(Workflow):
 
     def add_cut3d_den_to_cube_task(self, den_task_type_source=None):
         spec = self.set_short_single_core_to_spec()
+        spec['_add_launchpad_and_fw_id'] = True
         if den_task_type_source is None:
             cut3d_fw = Firework(Cut3DAbinitTask.den_to_cube(deps=['DEN']), spec=spec,
                                 name=(self.wf.name+"_cut3d")[:15])
@@ -111,6 +112,7 @@ class AbstractFWWorkflow(Workflow):
 
     def add_bader_task(self, den_task_type_source=None):
         spec = self.set_short_single_core_to_spec()
+        spec['_add_launchpad_and_fw_id'] = True
         if den_task_type_source is None:
             den_task_type_source = 'scf'
         # Find the Firework that should compute the DEN file
