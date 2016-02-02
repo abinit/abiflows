@@ -122,6 +122,9 @@ class AbstractFWWorkflow(Workflow):
                     if task.task_type == den_task_type_source:
                         if den_fw is None:
                             den_fw = fw
+                            if not task.pass_input:
+                                raise ValueError('Abinit task with task_type "{}" should pass the input to the '
+                                                 'Bader task'.format(den_task_type_source))
                             den_fw_id = fw_id
                             if len(self.wf.links[den_fw_id]) != 1:
                                 raise ValueError('AbinitSetupTask has {:d} children while it should have exactly '
@@ -136,10 +139,10 @@ class AbstractFWWorkflow(Workflow):
                                              'task_type "{}".'.format(den_task_type_source))
         if den_fw is None:
             raise ValueError('Firework with Abinit task_type "{}" not found.'.format(den_task_type_source))
-        # Set the pass_input variable of the task to True (needed to get the pseudo valence electrons)
-        for task in den_fw.tasks:
-            if isinstance(task, AbinitSetupTask):
-                task.pass_input = True
+        # # Set the pass_input variable of the task to True (needed to get the pseudo valence electrons)
+        # for task in den_fw.tasks:
+        #     if isinstance(task, AbinitSetupTask):
+        #         task.pass_input = True
         spec['den_task_type_source'] = den_task_type_source
         cut3d_task = Cut3DAbinitTask.den_to_cube(deps=['DEN'])
         bader_task = BaderTask()
@@ -263,12 +266,12 @@ class ScfFWWorkflowSRC(AbstractFWWorkflow):
     workflow_class = 'ScfFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    def __init__(self, abiinput, spec={}, initialization_info={}):
+    def __init__(self, abiinput, spec={}, initialization_info={}, pass_input=False):
 
         scf_helper = ScfTaskHelper()
         control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
                                                           WalltimeController(), MemoryController()])
-        setup_task = AbinitSetupTask(abiinput=abiinput, task_helper=scf_helper)
+        setup_task = AbinitSetupTask(abiinput=abiinput, task_helper=scf_helper, pass_input=pass_input)
         run_task = AbinitRunTask(control_procedure=control_procedure, task_helper=scf_helper)
         control_task = AbinitControlTask(control_procedure=control_procedure, task_helper=scf_helper)
 
