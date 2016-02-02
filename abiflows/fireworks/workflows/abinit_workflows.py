@@ -183,7 +183,7 @@ class AbstractFWWorkflow(Workflow):
         abinit_input = myfw.spec['previous_fws'][myfw.spec['den_task_type_source']][0]['input']
         psp_valences = abinit_input.valence_electrons_per_atom
         bader_charges = [atom['charge'] for atom in bader_data]
-        bader_charges_transfer = [psp_valences[iatom]-bader_charges[iatom] for iatom in range(len(psp_valences))]
+        bader_charges_transfer = [bader_charges[iatom]-psp_valences[iatom] for iatom in range(len(psp_valences))]
 
         return {'bader_analysis': {'pseudo_valence_charges': psp_valences,
                                    'bader_charges': bader_charges,
