@@ -275,7 +275,7 @@ class ScfFWWorkflowSRC(AbstractFWWorkflow):
         run_task = AbinitRunTask(control_procedure=control_procedure, task_helper=scf_helper)
         control_task = AbinitControlTask(control_procedure=control_procedure, task_helper=scf_helper)
 
-        scf_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task)
+        scf_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task, spec=spec)
 
         self.wf = Workflow(fireworks=scf_fws['fws'], links_dict=scf_fws['links_dict'],
                            metadata={'workflow_class': self.workflow_class,
