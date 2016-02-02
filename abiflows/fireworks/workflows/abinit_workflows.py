@@ -25,6 +25,7 @@ from abiflows.fireworks.tasks.abinit_tasks_src import AbinitSetupTask, AbinitRun
 from abiflows.fireworks.tasks.abinit_tasks_src import ScfTaskHelper, NscfTaskHelper, DdkTaskHelper
 from abiflows.fireworks.tasks.abinit_tasks_src import RelaxTaskHelper
 from abiflows.fireworks.tasks.abinit_tasks_src import GeneratePiezoElasticFlowFWSRCAbinitTask
+from abiflows.fireworks.tasks.abinit_tasks_src import Cut3DAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTask, DdkTask, MergeDdbAbinitTask
@@ -96,6 +97,16 @@ class AbstractFWWorkflow(Workflow):
                              spec=spec,
                              name='anaddb')
         append_fw_to_wf(anaddb_fw, self.wf)
+
+    def add_cut3d_den_to_cube_task(self, den_task_type_source=None):
+        spec = self.set_short_single_core_to_spec()
+        if den_task_type_source is None:
+            cut3d_fw = Firework(Cut3DAbinitTask.den_to_cube(deps=['DEN']), spec=spec,
+                                name=(self.wf.name+"_cut3d")[:15])
+        else:
+            raise NotImplementedError('Cut3D from specified task_type source not yet implemented')
+
+        append_fw_to_wf(cut3d_fw, self.wf)
 
     def add_metadata(self, structure=None, additional_metadata={}):
         metadata = dict(wf_type = self.__class__.__name__)

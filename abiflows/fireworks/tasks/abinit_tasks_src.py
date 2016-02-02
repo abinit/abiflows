@@ -8,6 +8,7 @@ import collections
 import errno
 import threading
 import subprocess
+import time
 from monty.json import MSONable
 from monty.json import MontyDecoder
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask, SetupError, createSRCFireworks
@@ -18,6 +19,7 @@ from abiflows.fireworks.tasks.abinit_tasks import MergeDdbAbinitTask
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
+from abiflows.fireworks.tasks.abinit_common import Cut3DInput
 from fireworks import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
@@ -56,18 +58,19 @@ class AbinitSRCMixin(object):
         ftm.update_fw_policy(fw_spec.get('fw_policy', {}))
         return ftm
 
-    def setup_rundir(self, rundir, create_dirs=False):
+    def setup_rundir(self, rundir, create_dirs=False, directories_only=False):
         """Set the run directory."""
 
         # Files required for the execution.
-        self.input_file = File(os.path.join(rundir, INPUT_FILE_NAME))
-        self.output_file = File(os.path.join(rundir, OUTPUT_FILE_NAME))
-        self.files_file = File(os.path.join(rundir, FILES_FILE_NAME))
-        self.log_file = File(os.path.join(rundir, LOG_FILE_NAME))
-        self.stderr_file = File(os.path.join(rundir, STDERR_FILE_NAME))
+        if not directories_only:
+            self.input_file = File(os.path.join(rundir, INPUT_FILE_NAME))
+            self.output_file = File(os.path.join(rundir, OUTPUT_FILE_NAME))
+            self.files_file = File(os.path.join(rundir, FILES_FILE_NAME))
+            self.log_file = File(os.path.join(rundir, LOG_FILE_NAME))
+            self.stderr_file = File(os.path.join(rundir, STDERR_FILE_NAME))
 
-        # This file is produce by Abinit if nprocs > 1 and MPI_ABORT.
-        self.mpiabort_file = File(os.path.join(rundir, MPIABORTFILE))
+            # This file is produce by Abinit if nprocs > 1 and MPI_ABORT.
+            self.mpiabort_file = File(os.path.join(rundir, MPIABORTFILE))
 
         # Directories with input|output|temporary data.
         self.indir = Directory(os.path.join(rundir, INDIR_NAME))
@@ -876,6 +879,200 @@ class StrainPertTaskHelper(DfptTaskHelper):
 
 
 ##############################
+# Post-Processing tasks
+##############################
+
+
+@explicit_serialize
+class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
+    task_type = "cut3d"
+
+    CUT3D_OPTIONS = ['den_to_cube']
+
+
+    def __init__(self, cut3d_option=None, deps=None, cut3d_input_file='cut3d.in',
+                 cut3d_log_file='cut3d.log', cut3d_err_file='cut3d.err', task_type=None):
+        """
+        General constructor for Cut3D task.
+        """
+        self.deps = deps
+        if cut3d_option not in self.CUT3D_OPTIONS:
+            raise ValueError('Option "{}" for cut3d is not allowed'.format(cut3d_option))
+        self.cut3d_option = cut3d_option
+        self.cut3d_input_file = cut3d_input_file
+        self.cut3d_log_file = cut3d_log_file
+        self.cut3d_err_file = cut3d_err_file
+        self.files = {}
+        if task_type is not None:
+            self.task_type = task_type
+
+    def run_cut3d(self):
+        """
+        executes cut3d and waits for the end of the process.
+        """
+
+        def cut3d_process():
+            command = []
+            #consider the case of serial execution
+            command.append(self.ftm.fw_policy.cut3d_cmd)
+            with open(self.cut3d_input_file, 'r') as stdin, open(self.cut3d_log_file, 'w') as stdout, \
+                    open(self.stderr_file.path, 'w') as stderr:
+                self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
+
+            (stdoutdata, stderrdata) = self.process.communicate()
+            self.returncode = self.process.returncode
+
+        # initialize returncode to avoid missing references in case of exception in the other thread
+        self.returncode = None
+
+        thread = threading.Thread(target=cut3d_process)
+        # the amount of time left plus a buffer of 2 minutes
+        timeout = (self.walltime - (time.time() - self.start_time) - 120) if self.walltime else None
+        thread.start()
+        thread.join(timeout)
+        if thread.is_alive():
+            self.process.terminate()
+            thread.join()
+            raise WalltimeError("The cut3d task couldn't be terminated within the time limit. Killed.")
+
+    def setup_task(self, fw_spec):
+        self.start_time = time.time()
+
+        self.set_logger()
+
+        # load the FWTaskManager to get configuration parameters
+        self.ftm = self.get_fw_task_manager(fw_spec)
+
+        # set walltime, if possible
+        self.walltime = None
+        if self.ftm.fw_policy.walltime_command:
+            try:
+                p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err =p.communicate()
+                status = p.returncode
+                if status == 0:
+                    self.walltime = int(out)
+                else:
+                    logger.warning("Impossible to get the walltime: " + err)
+            except Exception as e:
+                logger.warning("Impossible to get the walltime: ", exc_info=True)
+
+    def resolve_deps(self, fw_spec):
+        if not self.deps:
+            return
+        previous_fws = fw_spec.get('previous_fws', None)
+        if previous_fws is None:
+            msg = "No previous_fws data. Needed for dependecies {}.".format(str(self.deps))
+            logger.error(msg)
+            raise InitializationError(msg)
+        #TODO: right now, only one file is allowed, in some uses of cut3d, this might not be enough
+        if len(self.deps) != 1:
+            raise NotImplementedError('Only one dependency for cut3d is allowed right now')
+        if isinstance(self.deps, (list, tuple)):
+            # check that there is only one previous_fws
+            if len(previous_fws) != 1 or len(previous_fws.values()[0]) != 1:
+                msg = "previous_fws does not contain a single reference. " \
+                      "Specify the dependency for {}.".format(str(self.deps))
+                logger.error(msg)
+                raise InitializationError(msg)
+            self.resolve_deps_per_task_type(previous_fws.values()[0], self.deps)
+        else:
+            # deps should be a dict
+            for task_type, deps_list in self.deps.items():
+                if task_type not in previous_fws:
+                    msg = "No previous_fws data for task type {}.".format(task_type)
+                    logger.error(msg)
+                    raise InitializationError(msg)
+                if len(previous_fws[task_type]) < 1:
+                    msg = "Previous_fws does not contain any reference for task type {}, " \
+                          "needed in reference {}. ".format(task_type, str(self.deps))
+                    logger.error(msg)
+                    raise InitializationError(msg)
+                elif len(previous_fws[task_type]) > 1:
+                    msg = "Previous_fws contains more than a single reference for task type {}, " \
+                          "needed in reference {}. Risk of overwriting.".format(task_type, str(self.deps))
+                    logger.warning(msg)
+                self.resolve_deps_per_task_type(previous_fws[task_type], deps_list)
+
+    def resolve_deps_per_task_type(self, previous_tasks, deps_list):
+        for previous_task in previous_tasks:
+            for d in deps_list:
+                source_dir = previous_task['dir']
+                self.link_ext(d, source_dir)
+
+    def link_ext(self, ext, source_dir):
+        source = os.path.join(source_dir, self.prefix.odata + "_" + ext)
+        logger.info("Need path {} with ext {}".format(source, ext))
+        dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext)
+        if not os.path.exists(source):
+            # Try netcdf file. TODO: this case should be treated in a cleaner way.
+            source += "-etsf.nc"
+            if os.path.exists(source): dest += "-etsf.nc"
+        if not os.path.exists(source):
+            msg = "{} is needed by this task but it does not exist".format(source)
+            logger.error(msg)
+            raise InitializationError(msg)
+        # Link path to dest if dest link does not exist.
+        # else check that it points to the expected file.
+        logger.info("Linking path {} --> {}".format(source, dest))
+        if ext == 'DEN':
+            self.files['density'] = dest
+        else:
+            raise InitializationError('Only density files are allowed right now')
+        if not os.path.exists(dest):
+            if self.ftm.fw_policy.copy_deps:
+                shutil.copyfile(source, dest)
+            else:
+                os.symlink(source, dest)
+            return dest
+
+    def run_task(self, fw_spec):
+        self.setup_task(fw_spec=fw_spec)
+        self.setup_rundir(rundir=os.getcwd(), create_dirs=True, directories_only=True)
+
+        self.resolve_deps(fw_spec=fw_spec)
+
+        # TODO: make this more general ?
+        cut3d_input = Cut3DInput.den_to_cube(self.files['density'], cube_filename='density.cube')
+        cut3d_input.write_input(self.cut3d_input_file)
+        self.run_cut3d()
+        return FWAction(update_spec={'cut3d_directory': self.workdir})
+
+    @classmethod
+    def den_to_cube(cls, deps, task_type=None):
+        if task_type is None:
+            task_type = 'cut3d-den-to-cube'
+        return cls(cut3d_option='den_to_cube', deps=deps, task_type=task_type)
+
+    # Prefixes for Abinit (input, output, temporary) files.
+    Prefix = collections.namedtuple("Prefix", "idata odata tdata")
+    pj = os.path.join
+
+    prefix = Prefix(pj("indata", "in"), pj("outdata", "out"), pj("tmpdata", "tmp"))
+    del Prefix, pj
+
+
+@explicit_serialize
+class BaderTask(FireTaskBase):
+    task_type = "bader"
+
+
+    def __init__(self, cube_filepath):
+        """
+        General constructor for Cut3D task.
+        """
+        self.cube_filepath = cube_filepath
+
+    def set_workdir(self, workdir):
+        self.workdir = workdir
+
+    def run_task(self, fw_spec):
+        pass
+
+
+
+##############################
 # Generation tasks
 ##############################
 
@@ -1022,6 +1219,10 @@ class InitializationError(Exception):
 
 
 class RestartError(Exception):
+    pass
+
+
+class WalltimeError(Exception):
     pass
 
 
