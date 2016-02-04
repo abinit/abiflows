@@ -22,7 +22,11 @@ from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
 from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, ScfFWTask, RelaxFWTask, NscfFWTask
 from abiflows.fireworks.tasks.abinit_tasks_src import AbinitSetupTask, AbinitRunTask, AbinitControlTask
-from abiflows.fireworks.tasks.abinit_tasks_src import ScfTaskHelper
+from abiflows.fireworks.tasks.abinit_tasks_src import ScfTaskHelper, NscfTaskHelper, DdkTaskHelper
+from abiflows.fireworks.tasks.abinit_tasks_src import RelaxTaskHelper
+from abiflows.fireworks.tasks.abinit_tasks_src import GeneratePiezoElasticFlowFWSRCAbinitTask
+from abiflows.fireworks.tasks.abinit_tasks_src import Cut3DAbinitTask
+from abiflows.fireworks.tasks.abinit_tasks_src import BaderTask
 from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTask, DdkTask, MergeDdbAbinitTask
@@ -71,14 +75,17 @@ class AbstractFWWorkflow(Workflow):
         spec['_priority'] = 100
         cleanup_fw = Firework(FinalCleanUpTask(out_exts=out_exts), spec=spec,
                               name=(self.wf.name+"_cleanup")[:15])
+        spec['_add_launchpad_and_fw_id'] = True
 
         append_fw_to_wf(cleanup_fw, self.wf)
 
-    def add_db_insert_and_cleanup(self, mongo_database, out_exts=["WFK"], insertion_data=None, criteria=None):
+    def add_db_insert_and_cleanup(self, mongo_database, out_exts=["WFK", "1WF", "DEN"], insertion_data=None,
+                                  criteria=None):
         if insertion_data is None:
             insertion_data = {'structure': 'get_final_structure_and_history'}
         spec = self.set_short_single_core_to_spec()
         spec['mongo_database'] = mongo_database.as_dict()
+        spec['_add_launchpad_and_fw_id'] = True
         insert_and_cleanup_fw = Firework([DatabaseInsertTask(insertion_data=insertion_data, criteria=criteria),
                                           FinalCleanUpTask(out_exts=out_exts)],
                                          spec=spec,
@@ -93,6 +100,94 @@ class AbstractFWWorkflow(Workflow):
                              spec=spec,
                              name='anaddb')
         append_fw_to_wf(anaddb_fw, self.wf)
+
+    def add_cut3d_den_to_cube_task(self, den_task_type_source=None):
+        spec = self.set_short_single_core_to_spec()
+        spec['_add_launchpad_and_fw_id'] = True
+        if den_task_type_source is None:
+            cut3d_fw = Firework(Cut3DAbinitTask.den_to_cube(deps=['DEN']), spec=spec,
+                                name=(self.wf.name+"_cut3d")[:15])
+        else:
+            raise NotImplementedError('Cut3D from specified task_type source not yet implemented')
+
+        append_fw_to_wf(cut3d_fw, self.wf)
+
+    def add_bader_task(self, den_task_type_source=None):
+        spec = self.set_short_single_core_to_spec()
+        spec['_add_launchpad_and_fw_id'] = True
+        if den_task_type_source is None:
+            den_task_type_source = 'scf'
+        # Find the Firework that should compute the DEN file
+        den_fw = None
+        control_fw_id = None
+        for fw_id, fw in self.wf.id_fw.items():
+            for task in fw.tasks:
+                if isinstance(task, AbinitSetupTask):
+                    if task.task_type == den_task_type_source:
+                        if den_fw is None:
+                            den_fw = fw
+                            if not task.pass_input:
+                                raise ValueError('Abinit task with task_type "{}" should pass the input to the '
+                                                 'Bader task'.format(den_task_type_source))
+                            den_fw_id = fw_id
+                            if len(self.wf.links[den_fw_id]) != 1:
+                                raise ValueError('AbinitSetupTask has {:d} children while it should have exactly '
+                                                 'one'.format(len(self.wf.links[den_fw_id])))
+                            run_fw_id = self.wf.links[den_fw_id][0]
+                            if len(self.wf.links[run_fw_id]) != 1:
+                                raise ValueError('AbinitRunTask has {:d} children while it should have exactly '
+                                                 'one'.format(len(self.wf.links[run_fw_id])))
+                            control_fw_id = self.wf.links[run_fw_id][0]
+                        else:
+                            raise ValueError('Found more than one Firework with Abinit '
+                                             'task_type "{}".'.format(den_task_type_source))
+        if den_fw is None:
+            raise ValueError('Firework with Abinit task_type "{}" not found.'.format(den_task_type_source))
+        # # Set the pass_input variable of the task to True (needed to get the pseudo valence electrons)
+        # for task in den_fw.tasks:
+        #     if isinstance(task, AbinitSetupTask):
+        #         task.pass_input = True
+        spec['den_task_type_source'] = den_task_type_source
+        cut3d_task = Cut3DAbinitTask.den_to_cube(deps=['DEN'])
+        bader_task = BaderTask()
+        bader_fw = Firework([cut3d_task, bader_task], spec=spec,
+                            name=("bader")[:15])
+
+        self.wf.append_wf(new_wf=Workflow.from_Firework(bader_fw), fw_ids=[control_fw_id],
+                          detour=False, pull_spec_mods=False)
+
+    @classmethod
+    def get_bader_charges(cls, wf):
+        # I dont think we need that here ...
+        # assert wf.metadata['workflow_class'] == self.workflow_class
+        # assert wf.metadata['workflow_module'] == self.workflow_module
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if fw.name == 'bader':
+                if not final_fw_id:
+                    final_fw_id = fw_id
+                else:
+                    raise ValueError('Multiple Fireworks found with name equal to "bader"')
+        if final_fw_id is None:
+            raise RuntimeError('Bader analysis not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        myfw.tasks[-1].setup_rundir(rundir=last_launch.launch_dir)
+        bader_data = myfw.tasks[-1].get_bader_data()
+        if len(myfw.spec['previous_fws'][myfw.spec['den_task_type_source']]) != 1:
+            raise ValueError('Found "{:d}" previous fws with task_type "{}" while there should be only '
+                             'one.'.format(len(myfw.spec['previous_fws'][myfw.spec['den_task_type_source']]),
+                                           myfw.spec['den_task_type_source']))
+        abinit_input = myfw.spec['previous_fws'][myfw.spec['den_task_type_source']][0]['input']
+        psp_valences = abinit_input.valence_electrons_per_atom
+        bader_charges = [atom['charge'] for atom in bader_data]
+        bader_charges_transfer = [bader_charges[iatom]-psp_valences[iatom] for iatom in range(len(psp_valences))]
+
+        return {'bader_analysis': {'pseudo_valence_charges': psp_valences,
+                                   'bader_charges': bader_charges,
+                                   'bader_charges_transfer': bader_charges_transfer}}
 
     def add_metadata(self, structure=None, additional_metadata={}):
         metadata = dict(wf_type = self.__class__.__name__)
@@ -171,18 +266,24 @@ class ScfFWWorkflow(AbstractFWWorkflow):
 
 
 class ScfFWWorkflowSRC(AbstractFWWorkflow):
-    def __init__(self, abiinput, spec={}, initialization_info={}):
+
+    workflow_class = 'ScfFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    def __init__(self, abiinput, spec={}, initialization_info={}, pass_input=False):
 
         scf_helper = ScfTaskHelper()
         control_procedure = ControlProcedure(controllers=[AbinitController.from_helper(scf_helper),
                                                           WalltimeController(), MemoryController()])
-        setup_task = AbinitSetupTask(abiinput=abiinput, task_helper=scf_helper)
+        setup_task = AbinitSetupTask(abiinput=abiinput, task_helper=scf_helper, pass_input=pass_input)
         run_task = AbinitRunTask(control_procedure=control_procedure, task_helper=scf_helper)
         control_task = AbinitControlTask(control_procedure=control_procedure, task_helper=scf_helper)
 
-        scf_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task)
+        scf_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task, spec=spec)
 
-        self.wf = Workflow(fireworks=scf_fws['fws'], links_dict=scf_fws['links_dict'])
+        self.wf = Workflow(fireworks=scf_fws['fws'], links_dict=scf_fws['links_dict'],
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
 
     @classmethod
     def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
@@ -290,7 +391,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
                    target_dilatmx=target_dilatmx)
 
 
-class RelaxFWWorkflowSRC(AbstractFWWorkflow):
+class RelaxFWWorkflowSRCOld(AbstractFWWorkflow):
     workflow_class = 'RelaxFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
@@ -355,6 +456,128 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
         return {'structure': structure.as_dict(), 'history': history}
 
 
+class RelaxFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'RelaxFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    def __init__(self, ion_input, ioncell_input, spec={}, initialization_info={}, additional_controllers=None):
+
+        fws = []
+        links_dict = {}
+
+        if additional_controllers is None:
+            additional_controllers = [WalltimeController(), MemoryController()]
+        else:
+            additional_controllers = additional_controllers
+
+        #1. Relax run at fixed cell
+        relax_helper = RelaxTaskHelper()
+        relax_controllers = [AbinitController.from_helper(relax_helper)]
+        relax_controllers.extend(additional_controllers)
+        relax_control_procedure = ControlProcedure(controllers=relax_controllers)
+        setup_relax_ions_task = AbinitSetupTask(abiinput=ion_input, task_helper=relax_helper)
+        run_relax_ions_task = AbinitRunTask(control_procedure=relax_control_procedure, task_helper=relax_helper,
+                                            task_type='ion')
+        control_relax_ions_task = AbinitControlTask(control_procedure=relax_control_procedure,
+                                                    task_helper=relax_helper)
+
+        relax_ions_fws = createSRCFireworks(setup_task=setup_relax_ions_task, run_task=run_relax_ions_task,
+                                            control_task=control_relax_ions_task,
+                                            spec=spec, initialization_info=initialization_info)
+
+        fws.extend(relax_ions_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=relax_ions_fws['links_dict'])
+
+        #2. Relax run with cell relaxation
+        setup_relax_ions_cell_task = AbinitSetupTask(abiinput=ioncell_input, task_helper=relax_helper,
+                                                     deps={run_relax_ions_task.task_type: '@structure'})
+        run_relax_ions_cell_task = AbinitRunTask(control_procedure=relax_control_procedure, task_helper=relax_helper,
+                                                 task_type='ioncell')
+        control_relax_ions_cell_task = AbinitControlTask(control_procedure=relax_control_procedure,
+                                                         task_helper=relax_helper)
+
+        relax_ions_cell_fws = createSRCFireworks(setup_task=setup_relax_ions_cell_task,
+                                                 run_task=run_relax_ions_cell_task,
+                                                 control_task=control_relax_ions_cell_task,
+                                                 spec=spec, initialization_info=initialization_info)
+
+        fws.extend(relax_ions_cell_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=relax_ions_cell_fws['links_dict'])
+
+        links_dict.update({relax_ions_fws['control_fw']: relax_ions_cell_fws['setup_fw']})
+
+        self.wf = Workflow(fireworks=fws,
+                           links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+
+    @classmethod
+    def get_final_structure(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+        ioncell = -1
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if 'SRC_task_index' in fw.spec:
+                if fw.tasks[-1].src_type != 'run':
+                    continue
+                task_index = fw.spec['SRC_task_index']
+                if task_index.task_type == 'ioncell':
+                    if task_index.index > ioncell:
+                        ioncell = task_index.index
+                        final_fw_id = fw_id
+        if final_fw_id is None:
+            raise RuntimeError('Final structure not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        mytask = myfw.tasks[-1]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        # myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
+        # mytask.setup_rundir(last_launch.launch_dir, create_dirs=False)
+        helper = RelaxTaskHelper()
+        helper.set_task(mytask)
+        helper.task.setup_rundir(last_launch.launch_dir, create_dirs=False)
+
+        structure = helper.get_final_structure()
+
+        return {'structure': structure.as_dict()}
+
+    @classmethod
+    def get_final_structure_and_history(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+        ioncell = -1
+        final_fw_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if 'SRC_task_index' in fw.spec:
+                if fw.tasks[-1].src_type != 'run':
+                    continue
+                task_index = fw.spec['SRC_task_index']
+                if task_index.task_type == 'ioncell':
+                    if task_index.index > ioncell:
+                        ioncell = task_index.index
+                        final_fw_id = fw_id
+        if final_fw_id is None:
+            raise RuntimeError('Final structure not found ...')
+        myfw = wf.id_fw[final_fw_id]
+        mytask = myfw.tasks[-1]
+        #TODO add a check on the state of the launches
+        last_launch = (myfw.archived_launches + myfw.launches)[-1]
+        #TODO add a cycle to find the instance of AbiFireTask?
+        # myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
+        # mytask.setup_rundir(last_launch.launch_dir, create_dirs=False)
+        helper = RelaxTaskHelper()
+        helper.set_task(mytask)
+        helper.task.setup_rundir(last_launch.launch_dir, create_dirs=False)
+        # helper.set_task(mytask)
+
+        structure = helper.get_final_structure()
+        # history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+
+        return {'structure': structure.as_dict()}
+
+
 class NscfFWWorkflow(AbstractFWWorkflow):
     def __init__(self, scf_input, nscf_input, autoparal=False, spec={}, initialization_info={}):
 
@@ -376,6 +599,69 @@ class NscfFWWorkflow(AbstractFWWorkflow):
         self.wf = Workflow([self.scf_fw, self.nscf_fw], {self.scf_fw: [self.nscf_fw]},
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module})
+
+
+class NscfFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'NscfFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+    def __init__(self, scf_input, nscf_input, spec={}, initialization_info={}):
+
+        # Initializes fws list and links_dict
+        fws = []
+        links_dict = {}
+
+        if 'additional_controllers' in spec:
+            additional_controllers = spec['additional_controllers']
+            spec.pop('additional_controllers')
+        else:
+            additional_controllers = [WalltimeController(), MemoryController()]
+        # Self-consistent calculation
+        scf_helper = ScfTaskHelper()
+        scf_controllers = [AbinitController.from_helper(scf_helper)]
+        scf_controllers.extend(additional_controllers)
+        scf_control_procedure = ControlProcedure(controllers=scf_controllers)
+        setup_scf_task = AbinitSetupTask(abiinput=scf_input, task_helper=scf_helper)
+        run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+        control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+
+        scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
+                                     task_index=scf_helper.task_type,
+                                     spec=spec, initialization_info=initialization_info)
+
+        fws.extend(scf_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
+
+
+        # Non self-consistent calculation
+        nscf_helper = NscfTaskHelper()
+        nscf_controllers = [AbinitController.from_helper(nscf_helper)]
+        nscf_controllers.extend(additional_controllers)
+        nscf_control_procedure = ControlProcedure(controllers=nscf_controllers)
+        setup_nscf_task = AbinitSetupTask(abiinput=nscf_input, task_helper=nscf_helper,
+                                          deps={run_scf_task.task_type: 'DEN'})
+        run_nscf_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
+        control_nscf_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
+
+        nscf_fws = createSRCFireworks(setup_task=setup_nscf_task, run_task=run_nscf_task,
+                                      control_task=control_nscf_task, task_index=nscf_helper.task_type, spec=spec,
+                                      initialization_info=initialization_info)
+
+        fws.extend(nscf_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=nscf_fws['links_dict'])
+        #Link with previous SCF
+        links_dict_update(links_dict=links_dict,
+                          links_update={scf_fws['control_fw'].fw_id: nscf_fws['setup_fw'].fw_id})
+
+        self.wf = Workflow(fireworks=fws, links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+
+    @classmethod
+    def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
+                     spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
+                     shift_mode="Monkhorst-Pack", extra_abivars={}, decorators=[], autoparal=False, spec={}):
+        raise NotImplementedError('from_factory class method not yet implemented for NscfWorkflowSRC')
 
 
 class HybridOneShotFWWorkflow(AbstractFWWorkflow):
@@ -581,7 +867,7 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
         raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
 
 
-class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
+class PiezoElasticFWWorkflowSRCOld(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
@@ -669,7 +955,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                                                wf_task_index_prefix='rf',
                                                handlers=handlers['_all'], validators=validators['_all'],
                                                deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
-                                                  SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
+                                                     SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
                                                queue_adapter_update=queue_adapter_update)
             fws.extend(SRC_rf_fws['fws'])
             links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
@@ -725,6 +1011,325 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                            links_dict=links_dict,
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module})
+
+    @classmethod
+    def get_all_elastic_tensors(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+
+        anaddb_no_stress_id = None
+        anaddb_stress_id = None
+        for fw_id, fw in wf.id_fw.items():
+            if fw.name == 'anaddb-piezo-elast':
+                anaddb_no_stress_id = fw_id
+            if fw.name == 'anaddb-piezo-elast-stress-corrected':
+                anaddb_stress_id = fw_id
+        if anaddb_no_stress_id is None or anaddb_stress_id is None:
+            raise RuntimeError('Final anaddb tasks not found ...')
+        myfw_nostress = wf.id_fw[anaddb_no_stress_id]
+        last_launch_nostress = (myfw_nostress.archived_launches + myfw_nostress.launches)[-1]
+        myfw_nostress.tasks[-1].set_workdir(workdir=last_launch_nostress.launch_dir)
+
+        myfw_stress = wf.id_fw[anaddb_stress_id]
+        last_launch_stress = (myfw_stress.archived_launches + myfw_stress.launches)[-1]
+        myfw_stress.tasks[-1].set_workdir(workdir=last_launch_stress.launch_dir)
+
+        ec_nostress_clamped = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='clamped_ion')
+        ec_nostress_relaxed = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion')
+        ec_stress_relaxed = myfw_stress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion_stress_corrected')
+
+        ec_dicts = {'clamped_ion': ec_nostress_clamped.extended_dict(),
+                    'relaxed_ion': ec_nostress_relaxed.extended_dict(),
+                    'relaxed_ion_stress_corrected': ec_stress_relaxed.extended_dict()}
+
+        return {'elastic_properties': ec_dicts}
+
+    @classmethod
+    def from_factory(cls):
+        raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
+
+
+class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'PiezoElasticFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
+
+    def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
+                 ddk_split=False, rf_split=False, additional_controllers=None, new=False):
+
+
+        if new:
+            fws = []
+            links_dict = {}
+
+            if additional_controllers is None:
+                additional_controllers = [WalltimeController(), MemoryController()]
+            else:
+                additional_controllers = additional_controllers
+
+            #1. SCF run in the irreducible Brillouin Zone
+            scf_helper = ScfTaskHelper()
+            scf_controllers = [AbinitController.from_helper(scf_helper)]
+            scf_controllers.extend(additional_controllers)
+            scf_control_procedure = ControlProcedure(controllers=scf_controllers)
+            setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
+            run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
+                                         task_type='scfibz')
+            control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+
+            scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
+                                         spec=spec, initialization_info=initialization_info)
+
+            fws.extend(scf_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
+
+            #2. nSCF run in the full Brillouin Zone with kptopt 2
+            nscf_helper = NscfTaskHelper()
+            nscf_controllers = [AbinitController.from_helper(nscf_helper)]
+            nscf_controllers.extend(additional_controllers)
+            nscf_control_procedure = ControlProcedure(controllers=nscf_controllers)
+            nscf_inp_fbz = scf_inp_ibz.deepcopy()
+            nscf_inp_fbz.set_vars({'tolwfr': 1.0e-20,
+                                   'kptopt': 3,
+                                   'iscf': -2,
+                                   'istwfk': '*1'})
+            # Adding buffer to help convergence ...
+            if 'nbdbuf' not in nscf_inp_fbz:
+                nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
+                nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
+            setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
+                                                 deps={run_scf_task.task_type: ['DEN']}, pass_input=True)
+            run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
+                                             task_type='nscffbz')
+            control_nscffbz_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
+
+            nscffbz_fws = createSRCFireworks(setup_task=setup_nscffbz_task, run_task=run_nscffbz_task,
+                                             control_task=control_nscffbz_task,
+                                             spec=spec, initialization_info=initialization_info)
+
+            fws.extend(nscffbz_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=nscffbz_fws['links_dict'])
+            #Link with the IBZ SCF run
+            links_dict_update(links_dict=links_dict,
+                              links_update={scf_fws['control_fw'].fw_id: nscffbz_fws['setup_fw'].fw_id})
+
+            #3. DDK calculation
+            if ddk_split:
+                raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
+            else:
+                ddk_helper = DdkTaskHelper()
+                ddk_controllers = [AbinitController.from_helper(ddk_helper)]
+                ddk_controllers.extend(additional_controllers)
+                ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
+                ddk_inp.set_vars({'kptopt': 3})
+                setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
+                                                 deps={run_nscffbz_task.task_type: 'WFK'})
+                run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
+                                             task_type='ddk')
+                control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
+
+                ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
+                                             control_task=control_ddk_task,
+                                             spec=spec, initialization_info=initialization_info)
+
+                fws.extend(ddk_fws['fws'])
+                links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
+                #Link with the FBZ nSCF run
+                links_dict_update(links_dict=links_dict,
+                                  links_update={nscffbz_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
+
+            #4. Response-Function calculation(s) of the elastic constants
+            rf_ddb_source_task_type = 'mrgddb-strains'
+            rf_tolvar, value = rf_inp.scf_tolvar
+            rf_tol = {rf_tolvar: value}
+            gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
+                                                               previous_ddk_task_type=run_ddk_task.task_type,
+                                                               mrgddb_task_type=rf_ddb_source_task_type,
+                                                               additional_controllers=additional_controllers,
+                                                               rf_tol=rf_tol)
+            genrfstrains_spec = set_short_single_core_to_spec(spec)
+            gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
+            fws.append(gen_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={nscffbz_fws['control_fw'].fw_id: gen_fw.fw_id,
+                                            ddk_fws['control_fw'].fw_id: gen_fw.fw_id})
+
+            rf_ddb_src_fw = gen_fw
+
+            #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
+            # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
+            # stress-corrected elastic constants)
+            mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
+                                                                    run_scf_task.task_type],
+                                             delete_source_ddbs=False, num_ddbs=2)
+            mrgddb_spec = set_short_single_core_to_spec(spec)
+            mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
+            fws.append(mrgddb_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
+                                            scf_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
+
+            #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
+            anaddb_tag = 'anaddb-piezo-elast'
+            spec = set_short_single_core_to_spec(spec)
+            anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                     stress_correction=False),
+                                           deps={rf_ddb_source_task_type: ['DDB']},
+                                           task_type=anaddb_tag)
+            anaddb_fw = Firework([anaddb_task],
+                                 spec=spec,
+                                 name=anaddb_tag)
+            fws.append(anaddb_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
+
+            #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
+            anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
+            spec = set_short_single_core_to_spec(spec)
+            anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                            stress_correction=True),
+                                                  deps={mrgddb_task.task_type: ['DDB']},
+                                                  task_type=anaddb_tag)
+            anaddb_stress_fw = Firework([anaddb_stress_task],
+                                        spec=spec,
+                                        name=anaddb_tag)
+            fws.append(anaddb_stress_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
+
+            self.wf = Workflow(fireworks=fws,
+                               links_dict=links_dict,
+                               metadata={'workflow_class': self.workflow_class,
+                                         'workflow_module': self.workflow_module})
+        else:
+            fws = []
+            links_dict = {}
+
+            if additional_controllers is None:
+                additional_controllers = [WalltimeController(), MemoryController()]
+            else:
+                additional_controllers = additional_controllers
+
+            #1. First SCF run in the irreducible Brillouin Zone
+            scf_helper = ScfTaskHelper()
+            scf_controllers = [AbinitController.from_helper(scf_helper)]
+            scf_controllers.extend(additional_controllers)
+            scf_control_procedure = ControlProcedure(controllers=scf_controllers)
+            setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
+            run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
+                                         task_type='scfibz')
+            control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+
+            scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
+                                         spec=spec, initialization_info=initialization_info)
+
+            fws.extend(scf_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
+
+            #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
+            #2nd derivative DDB's from the DFPT RF run
+            scf_inp_fbz = scf_inp_ibz.deepcopy()
+            scf_inp_fbz['kptopt'] = 2
+            setup_scffbz_task = AbinitSetupTask(abiinput=scf_inp_fbz, task_helper=scf_helper,
+                                                deps={run_scf_task.task_type: ['WFK', 'DEN']})
+            run_scffbz_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
+                                            task_type='scffbz')
+            control_scffbz_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+
+            scffbz_fws = createSRCFireworks(setup_task=setup_scffbz_task, run_task=run_scffbz_task,
+                                            control_task=control_scffbz_task,
+                                            spec=spec, initialization_info=initialization_info)
+
+            fws.extend(scffbz_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=scffbz_fws['links_dict'])
+            #Link with the IBZ SCF run
+            links_dict_update(links_dict=links_dict,
+                              links_update={scf_fws['control_fw'].fw_id: scffbz_fws['setup_fw'].fw_id})
+
+            #3. DDK calculation
+            if ddk_split:
+                raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
+            else:
+                ddk_helper = DdkTaskHelper()
+                ddk_controllers = [AbinitController.from_helper(ddk_helper)]
+                ddk_controllers.extend(additional_controllers)
+                ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
+                setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
+                                                 deps={run_scf_task.task_type: 'WFK'})
+                run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
+                                             task_type='ddk')
+                control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
+
+                ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
+                                             control_task=control_ddk_task,
+                                             spec=spec, initialization_info=initialization_info)
+
+                fws.extend(ddk_fws['fws'])
+                links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
+                #Link with the IBZ SCF run
+                links_dict_update(links_dict=links_dict,
+                                  links_update={scf_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
+
+            #4. Response-Function calculation(s) of the elastic constants
+            rf_ddb_source_task_type = 'mrgddb-strains'
+            gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_scf_task.task_type,
+                                                               previous_ddk_task_type=run_ddk_task.task_type,
+                                                               mrgddb_task_type=rf_ddb_source_task_type,
+                                                               additional_controllers=additional_controllers)
+            genrfstrains_spec = set_short_single_core_to_spec(spec)
+            gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
+            fws.append(gen_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={scf_fws['control_fw'].fw_id: gen_fw.fw_id,
+                                            ddk_fws['control_fw'].fw_id: gen_fw.fw_id})
+
+            rf_ddb_src_fw = gen_fw
+
+            #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
+            # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
+            # stress-corrected elastic constants)
+            mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
+                                                                    run_scffbz_task.task_type],
+                                             delete_source_ddbs=False, num_ddbs=2)
+            mrgddb_spec = set_short_single_core_to_spec(spec)
+            mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
+            fws.append(mrgddb_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
+                                            scffbz_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
+
+            #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
+            anaddb_tag = 'anaddb-piezo-elast'
+            spec = set_short_single_core_to_spec(spec)
+            anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                     stress_correction=False),
+                                           deps={rf_ddb_source_task_type: ['DDB']},
+                                           task_type=anaddb_tag)
+            anaddb_fw = Firework([anaddb_task],
+                                 spec=spec,
+                                 name=anaddb_tag)
+            fws.append(anaddb_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
+
+            #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
+            anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
+            spec = set_short_single_core_to_spec(spec)
+            anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                            stress_correction=True),
+                                                  deps={mrgddb_task.task_type: ['DDB']},
+                                                  task_type=anaddb_tag)
+            anaddb_stress_fw = Firework([anaddb_stress_task],
+                                        spec=spec,
+                                        name=anaddb_tag)
+            fws.append(anaddb_stress_fw)
+            links_dict_update(links_dict=links_dict,
+                              links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
+
+            self.wf = Workflow(fireworks=fws,
+                               links_dict=links_dict,
+                               metadata={'workflow_class': self.workflow_class,
+                                         'workflow_module': self.workflow_module})
 
     @classmethod
     def get_all_elastic_tensors(cls, wf):

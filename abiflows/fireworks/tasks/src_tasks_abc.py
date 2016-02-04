@@ -3,6 +3,7 @@ from __future__ import print_function, division, unicode_literals
 import abc
 import copy
 import inspect
+import json
 import os
 
 from fireworks.core.firework import FireTaskBase
@@ -20,6 +21,7 @@ from monty.subprocess import Command
 
 from abiflows.core.mastermind_abc import ControlProcedure, ControlledItemType
 from abiflows.core.mastermind_abc import ControllerNote
+from abiflows.core.mastermind_abc import Cleaner
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get_short_single_core_spec
 
 RESTART_FROM_SCRATCH = ControllerNote.RESTART_FROM_SCRATCH
@@ -87,11 +89,28 @@ class SRCTaskMixin(object):
 class SetupTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'setup'
+    task_type = 'unknown'
 
     RUN_PARAMETERS = ['_queueadapter', 'mpi_ncpus', 'qtk_queueadapter']
 
-    def __init__(self, restart_info=None):
+    def __init__(self, deps=None, restart_info=None, task_type=None):
+
+        # TODO: if at some point, this is not enough (as for the ddk, or for the structure, or for anything else,
+        #       we could thing of an object ?
+        # deps are transformed to be a list or a dict of lists
+        if isinstance(deps, dict):
+            deps = dict(deps)
+            for k, v in deps.items():
+                if not isinstance(v, (list, tuple)):
+                    deps[k] = [v]
+        elif deps and not isinstance(deps, (list, tuple)):
+            deps = [deps]
+        self.deps = deps
+
         self.restart_info = restart_info
+
+        if task_type is not None:
+            self.task_type = task_type
 
     def set_restart_info(self, restart_info=None):
         self.restart_info = restart_info
@@ -105,6 +124,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         os.chdir(self.setup_dir)
         # Make the file transfers from another worker if needed
         self.file_transfers(fw_spec=fw_spec)
+        # Get back information from the previous runs
+        self.fetch_previous_info(fw_spec=fw_spec)
         # Setup the parameters for the run (number of cpus, time, memory, openmp, ...)
         params = list(self.RUN_PARAMETERS)
         if 'src_modified_objects' in fw_spec:
@@ -125,7 +146,11 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
 
     def _setup_run_parameters(self, fw_spec, parameters):
         qadapter_spec, qtk_queueadapter = get_short_single_core_spec(return_qtk=True)
+        params = {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
+        setup_params = self.setup_run_parameters(fw_spec=fw_spec)
+        params.update(setup_params)
         if 'initial_parameters' in fw_spec and fw_spec['SRC_task_index'].index == 1:
+            qtk_queueadapter = params['qtk_queueadapter']
             initial_parameters = fw_spec['initial_parameters']
             if 'run_timelimit' in initial_parameters:
                 qtk_queueadapter.set_timelimit(timelimit=initial_parameters['run_timelimit'])
@@ -134,15 +159,16 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
             if 'run_mpi_ncpus' in initial_parameters:
                 qtk_queueadapter.set_mpi_procs(mpi_procs=initial_parameters['run_mpi_ncpus'])
             qadapter_spec = qtk_queueadapter.get_subs_dict()
-        params = {'_queueadapter': qadapter_spec, 'mpi_ncpus': 1, 'qtk_queueadapter': qtk_queueadapter}
-        setup_params = self.setup_run_parameters(fw_spec=fw_spec)
-        params.update(setup_params)
+            params.update({'qtk_queueadapter': qtk_queueadapter, '_queueadapter': qadapter_spec})
         return {param: params[param] for param in parameters}
 
     def setup_run_parameters(self, fw_spec):
         return {}
 
     def file_transfers(self, fw_spec):
+        pass
+
+    def fetch_previous_info(self, fw_spec):
         pass
 
     def prepare_run(self, fw_spec):
@@ -193,13 +219,19 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         lp.update_spec(fw_ids=[control_fw_id],
                        spec_document=spec_update)
 
+    def additional_task_info(self):
+        return {}
+
 
 class RunTask(SRCTaskMixin, FireTaskBase):
 
     src_type = 'run'
+    task_type = 'unknown'
 
-    def __init__(self, control_procedure):
+    def __init__(self, control_procedure, task_type=None):
         self.set_control_procedure(control_procedure=control_procedure)
+        if task_type is not None:
+            self.task_type = task_type
 
     def set_control_procedure(self, control_procedure):
         self.control_procedure = control_procedure
@@ -239,6 +271,9 @@ class RunTask(SRCTaskMixin, FireTaskBase):
     def postrun(self, fw_spec):
         pass
 
+    def additional_task_info(self):
+        return {}
+
 
 @explicit_serialize
 class ScriptRunTask(RunTask):
@@ -277,10 +312,11 @@ class ScriptRunTask(RunTask):
 class ControlTask(SRCTaskMixin, FireTaskBase):
     src_type = 'control'
 
-    def __init__(self, control_procedure, manager=None, max_restarts=10):
+    def __init__(self, control_procedure, manager=None, max_restarts=10, src_cleaning=None):
         self.control_procedure = control_procedure
         self.manager = manager
         self.max_restarts = max_restarts
+        self.src_cleaning = src_cleaning
 
     def run_task(self, fw_spec):
         self.setup_directories(fw_spec=fw_spec, create_dirs=False)
@@ -322,7 +358,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # even multiple tasks is not yet supported ... should it be ? or should we stay with only one task allways ?)
         # If it is modified, it should update the corresponding bit (setup_spec and/or run_spec and/or
         # setup_task and/or run_task)
-        initial_objects_info = self.get_initial_objects_info()
+        initial_objects_info = self.get_initial_objects_info(setup_fw=self.setup_fw, run_fw= self.run_fw,
+                                                             src_directories=self.src_directories)
         qerr_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qerr')
         qout_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qout')
         initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
@@ -337,23 +374,38 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         control_report = self.control_procedure.process(**initial_objects)
 
         if control_report.unrecoverable:
-            raise ValueError('Errors are unrecoverable')
+            f = open(os.path.join(self.control_dir, 'control_report.json'), 'w')
+            json.dump(control_report.as_dict(), f)
+            f.close()
+            #TODO: apply the cleaning here
+            if self.src_cleaning is not None:
+                pass
+            raise ValueError('Errors are unrecoverable. Control report written in "control_report.json"')
 
         # If everything is ok, update the spec of the children
         if control_report.finalized:
             stored_data = {'control_report': control_report, 'finalized': True}
             update_spec = {}
             mod_spec = []
-            if 'previous_fws' in fw_spec:
-                #TODO: We actually dont need that here, but we should add something to pass info from this SRC
-                # to the next if needed
-                for task_type, task_info in fw_spec['previous_fws'].items():
-                    mod_spec.append({'_push_all': {'previous_fws->'+task_type: task_info}})
+            run_task = self.run_fw.tasks[-1]
+            setup_task = self.setup_fw.tasks[-1]
+            task_type = run_task.task_type
+            #TODO: should we also add here the cluster in which the calculation was performed so that if the next
+            #      SRC trio starts on another cluster, it should fetch the needed files from the run_dir of this cluster
+            task_info = {'dir': self.run_dir}
+            task_info.update(run_task.additional_task_info())
+            task_info.update(setup_task.additional_task_info())
+            mod_spec.append({'_push': {'previous_fws->'+task_type: task_info}})
+            if self.src_cleaning is not None:
+                pass
             return FWAction(stored_data=stored_data, exit=False, update_spec=update_spec, mod_spec=mod_spec,
                             additions=None, detours=None, defuse_children=False)
 
         # Check the maximum number of restarts
         if task_index.index == self.max_restarts:
+            # TODO: decide when to apply cleaning here ?
+            if self.src_cleaning is not None:
+                pass
             raise ValueError('Maximum number of restarts ({:d}) reached'.format(self.max_restarts))
 
         # Increase the task_index
@@ -379,7 +431,10 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         run_task = self.run_fw.tasks[-1]
         control_task = self
 
-        modified_objects = {}
+        if 'src_modified_objects' in fw_spec:
+            modified_objects = fw_spec['src_modified_objects']
+        else:
+            modified_objects = {}
         setup_spec_update = {}
         run_spec_update = {}
         for target, action in control_report.actions.items():
@@ -429,6 +484,10 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         new_spec.pop('_launch_dir')
         new_spec.pop('src_directories')
         new_spec['previous_src'] = {'src_directories': self.src_directories}
+        if 'all_src_directories' in new_spec:
+            new_spec['all_src_directories'].append({'src_directories': self.src_directories})
+        else:
+            new_spec['all_src_directories'] = [{'src_directories': self.src_directories}]
         # if '_queueadapter' in modified_objects:
         #     new_spec['_queueadapter'] = modified_objects['_queueadapter']
         #TODO: what to do here ? Right now this should work, just transfer information from the run_fw to the
@@ -438,10 +497,10 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # Create the new SRC trio
         # TODO: check initialization info, deps, ... previous_fws, ... src_previous_fws ? ...
         new_SRC_fws = createSRCFireworks(setup_task=setup_task, run_task=run_task, control_task=control_task,
-                                         spec=new_spec, initialization_info=None, task_index=task_index, deps=None,
+                                         spec=new_spec, initialization_info=None, task_index=task_index,
                                          run_spec_update=run_spec_update, setup_spec_update=setup_spec_update)
         wf = Workflow(fireworks=new_SRC_fws['fws'], links_dict=new_SRC_fws['links_dict'])
-        return FWAction(detours=[wf])
+        return FWAction(stored_data={'control_report': control_report}, detours=[wf])
 
     def get_setup_and_run_fw(self, fw_spec):
         # Get the launchpad
@@ -481,7 +540,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         setup_fw = lp.get_fw_by_id(fw_id=setup_fw_id)
         return {'setup_fw': setup_fw, 'run_fw': run_fw}
 
-    def get_initial_objects_info(self):
+    def get_initial_objects_info(self, setup_fw, run_fw, src_directories):
         return {}
 
     @classmethod
@@ -493,7 +552,8 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
     def to_dict(self):
         return {'control_procedure': self.control_procedure.as_dict(),
                 'manager': self.manager.as_dict() if self.manager is not None else None,
-                'max_restarts': self.max_restarts}
+                'max_restarts': self.max_restarts,
+                'src_cleaning': self.src_cleaning.as_dict() if self.src_cleaning is not None else None}
 
     @classmethod
     def from_dict(cls, d):
@@ -503,12 +563,281 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
             manager = None
         else:
             manager = dec.process_decoded(d['manager']),
-        return cls(control_procedure=control_procedure, manager=manager, max_restarts=d['max_restarts'])
+        if 'src_cleaning' in d:
+            src_cleaning = SRCCleaning.from_dict(d['src_cleaning']) if d['src_cleaning'] is not None else None
+        else:
+            src_cleaning = None
+        return cls(control_procedure=control_procedure, manager=manager, max_restarts=d['max_restarts'],
+                   src_cleaning=src_cleaning)
 
+
+class SRCCleanerOptions(MSONable):
+
+    WHEN_TO_CLEAN = ['EACH_STEP', 'LAST_STEP', 'EACH_STEP_EXCEPT_LAST']
+    CURRENT_SRC_STATES_ALLOWED = ['RECOVERABLE', 'UNRECOVERABLE', 'MAXRESTARTS', 'FINALIZED']
+
+    def __init__(self, when_to_clean, current_src_states_allowed, which_src_steps_to_clean):
+        self.when_to_clean = when_to_clean
+        self.current_src_states_allowed = current_src_states_allowed
+        self.which_src_steps_to_clean = which_src_steps_to_clean
+
+    @classmethod
+    def clean_all(cls):
+        return cls(when_to_clean='EACH_STEP', current_src_states_allowed=cls.CURRENT_SRC_STATES_ALLOWED,
+                   which_src_steps_to_clean='all')
+
+    @classmethod
+    def clean_all_except_last(cls):
+        return cls(when_to_clean='EACH_STEP', current_src_states_allowed=cls.CURRENT_SRC_STATES_ALLOWED,
+                   which_src_steps_to_clean='all_before_this_one')
+
+    @property
+    def when_to_clean(self):
+        return self._when_to_clean
+
+    @when_to_clean.setter
+    def when_to_clean(self, when_to_clean):
+        if when_to_clean not in self.WHEN_TO_CLEAN:
+            raise ValueError('Argument "when_to_clean" is "{}" while it should be one of the following : '
+                             '{}'.format(when_to_clean,
+                                         ', '.join(self.WHEN_TO_CLEAN)))
+        self._when_to_clean = when_to_clean
+
+    @property
+    def current_src_states_allowed(self):
+        return self._current_src_states_allowed
+
+    @current_src_states_allowed.setter
+    def current_src_states_allowed(self, current_src_states_allowed):
+        for current_src_state_allowed in current_src_states_allowed:
+            if current_src_state_allowed not in self.CURRENT_SRC_STATES_ALLOWED:
+                raise ValueError('One of the items in  "current_src_states_allowed" is "{}" while it should be one of '
+                                 'the following : {}'.format(current_src_state_allowed,
+                                                             ', '.join(self.CURRENT_SRC_STATES_ALLOWED)))
+        self._current_src_states_allowed = current_src_states_allowed
+
+    @property
+    def which_src_steps_to_clean(self):
+        return self._which_src_steps_to_clean
+
+    @which_src_steps_to_clean.setter
+    def which_src_steps_to_clean(self, which_src_steps_to_clean):
+        if which_src_steps_to_clean in ['all', 'this_one', 'all_before_this_one', 'all_before_the_previous_one',
+                                        'the_one_before_this_one', 'the_one_before_the_previous_one']:
+            self._which_src_steps_to_clean = which_src_steps_to_clean
+            self._which_src_steps_to_clean_pattern = which_src_steps_to_clean
+        elif which_src_steps_to_clean[:7] == 'single_':
+            sp = which_src_steps_to_clean.split('_')
+            if len(sp) != 2:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "single_" but has more '
+                                 'than one underscore ... '
+                                 'Impossible to identify the step to clean.'.format(which_src_steps_to_clean))
+            try:
+                istep = int(sp[1])
+            except ValueError:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "single_" but the '
+                                 'remaining part is not an integer ... '
+                                 'Impossible to identify the step to clean.'.format(which_src_steps_to_clean))
+            if istep < 1:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "single_" but the '
+                                 'remaining part is an integer < 1 ... '
+                                 'Impossible to identify the step to clean.'.format(which_src_steps_to_clean))
+            self._which_src_steps_to_clean = which_src_steps_to_clean
+            self._which_src_steps_to_clean_pattern = 'single_N'
+        elif (len(which_src_steps_to_clean) > 29 and which_src_steps_to_clean[:15] == 'all_before_the_' and
+                  which_src_steps_to_clean[-14:] == '_previous_ones'):
+            sp = which_src_steps_to_clean.split('_')
+            if len(sp) != 6:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "all_before_the_", '
+                                 'ends with "_previous_ones" but has more than 5 underscores ... Impossible to '
+                                 'identify the steps to clean.'.format(which_src_steps_to_clean))
+            try:
+                istep = int(sp[3])
+            except ValueError:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "all_before_the_", '
+                                 'ends with "_previous_ones" but the remaining part is not an integer ... '
+                                 'Impossible to identify the steps to clean.'.format(which_src_steps_to_clean))
+            if istep < 2:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "all_before_the_", '
+                                 'ends with "_previous_ones" but the remaining part an integer less than 2 ... '
+                                 'Impossible to identify the steps to clean.'.format(which_src_steps_to_clean))
+            self._which_src_steps_to_clean = which_src_steps_to_clean
+            self._which_src_steps_to_clean_pattern = 'all_before_the_N_previous_ones'
+        elif (len(which_src_steps_to_clean) > 33 and which_src_steps_to_clean[:19] == 'the_one_before_the_' and
+                  which_src_steps_to_clean[-14:] == '_previous_ones'):
+            sp = which_src_steps_to_clean.split('_')
+            if len(sp) != 7:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "the_one_before_the_", '
+                                 'ends with "_previous_ones" but has more than 6 underscores ... Impossible to '
+                                 'identify the steps to clean.'.format(which_src_steps_to_clean))
+            try:
+                istep = int(sp[4])
+            except ValueError:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "the_one_before_the_", '
+                                 'ends with "_previous_ones" but the remaining part is not an integer ... '
+                                 'Impossible to identify the steps to clean.'.format(which_src_steps_to_clean))
+            if istep < 2:
+                raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "the_one_before_the_", '
+                                 'ends with "_previous_ones" but the remaining part an integer less than 2 ... '
+                                 'Impossible to identify the steps to clean.'.format(which_src_steps_to_clean))
+            self._which_src_steps_to_clean = which_src_steps_to_clean
+            self._which_src_steps_to_clean_pattern = 'the_one_before_the_N_previous_ones'
+        #TODO: implement "the_M_before_the_N_previous_ones" if needed ...
+        else:
+            raise ValueError('Argument "which_src_steps_to_clean" is "{}". This is not allowed. See documentation for '
+                             'the allowed options.'.format(which_src_steps_to_clean))
+
+    def steps_to_clean(self, this_step_index, this_step_state):
+        if this_step_state not in self.current_src_states_allowed:
+            return []
+        if self._which_src_steps_to_clean_pattern == 'all':
+            return range(1, this_step_index+1)
+        elif self._which_src_steps_to_clean_pattern == 'this_one':
+            return [this_step_index]
+        elif self._which_src_steps_to_clean_pattern == 'the_one_before_this_one':
+            if this_step_index == 1:
+                return []
+            return [this_step_index-1]
+        elif self._which_src_steps_to_clean_pattern == 'the_one_before_the_previous_one':
+            if this_step_index <= 2:
+                return []
+            return [this_step_index-2]
+        elif self._which_src_steps_to_clean_pattern == 'the_one_before_the_N_previous_ones':
+            iprev = int(self.which_src_steps_to_clean.split('_')[4])
+            istep = this_step_index-iprev-1
+            if istep < 1:
+                return []
+            return [istep]
+        elif self._which_src_steps_to_clean_pattern == 'all_before_this_one':
+            return range(1, this_step_index)
+        elif self._which_src_steps_to_clean_pattern == 'all_before_the_previous_one':
+            return range(1, this_step_index-1)
+        elif self._which_src_steps_to_clean_pattern == 'all_before_the_N_previous_ones':
+            iprev = int(self.which_src_steps_to_clean.split('_')[3])
+            return range(1, this_step_index-iprev)
+        elif self._which_src_steps_to_clean_pattern == 'single_N':
+            istep = int(self.which_src_steps_to_clean.split('_')[1])
+            if istep > this_step_index:
+                return []
+            return [istep]
+        raise ValueError('Should not reach this point in "steps_to_clean" of "SRCCleanerOptions"')
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'when_to_clean': self.when_to_clean,
+                'current_src_states_allowed': self.current_src_states_allowed,
+                'which_src_steps_to_clean': self.which_src_steps_to_clean}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(when_to_clean=d['when_to_clean'],
+                   current_src_states_allowed=d['current_src_states_allowed'],
+                   which_src_steps_to_clean=d['which_src_steps_to_clean'])
+
+
+class SRCCleaner(MSONable):
+
+    # RECURRENCE_TYPES = ['END', 'STEP', 'STEP_EXCEPT_END']
+    # STATE_TYPES = {'END': ['FINALIZED', 'UNRECOVERABLE', 'MAXRESTARTS'],
+    #                'STEP': ['RECOVERABLE', 'UNRECOVERABLE', 'MAXRESTARTS', 'FINALIZED'],
+    #                'STEP_EXCEPT_END': ['RECOVERABLE']}
+    # CLEANING_TYPES = ['ALL', 'ALL_EXCEPT_LAST', 'LAST']
+    SRC_TYPES = ['setup', 'run', 'control', 'src_root']
+
+    def __init__(self, cleaners=None, src_type='run', cleaner_options=SRCCleanerOptions.clean_all()):
+        if cleaners is None:
+            self.cleaners = []
+        else:
+            self.cleaners = cleaners
+        self.src_type = src_type
+        self.cleaner_options = cleaner_options
+
+    @property
+    def cleaners(self):
+        return self._cleaners
+
+    @cleaners.setter
+    def cleaners(self, cleaners):
+        if cleaners is None:
+            self._cleaners = []
+        elif isinstance(cleaners, list):
+            for cl in cleaners:
+                if not isinstance(cl, Cleaner):
+                    raise ValueError('One of the items in cleaners is not a Cleaner instance but is an instance '
+                                     'of {}'.format(cl.__class__.__name__))
+            self._cleaners = cleaners
+        else:
+            raise ValueError('The variable "cleaners" should be either None or a list of Cleaner objects')
+
+    @property
+    def src_type(self):
+        return self._src_type
+
+    @src_type.setter
+    def src_type(self, src_type):
+        if src_type not in self.SRC_TYPES:
+            raise ValueError('Argument "src_type" should be one of the following : '
+                             '{}'.format(', '.format(self.SRC_TYPES)))
+        self._src_type = src_type
+
+    def src_dir_to_clean(self, src_directories):
+        return src_directories['{}_dir'.format(self.src_type)]
+
+    def check_recurrence(self, src_task_index, state):
+        if state == self.recurrence:
+            return True
+        return False
+
+    def clean(self, last_src_directories, previous_src_dirs, src_task_index, state):
+        dirs_to_clean = []
+        if self.cleaning in ['ALL', 'LAST']:
+            dirs_to_clean.append(self.src_dir_to_clean(last_src_directories))
+            pass
+        if self.cleaning in ['ALL', 'ALL_EXCEPT_LAST']:
+            for src_directories in previous_src_dirs:
+                dirs_to_clean.append(self.src_dir_to_clean(src_directories))
+        for dir_to_clean in dirs_to_clean:
+            for cleaner in self.cleaners:
+                cleaner.clean(root_directory=dir_to_clean)
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'cleaners': [c.as_dict() for c in self.cleaners],
+                'src_types': self.src_type,
+                'cleaner_options': self.cleaner_options}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(recurrence=d['recurrence'],
+                   cleaners=[Cleaner.from_dict(d_c) for d_c in d['cleaners']],
+                   src_type=d['src_type'])
+
+
+class SRCCleaning(MSONable):
+
+    def __init__(self, src_cleaners=None):
+        if src_cleaners is None:
+            self.src_cleaners = []
+        else:
+            self.src_cleaners = src_cleaners
+
+    def clean(self, src_directories, previous_src_dirs, state):
+        pass
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__,
+                'src_cleaners': [src_c.as_dict() for src_c in self.src_cleaners]}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(src_cleaners=[SRCCleaner.from_dict(d_src_c) for d_src_c in d['src_cleaners']])
 
 
 def createSRCFireworks(setup_task, run_task, control_task, spec=None, initialization_info=None,
-                       task_index=None, deps=None, setup_spec_update=None, run_spec_update=None):
+                       task_index=None, setup_spec_update=None, run_spec_update=None):
     # Make a full copy of the spec
     if spec is None:
         spec = {}
@@ -519,8 +848,8 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     if task_index is not None:
         src_task_index = SRCTaskIndex.from_any(task_index)
     else:
-        src_task_index = SRCTaskIndex.from_any('unknown-task')
-    #     src_task_index = SRCTaskIndex.from_task(run_task)
+        # src_task_index = SRCTaskIndex.from_any('unknown-task')
+        src_task_index = SRCTaskIndex.from_task(run_task)
     spec['SRC_task_index'] = src_task_index
 
     # SetupTask
@@ -613,7 +942,7 @@ class SRCTaskIndex(MSONable):
         prefix_test_string = str(task_type)
         for allowed_char in self.ALLOWED_CHARS:
             prefix_test_string = prefix_test_string.replace(allowed_char, "")
-        if not prefix_test_string.isalpha():
+        if not prefix_test_string.isalnum():
             ac_str = ', '.join(['"{}"'.format(ac) for ac in self.ALLOWED_CHARS])
             raise ValueError('task_type should only contain letters '
                              'and the following characters : {}'.format(ac_str))
@@ -744,7 +1073,6 @@ class RunError(SRCError):
 
 class ControlError(SRCError):
     pass
-
 
 # TODO: Remove the following when the new SRC is working ...
 #

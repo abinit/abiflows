@@ -5,7 +5,11 @@ monitor and check tasks, events, results, objects, ...
 """
 
 import abc
+import fnmatch
 import logging
+import os
+import shutil
+import traceback
 
 from six import add_metaclass
 from monty.json import MontyDecoder
@@ -88,13 +92,25 @@ class ControlProcedure(MSONable):
             return report
         for priority in self.priorities:
             skip_lower_priority = False
+            #skip_other_controllers = False
             for controller in self.grouped_controllers[priority]:
+                if controller._only_unfinalized and report.finalized:
+                    #TODO: clean up here ... otherwise the ultimate could always be applied .....
+                    continue
                 controller_note = controller.process(**kwargs)
+                # TODO: clean up this ...
                 report.add_controller_note(controller_note=controller_note)
-                if controller.skip_lower_priority_controllers:
+            #    if controller_note.state in ControllerNote.ERROR_STATES:
+            #        skip_other_controllers = True
+            #        break
+                if report.state == ControlReport.RECOVERABLE and controller.skip_lower_priority_controllers:
                     skip_lower_priority = True
             if skip_lower_priority:
                 break
+            #if skip_other_controllers:
+            #    break
+        # if report.finalized and self.cleaner is not None:
+        #     self.cleaner.clean()
         return report
 
     @property
@@ -214,6 +230,8 @@ class Controller(MSONable):
 
     _priority = PRIORITY_MEDIUM
     _controlled_item_types = None
+    #TODO: try to make this cleaner ...
+    _only_unfinalized = False
 
     # Types of controllers
     # Combinations of the following are possible, e.g. some controller might be a monitor, a handler, a manager and a
@@ -293,6 +311,67 @@ class Controller(MSONable):
         return None
 
 
+class Cleaner(MSONable):
+    def __init__(self, dirs_and_patterns):
+        """
+        Initializes a Cleaner object used to delete files. The cleaner takes a simple list of dict described below
+        :param dirs_and_patterns: list of dicts with keys "directory" and "patterns". for each item in the list, any
+                                  file or directory present in the "directory" and matching one of the "patterns" will
+                                  be deleted.
+        Example : dirs_and_patterns = [{'directory': 'out',
+                                        'patterns': ['*.log', '*.backup']},
+                                       {'directory': 'tmp',
+                                        'patterns': ['*']}]
+                  will remove all files ending with ".log" or ".backup" in the "out" directory and all files in the
+                  "tmp" directory.
+
+        """
+        for dir_and_patterns in dirs_and_patterns:
+            if os.path.isabs(dir_and_patterns['directory']):
+                raise ValueError('The definition of the directories to clean should be as relative paths and not '
+                                 'absolute paths')
+        self.dirs_and_patterns = dirs_and_patterns
+
+    def clean(self, root_directory):
+        if not os.path.isabs(root_directory):
+            raise ValueError('The root directory to clean should be defined with an absolute path')
+        deleted_files = []
+        for dir_and_patterns in self.dirs_and_patterns:
+            directory = os.path.join(root_directory, dir_and_patterns['directory'])
+            if os.path.isdir(directory):
+                for file in os.listdir(directory):
+                    for patt in dir_and_patterns['patterns']:
+                        if fnmatch.fnmatch(file, patt):
+                            fp = os.path.join(directory, file)
+                            try:
+                                if os.path.isfile(fp):
+                                    os.unlink(fp)
+                                elif os.path.isdir(fp):
+                                    shutil.rmtree(fp)
+                                deleted_files.append(fp)
+                                break
+                            except:
+                                logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
+        pass
+
+    # def delete_files(d, exts=None):
+    #     deleted_files = []
+    #     if os.path.isdir(d):
+    #         for f in os.listdir(d):
+    #             if exts is None or "*" in exts or any(ext in f for ext in exts):
+    #                 fp = os.path.join(d, f)
+    #                 try:
+    #                     if os.path.isfile(fp):
+    #                         os.unlink(fp)
+    #                     elif os.path.isdir(fp):
+    #                         shutil.rmtree(fp)
+    #                     deleted_files.append(fp)
+    #                 except:
+    #                     logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
+    #
+    #     return deleted_files
+
+
 @add_metaclass(abc.ABCMeta)
 class Manager(MSONable):
     def __init__(self):
@@ -327,6 +406,7 @@ class ControllerNote(MSONable):
     # ERROR_FIXCONTINUE = 'ERROR_FIXCONTINUE'
 
     STATES = [EVERYTHING_OK, NOTHING_FOUND, ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_RECOVERABLE]
+    ERROR_STATES = [ERROR_UNRECOVERABLE, ERROR_NOFIX, ERROR_RECOVERABLE]
 
     #TODO consider using increasing integers as values, so that we can take the lowest as a general value of the
     # restart
@@ -485,11 +565,12 @@ class ControlReport(MSONable):
     def update_state_from_controller_notes(self):
         if len(self.controller_notes) == 0:
             self.state = self.NONE
-        elif any([cn.state == ControllerNote.ERROR_UNRECOVERABLE for cn in self.controller_notes]):
-            self.state = self.UNRECOVERABLE
         elif any([cn.state == ControllerNote.ERROR_RECOVERABLE for cn in self.controller_notes]):
             self.state = self.RECOVERABLE
-        elif all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate]):
+        elif any([cn.state == ControllerNote.ERROR_UNRECOVERABLE for cn in self.controller_notes]):
+            self.state = self.UNRECOVERABLE
+        elif (len([cn for cn in self.controller_notes if cn.controller.can_validate]) and
+                  all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate])):
             self.state = self.FINALIZED
         else:
             # If no controller says it is recoverable/unrecoverable/valid/... then we set it to unrecoverable ?
