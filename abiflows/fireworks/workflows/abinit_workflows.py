@@ -1146,7 +1146,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                                                                previous_ddk_task_type=run_ddk_task.task_type,
                                                                mrgddb_task_type=rf_ddb_source_task_type,
                                                                additional_controllers=additional_controllers,
-                                                               rf_tol=rf_tol)
+                                                               rf_tol=rf_tol, additional_input_vars={'mem_test': 0})
             genrfstrains_spec = set_short_single_core_to_spec(spec)
             gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
             fws.append(gen_fw)
