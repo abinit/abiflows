@@ -1226,7 +1226,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                  previous_ddk_task_type=DdkTaskHelper.task_type, control_procedure=None,
                  additional_controllers=None,
                  mrgddb_task_type='mrgddb-strains',
-                 rf_tol=None):
+                 rf_tol=None, additional_input_vars=None):
         if piezo_elastic_factory is None:
             self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
         else:
@@ -1250,6 +1250,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         self.additional_controllers = additional_controllers
         self.mrgddb_task_type = mrgddb_task_type
         self.rf_tol = rf_tol
+        self.additional_input_vars = additional_input_vars
 
     def run_task(self, fw_spec):
 
@@ -1282,6 +1283,8 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
 
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
             strain_task_type = 'strain-pert-{:d}'.format(istrain_pert+1)
+            if self.additional_input_vars is not None:
+                rf_strain_input.set_vars(self.additional_input_vars)
             setup_rf_task = AbinitSetupTask(abiinput=rf_strain_input, task_helper=self.helper,
                                             deps={self.previous_scf_task_type: 'WFK',
                                                   self.previous_ddk_task_type: 'DDK'})
