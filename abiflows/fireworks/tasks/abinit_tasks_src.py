@@ -1285,6 +1285,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             strain_task_type = 'strain-pert-{:d}'.format(istrain_pert+1)
             if self.additional_input_vars is not None:
                 rf_strain_input.set_vars(self.additional_input_vars)
+            rf_strain_input.set_vars(mem_test=0)
             setup_rf_task = AbinitSetupTask(abiinput=rf_strain_input, task_helper=self.helper,
                                             deps={self.previous_scf_task_type: 'WFK',
                                                   self.previous_ddk_task_type: 'DDK'})
