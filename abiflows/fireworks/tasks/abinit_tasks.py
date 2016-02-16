@@ -1554,7 +1554,6 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
                             if 'Description of the PAW dataset(s)' in line:
                                 in_psp_info = True
                                 fname_with_psp = fname
-                                psp_lines.append(line)
                             if in_psp_info:
                                 if '**** Database of total energy derivatives ****' in line:
                                     break
