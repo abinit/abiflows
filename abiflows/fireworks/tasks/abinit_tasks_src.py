@@ -1084,13 +1084,17 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
     task_type = "bader"
 
 
-    def __init__(self, bader_log_file='bader.log', bader_err_file='bader.err'):
+    def __init__(self, bader_log_file='bader.log', bader_err_file='bader.err', electrons=None):
         """
         General constructor for Cut3D task.
         """
 
         self.bader_log_file = bader_log_file
         self.bader_err_file = bader_err_file
+        if electrons is not None:
+            if electrons not in ['valence', 'all-electron']:
+                raise ValueError('Argument "electrons" should be "valence" or "all-electron"')
+        self.electrons = electrons
 
     def set_workdir(self, workdir):
         self.workdir = workdir
@@ -1154,7 +1158,10 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
 
     def setup_rundir(self, rundir, create_dirs=True, directories_only=False):
         # Directories with input|output|temporary data.
-        self.bader_dir = Directory(os.path.join(rundir, 'bader'))
+        if self.electrons is None:
+            self.bader_dir = Directory(os.path.join(rundir, 'bader'))
+        else:
+            self.bader_dir = Directory(os.path.join(rundir, 'bader', self.electrons))
         self.rundir = self.bader_dir.path
 
         # Create dir for bader
