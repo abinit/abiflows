@@ -1546,7 +1546,6 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
                 for fname in ddb_files:
                     in_psp_info = False
-                    psp_lines = []
                     with open(fname, 'r') as fh:
                         dd = fh.readlines()
                         for iline, line in enumerate(dd):
@@ -1560,6 +1559,8 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
                                 if '**** Database of total energy derivatives ****' in line:
                                     break
                                 psp_lines.append(line)
+                    if fname_with_psp:
+                        break
 
                 if not fname_with_psp:
                     raise ValueError('Should have at least one DDB with the psp info ...')
