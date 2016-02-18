@@ -35,6 +35,7 @@ from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.abio.input_tags import STRAIN
 from abipy.electrons.gsr import GsrFile
+from abipy.core.mixins import AbinitOutNcFile
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
@@ -319,6 +320,12 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                     #     logger.error(msg)
                     #     raise SetupError(msg)
                     # self.abiinput.set_structure(previous_task['structure'])
+                elif d.startswith('@outnc'):
+                    varname = d.split('.')[1]
+                    outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
+                    outnc_file = AbinitOutNcFile(outnc_path)
+                    vars = outnc_file.get_vars(vars=[varname], strict=True)
+                    self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
