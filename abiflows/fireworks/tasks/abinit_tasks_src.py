@@ -320,7 +320,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                     #     logger.error(msg)
                     #     raise SetupError(msg)
                     # self.abiinput.set_structure(previous_task['structure'])
-                elif d.startswith('@outnc'):
+                elif d.startswith('@outnc') or d.startswith('#outnc'):
                     varname = d.split('.')[1]
                     outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
                     outnc_file = AbinitOutNcFile(outnc_path)
@@ -348,14 +348,15 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         if not self.deps:
             return
 
+        # If this is the first run of the task, the informations are taken from the 'previous_fws',
+        # that should be present.
+        previous_fws = fw_spec.get('previous_fws', None)
+        if previous_fws is None:
+            msg = "No previous_fws data. Needed for dependecies {}.".format(str(self.deps))
+            logger.error(msg)
+            raise SetupError(msg)
+
         if not self.restart_info:
-            # If this is the first run of the task, the informations are taken from the 'previous_fws',
-            # that should be present.
-            previous_fws = fw_spec.get('previous_fws', None)
-            if previous_fws is None:
-                msg = "No previous_fws data. Needed for dependecies {}.".format(str(self.deps))
-                logger.error(msg)
-                raise SetupError(msg)
 
             if isinstance(self.deps, (list, tuple)):
                 # check that there is only one previous_fws
@@ -406,6 +407,37 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                 if os.path.islink(source):
                     source = os.readlink(source)
                 os.symlink(source, os.path.join(self.run_dir, INDIR_NAME, f))
+
+            # Resolve the dependencies that start with '#'
+            if isinstance(self.deps, (list, tuple)):
+                # check that there is only one previous_fws
+                if len(previous_fws) != 1 or len(previous_fws.values()[0]) != 1:
+                    msg = "previous_fws does not contain a single reference. " \
+                          "Specify the dependency for {}.".format(str(self.deps))
+                    logger.error(msg)
+                    raise SetupError(msg)
+                deps = [dep for dep in self.deps if dep[0] == '#']
+                self.resolve_deps_per_task_type(previous_fws.values()[0], deps)
+
+            else:
+                # deps should be a dict
+                for task_type, deps_list in self.deps.items():
+                    if task_type not in previous_fws:
+                        msg = "No previous_fws data for task type {}.".format(task_type)
+                        logger.error(msg)
+                        raise SetupError(msg)
+                    if len(previous_fws[task_type]) < 1:
+                        msg = "Previous_fws does not contain any reference for task type {}, " \
+                              "needed in reference {}. ".format(task_type, str(self.deps))
+                        logger.error(msg)
+                        raise SetupError(msg)
+                    elif len(previous_fws[task_type]) > 1:
+                        msg = "Previous_fws contains more than a single reference for task type {}, " \
+                              "needed in reference {}. Risk of overwriting.".format(task_type, str(self.deps))
+                        logger.warning(msg)
+
+                    deps_list = [dep for dep in deps_list if dep[0] == '#']
+                    self.resolve_deps_per_task_type(previous_fws[task_type], deps_list)
 
     @property
     def filesfile_string(self):
