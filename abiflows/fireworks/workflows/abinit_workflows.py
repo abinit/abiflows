@@ -1104,7 +1104,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
                 nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
             nscffbz_deps = {run_scf_task.task_type: ['DEN']}
-            nscffbz_deps.update(ngfft_deps)
+            nscffbz_deps[run_scf_task.task_type].extend(ngfft_deps)
             setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
                                                  deps=nscffbz_deps, pass_input=True)
             run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
@@ -1131,7 +1131,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
                 ddk_inp.set_vars({'kptopt': 3})
                 ddk_deps = {run_nscffbz_task.task_type: 'WFK'}
-                ddk_deps.update(ngfft_deps)
+                ddk_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
                 setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
                                                  deps=ddk_deps)
                 run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
@@ -1154,7 +1154,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             rf_tol = {rf_tolvar: value}
             rf_deps = {run_nscffbz_task.task_type: 'WFK',
                        run_ddk_task.task_type: 'DDK'}
-            rf_deps.update(ngfft_deps)
+            rf_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
             gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
                                                                previous_ddk_task_type=run_ddk_task.task_type,
                                                                mrgddb_task_type=rf_ddb_source_task_type,
