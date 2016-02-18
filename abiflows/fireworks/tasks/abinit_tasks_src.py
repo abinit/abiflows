@@ -1233,7 +1233,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                  previous_ddk_task_type=DdkTaskHelper.task_type, control_procedure=None,
                  additional_controllers=None,
                  mrgddb_task_type='mrgddb-strains',
-                 rf_tol=None, additional_input_vars=None):
+                 rf_tol=None, additional_input_vars=None, rf_deps=None):
         if piezo_elastic_factory is None:
             self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
         else:
@@ -1258,6 +1258,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         self.mrgddb_task_type = mrgddb_task_type
         self.rf_tol = rf_tol
         self.additional_input_vars = additional_input_vars
+        self.rf_deps = rf_deps
 
     def run_task(self, fw_spec):
 
@@ -1288,14 +1289,19 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         strain_task_types = []
         fws_deps = {}
 
+        if self.rf_deps is not None:
+            rf_deps = self.rf_deps
+        else:
+            rf_deps = {self.previous_scf_task_type: 'WFK',
+                       self.previous_ddk_task_type: 'DDK'}
+
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
             strain_task_type = 'strain-pert-{:d}'.format(istrain_pert+1)
             if self.additional_input_vars is not None:
                 rf_strain_input.set_vars(self.additional_input_vars)
             rf_strain_input.set_vars(mem_test=0)
             setup_rf_task = AbinitSetupTask(abiinput=rf_strain_input, task_helper=self.helper,
-                                            deps={self.previous_scf_task_type: 'WFK',
-                                                  self.previous_ddk_task_type: 'DDK'})
+                                            deps=rf_deps)
             run_rf_task = AbinitRunTask(control_procedure=self.control_procedure, task_helper=self.helper,
                                         task_type=strain_task_type)
             control_rf_task = AbinitControlTask(control_procedure=self.control_procedure, task_helper=self.helper)

@@ -1055,7 +1055,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
 
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
-                 ddk_split=False, rf_split=False, additional_controllers=None, new=False):
+                 ddk_split=False, rf_split=False, additional_controllers=None, new=True):
 
 
         if new:
@@ -1066,6 +1066,12 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 additional_controllers = [WalltimeController(), MemoryController()]
             else:
                 additional_controllers = additional_controllers
+
+            # Dependencies for the ngfft grid (for some reason, the fft grid can change between SCF and nSCF runs
+            # even when all other parameters are the same ...)
+            ngfft_deps = ['@outnc.ngfft']
+            if scf_inp_ibz.ispaw:
+                ngfft_deps.append('@outnc.ngfftdg')
 
             #1. SCF run in the irreducible Brillouin Zone
             scf_helper = ScfTaskHelper()
@@ -1097,8 +1103,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             if 'nbdbuf' not in nscf_inp_fbz:
                 nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
                 nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
+            nscffbz_deps = {run_scf_task.task_type: ['DEN']}
+            nscffbz_deps.update(ngfft_deps)
             setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
-                                                 deps={run_scf_task.task_type: ['DEN']}, pass_input=True)
+                                                 deps=nscffbz_deps, pass_input=True)
             run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
                                              task_type='nscffbz')
             control_nscffbz_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
@@ -1122,8 +1130,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 ddk_controllers.extend(additional_controllers)
                 ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
                 ddk_inp.set_vars({'kptopt': 3})
+                ddk_deps = {run_nscffbz_task.task_type: 'WFK'}
+                ddk_deps.update(ngfft_deps)
                 setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
-                                                 deps={run_nscffbz_task.task_type: 'WFK'})
+                                                 deps=ddk_deps)
                 run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
                                              task_type='ddk')
                 control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
@@ -1142,11 +1152,15 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             rf_ddb_source_task_type = 'mrgddb-strains'
             rf_tolvar, value = rf_inp.scf_tolvar
             rf_tol = {rf_tolvar: value}
+            rf_deps = {run_nscffbz_task.task_type: 'WFK',
+                       run_ddk_task.task_type: 'DDK'}
+            rf_deps.update(ngfft_deps)
             gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
                                                                previous_ddk_task_type=run_ddk_task.task_type,
                                                                mrgddb_task_type=rf_ddb_source_task_type,
                                                                additional_controllers=additional_controllers,
-                                                               rf_tol=rf_tol, additional_input_vars={'mem_test': 0})
+                                                               rf_tol=rf_tol, additional_input_vars={'mem_test': 0},
+                                                               rf_deps=rf_deps)
             genrfstrains_spec = set_short_single_core_to_spec(spec)
             gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
             fws.append(gen_fw)

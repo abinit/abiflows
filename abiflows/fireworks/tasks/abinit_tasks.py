@@ -35,6 +35,7 @@ from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
+from abipy.core.mixins import AbinitOutNcFile
 
 from abipy.core import Structure
 
@@ -952,6 +953,12 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                         logger.error(msg)
                         raise InitializationError(msg)
                     self.abiinput.set_structure(previous_task['structure'])
+                elif d.startswith('@outnc'):
+                    varname = d.split('.')[1]
+                    outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
+                    outnc_file = AbinitOutNcFile(outnc_path)
+                    vars = outnc_file.get_vars(vars=[varname], strict=True)
+                    self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
