@@ -1069,9 +1069,9 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
             # Dependencies for the ngfft grid (for some reason, the fft grid can change between SCF and nSCF runs
             # even when all other parameters are the same ...)
-            ngfft_deps = ['@outnc.ngfft']
+            ngfft_deps = ['#outnc.ngfft']
             if scf_inp_ibz.ispaw:
-                ngfft_deps.append('@outnc.ngfftdg')
+                ngfft_deps.append('#outnc.ngfftdg')
 
             #1. SCF run in the irreducible Brillouin Zone
             scf_helper = ScfTaskHelper()
