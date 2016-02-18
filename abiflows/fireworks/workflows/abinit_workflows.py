@@ -1130,7 +1130,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                 ddk_controllers.extend(additional_controllers)
                 ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
                 ddk_inp.set_vars({'kptopt': 3})
-                ddk_deps = {run_nscffbz_task.task_type: 'WFK'}
+                ddk_deps = {run_nscffbz_task.task_type: ['WFK']}
                 ddk_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
                 setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
                                                  deps=ddk_deps)
@@ -1152,8 +1152,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             rf_ddb_source_task_type = 'mrgddb-strains'
             rf_tolvar, value = rf_inp.scf_tolvar
             rf_tol = {rf_tolvar: value}
-            rf_deps = {run_nscffbz_task.task_type: 'WFK',
-                       run_ddk_task.task_type: 'DDK'}
+            rf_deps = {run_nscffbz_task.task_type: ['WFK'],
+                       run_ddk_task.task_type: ['DDK']}
             rf_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
             gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
                                                                previous_ddk_task_type=run_ddk_task.task_type,
