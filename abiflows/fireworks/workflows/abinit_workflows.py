@@ -1055,297 +1055,299 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
 
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
-                 ddk_split=False, rf_split=False, additional_controllers=None, new=True):
+                 ddk_split=False, rf_split=False, additional_controllers=None, additional_input_vars=None):
 
+        fws = []
+        links_dict = {}
 
-        if new:
-            fws = []
-            links_dict = {}
-
-            if additional_controllers is None:
-                additional_controllers = [WalltimeController(), MemoryController()]
-            else:
-                additional_controllers = additional_controllers
-
-            # Dependencies for the ngfft grid (for some reason, the fft grid can change between SCF and nSCF runs
-            # even when all other parameters are the same ...)
-            ngfft_deps = ['#outnc.ngfft']
-            if scf_inp_ibz.ispaw:
-                ngfft_deps.append('#outnc.ngfftdg')
-
-            #1. SCF run in the irreducible Brillouin Zone
-            scf_helper = ScfTaskHelper()
-            scf_controllers = [AbinitController.from_helper(scf_helper)]
-            scf_controllers.extend(additional_controllers)
-            scf_control_procedure = ControlProcedure(controllers=scf_controllers)
-            setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
-            run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
-                                         task_type='scfibz')
-            control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
-
-            scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
-                                         spec=spec, initialization_info=initialization_info)
-
-            fws.extend(scf_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
-
-            #2. nSCF run in the full Brillouin Zone with kptopt 2
-            nscf_helper = NscfTaskHelper()
-            nscf_controllers = [AbinitController.from_helper(nscf_helper)]
-            nscf_controllers.extend(additional_controllers)
-            nscf_control_procedure = ControlProcedure(controllers=nscf_controllers)
-            nscf_inp_fbz = scf_inp_ibz.deepcopy()
-            nscf_inp_fbz.set_vars({'tolwfr': 1.0e-20,
-                                   'kptopt': 3,
-                                   'iscf': -2,
-                                   'istwfk': '*1'})
-            # Adding buffer to help convergence ...
-            if 'nbdbuf' not in nscf_inp_fbz:
-                nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
-                nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
-            nscffbz_deps = {run_scf_task.task_type: ['DEN']}
-            nscffbz_deps[run_scf_task.task_type].extend(ngfft_deps)
-            setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
-                                                 deps=nscffbz_deps, pass_input=True)
-            run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
-                                             task_type='nscffbz')
-            control_nscffbz_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
-
-            nscffbz_fws = createSRCFireworks(setup_task=setup_nscffbz_task, run_task=run_nscffbz_task,
-                                             control_task=control_nscffbz_task,
-                                             spec=spec, initialization_info=initialization_info)
-
-            fws.extend(nscffbz_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=nscffbz_fws['links_dict'])
-            #Link with the IBZ SCF run
-            links_dict_update(links_dict=links_dict,
-                              links_update={scf_fws['control_fw'].fw_id: nscffbz_fws['setup_fw'].fw_id})
-
-            #3. DDK calculation
-            if ddk_split:
-                raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
-            else:
-                ddk_helper = DdkTaskHelper()
-                ddk_controllers = [AbinitController.from_helper(ddk_helper)]
-                ddk_controllers.extend(additional_controllers)
-                ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
-                ddk_inp.set_vars({'kptopt': 3})
-                ddk_deps = {run_nscffbz_task.task_type: ['WFK']}
-                ddk_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
-                setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
-                                                 deps=ddk_deps)
-                run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
-                                             task_type='ddk')
-                control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
-
-                ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
-                                             control_task=control_ddk_task,
-                                             spec=spec, initialization_info=initialization_info)
-
-                fws.extend(ddk_fws['fws'])
-                links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
-                #Link with the FBZ nSCF run
-                links_dict_update(links_dict=links_dict,
-                                  links_update={nscffbz_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
-
-            #4. Response-Function calculation(s) of the elastic constants
-            rf_ddb_source_task_type = 'mrgddb-strains'
-            rf_tolvar, value = rf_inp.scf_tolvar
-            rf_tol = {rf_tolvar: value}
-            rf_deps = {run_nscffbz_task.task_type: ['WFK'],
-                       run_ddk_task.task_type: ['DDK']}
-            rf_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
-            gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
-                                                               previous_ddk_task_type=run_ddk_task.task_type,
-                                                               mrgddb_task_type=rf_ddb_source_task_type,
-                                                               additional_controllers=additional_controllers,
-                                                               rf_tol=rf_tol, additional_input_vars={'mem_test': 0},
-                                                               rf_deps=rf_deps)
-            genrfstrains_spec = set_short_single_core_to_spec(spec)
-            gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
-            fws.append(gen_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={nscffbz_fws['control_fw'].fw_id: gen_fw.fw_id,
-                                            ddk_fws['control_fw'].fw_id: gen_fw.fw_id})
-
-            rf_ddb_src_fw = gen_fw
-
-            #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
-            # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
-            # stress-corrected elastic constants)
-            mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
-                                                                    run_scf_task.task_type],
-                                             delete_source_ddbs=False, num_ddbs=2)
-            mrgddb_spec = set_short_single_core_to_spec(spec)
-            if scf_inp_ibz.ispaw:
-                mrgddb_spec['PAW_datasets_description_correction'] = 'yes'
-            mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
-            fws.append(mrgddb_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
-                                            scf_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
-
-            #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
-            anaddb_tag = 'anaddb-piezo-elast'
-            spec = set_short_single_core_to_spec(spec)
-            anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                                     stress_correction=False),
-                                           deps={rf_ddb_source_task_type: ['DDB']},
-                                           task_type=anaddb_tag)
-            anaddb_fw = Firework([anaddb_task],
-                                 spec=spec,
-                                 name=anaddb_tag)
-            fws.append(anaddb_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
-
-            #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
-            anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
-            spec = set_short_single_core_to_spec(spec)
-            anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                                            stress_correction=True),
-                                                  deps={mrgddb_task.task_type: ['DDB']},
-                                                  task_type=anaddb_tag)
-            anaddb_stress_fw = Firework([anaddb_stress_task],
-                                        spec=spec,
-                                        name=anaddb_tag)
-            fws.append(anaddb_stress_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
-
-            self.wf = Workflow(fireworks=fws,
-                               links_dict=links_dict,
-                               metadata={'workflow_class': self.workflow_class,
-                                         'workflow_module': self.workflow_module})
+        if additional_controllers is None:
+            additional_controllers = [WalltimeController(), MemoryController()]
         else:
-            fws = []
-            links_dict = {}
+            additional_controllers = additional_controllers
 
-            if additional_controllers is None:
-                additional_controllers = [WalltimeController(), MemoryController()]
-            else:
-                additional_controllers = additional_controllers
+        # Dependencies for the ngfft grid (for some reason, the fft grid can change between SCF and nSCF runs
+        # even when all other parameters are the same ...)
+        ngfft_deps = ['#outnc.ngfft']
+        if scf_inp_ibz.ispaw:
+            ngfft_deps.append('#outnc.ngfftdg')
 
-            #1. First SCF run in the irreducible Brillouin Zone
-            scf_helper = ScfTaskHelper()
-            scf_controllers = [AbinitController.from_helper(scf_helper)]
-            scf_controllers.extend(additional_controllers)
-            scf_control_procedure = ControlProcedure(controllers=scf_controllers)
-            setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
-            run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
-                                         task_type='scfibz')
-            control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+        scf_inp_ibz.set_vars(additional_input_vars)
+        ddk_inp.set_vars(additional_input_vars)
+        rf_inp.set_vars(additional_input_vars)
 
-            scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
+        #1. SCF run in the irreducible Brillouin Zone
+        scf_helper = ScfTaskHelper()
+        scf_controllers = [AbinitController.from_helper(scf_helper)]
+        scf_controllers.extend(additional_controllers)
+        scf_control_procedure = ControlProcedure(controllers=scf_controllers)
+        setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
+        run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
+                                     task_type='scfibz')
+        control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+
+        scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
+                                     spec=spec, initialization_info=initialization_info)
+
+        fws.extend(scf_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
+
+        #2. nSCF run in the full Brillouin Zone with kptopt 2
+        nscf_helper = NscfTaskHelper()
+        nscf_controllers = [AbinitController.from_helper(nscf_helper)]
+        nscf_controllers.extend(additional_controllers)
+        nscf_control_procedure = ControlProcedure(controllers=nscf_controllers)
+        nscf_inp_fbz = scf_inp_ibz.deepcopy()
+        nscf_inp_fbz.set_vars({'tolwfr': 1.0e-20,
+                               'kptopt': 3,
+                               'iscf': -2,
+                               'istwfk': '*1'})
+        # Adding buffer to help convergence ...
+        if 'nbdbuf' not in nscf_inp_fbz:
+            nbdbuf = max(int(0.1*nscf_inp_fbz['nband']), 4)
+            nscf_inp_fbz.set_vars(nband=nscf_inp_fbz['nband']+nbdbuf, nbdbuf=nbdbuf)
+        nscffbz_deps = {run_scf_task.task_type: ['DEN']}
+        nscffbz_deps[run_scf_task.task_type].extend(ngfft_deps)
+        setup_nscffbz_task = AbinitSetupTask(abiinput=nscf_inp_fbz, task_helper=nscf_helper,
+                                             deps=nscffbz_deps, pass_input=True)
+        run_nscffbz_task = AbinitRunTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper,
+                                         task_type='nscffbz')
+        control_nscffbz_task = AbinitControlTask(control_procedure=nscf_control_procedure, task_helper=nscf_helper)
+
+        nscffbz_fws = createSRCFireworks(setup_task=setup_nscffbz_task, run_task=run_nscffbz_task,
+                                         control_task=control_nscffbz_task,
                                          spec=spec, initialization_info=initialization_info)
 
-            fws.extend(scf_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
+        fws.extend(nscffbz_fws['fws'])
+        links_dict_update(links_dict=links_dict, links_update=nscffbz_fws['links_dict'])
+        #Link with the IBZ SCF run
+        links_dict_update(links_dict=links_dict,
+                          links_update={scf_fws['control_fw'].fw_id: nscffbz_fws['setup_fw'].fw_id})
 
-            #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
-            #2nd derivative DDB's from the DFPT RF run
-            scf_inp_fbz = scf_inp_ibz.deepcopy()
-            scf_inp_fbz['kptopt'] = 2
-            setup_scffbz_task = AbinitSetupTask(abiinput=scf_inp_fbz, task_helper=scf_helper,
-                                                deps={run_scf_task.task_type: ['WFK', 'DEN']})
-            run_scffbz_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
-                                            task_type='scffbz')
-            control_scffbz_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+        #3. DDK calculation
+        if ddk_split:
+            raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
+        else:
+            ddk_helper = DdkTaskHelper()
+            ddk_controllers = [AbinitController.from_helper(ddk_helper)]
+            ddk_controllers.extend(additional_controllers)
+            ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
+            ddk_inp.set_vars({'kptopt': 3})
+            ddk_deps = {run_nscffbz_task.task_type: ['WFK']}
+            ddk_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
+            setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
+                                             deps=ddk_deps)
+            run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
+                                         task_type='ddk')
+            control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
 
-            scffbz_fws = createSRCFireworks(setup_task=setup_scffbz_task, run_task=run_scffbz_task,
-                                            control_task=control_scffbz_task,
-                                            spec=spec, initialization_info=initialization_info)
+            ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
+                                         control_task=control_ddk_task,
+                                         spec=spec, initialization_info=initialization_info)
 
-            fws.extend(scffbz_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=scffbz_fws['links_dict'])
-            #Link with the IBZ SCF run
+            fws.extend(ddk_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
+            #Link with the FBZ nSCF run
             links_dict_update(links_dict=links_dict,
-                              links_update={scf_fws['control_fw'].fw_id: scffbz_fws['setup_fw'].fw_id})
+                              links_update={nscffbz_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
 
-            #3. DDK calculation
-            if ddk_split:
-                raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
-            else:
-                ddk_helper = DdkTaskHelper()
-                ddk_controllers = [AbinitController.from_helper(ddk_helper)]
-                ddk_controllers.extend(additional_controllers)
-                ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
-                setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
-                                                 deps={run_scf_task.task_type: 'WFK'})
-                run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
-                                             task_type='ddk')
-                control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
+        #4. Response-Function calculation(s) of the elastic constants
+        rf_ddb_source_task_type = 'mrgddb-strains'
+        rf_tolvar, value = rf_inp.scf_tolvar
+        rf_tol = {rf_tolvar: value}
+        rf_deps = {run_nscffbz_task.task_type: ['WFK'],
+                   run_ddk_task.task_type: ['DDK']}
+        rf_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
+        gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
+                                                           previous_ddk_task_type=run_ddk_task.task_type,
+                                                           mrgddb_task_type=rf_ddb_source_task_type,
+                                                           additional_controllers=additional_controllers,
+                                                           rf_tol=rf_tol, additional_input_vars=additional_input_vars,
+                                                           rf_deps=rf_deps)
+        genrfstrains_spec = set_short_single_core_to_spec(spec)
+        gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
+        fws.append(gen_fw)
+        links_dict_update(links_dict=links_dict,
+                          links_update={nscffbz_fws['control_fw'].fw_id: gen_fw.fw_id,
+                                        ddk_fws['control_fw'].fw_id: gen_fw.fw_id})
 
-                ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
-                                             control_task=control_ddk_task,
-                                             spec=spec, initialization_info=initialization_info)
+        rf_ddb_src_fw = gen_fw
 
-                fws.extend(ddk_fws['fws'])
-                links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
-                #Link with the IBZ SCF run
-                links_dict_update(links_dict=links_dict,
-                                  links_update={scf_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
+        #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
+        # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
+        # stress-corrected elastic constants)
+        mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
+                                                                run_scf_task.task_type],
+                                         delete_source_ddbs=False, num_ddbs=2)
+        mrgddb_spec = set_short_single_core_to_spec(spec)
+        if scf_inp_ibz.ispaw:
+            mrgddb_spec['PAW_datasets_description_correction'] = 'yes'
+        mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
+        fws.append(mrgddb_fw)
+        links_dict_update(links_dict=links_dict,
+                          links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
+                                        scf_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
 
-            #4. Response-Function calculation(s) of the elastic constants
-            rf_ddb_source_task_type = 'mrgddb-strains'
-            gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_scf_task.task_type,
-                                                               previous_ddk_task_type=run_ddk_task.task_type,
-                                                               mrgddb_task_type=rf_ddb_source_task_type,
-                                                               additional_controllers=additional_controllers)
-            genrfstrains_spec = set_short_single_core_to_spec(spec)
-            gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
-            fws.append(gen_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={scf_fws['control_fw'].fw_id: gen_fw.fw_id,
-                                            ddk_fws['control_fw'].fw_id: gen_fw.fw_id})
+        #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
+        anaddb_tag = 'anaddb-piezo-elast'
+        spec = set_short_single_core_to_spec(spec)
+        anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                 stress_correction=False),
+                                       deps={rf_ddb_source_task_type: ['DDB']},
+                                       task_type=anaddb_tag)
+        anaddb_fw = Firework([anaddb_task],
+                             spec=spec,
+                             name=anaddb_tag)
+        fws.append(anaddb_fw)
+        links_dict_update(links_dict=links_dict,
+                          links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
 
-            rf_ddb_src_fw = gen_fw
+        #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
+        anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
+        spec = set_short_single_core_to_spec(spec)
+        anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+                                                                        stress_correction=True),
+                                              deps={mrgddb_task.task_type: ['DDB']},
+                                              task_type=anaddb_tag)
+        anaddb_stress_fw = Firework([anaddb_stress_task],
+                                    spec=spec,
+                                    name=anaddb_tag)
+        fws.append(anaddb_stress_fw)
+        links_dict_update(links_dict=links_dict,
+                          links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
 
-            #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
-            # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
-            # stress-corrected elastic constants)
-            mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
-                                                                    run_scffbz_task.task_type],
-                                             delete_source_ddbs=False, num_ddbs=2)
-            mrgddb_spec = set_short_single_core_to_spec(spec)
-            mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
-            fws.append(mrgddb_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
-                                            scffbz_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
-
-            #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
-            anaddb_tag = 'anaddb-piezo-elast'
-            spec = set_short_single_core_to_spec(spec)
-            anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                                     stress_correction=False),
-                                           deps={rf_ddb_source_task_type: ['DDB']},
-                                           task_type=anaddb_tag)
-            anaddb_fw = Firework([anaddb_task],
-                                 spec=spec,
-                                 name=anaddb_tag)
-            fws.append(anaddb_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
-
-            #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
-            anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
-            spec = set_short_single_core_to_spec(spec)
-            anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                                            stress_correction=True),
-                                                  deps={mrgddb_task.task_type: ['DDB']},
-                                                  task_type=anaddb_tag)
-            anaddb_stress_fw = Firework([anaddb_stress_task],
-                                        spec=spec,
-                                        name=anaddb_tag)
-            fws.append(anaddb_stress_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
-
-            self.wf = Workflow(fireworks=fws,
-                               links_dict=links_dict,
-                               metadata={'workflow_class': self.workflow_class,
-                                         'workflow_module': self.workflow_module})
+        self.wf = Workflow(fireworks=fws,
+                           links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
+        # else:
+        #     fws = []
+        #     links_dict = {}
+        #
+        #     if additional_controllers is None:
+        #         additional_controllers = [WalltimeController(), MemoryController()]
+        #     else:
+        #         additional_controllers = additional_controllers
+        #
+        #     #1. First SCF run in the irreducible Brillouin Zone
+        #     scf_helper = ScfTaskHelper()
+        #     scf_controllers = [AbinitController.from_helper(scf_helper)]
+        #     scf_controllers.extend(additional_controllers)
+        #     scf_control_procedure = ControlProcedure(controllers=scf_controllers)
+        #     setup_scf_task = AbinitSetupTask(abiinput=scf_inp_ibz, task_helper=scf_helper, pass_input=True)
+        #     run_scf_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
+        #                                  task_type='scfibz')
+        #     control_scf_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+        #
+        #     scf_fws = createSRCFireworks(setup_task=setup_scf_task, run_task=run_scf_task, control_task=control_scf_task,
+        #                                  spec=spec, initialization_info=initialization_info)
+        #
+        #     fws.extend(scf_fws['fws'])
+        #     links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
+        #
+        #     #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
+        #     #2nd derivative DDB's from the DFPT RF run
+        #     scf_inp_fbz = scf_inp_ibz.deepcopy()
+        #     scf_inp_fbz['kptopt'] = 2
+        #     setup_scffbz_task = AbinitSetupTask(abiinput=scf_inp_fbz, task_helper=scf_helper,
+        #                                         deps={run_scf_task.task_type: ['WFK', 'DEN']})
+        #     run_scffbz_task = AbinitRunTask(control_procedure=scf_control_procedure, task_helper=scf_helper,
+        #                                     task_type='scffbz')
+        #     control_scffbz_task = AbinitControlTask(control_procedure=scf_control_procedure, task_helper=scf_helper)
+        #
+        #     scffbz_fws = createSRCFireworks(setup_task=setup_scffbz_task, run_task=run_scffbz_task,
+        #                                     control_task=control_scffbz_task,
+        #                                     spec=spec, initialization_info=initialization_info)
+        #
+        #     fws.extend(scffbz_fws['fws'])
+        #     links_dict_update(links_dict=links_dict, links_update=scffbz_fws['links_dict'])
+        #     #Link with the IBZ SCF run
+        #     links_dict_update(links_dict=links_dict,
+        #                       links_update={scf_fws['control_fw'].fw_id: scffbz_fws['setup_fw'].fw_id})
+        #
+        #     #3. DDK calculation
+        #     if ddk_split:
+        #         raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
+        #     else:
+        #         ddk_helper = DdkTaskHelper()
+        #         ddk_controllers = [AbinitController.from_helper(ddk_helper)]
+        #         ddk_controllers.extend(additional_controllers)
+        #         ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
+        #         setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
+        #                                          deps={run_scf_task.task_type: 'WFK'})
+        #         run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
+        #                                      task_type='ddk')
+        #         control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
+        #
+        #         ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
+        #                                      control_task=control_ddk_task,
+        #                                      spec=spec, initialization_info=initialization_info)
+        #
+        #         fws.extend(ddk_fws['fws'])
+        #         links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
+        #         #Link with the IBZ SCF run
+        #         links_dict_update(links_dict=links_dict,
+        #                           links_update={scf_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
+        #
+        #     #4. Response-Function calculation(s) of the elastic constants
+        #     rf_ddb_source_task_type = 'mrgddb-strains'
+        #     gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_scf_task.task_type,
+        #                                                        previous_ddk_task_type=run_ddk_task.task_type,
+        #                                                        mrgddb_task_type=rf_ddb_source_task_type,
+        #                                                        additional_controllers=additional_controllers)
+        #     genrfstrains_spec = set_short_single_core_to_spec(spec)
+        #     gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
+        #     fws.append(gen_fw)
+        #     links_dict_update(links_dict=links_dict,
+        #                       links_update={scf_fws['control_fw'].fw_id: gen_fw.fw_id,
+        #                                     ddk_fws['control_fw'].fw_id: gen_fw.fw_id})
+        #
+        #     rf_ddb_src_fw = gen_fw
+        #
+        #     #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
+        #     # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
+        #     # stress-corrected elastic constants)
+        #     mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
+        #                                                             run_scffbz_task.task_type],
+        #                                      delete_source_ddbs=False, num_ddbs=2)
+        #     mrgddb_spec = set_short_single_core_to_spec(spec)
+        #     mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
+        #     fws.append(mrgddb_fw)
+        #     links_dict_update(links_dict=links_dict,
+        #                       links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
+        #                                     scffbz_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
+        #
+        #     #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
+        #     anaddb_tag = 'anaddb-piezo-elast'
+        #     spec = set_short_single_core_to_spec(spec)
+        #     anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+        #                                                              stress_correction=False),
+        #                                    deps={rf_ddb_source_task_type: ['DDB']},
+        #                                    task_type=anaddb_tag)
+        #     anaddb_fw = Firework([anaddb_task],
+        #                          spec=spec,
+        #                          name=anaddb_tag)
+        #     fws.append(anaddb_fw)
+        #     links_dict_update(links_dict=links_dict,
+        #                       links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
+        #
+        #     #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
+        #     anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
+        #     spec = set_short_single_core_to_spec(spec)
+        #     anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+        #                                                                     stress_correction=True),
+        #                                           deps={mrgddb_task.task_type: ['DDB']},
+        #                                           task_type=anaddb_tag)
+        #     anaddb_stress_fw = Firework([anaddb_stress_task],
+        #                                 spec=spec,
+        #                                 name=anaddb_tag)
+        #     fws.append(anaddb_stress_fw)
+        #     links_dict_update(links_dict=links_dict,
+        #                       links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
+        #
+        #     self.wf = Workflow(fireworks=fws,
+        #                        links_dict=links_dict,
+        #                        metadata={'workflow_class': self.workflow_class,
+        #                                  'workflow_module': self.workflow_module})
 
     @classmethod
     def get_all_elastic_tensors(cls, wf):
