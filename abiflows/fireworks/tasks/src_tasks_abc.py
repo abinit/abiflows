@@ -142,6 +142,8 @@ class SetupTask(SRCTaskMixin, FireTaskBase):
         update_spec.update(run_parameters)
         if 'src_modified_objects' in fw_spec:
             update_spec.update(fw_spec['src_modified_objects'])
+        if 'previous_fws' in fw_spec:
+            update_spec['previous_fws'] = fw_spec['previous_fws']
         return FWAction(update_spec=update_spec)
 
     def _setup_run_parameters(self, fw_spec, parameters):
@@ -255,6 +257,9 @@ class RunTask(SRCTaskMixin, FireTaskBase):
 
         if update_spec is None:
             update_spec = {}
+
+        if 'previous_fws' in fw_spec:
+            update_spec['previous_fws'] = fw_spec['previous_fws']
 
         #TODO: the directory is passed thanks to _pass_job_info. Should we pass anything else ?
         return FWAction(stored_data=None, exit=False, update_spec=None, mod_spec=None,
