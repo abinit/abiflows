@@ -112,7 +112,8 @@ class AbinitController(Controller):
                         if structure is None:
                             raise ValueError('Structure should be present in the initial objects for restarting '
                                              'relaxation runs')
-                        actions['structure'] = structure
+                        # Fake action ... TODO: make something better for the actions ...
+                        actions['structure'] = structure.__len__
                     note.add_problem('Unconverged: {}'.format(', '.join(e.name for e in critical_events_found)))
                 else:
                     # calculation converged
