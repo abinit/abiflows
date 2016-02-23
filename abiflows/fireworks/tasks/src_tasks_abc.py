@@ -478,6 +478,28 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
                         attr = mod
                     else:
                         attr = target_object
+                elif 'setup_task' in update['target']:
+                    sp = update['target'].split('.')
+                    if len(sp) != 2:
+                        raise ValueError('target is "{}" and contains more than 1 "."'.format(update['target']))
+                    if sp[0] != 'setup_task':
+                        raise ValueError('target does not start with "setup_task" ...')
+                    task = setup_task
+                    task_attribute = getattr(task, sp[1])
+                    if 'attribute' in update:
+                        attr = getattr(task_attribute, update['attribute'])
+                        if 'mod' in update:
+                            mod = getattr(target_object, update['mod'])()
+                            attr = mod
+                        else:
+                            attr = target_object
+                    elif 'setter' in update:
+                        setter = getattr(task_attribute, update['setter'])
+                        if 'mod' in update:
+                            mod = getattr(target_object, update['mod'])()
+                            setter(mod)
+                        else:
+                            setter(target_object)
                 else:
                     raise ValueError('Only changes to fw_spec, setup_task and run_task are allowed right now ...')
 

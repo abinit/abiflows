@@ -71,6 +71,7 @@ class AbinitController(Controller):
         abinit_log_file = File(kwargs.get('abinit_log_filepath'))
         abinit_mpi_abort_file = File(kwargs.get('abinit_mpi_abort_filepath'))
         abinit_outdir_path = Directory(kwargs.get('abinit_outdir_path'))
+        structure = kwargs.get('structure', None)
 
         note = ControllerNote(controller=self)
         # Initialize the actions for everything that is passed to kwargs
@@ -107,6 +108,11 @@ class AbinitController(Controller):
                     # Calculation did not converge. A simple restart is enough
                     note.state = ControllerNote.ERROR_RECOVERABLE
                     note.simple_restart()
+                    if 'RelaxConvergenceWarning' in [e.name for e in critical_events_found]:
+                        if structure is None:
+                            raise ValueError('Structure should be present in the initial objects for restarting '
+                                             'relaxation runs')
+                        actions['structure'] = structure
                     note.add_problem('Unconverged: {}'.format(', '.join(e.name for e in critical_events_found)))
                 else:
                     # calculation converged
@@ -158,6 +164,7 @@ class AbinitController(Controller):
                         note.simple_restart()
 
                     actions['abinit_input'] = abiinput_actions
+
                     #TODO if the queue_adapter can be modified by the handlers return it
                     # actions['queue_adapter'] = queue_adapter_actions
                 else:
