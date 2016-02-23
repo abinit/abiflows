@@ -20,6 +20,7 @@ from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancel
 from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import TimeCancelError
 from pymatgen.io.abinit.utils import Directory, File
+from pymatgen.core.structure import Structure
 from abipy.abio.inputs import AbinitInput
 import logging
 import os
@@ -113,7 +114,7 @@ class AbinitController(Controller):
                             raise ValueError('Structure should be present in the initial objects for restarting '
                                              'relaxation runs')
                         # Fake action ... TODO: make something better for the actions ...
-                        actions['structure'] = structure.__len__
+                        actions['structure'] = Action(callable=Structure.__len__)
                     note.add_problem('Unconverged: {}'.format(', '.join(e.name for e in critical_events_found)))
                 else:
                     # calculation converged
