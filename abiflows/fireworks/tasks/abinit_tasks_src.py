@@ -767,7 +767,17 @@ class RelaxTaskHelper(GsTaskHelper):
             with self.open_gsr() as gsr:
                 return gsr.structure
         except AttributeError:
-            msg = "Cannot find the GSR file with the final structure to restart from."
+            msg = "Cannot find the GSR file with the final structure."
+            logger.error(msg)
+            raise PostProcessError(msg)
+
+    def get_computed_entry(self):
+        """Get the computed entry from the GSR file."""
+        try:
+            with self.open_gsr() as gsr:
+                return gsr.get_computed_entry(inc_structure=True)
+        except AttributeError:
+            msg = "Cannot find the GSR file with the information to get the computed entry."
             logger.error(msg)
             raise PostProcessError(msg)
 
