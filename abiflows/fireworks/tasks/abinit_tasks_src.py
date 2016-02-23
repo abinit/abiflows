@@ -597,17 +597,22 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
         run_task.setup_rundir(rundir=run_dir, create_dirs=False, directories_only=False)
         task_helper = run_task.task_helper
         task_helper.set_task(run_task)
-        return {'abinit_input': {'object': setup_fw.tasks[-1].abiinput,
-                                 'updates': [{'target': 'setup_task',
-                                              'attribute': 'abiinput'}]},
-                'abinit_output_filepath': {'object': os.path.join(run_dir, OUTPUT_FILE_NAME)},
-                'abinit_log_filepath': {'object': os.path.join(run_dir, LOG_FILE_NAME)},
-                'abinit_mpi_abort_filepath': {'object': os.path.join(run_dir, MPIABORTFILE)},
-                'abinit_outdir_path': {'object': os.path.join(run_dir, OUTDIR_NAME)},
-                'abinit_err_filepath': {'object': os.path.join(run_dir, STDERR_FILE_NAME)},
-                'structure': {'object': task_helper.get_final_structure(),
-                              'updates': [{'target': 'setup_task.abiinput',
-                                           'setter': 'set_structure'}]}}
+        init_obj_info = {'abinit_input': {'object': setup_fw.tasks[-1].abiinput,
+                                          'updates': [{'target': 'setup_task',
+                                                       'attribute': 'abiinput'}]},
+                         'abinit_output_filepath': {'object': os.path.join(run_dir, OUTPUT_FILE_NAME)},
+                         'abinit_log_filepath': {'object': os.path.join(run_dir, LOG_FILE_NAME)},
+                         'abinit_mpi_abort_filepath': {'object': os.path.join(run_dir, MPIABORTFILE)},
+                         'abinit_outdir_path': {'object': os.path.join(run_dir, OUTDIR_NAME)},
+                         'abinit_err_filepath': {'object': os.path.join(run_dir, STDERR_FILE_NAME)}}
+        # 'structure': {'object': task_helper.get_final_structure(),
+        #               'updates': [{'target': 'setup_task.abiinput',
+        #                            'setter': 'set_structure'}]}}
+        if hasattr(task_helper, 'get_final_structure'):
+            init_obj_info['structure'] = {'object': task_helper.get_final_structure(),
+                                          'updates': [{'target': 'setup_task.abiinput',
+                                                       'setter': 'set_structure'}]}
+        return init_obj_info
 
             # initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
             #                                            'updates': [{'target': 'fw_spec',
