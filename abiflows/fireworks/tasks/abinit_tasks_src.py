@@ -609,7 +609,11 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
         #               'updates': [{'target': 'setup_task.abiinput',
         #                            'setter': 'set_structure'}]}}
         if hasattr(task_helper, 'get_final_structure'):
-            init_obj_info['structure'] = {'object': task_helper.get_final_structure(),
+            try:
+                final_structure = task_helper.get_final_structure()
+            except PostProcessError:
+                final_structure = None
+            init_obj_info['structure'] = {'object': final_structure,
                                           'updates': [{'target': 'setup_task.abiinput',
                                                        'setter': 'set_structure'}]}
         return init_obj_info
