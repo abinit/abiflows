@@ -611,7 +611,9 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
         if hasattr(task_helper, 'get_final_structure'):
             try:
                 final_structure = task_helper.get_final_structure()
-            except PostProcessError, HelperError:
+            except HelperError:
+                final_structure = None
+            except PostProcessError:
                 final_structure = None
             init_obj_info['structure'] = {'object': final_structure,
                                           'updates': [{'target': 'setup_task.abiinput',
