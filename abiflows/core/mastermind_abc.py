@@ -565,10 +565,10 @@ class ControlReport(MSONable):
     def update_state_from_controller_notes(self):
         if len(self.controller_notes) == 0:
             self.state = self.NONE
-        elif any([cn.state == ControllerNote.ERROR_UNRECOVERABLE for cn in self.controller_notes]):
-            self.state = self.UNRECOVERABLE
         elif any([cn.state == ControllerNote.ERROR_RECOVERABLE for cn in self.controller_notes]):
             self.state = self.RECOVERABLE
+        elif any([cn.state == ControllerNote.ERROR_UNRECOVERABLE for cn in self.controller_notes]):
+            self.state = self.UNRECOVERABLE
         elif (len([cn for cn in self.controller_notes if cn.controller.can_validate]) and
                   all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate])):
             self.state = self.FINALIZED
