@@ -39,8 +39,8 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                      'pretty_formula': structure.composition.reduced_formula,
                      'nsites': len(structure)
                      }
-            gridfs_msonables = {'structure': structure.as_dict(),
-                                'structure_environments': se.as_dict()}
+            gridfs_msonables = {'structure': structure,
+                                'structure_environments': se}
             criteria = {'identifier': identifier}
             if database.collection.find(criteria).count() == 1:
                 database.update_entry(query=criteria, entry_update=entry,
@@ -49,7 +49,7 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                 database.insert_entry(entry=entry, gridfs_msonables=gridfs_msonables)
 
 class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
-    _fw_name = "ChemEnvLightStructureEnvironmentTask"
+    _fw_name = "ChemEnvLightStructureEnvironmentsTask"
 
     def run_task(self, fw_spec):
         logging.basicConfig(filename='chemenv_light_structure_environments.log',
