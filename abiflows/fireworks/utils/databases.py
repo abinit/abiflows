@@ -66,8 +66,8 @@ class MongoDatabase(MSONable):
             for entry_value, msonable_object in gridfs_msonables.items():
                 if entry_value in entry:
                     backup_current_entry_value = str(entry_value)
+                    backup_number = 1
                     while True:
-                        backup_number = 1
                         if backup_number > 10:
                             raise ValueError('Too many backups (10) for object with entry name "{}"'.format(entry_value))
                         if backup_current_entry_value in entry:
