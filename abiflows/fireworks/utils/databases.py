@@ -75,6 +75,7 @@ class MongoDatabase(MSONable):
                             backup_number += 1
                             continue
                         entry[backup_current_entry_value] = entry[entry_value]
+                        break
                 dict_str = json.dumps(msonable_object.as_dict())
                 file_obj = self.gridfs.put(dict_str, encoding='utf-8')
                 entry[entry_value] = file_obj
