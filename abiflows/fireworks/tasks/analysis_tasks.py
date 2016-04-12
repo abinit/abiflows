@@ -41,8 +41,9 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                      }
             gridfs_msonables = {'structure': structure.as_dict(),
                                 'structure_environments': se.as_dict()}
-            if 'criteria' in fw_spec:
-                database.update_entry(query=fw_spec['criteria'], entry_update=entry,
+            criteria = {'identifier': identifier}
+            if database.collection.find(criteria).count() == 1:
+                database.update_entry(query=criteria, entry_update=entry,
                                       gridfs_msonables=gridfs_msonables)
             else:
                 database.insert_entry(entry=entry, gridfs_msonables=gridfs_msonables)
