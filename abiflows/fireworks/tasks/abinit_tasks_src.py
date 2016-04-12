@@ -1300,7 +1300,8 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                  previous_ddk_task_type=DdkTaskHelper.task_type, control_procedure=None,
                  additional_controllers=None,
                  mrgddb_task_type='mrgddb-strains',
-                 rf_tol=None, additional_input_vars=None, rf_deps=None):
+                 rf_tol=None, additional_input_vars=None, rf_deps=None,
+                 allow_parallel_perturbations=True):
         if piezo_elastic_factory is None:
             self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
         else:
@@ -1326,6 +1327,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         self.rf_tol = rf_tol
         self.additional_input_vars = additional_input_vars
         self.rf_deps = rf_deps
+        self.allow_parallel_perturbations = allow_parallel_perturbations
 
     def run_task(self, fw_spec):
 
@@ -1360,7 +1362,9 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             rf_deps = self.rf_deps
         else:
             rf_deps = {self.previous_scf_task_type: 'WFK',
-                       self.previous_ddk_task_type: 'DDK'}
+                       self.previous_ddk_task_tyallow_parallel_perturbationspe: 'DDK'}
+
+        prev_src_pert = False
 
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
             strain_task_type = 'strain-pert-{:d}'.format(istrain_pert+1)
@@ -1380,6 +1384,14 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             total_list_fws.extend(rf_fws['fws'])
             strain_task_types.append(strain_task_type)
             links_dict_update(links_dict=fws_deps, links_update=rf_fws['links_dict'])
+            # Additional links if we want to avoid multiple perturbations to be run at the same time (e.g. to avoid
+            # I/O bottlenecks because of reading the same file
+            if not self.allow_parallel_perturbations:
+                if prev_src_pert:
+                    if prev_src_pert['control_fw'] not in fws_deps:
+                        fws_deps[prev_src_pert['control_fw']] = []
+                    fws_deps[prev_src_pert['control_fw']].extend(rf_fws['fws'])
+                    prev_src_pert = rf_fws
 
 
         # Adding the MrgDdb Firework

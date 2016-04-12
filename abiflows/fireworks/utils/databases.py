@@ -5,6 +5,7 @@ Utilities for database insertion
 
 from monty.json import MSONable
 import gridfs
+import json
 import pymongo
 
 
@@ -34,7 +35,12 @@ class MongoDatabase(MSONable):
         else:
             self.gridfs = None
 
-    def insert_entry(self, entry):
+    def insert_entry(self, entry, gridfs_msonables=None):
+        if gridfs_msonables is not None:
+            for entry_value, msonable_object in gridfs_msonables.items():
+                dict_str = json.dumps(msonable_object.as_dict())
+                file_obj = self.gridfs.put(dict_str, encoding='utf-8')
+                entry[entry_value] = file_obj
         self.collection.insert(entry)
 
     def get_entry(self, criteria):
@@ -50,12 +56,17 @@ class MongoDatabase(MSONable):
             raise ValueError('Entry should contain "_id" field to be saved')
         self.collection.save(entry)
 
-    def update_entry(self, query, entry_update):
+    def update_entry(self, query, entry_update, gridfs_msonables=None):
         count = self.collection.find(query).count()
         if count != 1:
             raise RuntimeError("Number of entries != 1, found : {:d}".format(count))
         entry = self.collection.find_one(query)
         entry.update(entry_update)
+        if gridfs_msonables is not None:
+            for entry_value, msonable_object in gridfs_msonables.items():
+                dict_str = json.dumps(msonable_object.as_dict())
+                file_obj = self.gridfs.put(dict_str, encoding='utf-8')
+                entry[entry_value] = file_obj
         self.collection.save(entry)
 
     def as_dict(self):

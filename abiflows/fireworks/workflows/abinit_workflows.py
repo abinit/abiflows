@@ -1089,7 +1089,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
 
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
-                 ddk_split=False, rf_split=False, additional_controllers=None, additional_input_vars=None):
+                 ddk_split=False, rf_split=False, additional_controllers=None, additional_input_vars=None,
+                 allow_parallel_perturbations=True):
 
         fws = []
         links_dict = {}
@@ -1196,7 +1197,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                                                            mrgddb_task_type=rf_ddb_source_task_type,
                                                            additional_controllers=additional_controllers,
                                                            rf_tol=rf_tol, additional_input_vars=additional_input_vars,
-                                                           rf_deps=rf_deps)
+                                                           rf_deps=rf_deps,
+                                                           allow_parallel_perturbations=allow_parallel_perturbations)
         genrfstrains_spec = set_short_single_core_to_spec(spec)
         gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
         fws.append(gen_fw)
