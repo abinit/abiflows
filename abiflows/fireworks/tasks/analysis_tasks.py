@@ -3,6 +3,7 @@ from __future__ import print_function, division, unicode_literals
 import logging
 from fireworks.core.firework import FireTaskBase
 from pymatgen.analysis.chemenv.coordination_environments.coordination_geometry_finder import LocalGeometryFinder
+from pymatgen.matproj.rest import MPRester
 
 import json
 
@@ -20,8 +21,18 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
         if 'chemenv_parameters' in fw_spec:
             for param, value in fw_spec['chemenv_parameters'].items():
                 lgf.setup_parameter(param, value)
-        structure = fw_spec['structure']
         identifier = fw_spec['identifier']
+        if 'structure' in fw_spec:
+            structure = fw_spec['structure']
+        else:
+            if identifier['source'] == 'MaterialsProject' and 'material_id' in identifier:
+                if not 'mapi_key' in fw_spec:
+                    raise ValueError('The mapi_key should be provided to get the structure from the Materials Project')
+                a = MPRester(fw_spec['mapi_key'])
+                structure = a.get_structure_by_material_id(identifier['material_id'])
+            else:
+                raise ValueError('Either structure or identifier with source = MaterialsProject and material_id '
+                                 'should be provided')
         lgf.setup_structure(structure)
         se = lgf.compute_structure_environments_detailed_voronoi()
         if 'json_file' in fw_spec:
