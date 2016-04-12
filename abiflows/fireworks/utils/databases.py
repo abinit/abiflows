@@ -64,6 +64,17 @@ class MongoDatabase(MSONable):
         entry.update(entry_update)
         if gridfs_msonables is not None:
             for entry_value, msonable_object in gridfs_msonables.items():
+                if entry_value in entry:
+                    backup_current_entry_value = str(entry_value)
+                    while True:
+                        backup_number = 1
+                        if backup_number > 10:
+                            raise ValueError('Too many backups (10) for object with entry name "{}"'.format(entry_value))
+                        if backup_current_entry_value in entry:
+                            backup_current_entry_value = '{}_backup_{:d}'.format(entry_value, backup_number)
+                            backup_number += 1
+                            continue
+                        entry[backup_current_entry_value] = entry[entry_value]
                 dict_str = json.dumps(msonable_object.as_dict())
                 file_obj = self.gridfs.put(dict_str, encoding='utf-8')
                 entry[entry_value] = file_obj
