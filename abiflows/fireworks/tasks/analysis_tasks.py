@@ -117,8 +117,8 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
                      'nsites': len(lse.structure),
                      'chemenv_statistics': lse.get_statistics(bson_compatible=True)
                      }
-            gridfs_msonables = {'structure': lse.structure.as_dict(),
-                                'light_structure_environments': lse.as_dict()}
+            gridfs_msonables = {'structure': lse.structure,
+                                'light_structure_environments': lse}
             criteria = {'identifier': identifier}
             if database.collection.find(criteria).count() == 1:
                 database.update_entry(query=criteria, entry_update=entry,
