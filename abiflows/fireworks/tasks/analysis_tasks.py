@@ -35,8 +35,12 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
             else:
                 raise ValueError('Either structure or identifier with source = MaterialsProject and material_id '
                                  'should be provided')
+
+        # Compute the structure environments
         lgf.setup_structure(structure)
         se = lgf.compute_structure_environments_detailed_voronoi()
+
+        # Write to json file
         if 'json_file' in fw_spec:
             json_file = fw_spec['json_file']
         else:
@@ -44,6 +48,8 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
         f = open(json_file, 'w')
         json.dump(se.as_dict(), f)
         f.close()
+
+        # Save to database
         if 'mongo_database' in fw_spec:
             database = fw_spec['mongo_database']
             entry = {'identifier': identifier,
@@ -88,10 +94,11 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
             raise RuntimeError('Wrong structure_environments_setup : '
                                '"{}" is not allowed'.format(fw_spec['structure_environments_setup']))
 
-        # Compute the light structure environments object
+        # Compute the light structure environments
         chemenv_strategy = fw_spec['chemenv_strategy']
         lse = LightStructureEnvironments(strategy=chemenv_strategy, structure_environments=se)
 
+        # Write to json file
         if 'json_file' in fw_spec:
             json_file = fw_spec['json_file']
         else:
@@ -99,6 +106,8 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
         f = open(json_file, 'w')
         json.dump(lse.as_dict(), f)
         f.close()
+
+        # Save to database
         if 'mongo_database' in fw_spec:
             database = fw_spec['mongo_database']
             entry = {'identifier': identifier,
