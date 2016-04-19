@@ -1361,8 +1361,9 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         if self.rf_deps is not None:
             rf_deps = self.rf_deps
         else:
-            rf_deps = {self.previous_scf_task_type: 'WFK',
-                       self.previous_ddk_task_tyallow_parallel_perturbationspe: 'DDK'}
+            rf_deps = {self.previous_scf_task_type: 'WFK'}
+            if self.previous_ddk_task_type is not None:
+                rf_deps[self.previous_ddk_task_type] = 'DDK'
 
         prev_src_pert = False
 

@@ -1090,7 +1090,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
                  ddk_split=False, rf_split=False, additional_controllers=None, additional_input_vars=None,
-                 allow_parallel_perturbations=True):
+                 allow_parallel_perturbations=True, do_ddk=True):
 
         fws = []
         links_dict = {}
@@ -1107,7 +1107,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             ngfft_deps.append('#outnc.ngfftdg')
 
         scf_inp_ibz.set_vars(additional_input_vars)
-        ddk_inp.set_vars(additional_input_vars)
+        if do_ddk:
+            ddk_inp.set_vars(additional_input_vars)
         rf_inp.set_vars(additional_input_vars)
 
         #1. SCF run in the irreducible Brillouin Zone
@@ -1159,41 +1160,46 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                           links_update={scf_fws['control_fw'].fw_id: nscffbz_fws['setup_fw'].fw_id})
 
         #3. DDK calculation
-        if ddk_split:
-            raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
-        else:
-            ddk_helper = DdkTaskHelper()
-            ddk_controllers = [AbinitController.from_helper(ddk_helper)]
-            ddk_controllers.extend(additional_controllers)
-            ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
-            ddk_inp.set_vars({'kptopt': 3})
-            ddk_deps = {run_nscffbz_task.task_type: ['WFK']}
-            ddk_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
-            setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
-                                             deps=ddk_deps)
-            run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
-                                         task_type='ddk')
-            control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
+        if do_ddk:
+            if ddk_split:
+                raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
+            else:
+                ddk_helper = DdkTaskHelper()
+                ddk_controllers = [AbinitController.from_helper(ddk_helper)]
+                ddk_controllers.extend(additional_controllers)
+                ddk_control_procedure = ControlProcedure(controllers=ddk_controllers)
+                ddk_inp.set_vars({'kptopt': 3})
+                ddk_deps = {run_nscffbz_task.task_type: ['WFK']}
+                ddk_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
+                setup_ddk_task = AbinitSetupTask(abiinput=ddk_inp, task_helper=ddk_helper,
+                                                 deps=ddk_deps)
+                run_ddk_task = AbinitRunTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper,
+                                             task_type='ddk')
+                control_ddk_task = AbinitControlTask(control_procedure=ddk_control_procedure, task_helper=ddk_helper)
 
-            ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
-                                         control_task=control_ddk_task,
-                                         spec=spec, initialization_info=initialization_info)
+                ddk_fws = createSRCFireworks(setup_task=setup_ddk_task, run_task=run_ddk_task,
+                                             control_task=control_ddk_task,
+                                             spec=spec, initialization_info=initialization_info)
 
-            fws.extend(ddk_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
-            #Link with the FBZ nSCF run
-            links_dict_update(links_dict=links_dict,
-                              links_update={nscffbz_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
+                fws.extend(ddk_fws['fws'])
+                links_dict_update(links_dict=links_dict, links_update=ddk_fws['links_dict'])
+                #Link with the FBZ nSCF run
+                links_dict_update(links_dict=links_dict,
+                                  links_update={nscffbz_fws['control_fw'].fw_id: ddk_fws['setup_fw'].fw_id})
 
         #4. Response-Function calculation(s) of the elastic constants
         rf_ddb_source_task_type = 'mrgddb-strains'
         rf_tolvar, value = rf_inp.scf_tolvar
         rf_tol = {rf_tolvar: value}
-        rf_deps = {run_nscffbz_task.task_type: ['WFK'],
-                   run_ddk_task.task_type: ['DDK']}
+        rf_deps = {run_nscffbz_task.task_type: ['WFK']}
+        if do_ddk:
+            rf_deps[run_ddk_task.task_type] = ['DDK']
+            previous_ddk_task_type = run_ddk_task.task_type
+        else:
+            previous_ddk_task_type = None
         rf_deps[run_nscffbz_task.task_type].extend(ngfft_deps)
         gen_task = GeneratePiezoElasticFlowFWSRCAbinitTask(previous_scf_task_type=run_nscffbz_task.task_type,
-                                                           previous_ddk_task_type=run_ddk_task.task_type,
+                                                           previous_ddk_task_type=previous_ddk_task_type,
                                                            mrgddb_task_type=rf_ddb_source_task_type,
                                                            additional_controllers=additional_controllers,
                                                            rf_tol=rf_tol, additional_input_vars=additional_input_vars,
@@ -1202,9 +1208,11 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         genrfstrains_spec = set_short_single_core_to_spec(spec)
         gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
         fws.append(gen_fw)
+        linkupdate = {nscffbz_fws['control_fw'].fw_id: gen_fw.fw_id}
+        if do_ddk:
+            linkupdate[ddk_fws['control_fw'].fw_id] = gen_fw.fw_id
         links_dict_update(links_dict=links_dict,
-                          links_update={nscffbz_fws['control_fw'].fw_id: gen_fw.fw_id,
-                                        ddk_fws['control_fw'].fw_id: gen_fw.fw_id})
+                          links_update=linkupdate)
 
         rf_ddb_src_fw = gen_fw
 
