@@ -1365,7 +1365,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             if self.previous_ddk_task_type is not None:
                 rf_deps[self.previous_ddk_task_type] = 'DDK'
 
-        prev_src_pert = False
+        prev_src_pert = None
 
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
             strain_task_type = 'strain-pert-{:d}'.format(istrain_pert+1)
@@ -1388,11 +1388,11 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             # Additional links if we want to avoid multiple perturbations to be run at the same time (e.g. to avoid
             # I/O bottlenecks because of reading the same file
             if not self.allow_parallel_perturbations:
-                if prev_src_pert:
-                    if prev_src_pert['control_fw'] not in fws_deps:
-                        fws_deps[prev_src_pert['control_fw']] = []
-                    fws_deps[prev_src_pert['control_fw']].extend(rf_fws['fws'])
+                if prev_src_pert is not None:
+                    link_dict_update = {prev_src_pert['control_fw'].fw_id: [rf_fws['setup_fw'].fw_id]}
+                    links_dict_update(links_dict=fws_deps, links_update=link_dict_update)
                 prev_src_pert = rf_fws
+
 
 
         # Adding the MrgDdb Firework
