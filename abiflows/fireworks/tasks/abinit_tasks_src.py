@@ -1392,7 +1392,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                     if prev_src_pert['control_fw'] not in fws_deps:
                         fws_deps[prev_src_pert['control_fw']] = []
                     fws_deps[prev_src_pert['control_fw']].extend(rf_fws['fws'])
-                    prev_src_pert = rf_fws
+                prev_src_pert = rf_fws
 
 
         # Adding the MrgDdb Firework
