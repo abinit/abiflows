@@ -1110,6 +1110,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         if do_ddk:
             ddk_inp.set_vars(additional_input_vars)
         rf_inp.set_vars(additional_input_vars)
+        if not do_ddk:
+            rf_inp.set_vars(irdddk=0)
 
         #1. SCF run in the irreducible Brillouin Zone
         scf_helper = ScfTaskHelper()
