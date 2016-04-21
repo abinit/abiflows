@@ -1408,7 +1408,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         total_list_fws.append(mrgddb_fw)
         #Adding the dependencies
         for src_fws in all_SRC_rf_fws:
-            links_dict_update(links_dict=fws_deps, links_update={src_fws['control_fw']: mrgddb_fw})
+            links_dict_update(links_dict=fws_deps, links_update={src_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
 
         rf_strains_wf = Workflow(total_list_fws, fws_deps)
 
