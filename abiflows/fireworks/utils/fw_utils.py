@@ -237,7 +237,9 @@ def get_time_report_for_wf(wf):
             run_time = completed_launch.runtime_secs
             total_run_time += run_time
 
-            if 'mpi_ncpus' in fw.spec:
+            if 'qtk_queueadapter' in fw.spec and 'mpi_procs' in fw.spec['qtk_queueadapter']:
+                ncpus = fw.spec['qtk_queueadapter']['mpi_procs']
+            elif 'mpi_ncpus' in fw.spec:
                 ncpus = fw.spec['mpi_ncpus']
             elif 'ntasks' in fw.spec:
                 ncpus = fw.spec['ntasks']
