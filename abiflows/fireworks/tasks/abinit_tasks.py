@@ -243,12 +243,16 @@ class AbiFireTask(BasicTaskMixin, FireTaskBase):
     CRITICAL_EVENTS = [
     ]
 
-    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[]):
+    def __init__(self, abiinput, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None):
         """
         Basic __init__, subclasses are supposed to define the same input parameters, add their own and call super for
         the basic ones. The input parameter should be stored as attributes of the instance for serialization and
         for inspection.
         """
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
         self.abiinput = abiinput
         self.restart_info = restart_info
 
@@ -1267,8 +1271,12 @@ class StrainPertTask(DfptTask):
 
 @explicit_serialize
 class RelaxDilatmxFWTask(RelaxFWTask):
-    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+    def __init__(self, abiinput, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None,
                  target_dilatmx=1.01):
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
         self.target_dilatmx = target_dilatmx
         super(RelaxDilatmxFWTask, self).__init__(abiinput=abiinput, restart_info=restart_info, handlers=handlers,
                                                  is_autoparal=is_autoparal, deps=deps, history=history)
@@ -1410,7 +1418,11 @@ class MergeDdbTask(BasicTaskMixin, FireTaskBase):
 class AnaDdbTask(BasicTaskMixin, FireTaskBase):
     task_type = "anaddb"
 
-    def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[]):
+    def __init__(self, anaddb_input, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None):
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
         self.anaddb_input = anaddb_input
         self.restart_info = restart_info
 
@@ -1698,7 +1710,9 @@ class AnaDdbTask(BasicTaskMixin, FireTaskBase):
 
 @explicit_serialize
 class GeneratePhononFlowFWTask(BasicTaskMixin, FireTaskBase):
-    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None):
+    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=None, with_autoparal=None):
+        if handlers is None:
+            handlers = []
         self.phonon_factory = phonon_factory
         self.previous_task_type = previous_task_type
         self.handlers = handlers
@@ -1989,7 +2003,7 @@ class FWTaskManager(object):
             self.task_manager = None
 
     @classmethod
-    def from_user_config(cls, fw_policy={}):
+    def from_user_config(cls, fw_policy=None):
         """
         Initialize the manager using the dict in the following order of preference:
         - the "fw_manager.yaml" file in the folder where the command is executed
@@ -1997,6 +2011,8 @@ class FWTaskManager(object):
         - the "fw_manager.yaml" in the ~/.abinit/abipy folder
         - if no file available, fall back to default values
         """
+        if fw_policy is None:
+                fw_policy = {}
 
         # Try in the current directory then in user configuration directory.
         paths = [os.path.join(os.getcwd(), cls.YAML_FILE), os.getenv("FW_TASK_MANAGER"),
