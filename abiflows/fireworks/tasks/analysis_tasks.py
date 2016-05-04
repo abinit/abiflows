@@ -58,8 +58,20 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                      'pretty_formula': structure.composition.reduced_formula,
                      'nsites': len(structure)
                      }
-            gridfs_msonables = {'structure': structure,
-                                'structure_environments': se}
+
+            saving_option = fw_spec['saving_option']
+            if saving_option == 'gridfs':
+                gridfs_msonables = {'structure': structure,
+                                    'structure_environments': se}
+            elif saving_option == 'storefile':
+                gridfs_msonables = None
+                se_rfilename = 'se_{}.json'.format(fw_spec['storefile_basename'])
+                se_rfilepath = '{}/{}'.format(fw_spec['storefile_dirpath'], se_rfilename)
+                storage_server = fw_spec['storage_server']
+                storage_server.put(localpath=json_file, remotepath=se_rfilepath, overwrite=False, makedirs=False)
+            else:
+                raise ValueError('Saving option is "{}" while it should be '
+                                 '"gridfs" or "storefile"'.format(saving_option))
             criteria = {'identifier': identifier}
             if database.collection.find(criteria).count() == 1:
                 database.update_entry(query=criteria, entry_update=entry,

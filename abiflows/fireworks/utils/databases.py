@@ -7,6 +7,8 @@ from monty.json import MSONable
 import gridfs
 import json
 import pymongo
+import paramiko
+import os
 
 
 class MongoDatabase(MSONable):
@@ -101,3 +103,76 @@ class MongoDatabase(MSONable):
         return cls(host=d['host'], port=d['port'], database=d['database'],
                    username=d['username'], password=d['password'], collection=d['collection'],
                    gridfs_collection=d['gridfs_collection'])
+
+
+class StorageServer(MSONable):
+    """
+    Storage server class for moving files to/from a given server
+    """
+
+    def __init__(self, hostname, port=22, username=None, password=None):
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
+        self.connect()
+
+    def connect(self):
+        self.ssh_client = paramiko.SSHClient()
+        self.ssh_client.load_system_host_keys()
+        self.ssh_client.connect(hostname=self.hostname, port=self.port,
+                                username=self.username, password=self.password)
+        self.sftp_client = self.ssh_client.open_sftp()
+
+    def remotepath_exists(self, path):
+        try:
+            self.sftp_client.stat(path)
+        except IOError as e:
+            if e[0] == 2:
+                return False
+            raise
+        else:
+            return True
+
+    def remote_makedirs(self, path):
+        head, tail = os.path.split(path)
+        if not tail:
+            head, tail = os.path.split(head)
+        if head and tail and not self.remotepath_exists(path=head):
+            self.remote_makedirs(head)
+            if tail == '.':
+                return
+        self.sftp_client.mkdir(path=path)
+
+    def put(self, localpath, remotepath, overwrite=False, makedirs=True):
+        if not os.path.exists(localpath):
+            raise IOError('Local path "{}" does not exist'.format(localpath))
+        if not overwrite and self.remotepath_exists(remotepath):
+            raise IOError('Remote path "{}" exists'.format(remotepath))
+        rdirname, rfilename = os.path.split(remotepath)
+        if not rfilename or rfilename in ['.', '..']:
+            raise IOError('Remote path "{}" is not a valid filepath'.format(remotepath))
+        if not self.remotepath_exists(rdirname):
+            if makedirs:
+                self.remote_makedirs(rdirname)
+            else:
+                raise IOError('Directory of remote path "{}" does not exists and '
+                              '"makedirs" is set to False'.format(remotepath))
+        return self.sftp_client.put(localpath=localpath, remotepath=remotepath)
+
+    def as_dict(self):
+        """
+        Json-serializable dict representation of a StorageServer
+        """
+        dd = {"@module": self.__class__.__module__,
+              "@class": self.__class__.__name__,
+              "hostname": self.hostname,
+              "port": self.port,
+              "username": self.username,
+              "password": self.password}
+        return dd
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(hostname=d['hostname'], port=d['port'],
+                   username=d['username'], password=d['password'])
