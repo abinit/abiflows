@@ -79,6 +79,7 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                 se_rfilepath = '{}/{}'.format(fw_spec['storefile_dirpath'], se_rfilename)
                 storage_server = fw_spec['storage_server']
                 storage_server.put(localpath=json_file, remotepath=se_rfilepath, overwrite=False, makedirs=False)
+                entry['structure_environments_file'] = se_rfilepath
             else:
                 raise ValueError('Saving option is "{}" while it should be '
                                  '"gridfs" or "storefile"'.format(saving_option))
