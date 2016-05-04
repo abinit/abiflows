@@ -115,7 +115,7 @@ class StorageServer(MSONable):
         self.port = port
         self.username = username
         self.password = password
-        self.connect()
+        # self.connect()
 
     def connect(self):
         self.ssh_client = paramiko.SSHClient()
@@ -123,6 +123,10 @@ class StorageServer(MSONable):
         self.ssh_client.connect(hostname=self.hostname, port=self.port,
                                 username=self.username, password=self.password)
         self.sftp_client = self.ssh_client.open_sftp()
+
+    def disconnect(self):
+        self.sftp_client.close()
+        self.ssh_client.close()
 
     def remotepath_exists(self, path):
         try:
@@ -145,6 +149,7 @@ class StorageServer(MSONable):
         self.sftp_client.mkdir(path=path)
 
     def put(self, localpath, remotepath, overwrite=False, makedirs=True):
+        self.connect()
         if not os.path.exists(localpath):
             raise IOError('Local path "{}" does not exist'.format(localpath))
         if not overwrite and self.remotepath_exists(remotepath):
@@ -158,7 +163,12 @@ class StorageServer(MSONable):
             else:
                 raise IOError('Directory of remote path "{}" does not exists and '
                               '"makedirs" is set to False'.format(remotepath))
-        return self.sftp_client.put(localpath=localpath, remotepath=remotepath)
+        sftp_stat = self.sftp_client.put(localpath=localpath, remotepath=remotepath)
+        self.disconnect()
+        return sftp_stat
+
+    def get(self, remotepath, localpath=None, overwrite=False, makedirs=True):
+        pass
 
     def as_dict(self):
         """
