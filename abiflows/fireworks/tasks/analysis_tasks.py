@@ -65,7 +65,17 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                                     'structure_environments': se}
             elif saving_option == 'storefile':
                 gridfs_msonables = None
-                se_rfilename = 'se_{}.json'.format(fw_spec['storefile_basename'])
+                if 'se_prefix' in fw_spec:
+                    se_prefix = fw_spec['se_prefix']
+                    if not se_prefix.isalpha():
+                        raise ValueError('Prefix for structure_environments file is "{}" '
+                                         'while it should be alphabetic'.format(se_prefix))
+                else:
+                    se_prefix = ''
+                if se_prefix:
+                    se_rfilename = '{}_{}.json'.format(se_prefix, fw_spec['storefile_basename'])
+                else:
+                    se_rfilename = '{}.json'.format(se_prefix, fw_spec['storefile_basename'])
                 se_rfilepath = '{}/{}'.format(fw_spec['storefile_dirpath'], se_rfilename)
                 storage_server = fw_spec['storage_server']
                 storage_server.put(localpath=json_file, remotepath=se_rfilepath, overwrite=False, makedirs=False)
