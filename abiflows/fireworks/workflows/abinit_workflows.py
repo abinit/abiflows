@@ -43,7 +43,9 @@ class AbstractFWWorkflow(Workflow):
         append_fw_to_wf(fw, self.wf)
 
     @staticmethod
-    def set_short_single_core_to_spec(spec={}):
+    def set_short_single_core_to_spec(spec=None):
+        if spec is None:
+                spec = {}
         spec = dict(spec)
 
         qadapter_spec = get_short_single_core_spec()
@@ -51,7 +53,9 @@ class AbstractFWWorkflow(Workflow):
         spec['_queueadapter'] = qadapter_spec
         return spec
 
-    def add_final_cleanup(self, out_exts=["WFK"]):
+    def add_final_cleanup(self, out_exts=None):
+        if out_exts is None:
+            out_exts = ["WFK"]
         spec = self.set_short_single_core_to_spec()
         # high priority
         #TODO improve the handling of the priorities
@@ -61,7 +65,9 @@ class AbstractFWWorkflow(Workflow):
 
         append_fw_to_wf(cleanup_fw, self.wf)
 
-    def add_db_insert_and_cleanup(self, mongo_database, out_exts=["WFK"], insertion_data=None, criteria=None):
+    def add_db_insert_and_cleanup(self, mongo_database, out_exts=None, insertion_data=None, criteria=None):
+        if out_exts is None:
+            out_exts = ["WFK"]
         if insertion_data is None:
             insertion_data = {'structure': 'get_final_structure_and_history'}
         spec = self.set_short_single_core_to_spec()
@@ -81,7 +87,9 @@ class AbstractFWWorkflow(Workflow):
                              name='anaddb')
         append_fw_to_wf(anaddb_fw, self.wf)
 
-    def add_metadata(self, structure=None, additional_metadata={}):
+    def add_metadata(self, structure=None, additional_metadata=None):
+        if additional_metadata is None:
+            additional_metadata = {}
         metadata = dict(wf_type = self.__class__.__name__)
         if structure:
             composition = structure.composition
@@ -109,7 +117,11 @@ class AbstractFWWorkflow(Workflow):
 
 
 class InputFWWorkflow(AbstractFWWorkflow):
-    def __init__(self, abiinput, task_type=AbiFireTask, autoparal=False, spec={}, initialization_info={}):
+    def __init__(self, abiinput, task_type=AbiFireTask, autoparal=False, spec=None, initialization_info=None):
+        if spec is None:
+            spec = {}
+        if initialization_info is None:
+            initialization_info = {}
         abitask = task_type(abiinput, is_autoparal=autoparal)
 
         spec = dict(spec)
@@ -124,7 +136,11 @@ class InputFWWorkflow(AbstractFWWorkflow):
 
 
 class ScfFWWorkflow(AbstractFWWorkflow):
-    def __init__(self, abiinput, autoparal=False, spec={}, initialization_info={}):
+    def __init__(self, abiinput, autoparal=False, spec=None, initialization_info=None):
+        if spec is None:
+            spec = {}
+        if initialization_info is None:
+            initialization_info = {}
         abitask = ScfFWTask(abiinput, is_autoparal=autoparal)
 
         spec = dict(spec)
@@ -139,7 +155,13 @@ class ScfFWWorkflow(AbstractFWWorkflow):
     @classmethod
     def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
-                     shift_mode="Monkhorst-Pack", extra_abivars={}, decorators=[], autoparal=False, spec={}):
+                     shift_mode="Monkhorst-Pack", extra_abivars=None, decorators=None, autoparal=False, spec=None):
+        if extra_abivars is None:
+                extra_abivars = {}
+        if decorators is None:
+                decorators = []
+        if spec is None:
+                spec = {}
         abiinput = scf_input(structure, pseudos, kppa=kppa, ecut=ecut, pawecutdg=pawecutdg, nband=nband,
                              accuracy=accuracy, spin_mode=spin_mode, smearing=smearing, charge=charge,
                              scf_algorithm=scf_algorithm, shift_mode=shift_mode)
@@ -154,7 +176,11 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
     workflow_class = 'RelaxFWWorkflow'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    def __init__(self, ion_input, ioncell_input, autoparal=False, spec={}, initialization_info={}, target_dilatmx=None):
+    def __init__(self, ion_input, ioncell_input, autoparal=False, spec=None, initialization_info=None, target_dilatmx=None):
+        if spec is None:
+            spec = {}
+        if initialization_info is None:
+            initialization_info = {}
         start_task_index = 1
         spec = dict(spec)
         spec['initialization_info'] = initialization_info
@@ -224,9 +250,17 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
     @classmethod
     def from_factory(cls, structure, pseudos, kppa=None, nband=None, ecut=None, pawecutdg=None, accuracy="normal",
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
-                     extra_abivars={}, decorators=[], autoparal=False, spec={}, initialization_info={},
+                     extra_abivars=None, decorators=None, autoparal=False, spec=None, initialization_info=None,
                      target_dilatmx=None):
 
+        if extra_abivars is None:
+                extra_abivars = {}
+        if decorators is None:
+                decorators = []
+        if spec is None:
+                spec = {}
+        if initialization_info is None:
+                initialization_info = {}
         ion_input = ion_ioncell_relax_input(structure=structure, pseudos=pseudos, kppa=kppa, nband=nband, ecut=ecut,
                                             pawecutdg=pawecutdg, accuracy=accuracy, spin_mode=spin_mode,
                                             smearing=smearing, charge=charge, scf_algorithm=scf_algorithm)[0]
@@ -243,8 +277,12 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
 
 class NscfFWWorkflow(AbstractFWWorkflow):
-    def __init__(self, scf_input, nscf_input, autoparal=False, spec={}, initialization_info={}):
+    def __init__(self, scf_input, nscf_input, autoparal=False, spec=None, initialization_info=None):
 
+        if spec is None:
+            spec = {}
+        if initialization_info is None:
+            initialization_info = {}
         spec = dict(spec)
         spec['initialization_info'] = initialization_info
         if autoparal:
@@ -260,7 +298,11 @@ class NscfFWWorkflow(AbstractFWWorkflow):
 
 
 class HybridOneShotFWWorkflow(AbstractFWWorkflow):
-    def __init__(self, scf_inp, hybrid_input, autoparal=False, spec={}, initialization_info={}):
+    def __init__(self, scf_inp, hybrid_input, autoparal=False, spec=None, initialization_info=None):
+        if spec is None:
+            spec = {}
+        if initialization_info is None:
+            initialization_info = {}
         rf = self.get_reduced_formula(scf_inp)
 
         scf_task = ScfFWTask(scf_inp, is_autoparal=autoparal)
@@ -282,8 +324,16 @@ class HybridOneShotFWWorkflow(AbstractFWWorkflow):
     def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      shift_mode="Monkhorst-Pack", hybrid_functional="hse06", ecutsigx=None, gw_qprange=1,
-                     extra_abivars={}, decorators=[], autoparal=False, spec={}, initialization_info={}):
+                     extra_abivars=None, decorators=None, autoparal=False, spec=None, initialization_info=None):
 
+        if extra_abivars is None:
+                extra_abivars = {}
+        if decorators is None:
+                decorators = []
+        if spec is None:
+                spec = {}
+        if initialization_info is None:
+                initialization_info = {}
         scf_fact = ScfFactory(structure=structure, pseudos=pseudos, kppa=kppa, ecut=ecut, pawecutdg=pawecutdg,
                               nband=nband, accuracy=accuracy, spin_mode=spin_mode, smearing=smearing, charge=charge,
                               scf_algorithm=scf_algorithm, shift_mode=shift_mode, extra_abivars=extra_abivars,
@@ -296,8 +346,10 @@ class HybridOneShotFWWorkflow(AbstractFWWorkflow):
 
 
 class NscfFWWorkflow(AbstractFWWorkflow):
-    def __init__(self, scf_input, nscf_input, autoparal=False, spec={}):
+    def __init__(self, scf_input, nscf_input, autoparal=False, spec=None):
 
+        if spec is None:
+            spec = {}
         spec = dict(spec)
         if autoparal:
             spec = self.set_short_single_core_to_spec(spec)
@@ -315,7 +367,11 @@ class PhononFWWorkflow(AbstractFWWorkflow):
     workflow_class = 'PhononFWWorkflow'
     workflow_module = 'abipy.fworks.fw_workflows'
 
-    def __init__(self, scf_inp, phonon_factory, autoparal=False, spec={}, initialization_info={}):
+    def __init__(self, scf_inp, phonon_factory, autoparal=False, spec=None, initialization_info=None):
+        if spec is None:
+            spec = {}
+        if initialization_info is None:
+            initialization_info = {}
         start_task_index = 1
 
         rf = self.get_reduced_formula(scf_inp)
@@ -348,9 +404,17 @@ class PhononFWWorkflow(AbstractFWWorkflow):
     def from_factory(cls, structure, pseudos, kppa=None, ecut=None, pawecutdg=None, nband=None, accuracy="normal",
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      shift_mode="Symmetric", ph_ngqpt=None, with_ddk=True, with_dde=True, with_bec=False,
-                     scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None, extra_abivars={}, decorators=[],
-                     autoparal=False, spec={}, initialization_info={}):
+                     scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None, extra_abivars=None, decorators=None,
+                     autoparal=False, spec=None, initialization_info=None):
 
+        if extra_abivars is None:
+                extra_abivars = {}
+        if decorators is None:
+                decorators = []
+        if spec is None:
+                spec = {}
+        if initialization_info is None:
+                initialization_info = {}
         extra_abivars_scf = dict(extra_abivars)
         extra_abivars_scf['tolwfr'] = scf_tol if scf_tol else 1.e-22
         scf_fact = ScfForPhononsFactory(structure=structure, pseudos=pseudos, kppa=kppa, ecut=ecut, pawecutdg=pawecutdg,
@@ -369,7 +433,11 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflow'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    def __init__(self, scf_inp, ddk_inp, rf_inp, autoparal=False, spec={}, initialization_info={}):
+    def __init__(self, scf_inp, ddk_inp, rf_inp, autoparal=False, spec=None, initialization_info=None):
+        if spec is None:
+            spec = {}
+        if initialization_info is None:
+            initialization_info = {}
         rf = self.get_reduced_formula(scf_inp)
 
         scf_task = ScfFWTask(scf_inp, is_autoparal=autoparal)
