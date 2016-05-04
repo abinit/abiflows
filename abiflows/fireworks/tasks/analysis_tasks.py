@@ -75,7 +75,7 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                 if se_prefix:
                     se_rfilename = '{}_{}.json'.format(se_prefix, fw_spec['storefile_basename'])
                 else:
-                    se_rfilename = '{}.json'.format(se_prefix, fw_spec['storefile_basename'])
+                    se_rfilename = '{}.json'.format(fw_spec['storefile_basename'])
                 se_rfilepath = '{}/{}'.format(fw_spec['storefile_dirpath'], se_rfilename)
                 storage_server = fw_spec['storage_server']
                 storage_server.put(localpath=json_file, remotepath=se_rfilepath, overwrite=False, makedirs=False)
