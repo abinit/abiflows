@@ -78,7 +78,7 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                     se_rfilename = '{}.json'.format(fw_spec['storefile_basename'])
                 se_rfilepath = '{}/{}'.format(fw_spec['storefile_dirpath'], se_rfilename)
                 storage_server = fw_spec['storage_server']
-                storage_server.put(localpath=json_file, remotepath=se_rfilepath, overwrite=False, makedirs=False)
+                storage_server.put(localpath=json_file, remotepath=se_rfilepath, overwrite=True, makedirs=False)
                 entry['structure_environments_file'] = se_rfilepath
             else:
                 raise ValueError('Saving option is "{}" while it should be '
@@ -108,9 +108,9 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
             dd = json.load(gfs_fileobject)
             se = StructureEnvironments.from_dict(dd)
         elif fw_spec['structure_environments_setup'] == 'from_storedfile':
-            storage_server = fw_spec['storage_server']
+            se_storage_server = fw_spec['se_storage_server']
             se_filepath = entry['structure_environments_file']
-            storage_server.get(se_filepath, 'se.json')
+            se_storage_server.get(se_filepath, 'se.json')
             f = open('se.json', 'r')
             dd = json.load(f)
             f.close()
@@ -161,7 +161,7 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
                     lse_rfilename = '{}.json'.format(fw_spec['storefile_basename'])
                 lse_rfilepath = '{}/{}'.format(fw_spec['storefile_dirpath'], lse_rfilename)
                 storage_server = fw_spec['storage_server']
-                storage_server.put(localpath=json_file, remotepath=lse_rfilepath, overwrite=False, makedirs=False)
+                storage_server.put(localpath=json_file, remotepath=lse_rfilepath, overwrite=True, makedirs=False)
                 entry['structure_environments_file'] = lse_rfilepath
             else:
                 raise ValueError('Saving option is "{}" while it should be '
