@@ -101,15 +101,17 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
         identifier = fw_spec['identifier']
         criteria = {'identifier': identifier}
         # Where to get the full structure environments object
-        if fw_spec['structure_environments_setup'] == 'from_database':
-            se_database = fw_spec['structure_environments_database']
-            entry = se_database.collection.find_one(criteria)
+        se_database = fw_spec['structure_environments_database']
+        entry = se_database.collection.find_one(criteria)
+        if fw_spec['structure_environments_setup'] == 'from_gridfs':
             gfs_fileobject = se_database.gridfs.get(entry['structure_environments'])
             dd = json.load(gfs_fileobject)
             se = StructureEnvironments.from_dict(dd)
-        elif fw_spec['structure_environments_setup'] == 'from_file':
-            se_filepath = fw_spec['structure_environments_filepath']
-            f = open(se_filepath, 'r')
+        elif fw_spec['structure_environments_setup'] == 'from_storedfile':
+            storage_server = fw_spec['storage_server']
+            se_filepath = entry['structure_environments_file']
+            storage_server.get(se_filepath, 'se.json')
+            f = open('se.json', 'r')
             dd = json.load(f)
             f.close()
             se = StructureEnvironments.from_dict(dd)
@@ -140,8 +142,30 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
                      'nsites': len(lse.structure),
                      'chemenv_statistics': lse.get_statistics(bson_compatible=True)
                      }
-            gridfs_msonables = {'structure': lse.structure,
-                                'light_structure_environments': lse}
+            saving_option = fw_spec['saving_option']
+            if saving_option == 'gridfs':
+                gridfs_msonables = {'structure': lse.structure,
+                                    'light_structure_environments': lse}
+            elif saving_option == 'storefile':
+                gridfs_msonables = None
+                if 'lse_prefix' in fw_spec:
+                    lse_prefix = fw_spec['lse_prefix']
+                    if not lse_prefix.isalpha():
+                        raise ValueError('Prefix for light_structure_environments file is "{}" '
+                                         'while it should be alphabetic'.format(lse_prefix))
+                else:
+                    lse_prefix = ''
+                if lse_prefix:
+                    lse_rfilename = '{}_{}.json'.format(lse_prefix, fw_spec['storefile_basename'])
+                else:
+                    lse_rfilename = '{}.json'.format(fw_spec['storefile_basename'])
+                lse_rfilepath = '{}/{}'.format(fw_spec['storefile_dirpath'], lse_rfilename)
+                storage_server = fw_spec['storage_server']
+                storage_server.put(localpath=json_file, remotepath=lse_rfilepath, overwrite=False, makedirs=False)
+                entry['structure_environments_file'] = lse_rfilepath
+            else:
+                raise ValueError('Saving option is "{}" while it should be '
+                                 '"gridfs" or "storefile"'.format(saving_option))
             criteria = {'identifier': identifier}
             if database.collection.find(criteria).count() == 1:
                 database.update_entry(query=criteria, entry_update=entry,

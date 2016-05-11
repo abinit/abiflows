@@ -9,6 +9,7 @@ import json
 import pymongo
 import paramiko
 import os
+import stat
 
 
 class MongoDatabase(MSONable):
@@ -168,7 +169,24 @@ class StorageServer(MSONable):
         return sftp_stat
 
     def get(self, remotepath, localpath=None, overwrite=False, makedirs=True):
-        pass
+        self.connect()
+        if not self.remotepath_exists(remotepath):
+            raise IOError('Remote path "{}" does not exist'.format(remotepath))
+        if localpath is None:
+            head, tail = os.path.split(remotepath)
+            localpath = tail
+        localpath = os.path.expanduser(localpath)
+        if not overwrite and os.path.exists(localpath):
+            raise IOError('Local path "{}" exists'.format(localpath))
+        # Check if the remotepath is a regular file (right now, this is the only option that is implemented,
+        #  directories should be implemented, symbolic links should be handled in some way).
+        remotepath_stat = self.sftp_client.stat(remotepath)
+        if stat.S_ISREG(remotepath_stat.st_mode):
+            sftp_stat = self.sftp_client.get(remotepath, localpath)
+        else:
+            raise NotImplementedError('Remote path "{}" is not a regular file'.format(remotepath))
+        self.disconnect()
+        return sftp_stat
 
     def as_dict(self):
         """
