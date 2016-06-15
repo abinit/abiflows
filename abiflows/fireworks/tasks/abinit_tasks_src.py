@@ -16,6 +16,7 @@ from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTa
 from abiflows.core.mastermind_abc import ControllerNote, ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
 from abiflows.fireworks.utils.fw_utils import FWTaskManager, links_dict_update, set_short_single_core_to_spec
+from abiflows.fireworks.utils.math_utils import divisors
 from abiflows.fireworks.tasks.abinit_tasks import MergeDdbAbinitTask
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
@@ -33,7 +34,7 @@ from abipy.abio.factories import InputFactory
 
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
-from abipy.abio.input_tags import STRAIN
+from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS
 from abipy.electrons.gsr import GsrFile
 from abipy.core.mixins import AbinitOutNcFile
 
@@ -232,8 +233,24 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
             raise SetupError(msg)
 
         autoparal_dir = 'run_autoparal'
+        # Set npfft by hand in autoparal if ngfft is found ...
+        if 'ngfft' in abiinput:
+            if GROUND_STATE in abiinput.runlevel or NSCF in abiinput.runlevel:
+                npfft_set = {1, 2, 3, 4, 5, 6}
+                ngfft = abiinput['ngfft']
+                divsy = divisors(ngfft[1])
+                divsz = divisors(ngfft[2])
+                npfft_set = npfft_set.intersection(set(divsy))
+                npfft_set = npfft_set.intersection(set(divsz))
+                if abiinput.ispaw:
+                    ngfftdg = abiinput['ngfftdg']
+                    divsy = divisors(ngfftdg[1])
+                    divsz = divisors(ngfftdg[2])
+                    npfft_set = npfft_set.intersection(set(divsy))
+                    npfft_set = npfft_set.intersection(set(divsz))
+                abiinput['npfft'] = max(npfft_set)
         pconfs = abiinput.abiget_autoparal_pconfs(max_ncpus=manager.max_cores, workdir=autoparal_dir,
-                                                       manager=manager)
+                                                  manager=manager)
         optconf = manager.select_qadapter(pconfs)
 
         d = pconfs.as_dict()
