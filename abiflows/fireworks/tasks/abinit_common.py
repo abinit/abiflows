@@ -1,5 +1,9 @@
 __author__ = 'waroquiers'
 
+import json
+from math import ceil
+import os
+
 TMPDIR_NAME = "tmpdata"
 OUTDIR_NAME = "outdata"
 INDIR_NAME = "indata"
@@ -14,6 +18,9 @@ DUMMY_FILENAME = "__DUMMY__"
 ELPHON_OUTPUT_FILE_NAME = "run.abo_elphon"
 DDK_FILES_FILE_NAME = "ddk.files"
 HISTORY_JSON = "history.json"
+
+
+module_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class Cut3DInput(object):
@@ -34,3 +41,20 @@ class Cut3DInput(object):
         input.append(cube_filename)         # Name of the output .cube file
         input.append('0')                   # No more analysis
         return cls(cut3d_input=input)
+
+def unprime_nband(nband, number_of_primes=10):
+    allowed_nbands = []
+    with open('{}/n1000multiples_primes.json'.format(module_dir), 'r') as f:
+        dd = json.load(f)
+        if 'numbers{:d}primes'.format(number_of_primes) not in dd:
+            raise ValueError('Number of primes is wrong ...')
+        allowed_nbands = dd['numbers{:d}primes'.format(number_of_primes)]
+    if nband <= 1000:
+        if nband in allowed_nbands:
+            return nband
+        return min([larger_nband for larger_nband in allowed_nbands if larger_nband > nband])
+    elif nband <= 10000:
+        nband10 = int(ceil(float(nband)/10.0))
+        if nband10 in allowed_nbands:
+            return nband10*10
+        return 10*min([larger_nband for larger_nband in allowed_nbands if larger_nband > nband10])
