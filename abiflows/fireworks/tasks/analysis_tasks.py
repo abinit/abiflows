@@ -5,6 +5,7 @@ from fireworks.core.firework import FireTaskBase
 from pymatgen.analysis.chemenv.coordination_environments.coordination_geometry_finder import LocalGeometryFinder
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import LightStructureEnvironments
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import StructureEnvironments
+from pymatgen.analysis.bond_valence import BVAnalyzer
 from pymatgen.matproj.rest import MPRester
 
 import json
@@ -38,7 +39,12 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
 
         # Compute the structure environments
         lgf.setup_structure(structure)
-        se = lgf.compute_structure_environments_detailed_voronoi()
+        try:
+            bva = BVAnalyzer()
+            valences = bva.get_valences(structure=structure)
+        except:
+            valences = 'undefined'
+        se = lgf.compute_structure_environments(only_cations=False, valences=valences)
 
         # Write to json file
         if 'json_file' in fw_spec:
