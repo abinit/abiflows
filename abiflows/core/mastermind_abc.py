@@ -624,7 +624,10 @@ class Action(MSONable):
         self.kwargs = kwargs
 
     def apply(self, object):
-        self.callable(object, **self.kwargs)
+        if len(self.kwargs) == 0:
+            self.callable(object)
+        else:
+            self.callable(object, **self.kwargs)
 
     @classmethod
     def from_dict(cls, d):

@@ -16,6 +16,7 @@ from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTa
 from abiflows.core.mastermind_abc import ControllerNote, ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
 from abiflows.fireworks.utils.fw_utils import FWTaskManager, links_dict_update, set_short_single_core_to_spec
+from abiflows.fireworks.utils.math_utils import divisors
 from abiflows.fireworks.tasks.abinit_tasks import MergeDdbAbinitTask
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
@@ -33,8 +34,9 @@ from abipy.abio.factories import InputFactory
 
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
-from abipy.abio.input_tags import STRAIN
+from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS
 from abipy.electrons.gsr import GsrFile
+from abipy.core.mixins import AbinitOutNcFile
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
@@ -231,8 +233,24 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
             raise SetupError(msg)
 
         autoparal_dir = 'run_autoparal'
+        # Set npfft by hand in autoparal if ngfft is found ...
+        if 'ngfft' in abiinput:
+            if GROUND_STATE in abiinput.runlevel or NSCF in abiinput.runlevel:
+                npfft_set = {1, 2, 3, 4, 5, 6}
+                ngfft = abiinput['ngfft']
+                divsy = divisors(ngfft[1])
+                divsz = divisors(ngfft[2])
+                npfft_set = npfft_set.intersection(set(divsy))
+                npfft_set = npfft_set.intersection(set(divsz))
+                if abiinput.ispaw:
+                    ngfftdg = abiinput['ngfftdg']
+                    divsy = divisors(ngfftdg[1])
+                    divsz = divisors(ngfftdg[2])
+                    npfft_set = npfft_set.intersection(set(divsy))
+                    npfft_set = npfft_set.intersection(set(divsz))
+                abiinput['npfft'] = max(npfft_set)
         pconfs = abiinput.abiget_autoparal_pconfs(max_ncpus=manager.max_cores, workdir=autoparal_dir,
-                                                       manager=manager)
+                                                  manager=manager)
         optconf = manager.select_qadapter(pconfs)
 
         d = pconfs.as_dict()
@@ -319,6 +337,12 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                     #     logger.error(msg)
                     #     raise SetupError(msg)
                     # self.abiinput.set_structure(previous_task['structure'])
+                elif d.startswith('@outnc') or d.startswith('#outnc'):
+                    varname = d.split('.')[1]
+                    outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
+                    outnc_file = AbinitOutNcFile(outnc_path)
+                    vars = outnc_file.get_vars(vars=[varname], strict=True)
+                    self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
@@ -341,14 +365,15 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         if not self.deps:
             return
 
+        # If this is the first run of the task, the informations are taken from the 'previous_fws',
+        # that should be present.
+        previous_fws = fw_spec.get('previous_fws', None)
+        if previous_fws is None:
+            msg = "No previous_fws data. Needed for dependecies {}.".format(str(self.deps))
+            logger.error(msg)
+            raise SetupError(msg)
+
         if not self.restart_info:
-            # If this is the first run of the task, the informations are taken from the 'previous_fws',
-            # that should be present.
-            previous_fws = fw_spec.get('previous_fws', None)
-            if previous_fws is None:
-                msg = "No previous_fws data. Needed for dependecies {}.".format(str(self.deps))
-                logger.error(msg)
-                raise SetupError(msg)
 
             if isinstance(self.deps, (list, tuple)):
                 # check that there is only one previous_fws
@@ -399,6 +424,37 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                 if os.path.islink(source):
                     source = os.readlink(source)
                 os.symlink(source, os.path.join(self.run_dir, INDIR_NAME, f))
+
+            # Resolve the dependencies that start with '#'
+            if isinstance(self.deps, (list, tuple)):
+                # check that there is only one previous_fws
+                if len(previous_fws) != 1 or len(previous_fws.values()[0]) != 1:
+                    msg = "previous_fws does not contain a single reference. " \
+                          "Specify the dependency for {}.".format(str(self.deps))
+                    logger.error(msg)
+                    raise SetupError(msg)
+                deps = [dep for dep in self.deps if dep[0] == '#']
+                self.resolve_deps_per_task_type(previous_fws.values()[0], deps)
+
+            else:
+                # deps should be a dict
+                for task_type, deps_list in self.deps.items():
+                    if task_type not in previous_fws:
+                        msg = "No previous_fws data for task type {}.".format(task_type)
+                        logger.error(msg)
+                        raise SetupError(msg)
+                    if len(previous_fws[task_type]) < 1:
+                        msg = "Previous_fws does not contain any reference for task type {}, " \
+                              "needed in reference {}. ".format(task_type, str(self.deps))
+                        logger.error(msg)
+                        raise SetupError(msg)
+                    elif len(previous_fws[task_type]) > 1:
+                        msg = "Previous_fws contains more than a single reference for task type {}, " \
+                              "needed in reference {}. Risk of overwriting.".format(task_type, str(self.deps))
+                        logger.warning(msg)
+
+                    deps_list = [dep for dep in deps_list if dep[0] == '#']
+                    self.resolve_deps_per_task_type(previous_fws[task_type], deps_list)
 
     @property
     def filesfile_string(self):
@@ -554,14 +610,32 @@ class AbinitControlTask(AbinitSRCMixin, ControlTask):
 
     def get_initial_objects_info(self, setup_fw, run_fw, src_directories):
         run_dir = src_directories['run_dir']
-        return {'abinit_input': {'object': setup_fw.tasks[-1].abiinput,
-                                 'updates': [{'target': 'setup_task',
-                                              'attribute': 'abiinput'}]},
-                'abinit_output_filepath': {'object': os.path.join(run_dir, OUTPUT_FILE_NAME)},
-                'abinit_log_filepath': {'object': os.path.join(run_dir, LOG_FILE_NAME)},
-                'abinit_mpi_abort_filepath': {'object': os.path.join(run_dir, MPIABORTFILE)},
-                'abinit_outdir_path': {'object': os.path.join(run_dir, OUTDIR_NAME)},
-                'abinit_err_filepath': {'object': os.path.join(run_dir, STDERR_FILE_NAME)}}
+        run_task = run_fw.tasks[-1]
+        run_task.setup_rundir(rundir=run_dir, create_dirs=False, directories_only=False)
+        task_helper = run_task.task_helper
+        task_helper.set_task(run_task)
+        init_obj_info = {'abinit_input': {'object': setup_fw.tasks[-1].abiinput,
+                                          'updates': [{'target': 'setup_task',
+                                                       'attribute': 'abiinput'}]},
+                         'abinit_output_filepath': {'object': os.path.join(run_dir, OUTPUT_FILE_NAME)},
+                         'abinit_log_filepath': {'object': os.path.join(run_dir, LOG_FILE_NAME)},
+                         'abinit_mpi_abort_filepath': {'object': os.path.join(run_dir, MPIABORTFILE)},
+                         'abinit_outdir_path': {'object': os.path.join(run_dir, OUTDIR_NAME)},
+                         'abinit_err_filepath': {'object': os.path.join(run_dir, STDERR_FILE_NAME)}}
+        # 'structure': {'object': task_helper.get_final_structure(),
+        #               'updates': [{'target': 'setup_task.abiinput',
+        #                            'setter': 'set_structure'}]}}
+        if hasattr(task_helper, 'get_final_structure'):
+            try:
+                final_structure = task_helper.get_final_structure()
+            except HelperError:
+                final_structure = None
+            except PostProcessError:
+                final_structure = None
+            init_obj_info['structure'] = {'object': final_structure,
+                                          'updates': [{'target': 'setup_task.abiinput',
+                                                       'setter': 'set_structure'}]}
+        return init_obj_info
 
             # initial_objects_info.update({'queue_adapter': {'object': self.run_fw.spec['qtk_queueadapter'],
             #                                            'updates': [{'target': 'fw_spec',
@@ -716,7 +790,17 @@ class RelaxTaskHelper(GsTaskHelper):
             with self.open_gsr() as gsr:
                 return gsr.structure
         except AttributeError:
-            msg = "Cannot find the GSR file with the final structure to restart from."
+            msg = "Cannot find the GSR file with the final structure."
+            logger.error(msg)
+            raise PostProcessError(msg)
+
+    def get_computed_entry(self):
+        """Get the computed entry from the GSR file."""
+        try:
+            with self.open_gsr() as gsr:
+                return gsr.get_computed_entry(inc_structure=True)
+        except AttributeError:
+            msg = "Cannot find the GSR file with the information to get the computed entry."
             logger.error(msg)
             raise PostProcessError(msg)
 
@@ -1084,13 +1168,17 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
     task_type = "bader"
 
 
-    def __init__(self, bader_log_file='bader.log', bader_err_file='bader.err'):
+    def __init__(self, bader_log_file='bader.log', bader_err_file='bader.err', electrons=None):
         """
         General constructor for Cut3D task.
         """
 
         self.bader_log_file = bader_log_file
         self.bader_err_file = bader_err_file
+        if electrons is not None:
+            if electrons not in ['valence', 'all-electron']:
+                raise ValueError('Argument "electrons" should be "valence" or "all-electron"')
+        self.electrons = electrons
 
     def set_workdir(self, workdir):
         self.workdir = workdir
@@ -1154,7 +1242,10 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
 
     def setup_rundir(self, rundir, create_dirs=True, directories_only=False):
         # Directories with input|output|temporary data.
-        self.bader_dir = Directory(os.path.join(rundir, 'bader'))
+        if self.electrons is None:
+            self.bader_dir = Directory(os.path.join(rundir, 'bader'))
+        else:
+            self.bader_dir = Directory(os.path.join(rundir, 'bader', self.electrons))
         self.rundir = self.bader_dir.path
 
         # Create dir for bader
@@ -1226,7 +1317,8 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                  previous_ddk_task_type=DdkTaskHelper.task_type, control_procedure=None,
                  additional_controllers=None,
                  mrgddb_task_type='mrgddb-strains',
-                 rf_tol=None):
+                 rf_tol=None, additional_input_vars=None, rf_deps=None,
+                 allow_parallel_perturbations=True):
         if piezo_elastic_factory is None:
             self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
         else:
@@ -1250,6 +1342,9 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         self.additional_controllers = additional_controllers
         self.mrgddb_task_type = mrgddb_task_type
         self.rf_tol = rf_tol
+        self.additional_input_vars = additional_input_vars
+        self.rf_deps = rf_deps
+        self.allow_parallel_perturbations = allow_parallel_perturbations
 
     def run_task(self, fw_spec):
 
@@ -1280,11 +1375,22 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         strain_task_types = []
         fws_deps = {}
 
+        if self.rf_deps is not None:
+            rf_deps = self.rf_deps
+        else:
+            rf_deps = {self.previous_scf_task_type: 'WFK'}
+            if self.previous_ddk_task_type is not None:
+                rf_deps[self.previous_ddk_task_type] = 'DDK'
+
+        prev_src_pert = None
+
         for istrain_pert, rf_strain_input in enumerate(rf_strain_inputs):
             strain_task_type = 'strain-pert-{:d}'.format(istrain_pert+1)
+            if self.additional_input_vars is not None:
+                rf_strain_input.set_vars(self.additional_input_vars)
+            rf_strain_input.set_vars(mem_test=0)
             setup_rf_task = AbinitSetupTask(abiinput=rf_strain_input, task_helper=self.helper,
-                                            deps={self.previous_scf_task_type: 'WFK',
-                                                  self.previous_ddk_task_type: 'DDK'})
+                                            deps=rf_deps)
             run_rf_task = AbinitRunTask(control_procedure=self.control_procedure, task_helper=self.helper,
                                         task_type=strain_task_type)
             control_rf_task = AbinitControlTask(control_procedure=self.control_procedure, task_helper=self.helper)
@@ -1296,6 +1402,14 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             total_list_fws.extend(rf_fws['fws'])
             strain_task_types.append(strain_task_type)
             links_dict_update(links_dict=fws_deps, links_update=rf_fws['links_dict'])
+            # Additional links if we want to avoid multiple perturbations to be run at the same time (e.g. to avoid
+            # I/O bottlenecks because of reading the same file
+            if not self.allow_parallel_perturbations:
+                if prev_src_pert is not None:
+                    link_dict_update = {prev_src_pert['control_fw'].fw_id: [rf_fws['setup_fw'].fw_id]}
+                    links_dict_update(links_dict=fws_deps, links_update=link_dict_update)
+                prev_src_pert = rf_fws
+
 
 
         # Adding the MrgDdb Firework
@@ -1311,7 +1425,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         total_list_fws.append(mrgddb_fw)
         #Adding the dependencies
         for src_fws in all_SRC_rf_fws:
-            links_dict_update(links_dict=fws_deps, links_update={src_fws['control_fw']: mrgddb_fw})
+            links_dict_update(links_dict=fws_deps, links_update={src_fws['control_fw'].fw_id: mrgddb_fw.fw_id})
 
         rf_strains_wf = Workflow(total_list_fws, fws_deps)
 

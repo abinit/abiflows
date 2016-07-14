@@ -15,6 +15,7 @@ from fireworks import Workflow
 import traceback
 import logging
 from abiflows.fireworks.utils.time_utils import TimeReport
+from fireworks.core.firework import Firework
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +238,9 @@ def get_time_report_for_wf(wf):
             run_time = completed_launch.runtime_secs
             total_run_time += run_time
 
-            if 'mpi_ncpus' in fw.spec:
+            if 'qtk_queueadapter' in fw.spec:
+                ncpus = fw.spec['qtk_queueadapter'].num_cores
+            elif 'mpi_ncpus' in fw.spec:
                 ncpus = fw.spec['mpi_ncpus']
             elif 'ntasks' in fw.spec:
                 ncpus = fw.spec['ntasks']
@@ -268,8 +271,12 @@ def get_time_report_for_wf(wf):
 
 def links_dict_update(links_dict, links_update):
     for parent_id, child_ids in links_update.items():
+        if isinstance(parent_id, Firework):
+            parent_id = parent_id.fw_id
         if isinstance(child_ids, int):
-                child_ids = [child_ids]
+            child_ids = [child_ids]
+        elif isinstance(child_ids, Firework):
+            child_ids = [child_ids.fw_id]
         if parent_id in links_dict:
             for child_id in child_ids:
                 if child_id in links_dict[parent_id]:

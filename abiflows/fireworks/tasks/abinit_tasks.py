@@ -35,6 +35,7 @@ from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
+from abipy.core.mixins import AbinitOutNcFile
 
 from abipy.core import Structure
 
@@ -952,6 +953,12 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                         logger.error(msg)
                         raise InitializationError(msg)
                     self.abiinput.set_structure(previous_task['structure'])
+                elif d.startswith('@outnc'):
+                    varname = d.split('.')[1]
+                    outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
+                    outnc_file = AbinitOutNcFile(outnc_path)
+                    vars = outnc_file.get_vars(vars=[varname], strict=True)
+                    self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))
@@ -1534,6 +1541,56 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
             out_ddb = mrgddb.merge(self.workdir, ddb_files, out_ddb=out_ddb, description=desc,
                                    delete_source_ddbs=self.delete_source_ddbs)
+
+            # Temporary fix ... mrgddb doesnt seem to work when I merge the GS DDB file with the Strain DDB file
+            # because the info on the pseudopotentials is not in the GS DDB file ...
+            #  www.welcome2quickanddirty.com (DavidWaroquiers)
+            if 'PAW_datasets_description_correction' in fw_spec:
+                if len(ddb_files) != 2:
+                    raise ValueError('Fix is temporary and only for a number of DDBs equal to 2')
+                fname_with_psp = None
+                psp_lines = []
+
+                for fname in ddb_files:
+                    in_psp_info = False
+                    with open(fname, 'r') as fh:
+                        dd = fh.readlines()
+                        for iline, line in enumerate(dd):
+                            if 'No information on the potentials yet' in line:
+                                break
+                            if 'Description of the PAW dataset(s)' in line:
+                                in_psp_info = True
+                                fname_with_psp = fname
+                            if in_psp_info:
+                                if '**** Database of total energy derivatives ****' in line:
+                                    break
+                                psp_lines.append(line)
+                    if fname_with_psp:
+                        break
+
+                if not fname_with_psp:
+                    raise ValueError('Should have at least one DDB with the psp info ...')
+
+                out_ddb_backup = '{}.backup'.format(out_ddb)
+                shutil.move(out_ddb, out_ddb_backup)
+
+                fw = open(out_ddb, 'w')
+                with open(out_ddb_backup, 'r') as fh:
+                    dd = fh.readlines()
+                    just_copy = True
+                    for line in dd:
+                        if 'Description of the PAW dataset(s)' in line:
+                            just_copy = False
+                            for pspline in psp_lines:
+                                fw.write(pspline)
+                        if just_copy:
+                            fw.write(line)
+                            continue
+                        if '**** Database of total energy derivatives ****' in line:
+                            just_copy = True
+                            fw.write(line)
+                            continue
+                fw.close()
 
             self.report = self.get_event_report()
 
