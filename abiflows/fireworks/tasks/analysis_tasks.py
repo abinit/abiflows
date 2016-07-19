@@ -37,13 +37,16 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                 raise ValueError('Either structure or identifier with source = MaterialsProject and material_id '
                                  'should be provided')
 
+        info = {}
         # Compute the structure environments
         lgf.setup_structure(structure)
         try:
             bva = BVAnalyzer()
             valences = bva.get_valences(structure=structure)
+            info['valences'] = {'origin': 'BVAnalyzer'}
         except:
             valences = 'undefined'
+            info['valences'] = {'origin': 'None'}
         se = lgf.compute_structure_environments(only_cations=False, valences=valences)
 
         # Write to json file
@@ -127,7 +130,16 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
 
         # Compute the light structure environments
         chemenv_strategy = fw_spec['chemenv_strategy']
-        lse = LightStructureEnvironments(strategy=chemenv_strategy, structure_environments=se)
+        if 'valences' in fw_spec:
+            valences = fw_spec['valences']
+            valences_origin = fw_spec['valences_origin']
+        else:
+            valences = 'undefined'
+            valences_origin = 'None'
+        lse = LightStructureEnvironments.from_structure_environments(strategy=chemenv_strategy,
+                                                                     structure_environments=se,
+                                                                     valences=valences,
+                                                                     valences_origin=valences_origin)
 
         # Write to json file
         if 'json_file' in fw_spec:
