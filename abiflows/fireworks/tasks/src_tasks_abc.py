@@ -887,6 +887,7 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     setup_spec = set_short_single_core_to_spec(setup_spec)
     setup_spec['_preserve_fworker'] = True
     setup_spec['_pass_job_info'] = True
+    setup_spec['initialization_info'] = initialization_info
     setup_spec.update({} if setup_spec_update is None else setup_spec_update)
     setup_fw = Firework(setup_task, spec=setup_spec, name=src_task_index.setup_str)
 

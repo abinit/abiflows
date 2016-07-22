@@ -68,8 +68,10 @@ class AbstractFWWorkflow(Workflow):
         spec['_queueadapter'] = qadapter_spec
         return spec
 
-    def add_final_cleanup(self, out_exts=["WFK"]):
+    def add_final_cleanup(self, out_exts=["WFK"], additional_spec=None):
         spec = self.set_short_single_core_to_spec()
+        if additional_spec:
+            spec.update(additional_spec)
         # high priority
         #TODO improve the handling of the priorities
         spec['_priority'] = 100
@@ -1090,7 +1092,7 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec={}, initialization_info={},
                  ddk_split=False, rf_split=False, additional_controllers=None, additional_input_vars=None,
-                 allow_parallel_perturbations=True, do_ddk=True):
+                 allow_parallel_perturbations=True, do_ddk=True, do_phonons=True):
 
         fws = []
         links_dict = {}
@@ -1099,6 +1101,9 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
             additional_controllers = [WalltimeController(), MemoryController()]
         else:
             additional_controllers = additional_controllers
+
+        if additional_input_vars is None:
+            additional_input_vars = {}
 
         # Dependencies for the ngfft grid (for some reason, the fft grid can change between SCF and nSCF runs
         # even when all other parameters are the same ...)
@@ -1207,7 +1212,8 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
                                                            additional_controllers=additional_controllers,
                                                            rf_tol=rf_tol, additional_input_vars=additional_input_vars,
                                                            rf_deps=rf_deps,
-                                                           allow_parallel_perturbations=allow_parallel_perturbations)
+                                                           allow_parallel_perturbations=allow_parallel_perturbations,
+                                                           do_phonons=do_phonons)
         genrfstrains_spec = set_short_single_core_to_spec(spec)
         gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
         fws.append(gen_fw)

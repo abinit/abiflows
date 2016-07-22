@@ -34,7 +34,7 @@ from abipy.abio.factories import InputFactory
 
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
-from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS
+from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
 from abipy.electrons.gsr import GsrFile
 from abipy.core.mixins import AbinitOutNcFile
 
@@ -1318,7 +1318,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                  additional_controllers=None,
                  mrgddb_task_type='mrgddb-strains',
                  rf_tol=None, additional_input_vars=None, rf_deps=None,
-                 allow_parallel_perturbations=True):
+                 allow_parallel_perturbations=True, do_phonons=True):
         if piezo_elastic_factory is None:
             self.piezo_elastic_factory = PiezoElasticFromGsFactory(rf_tol=rf_tol, rf_split=True)
         else:
@@ -1345,6 +1345,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         self.additional_input_vars = additional_input_vars
         self.rf_deps = rf_deps
         self.allow_parallel_perturbations = allow_parallel_perturbations
+        self.do_phonons = do_phonons
 
     def run_task(self, fw_spec):
 
@@ -1360,7 +1361,10 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
 
         # Get the strain RF inputs
         piezo_elastic_inputs = self.piezo_elastic_factory.build_input(previous_scf_input)
-        rf_strain_inputs = piezo_elastic_inputs.filter_by_tags(STRAIN)
+        if self.do_phonons:
+            rf_strain_inputs = piezo_elastic_inputs.filter_by_tags(STRAIN)
+        else:
+            rf_strain_inputs = piezo_elastic_inputs.filter_by_tags(STRAIN, exclude_tags=PHONON)
 
         initialization_info = fw_spec.get('initialization_info', {})
         initialization_info['input_factory'] = self.piezo_elastic_factory.as_dict()
@@ -1368,6 +1372,11 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         initial_parameters = fw_spec.get('initial_parameters', None)
         if initial_parameters:
             new_spec['initial_parameters'] = initial_parameters
+
+        if '_preserve_fworker' in fw_spec:
+            new_spec['_preserve_fworker']=True
+        if '_fworker' in fw_spec:
+            new_spec['_fworker'] = fw_spec['_fworker']
 
         # Create the SRC fireworks for each perturbation
         all_SRC_rf_fws = []

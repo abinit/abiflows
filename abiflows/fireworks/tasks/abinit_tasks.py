@@ -377,7 +377,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         """
 
         # rename outputs if rerunning in the same dir
-        self.rename_outputs()
+        # self.rename_outputs()
 
         # Copy the appropriate dependencies in the in dir
         #TODO it should be clarified if this should stay here or in setup_task().
@@ -853,7 +853,9 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                     # loop to allow local restart
                     while True:
                         self.config_run(fw_spec)
-                        self.run_abinit(fw_spec)
+                        # try to recover previous run
+                        if not os.path.isfile(self.output_file.path):
+                            self.run_abinit(fw_spec)
                         action = self.task_analysis(fw_spec)
                         if action:
                             return action
@@ -1292,6 +1294,36 @@ class HybridFWTask(GsFWTask):
 
     CRITICAL_EVENTS = [
     ]
+
+    @property
+    def sigres_path(self):
+        """Absolute path of the SIGRES file. Empty string if file is not present."""
+        # Lazy property to avoid multiple calls to has_abiext.
+        try:
+            return self._sigres_path
+        except AttributeError:
+            path = self.outdir.has_abiext("SIGRES")
+            if path: self._sigres_path = path
+            return path
+
+    def open_sigres(self):
+        """
+        Open the SIGRES file located in the in self.outdir.
+        Returns SigresFile object, None if file could not be found or file is not readable.
+        """
+        sigres_path = self.sigres_path
+
+        if not sigres_path:
+            logger.critical("%s didn't produce a SIGRES file in %s" % (self, self.outdir))
+            return None
+
+        # Open the SIGRES file and add its data to results.out
+        from abipy.electrons.gw import SigresFile
+        try:
+            return SigresFile(sigres_path)
+        except Exception as exc:
+            logger.critical("Exception while reading SIGRES file at %s:\n%s" % (sigres_path, str(exc)))
+            return None
 
 
 @explicit_serialize
@@ -1961,6 +1993,7 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
                     autoparal_spec['_queueadapter'] = qadapter_spec
                     autoparal_spec['mpi_ncpus'] = optconf['mpi_ncpus']
                 new_spec.update(autoparal_spec)
+                inp.set_vars(optconf.vars)
 
             current_deps = dict(deps)
             parent_fw = None
