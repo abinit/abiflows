@@ -50,7 +50,11 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
             except:
                 valences = 'undefined'
                 info['valences'] = {'origin': 'None'}
-        se = lgf.compute_structure_environments(only_cations=False, valences=valences)
+        excluded_atoms = None
+        if 'excluded_atoms' in fw_spec:
+            excluded_atoms = fw_spec['excluded_atoms']
+
+        se = lgf.compute_structure_environments(only_cations=False, valences=valences, excluded_atoms=excluded_atoms)
 
         # Write to json file
         if 'json_file' in fw_spec:
