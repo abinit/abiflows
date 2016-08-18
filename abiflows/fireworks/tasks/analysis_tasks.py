@@ -40,13 +40,16 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
         info = {}
         # Compute the structure environments
         lgf.setup_structure(structure)
-        try:
-            bva = BVAnalyzer()
-            valences = bva.get_valences(structure=structure)
-            info['valences'] = {'origin': 'BVAnalyzer'}
-        except:
-            valences = 'undefined'
-            info['valences'] = {'origin': 'None'}
+        if 'valences' in fw_spec:
+            valences = fw_spec['valences']
+        else:
+            try:
+                bva = BVAnalyzer()
+                valences = bva.get_valences(structure=structure)
+                info['valences'] = {'origin': 'BVAnalyzer'}
+            except:
+                valences = 'undefined'
+                info['valences'] = {'origin': 'None'}
         se = lgf.compute_structure_environments(only_cations=False, valences=valences)
 
         # Write to json file
@@ -158,7 +161,7 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
                      'nelements': len(lse.structure.composition.elements),
                      'pretty_formula': lse.structure.composition.reduced_formula,
                      'nsites': len(lse.structure),
-                     'chemenv_statistics': lse.get_statistics(bson_compatible=True)
+                     'chemenv_statistics': lse.get_statistics(statistics_fields='ALL', bson_compatible=True)
                      }
             saving_option = fw_spec['saving_option']
             if saving_option == 'gridfs':
