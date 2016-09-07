@@ -1,5 +1,6 @@
 from __future__ import print_function, division, unicode_literals
 
+import copy
 import logging
 import threading
 import subprocess
@@ -7,9 +8,14 @@ from monty.json import MSONable
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask
 from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
+from abiflows.fireworks.tasks.src_tasks_abc import SRCTaskIndex
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from fireworks import explicit_serialize
+from fireworks.core.firework import Firework
 from pymatgen.serializers.json_coders import pmg_serialize
 from pymatgen.io.abinit.utils import Directory
+from custodian.custodian import Custodian
+from custodian.vasp.jobs import VaspJob
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
@@ -83,42 +89,40 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
 class VaspRunTask(VaspSRCMixin, RunTask):
 
 
-    def __init__(self, control_procedure, task_helper, task_type=None):
+    def __init__(self, control_procedure, task_helper, task_type=None, custodian_handlers=None):
         if task_type is None:
             task_type = task_helper.task_type
         RunTask.__init__(self, control_procedure=control_procedure, task_type=task_type)
         self.task_helper = task_helper
         self.task_helper.set_task(self)
+        self.custodian_handlers = custodian_handlers
 
     def config(self, fw_spec):
         self.ftm = self.get_fw_task_manager(fw_spec)
         self.setup_rundir(self.run_dir, create_dirs=False)
 
     def run(self, fw_spec):
-        #TODO switch back to a simple process instead of a separate thread?
-        def vasp_process():
-            command = []
-            #consider the case of serial execution
-            if self.ftm.fw_policy.mpirun_cmd:
-                command.extend(self.ftm.fw_policy.mpirun_cmd.split())
-                if 'mpi_ncpus' in fw_spec:
-                    command.extend(['-np', str(fw_spec['mpi_ncpus'])])
-            command.append(self.ftm.fw_policy.vasp_cmd)
-            with open('vasp.out', 'w') as stdout, open('vasp.err', 'w') as stderr:
-                self.process = subprocess.Popen(command, stdout=stdout, stderr=stderr)
-
-            (stdoutdata, stderrdata) = self.process.communicate()
-            self.returncode = self.process.returncode
-
-        # initialize returncode to avoid missing references in case of exception in the other thread
-        self.returncode = None
-
-        thread = threading.Thread(target=vasp_process)
-        thread.start()
-        thread.join()
+        # class VaspJob(Job):
+        #     """
+        #     A basic vasp job. Just runs whatever is in the directory. But conceivably
+        #     can be a complex processing of inputs etc. with initialization.
+        #     """
+        #
+        #     def __init__(self, vasp_cmd, output_file="vasp.out", stderr_file="std_err.txt",
+        #                  suffix="", final=True, backup=True, auto_npar=True,
+        #                  auto_gamma=True, settings_override=None,
+        #                  gamma_vasp_cmd=None, copy_magmom=False, auto_continue=False):
+        if 'custodian_jobs' in fw_spec:
+            jobs = fw_spec['custodian_jobs']
+        else:
+            jobs = [VaspJob(vasp_cmd='mpirun /home/acad/ucl-naps/yugd/bin/vasp', auto_npar=False)]
+        custodian = Custodian(handlers=self.custodian_handlers, jobs=fw_spec['custodian_jobs'],
+                              validators=None, max_errors=10,
+                              polling_time_step=10, monitor_freq=30)
+        custodian.run()
 
     def postrun(self, fw_spec):
-        #TODO should this be a general feature of the SRC?
+        # TODO should this be a general feature of the SRC?
         self.task_helper.conclude_task()
         return {'qtk_queueadapter' :fw_spec['qtk_queueadapter']}
 
@@ -140,6 +144,73 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
         init_obj_info = {}
 
         return init_obj_info
+
+
+# class VaspSetupTask(VaspSRCMixin, SetupTask):
+#
+#     RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
+#
+#     def __init__(self, vasp_input_set, deps=None, task_helper=None, task_type=None,
+#                  restart_info=None, pass_input=False):
+# class VaspRunTask(VaspSRCMixin, RunTask):
+#
+#
+#     def __init__(self, control_procedure, task_helper, task_type=None, custodian_handlers=None):
+# class VaspControlTask(VaspSRCMixin, ControlTask):
+#
+#     def __init__(self, control_procedure, manager=None, max_restarts=10, src_cleaning=None, task_helper=None):
+#         ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts,
+#                              src_cleaning=src_cleaning)
+# def createVaspSRCFireworks(setup_task, run_task, control_task, spec=None, initialization_info=None,
+#                            task_index=None, setup_spec_update=None, run_spec_update=None):
+def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_procedure,
+                           custodian_handlers, max_restarts, src_cleaning, task_index, spec,
+                           setup_spec_update=None, run_spec_update=None):
+    # Make a full copy of the spec
+    if spec is None:
+        spec = {}
+    spec = copy.deepcopy(spec)
+    spec['_add_launchpad_and_fw_id'] = True
+    spec['_add_fworker'] = True
+    # Initialize the SRC task_index
+    src_task_index = SRCTaskIndex.from_any(task_index)
+    spec['SRC_task_index'] = src_task_index
+
+    # SetupTask
+    setup_spec = copy.deepcopy(spec)
+    # Remove any initial queue_adapter_update from the spec
+    setup_spec.pop('queue_adapter_update', None)
+
+    setup_spec = set_short_single_core_to_spec(setup_spec)
+    setup_spec['_preserve_fworker'] = True
+    setup_spec['_pass_job_info'] = True
+    setup_spec.update({} if setup_spec_update is None else setup_spec_update)
+    setup_task = VaspSetupTask(vasp_input_set=vasp_input_set, deps=None, task_helper=task_helper, task_type=task_type)
+    setup_fw = Firework(setup_task, spec=setup_spec, name=src_task_index.setup_str)
+
+    # RunTask
+    run_spec = copy.deepcopy(spec)
+    run_spec['SRC_task_index'] = src_task_index
+    run_spec['_preserve_fworker'] = True
+    run_spec['_pass_job_info'] = True
+    run_spec.update({} if run_spec_update is None else run_spec_update)
+    run_task = VaspRunTask(control_procedure=control_procedure, task_helper=task_helper, task_type=task_type,
+                           custodian_handlers=custodian_handlers)
+    run_fw = Firework(run_task, spec=run_spec, name=src_task_index.run_str)
+
+    # ControlTask
+    control_spec = copy.deepcopy(spec)
+    control_spec = set_short_single_core_to_spec(control_spec)
+    control_spec['SRC_task_index'] = src_task_index
+    control_spec['_allow_fizzled_parents'] = True
+    control_task = VaspControlTask(control_procedure=control_procedure, manager=None, max_restarts=max_restarts,
+                                   src_cleaning=src_cleaning, task_helper=task_helper)
+    control_fw = Firework(control_task, spec=control_spec, name=src_task_index.control_str)
+
+    links_dict = {setup_fw.fw_id: [run_fw.fw_id],
+                  run_fw.fw_id: [control_fw.fw_id]}
+    return {'setup_fw': setup_fw, 'run_fw': run_fw, 'control_fw': control_fw, 'links_dict': links_dict,
+            'fws': [setup_fw, run_fw, control_fw]}
 
 ####################
 # Helpers
@@ -179,8 +250,16 @@ class VaspTaskHelper(MSONable):
     def from_dict(cls, d):
         return cls()
 
-class NEBTaskHelper(VaspTaskHelper):
-    task_type = "NEB_vasp"
+
+class MITRelaxTaskHelper(VaspTaskHelper):
+    task_type = "MITRelax_vasp"
+
+    def restart(self, restart_info):
+        pass
+
+
+class MITNEBTaskHelper(VaspTaskHelper):
+    task_type = "MITNEB_vasp"
 
     def restart(self, restart_info):
         pass
