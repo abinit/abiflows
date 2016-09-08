@@ -104,7 +104,7 @@ class VaspRunTask(VaspSRCMixin, RunTask):
 
     def config(self, fw_spec):
         self.ftm = self.get_fw_task_manager(fw_spec)
-        self.setup_rundir(self.run_dir, create_dirs=False)
+        self.setup_rundir(self.run_dir)
 
     def run(self, fw_spec):
         # class VaspJob(Job):
@@ -117,11 +117,15 @@ class VaspRunTask(VaspSRCMixin, RunTask):
         #                  suffix="", final=True, backup=True, auto_npar=True,
         #                  auto_gamma=True, settings_override=None,
         #                  gamma_vasp_cmd=None, copy_magmom=False, auto_continue=False):
+        try:
+            vasp_cmd = os.environ()['VASP_CMD']
+        except:
+            raise ValueError('Unable to find vasp command')
         if 'custodian_jobs' in fw_spec:
             jobs = fw_spec['custodian_jobs']
         else:
-            jobs = [VaspJob(vasp_cmd='mpirun /home/acad/ucl-naps/yugd/bin/vasp', auto_npar=False)]
-        custodian = Custodian(handlers=self.custodian_handlers, jobs=fw_spec['custodian_jobs'],
+            jobs = [VaspJob(vasp_cmd=vasp_cmd, auto_npar=False)]
+        custodian = Custodian(handlers=self.custodian_handlers, jobs=jobs,
                               validators=None, max_errors=10,
                               polling_time_step=10, monitor_freq=30)
         custodian.run()
