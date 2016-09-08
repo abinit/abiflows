@@ -161,7 +161,7 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
     def get_initial_objects_info(self, setup_fw, run_fw, src_directories):
         run_dir = src_directories['run_dir']
         run_task = run_fw.tasks[-1]
-        run_task.setup_rundir(rundir=run_dir, create_dirs=False, directories_only=False)
+        run_task.setup_rundir(rundir=run_dir)
         task_helper = run_task.task_helper
         task_helper.set_task(run_task)
         init_obj_info = {}
