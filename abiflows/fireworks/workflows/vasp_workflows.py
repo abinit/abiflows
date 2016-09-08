@@ -19,6 +19,8 @@ from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_
 from abiflows.fireworks.tasks.vasp_tasks_src import createVaspSRCFireworks
 from abiflows.fireworks.tasks.vasp_tasks_src import MITRelaxTaskHelper
 
+from pymatgen.io.vasp.sets import MITRelaxSet
+
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
@@ -99,6 +101,11 @@ class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
         self.wf = Workflow(fireworks=fws, links_dict=links_dict,
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module})
+
+    @classmethod
+    def from_structure(cls, structure, spec):
+        vis = MITRelaxSet(structure=structure)
+        return cls(vasp_input_set=vis, spec=spec)
 
     @classmethod
     def get_final_structure(cls, wf):
