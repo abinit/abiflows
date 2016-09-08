@@ -18,6 +18,7 @@ from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
 from abiflows.fireworks.tasks.vasp_tasks_src import createVaspSRCFireworks
 from abiflows.fireworks.tasks.vasp_tasks_src import MITRelaxTaskHelper
+from abiflows.fireworks.tasks.utility_tasks import DatabaseInsertTask
 
 from pymatgen.io.vasp.sets import MITRelaxSet
 
@@ -50,6 +51,19 @@ class AbstractFWWorkflow(Workflow):
         spec['mpi_ncpus'] = 1
         spec['_queueadapter'] = qadapter_spec
         return spec
+
+    def add_db_insert(self, mongo_database, insertion_data=None,
+                      criteria=None):
+        if insertion_data is None:
+            insertion_data = {'structure': 'get_final_structure'}
+        spec = self.set_short_single_core_to_spec()
+        spec['mongo_database'] = mongo_database.as_dict()
+        spec['_add_launchpad_and_fw_id'] = True
+        insert_fw = Firework([DatabaseInsertTask(insertion_data=insertion_data, criteria=criteria)],
+                             spec=spec,
+                             name=(self.wf.name + "_insert")[:15])
+
+        append_fw_to_wf(insert_fw, self.wf)
 
     def add_metadata(self, structure=None, additional_metadata={}):
         metadata = dict(wf_type = self.__class__.__name__)

@@ -241,13 +241,9 @@ class VaspTaskHelper(MSONable):
         cpus_min = []
         cpus_max = []
         for qad in qadapters:
-            print(qad)
             cpus_per_node.append(qad.hw.cores_per_node)
             cpus_min.append(qad.min_cores)
             cpus_max.append(qad.max_cores)
-        print(cpus_per_node)
-        print(cpus_min)
-        print(cpus_max)
         return {'mpi_procs': 6}
 
     def set_task(self, task):
