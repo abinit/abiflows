@@ -114,7 +114,8 @@ class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
 
         self.wf = Workflow(fireworks=fws, links_dict=links_dict,
                            metadata={'workflow_class': self.workflow_class,
-                                     'workflow_module': self.workflow_module})
+                                     'workflow_module': self.workflow_module},
+                           name='MITRelaxFWWorkflowSRC')
 
     @classmethod
     def from_structure(cls, structure, spec):
