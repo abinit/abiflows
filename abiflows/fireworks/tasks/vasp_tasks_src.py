@@ -75,7 +75,11 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
         tm.select_qadapter(pconf)
         tm.qadapter.set_master_mem_overhead(mem_mb=1000)
         tm.qadapter.set_timelimit(6000)
-        tm.qadapter.set_mpi_procs(24)
+        qtk_params = self.task_helper.qtk_parallelization(self.vasp_input_set)
+        mpi_procs = qtk_params.pop('mpi_procs', 12)
+        if len(qtk_params) != 0:
+            raise ValueError('Too many parameters for qtk ...')
+        tm.qadapter.set_mpi_procs(mpi_procs)
         qtk_qadapter = tm.qadapter
 
         return {'_queueadapter': qtk_qadapter.get_subs_dict(), 'qtk_queueadapter': qtk_qadapter}
@@ -228,6 +232,9 @@ class VaspTaskHelper(MSONable):
 
     def __init__(self):
         self.task = None
+
+    def qtk_parallelization(self, vasp_input_set):
+        return {'mpi_procs': 6}
 
     def set_task(self, task):
         self.task = task
