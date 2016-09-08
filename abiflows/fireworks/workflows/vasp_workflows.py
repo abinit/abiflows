@@ -61,7 +61,7 @@ class AbstractFWWorkflow(Workflow):
         spec['_add_launchpad_and_fw_id'] = True
         insert_fw = Firework([DatabaseInsertTask(insertion_data=insertion_data, criteria=criteria)],
                              spec=spec,
-                             name=(self.wf.name + "_insert")[:15])
+                             name=(self.wf.name + "_insert"))
 
         append_fw_to_wf(insert_fw, self.wf)
 
