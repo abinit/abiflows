@@ -242,7 +242,7 @@ class VaspTaskHelper(MSONable):
         cpus_max = []
         for qad in qadapters:
             print(qad)
-            cpus_per_node.append(qad['hardware'].cores_per_node)
+            cpus_per_node.append(qad.hw.cores_per_node)
             cpus_min.append(qad.min_cores)
             cpus_max.append(qad.max_cores)
         print(cpus_per_node)
