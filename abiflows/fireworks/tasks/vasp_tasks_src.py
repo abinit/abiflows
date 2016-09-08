@@ -11,6 +11,7 @@ from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.src_tasks_abc import SRCTaskIndex
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
+from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import explicit_serialize
 from fireworks.core.firework import Firework
 from pymatgen.serializers.json_coders import pmg_serialize
@@ -68,7 +69,14 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
         return super(VaspSetupTask, self).run_task(fw_spec)
 
     def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
-        qtk_qadapter = None
+        ftm = self.get_fw_task_manager(fw_spec=fw_spec)
+        tm = ftm.task_manager
+        pconf = ParalHints({}, [{'tot_ncpus': 1, 'mpi_ncpus': 1, 'efficiency': 1}])
+        tm.select_qadapter(pconf)
+        tm.qadapter.set_master_mem_overhead(mem_mb=1000)
+        tm.qadapter.set_timelimit(6000)
+        tm.qadapter.set_mpi_procs(24)
+        qtk_qadapter = tm.qadapter
 
         return {'_queueadapter': qtk_qadapter.get_subs_dict(), 'qtk_queueadapter': qtk_qadapter}
 
