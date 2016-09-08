@@ -13,7 +13,7 @@ import six
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.launchpad import LaunchPad
 
-from abiflows.core.controllers import WalltimeController, MemoryController, SimpleValidatorController
+from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
 from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
 from abiflows.fireworks.tasks.vasp_tasks_src import createVaspSRCFireworks
@@ -84,7 +84,7 @@ class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
             additional_controllers = spec['additional_controllers']
             spec.pop('additional_controllers')
         else:
-            additional_controllers = [WalltimeController(), MemoryController(), SimpleValidatorController()]
+            additional_controllers = [WalltimeController(), MemoryController(), VaspXMLValidatorController()]
 
         control_procedure = ControlProcedure(controllers=additional_controllers)
         task_helper = MITRelaxTaskHelper()
