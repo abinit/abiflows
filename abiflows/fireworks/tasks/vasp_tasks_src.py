@@ -126,7 +126,7 @@ class VaspRunTask(VaspSRCMixin, RunTask):
         #                  auto_gamma=True, settings_override=None,
         #                  gamma_vasp_cmd=None, copy_magmom=False, auto_continue=False):
         try:
-            vasp_cmd = os.environ['VASP_CMD']
+            vasp_cmd = os.environ['VASP_CMD'].split()
         except:
             raise ValueError('Unable to find vasp command')
         if 'custodian_jobs' in fw_spec:
