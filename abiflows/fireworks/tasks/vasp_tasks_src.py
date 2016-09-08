@@ -2,6 +2,7 @@ from __future__ import print_function, division, unicode_literals
 
 import copy
 import logging
+import os
 import threading
 import subprocess
 from monty.json import MSONable
@@ -14,6 +15,7 @@ from fireworks import explicit_serialize
 from fireworks.core.firework import Firework
 from pymatgen.serializers.json_coders import pmg_serialize
 from pymatgen.io.abinit.utils import Directory
+from pymatgen.io.vasp import Vasprun
 from custodian.custodian import Custodian
 from custodian.vasp.jobs import VaspJob
 
@@ -33,6 +35,9 @@ class VaspSRCMixin(object):
             ftm = FWTaskManager.from_user_config()
         ftm.update_fw_policy(fw_spec.get('fw_policy', {}))
         return ftm
+
+    def setup_rundir(self, rundir):
+        self.run_dir = rundir
 
 
 @explicit_serialize
@@ -146,23 +151,6 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
         return init_obj_info
 
 
-# class VaspSetupTask(VaspSRCMixin, SetupTask):
-#
-#     RUN_PARAMETERS = ['_queueadapter', 'qtk_queueadapter']
-#
-#     def __init__(self, vasp_input_set, deps=None, task_helper=None, task_type=None,
-#                  restart_info=None, pass_input=False):
-# class VaspRunTask(VaspSRCMixin, RunTask):
-#
-#
-#     def __init__(self, control_procedure, task_helper, task_type=None, custodian_handlers=None):
-# class VaspControlTask(VaspSRCMixin, ControlTask):
-#
-#     def __init__(self, control_procedure, manager=None, max_restarts=10, src_cleaning=None, task_helper=None):
-#         ControlTask.__init__(self, control_procedure=control_procedure, manager=manager, max_restarts=max_restarts,
-#                              src_cleaning=src_cleaning)
-# def createVaspSRCFireworks(setup_task, run_task, control_task, spec=None, initialization_info=None,
-#                            task_index=None, setup_spec_update=None, run_spec_update=None):
 def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_procedure,
                            custodian_handlers, max_restarts, src_cleaning, task_index, spec,
                            setup_spec_update=None, run_spec_update=None):
@@ -173,7 +161,10 @@ def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_proce
     spec['_add_launchpad_and_fw_id'] = True
     spec['_add_fworker'] = True
     # Initialize the SRC task_index
-    src_task_index = SRCTaskIndex.from_any(task_index)
+    if task_index is not None:
+        src_task_index = SRCTaskIndex.from_any(task_index)
+    else:
+        src_task_index = SRCTaskIndex.from_string(task_type)
     spec['SRC_task_index'] = src_task_index
 
     # SetupTask
@@ -252,14 +243,21 @@ class VaspTaskHelper(MSONable):
 
 
 class MITRelaxTaskHelper(VaspTaskHelper):
-    task_type = "MITRelax_vasp"
+    task_type = "MITRelaxVasp"
 
     def restart(self, restart_info):
         pass
 
+    def get_final_structure(self):
+        try:
+            vasprun = Vasprun(os.path.join(self.task.run_dir, 'vasprun.xml'))
+        except:
+            raise ValueError('Failed to get final structure ...')
+        return {'structure': vasprun.final_structure.as_dict()}
+
 
 class MITNEBTaskHelper(VaspTaskHelper):
-    task_type = "MITNEB_vasp"
+    task_type = "MITNEBVasp"
 
     def restart(self, restart_info):
         pass
