@@ -164,7 +164,8 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
         run_task.setup_rundir(rundir=run_dir)
         task_helper = run_task.task_helper
         task_helper.set_task(run_task)
-        init_obj_info = {}
+        init_obj_info = {'vasprun_xml_file': {'object': os.path.join(run_dir, 'vasprun.xml')},
+                         'run_dir': {'object': run_dir}}
 
         return init_obj_info
 
