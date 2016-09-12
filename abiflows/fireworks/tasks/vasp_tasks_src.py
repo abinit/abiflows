@@ -173,6 +173,12 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
 from fireworks.core.firework import FireTaskBase
 @explicit_serialize
 class MyTestTask(FireTaskBase):
+
+    def __init__(self):
+        from abiflows.fireworks.tasks.utility_tasks import print_myself
+        print_myself()
+
+
     def run_task(self, fw_spec):
         from abiflows.fireworks.tasks.utility_tasks import print_myself
         print_myself()
