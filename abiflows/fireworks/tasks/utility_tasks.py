@@ -20,7 +20,6 @@ import importlib
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
-from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize
 from monty.json import MontyDecoder
@@ -532,6 +531,9 @@ class CheckTask(FireTaskBase):
         wf = Workflow(fireworks=SRC_fws['fws'], links_dict=SRC_fws['links_dict'])
         return FWAction(detours=[wf])
 
+
+def print_myself():
+    print('myself')
 
 def get_fw_task_manager(fw_spec):
     if 'ftm_file' in fw_spec:
