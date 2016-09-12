@@ -19,6 +19,7 @@ from pymatgen.io.abinit.utils import Directory
 from pymatgen.io.vasp import Vasprun
 from custodian.custodian import Custodian
 from custodian.vasp.jobs import VaspJob
+from fireworks.utilities.fw_serializers import serialize_fw
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
@@ -182,6 +183,14 @@ class MyTestTask(FireTaskBase):
     def run_task(self, fw_spec):
         from abiflows.fireworks.tasks.utility_tasks import print_myself
         print_myself()
+
+    @serialize_fw
+    def to_dict(self):
+        return {}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls()
 
 
 
