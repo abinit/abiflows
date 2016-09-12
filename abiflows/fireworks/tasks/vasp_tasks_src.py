@@ -170,6 +170,15 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
         return init_obj_info
 
 
+from fireworks.core.firework import FireTaskBase
+@explicit_serialize
+class MyTestTask(FireTaskBase):
+    def run_task(self, fw_spec):
+        from abiflows.fireworks.tasks.utility_tasks import print_myself
+        print_myself()
+
+
+
 def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_procedure,
                            custodian_handlers, max_restarts, src_cleaning, task_index, spec,
                            setup_spec_update=None, run_spec_update=None):
