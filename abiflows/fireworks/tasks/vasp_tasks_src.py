@@ -284,7 +284,7 @@ class MITRelaxTaskHelper(VaspTaskHelper):
             vasprun = Vasprun(os.path.join(self.task.run_dir, 'vasprun.xml'))
         except:
             raise ValueError('Failed to get final structure ...')
-        return {'structure': vasprun.final_structure.as_dict()}
+        return {'structure': vasprun.final_structure}
 
 
 class MITNEBTaskHelper(VaspTaskHelper):
