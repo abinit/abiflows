@@ -223,7 +223,7 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                               links_update=linkupdate)
 
         if n_nebs > 1:
-            for ineb in range(1, n_nebs+1):
+            for ineb in range(2, n_nebs+1):
                 prev_gen_neb_fw = gen_neb_fw
                 gen_neb_spec = spec.copy()
                 gen_neb_spec['terminal_start'] = neb_terminals[0]
