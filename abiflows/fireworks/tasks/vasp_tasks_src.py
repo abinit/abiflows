@@ -199,13 +199,16 @@ class GenerateVacanciesRelaxationTask(FireTaskBase):
 @explicit_serialize
 class GenerateNEBRelaxationTask(FireTaskBase):
 
-    def __init__(self, n_insert=1):
+    def __init__(self, n_insert=1, user_incar_settings=None):
+        if user_incar_settings is None:
+            user_incar_settings = {}
+        self.user_incar_settings = user_incar_settings
         self.n_insert = n_insert
 
     def run_task(self, fw_spec):
         from magdesign.diffusion.neb_structures import neb_structures_insert_in_existing
         structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=1)
-        neb_vis = MPNEBSet(structures=structs, user_incar_settings={'NPAR': 4, 'ISIF': 0, 'SIGMA': 0.2, 'ISMEAR': 0})
+        neb_vis = MPNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
         task_helper = MPNEBTaskHelper()
         task_type = 'MPNEBVasp'
         if 'additional_controllers' in fw_spec:
@@ -231,11 +234,13 @@ class GenerateNEBRelaxationTask(FireTaskBase):
 
     @serialize_fw
     def to_dict(self):
-        return {"n_insert": self.n_insert}
+        return {"n_insert": self.n_insert,
+                "user_incar_settings": self.user_incar_settings}
 
     @classmethod
     def from_dict(cls, d):
-        return cls(n_insert=d["n_insert"])
+        return cls(n_insert=d["n_insert"],
+                   user_incar_settings=d["user_incar_settings"])
 
 
 def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_procedure,
