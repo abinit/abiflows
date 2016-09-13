@@ -317,7 +317,7 @@ class VaspTaskHelper(MSONable):
             cpus_per_node.append(qad.hw.cores_per_node)
             cpus_min.append(qad.min_cores)
             cpus_max.append(qad.max_cores)
-        return {'mpi_procs': 6}
+        return {'mpi_procs': 24}
 
     def set_task(self, task):
         self.task = task
