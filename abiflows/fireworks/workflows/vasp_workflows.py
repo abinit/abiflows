@@ -244,9 +244,9 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
 
     @classmethod
     def from_terminals(cls, neb_terminals, spec, relax_terminals=True, n_insert=1, n_nebs=3,
+                       neb_vasp_input_set=MPNEBSet,
                        relax_vasp_input_set=MPRelaxSet):
-        neb_set = MPNEBSet(structures=neb_terminals)
-        return cls(neb_vasp_input_set=neb_set, spec=spec, neb_terminals=neb_terminals, relax_terminals=True,
+        return cls(neb_vasp_input_set=neb_vasp_input_set, spec=spec, neb_terminals=neb_terminals, relax_terminals=True,
                    n_insert=n_insert, n_nebs=n_nebs, relax_vasp_input_set=relax_vasp_input_set,
                    initial_neb_structures=None)
 
