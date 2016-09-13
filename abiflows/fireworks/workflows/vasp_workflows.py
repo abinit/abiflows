@@ -17,10 +17,12 @@ from abiflows.core.controllers import WalltimeController, MemoryController, Vasp
 from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
 from abiflows.fireworks.tasks.vasp_tasks_src import createVaspSRCFireworks
-from abiflows.fireworks.tasks.vasp_tasks_src import MITRelaxTaskHelper
+from abiflows.fireworks.tasks.vasp_tasks_src import MPRelaxTaskHelper
+from abiflows.fireworks.tasks.vasp_tasks_src import GenerateNEBRelaxationTask
+from abiflows.fireworks.tasks.vasp_sets import MPNEBSet
 from abiflows.fireworks.tasks.utility_tasks import DatabaseInsertTask
 
-from pymatgen.io.vasp.sets import MITRelaxSet
+from pymatgen.io.vasp.sets import MPRelaxSet
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -71,7 +73,7 @@ class AbstractFWWorkflow(Workflow):
             composition = structure.composition
             metadata['nsites'] = len(structure)
             metadata['elements'] = [el.symbol for el in composition.elements]
-            metadata['reduced_formula'] = composition.reduced_formula
+            metadata['reduced_formula'] = compossrc_fwsition.reduced_formula
 
         metadata.update(additional_metadata)
 
@@ -85,8 +87,8 @@ class AbstractFWWorkflow(Workflow):
         self.add_spec_to_all_fws(dict(_preserve_fworker=True))
 
 
-class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
-    workflow_class = 'MITRelaxFWWorkflowSRC'
+class MPRelaxFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'MPRelaxFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.vasp_workflows'
 
     def __init__(self, vasp_input_set, spec):
@@ -101,7 +103,7 @@ class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
             additional_controllers = [WalltimeController(), MemoryController(), VaspXMLValidatorController()]
 
         control_procedure = ControlProcedure(controllers=additional_controllers)
-        task_helper = MITRelaxTaskHelper()
+        task_helper = MPRelaxTaskHelper()
         task_type = task_helper.task_type
         src_fws = createVaspSRCFireworks(vasp_input_set=vasp_input_set, task_helper=task_helper, task_type=task_type,
                                          control_procedure=control_procedure,
@@ -115,11 +117,11 @@ class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
         self.wf = Workflow(fireworks=fws, links_dict=links_dict,
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module},
-                           name='MITRelaxFWWorkflowSRC')
+                           name='MPRelaxFWWorkflowSRC')
 
     @classmethod
     def from_structure(cls, structure, spec):
-        vis = MITRelaxSet(structure=structure)
+        vis = MPRelaxSet(structure=structure)
         return cls(vasp_input_set=vis, spec=spec)
 
     @classmethod
@@ -133,7 +135,7 @@ class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
                 if fw.tasks[-1].src_type != 'run':
                     continue
                 task_index = fw.spec['SRC_task_index']
-                if task_index.task_type == 'MITRelaxVasp':
+                if task_index.task_type == 'MPRelaxVasp':
                     if task_index.index > step_index:
                         step_index = task_index.index
                         final_fw_id = fw_id
@@ -144,10 +146,108 @@ class MITRelaxFWWorkflowSRC(AbstractFWWorkflow):
         last_launch = (myfw.archived_launches + myfw.launches)[-1]
         # myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
         # mytask.setup_rundir(last_launch.launch_dir, create_dirs=False)
-        helper = MITRelaxTaskHelper()
+        helper = MPRelaxTaskHelper()
         helper.set_task(mytask)
         helper.task.setup_rundir(last_launch.launch_dir)
 
         structure = helper.get_final_structure()
 
         return {'structure': structure.as_dict()}
+
+
+class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
+    workflow_class = 'MPNEBRelaxFWWorkflowSRC'
+    workflow_module = 'abiflows.fireworks.workflows.vasp_workflows'
+
+    def __init__(self, neb_vasp_input_set, spec, neb_terminals, relax_terminals=True, n_insert=1, n_nebs=3,
+                 relax_vasp_input_set=None, initial_neb_structures=None):
+        if n_nebs < 1:
+            raise ValueError('Minimum one NEB ...')
+        if relax_terminals and initial_neb_structures is not None:
+            raise ValueError('Cannot relax terminals and start from initial NEB structures')
+        # Initializes fws list and links_dict
+        fws = []
+        links_dict = {}
+
+        if 'additional_controllers' in spec:
+            additional_controllers = spec['additional_controllers']
+            spec.pop('additional_controllers')
+        else:
+            additional_controllers = [WalltimeController(), MemoryController(), VaspXMLValidatorController()]
+
+        # Control procedure
+        control_procedure = ControlProcedure(controllers=additional_controllers)
+
+        # First NEB
+        gen_neb_spec = spec.copy()
+        gen_neb_spec['terminal_start'] = neb_terminals[0]
+        gen_neb_spec['terminal_end'] = neb_terminals[1]
+        gen_neb_spec['structures'] = neb_terminals
+        gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert)
+        gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb1')
+        fws.append(gen_neb_fw)
+
+        if relax_terminals:
+            # Start terminal
+            relax_task_helper = MPRelaxTaskHelper()
+            relax_task_type = 'MPRelaxVasp-start'
+            vis_start = relax_vasp_input_set(neb_terminals[0])
+            start_src_fws = createVaspSRCFireworks(vasp_input_set=vis_start, task_helper=relax_task_helper,
+                                                   task_type=relax_task_type,
+                                                   control_procedure=control_procedure,
+                                                   custodian_handlers=[], max_restarts=10, src_cleaning=None,
+                                                   task_index=None,
+                                                   spec=None,
+                                                   setup_spec_update=None, run_spec_update=None)
+            fws.extend(start_src_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=start_src_fws['links_dict'])
+            linkupdate = {start_src_fws['control_fw'].fw_id: gen_neb_fw.fw_id}
+            links_dict_update(links_dict=links_dict,
+                              links_update=linkupdate)
+
+            # End terminal
+            relax_task_type = 'MPRelaxVasp-end'
+            vis_end = relax_vasp_input_set(neb_terminals[1])
+            end_src_fws = createVaspSRCFireworks(vasp_input_set=vis_end, task_helper=relax_task_helper,
+                                                 task_type=relax_task_type,
+                                                 control_procedure=control_procedure,
+                                                 custodian_handlers=[], max_restarts=10, src_cleaning=None,
+                                                 task_index=None,
+                                                 spec=None,
+                                                 setup_spec_update=None, run_spec_update=None)
+            fws.extend(end_src_fws['fws'])
+            links_dict_update(links_dict=links_dict, links_update=end_src_fws['links_dict'])
+            linkupdate = {end_src_fws['control_fw'].fw_id: gen_neb_fw.fw_id}
+            links_dict_update(links_dict=links_dict,
+                              links_update=linkupdate)
+
+        if n_nebs > 1:
+            for ineb in range(1, n_nebs+1):
+                prev_gen_neb_fw = gen_neb_fw
+                gen_neb_spec = spec.copy()
+                gen_neb_spec['terminal_start'] = neb_terminals[0]
+                gen_neb_spec['terminal_end'] = neb_terminals[1]
+                gen_neb_spec['structures'] = neb_terminals
+                gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert)
+                gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb1')
+                fws.append(gen_neb_fw)
+                linkupdate = {prev_gen_neb_fw['control_fw'].fw_id: gen_neb_fw.fw_id}
+                links_dict_update(links_dict=links_dict,
+                                  links_update=linkupdate)
+
+        self.wf = Workflow(fireworks=fws, links_dict=links_dict,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module},
+                           name="MPNEBRelaxFWWorkflowSRC")
+
+
+    @classmethod
+    def from_terminals(cls, neb_terminals, spec, relax_terminals=True, n_insert=1, n_nebs=3, relax_vasp_input_set=None):
+        neb_set = MPNEBSet(structures=neb_terminals)
+        return cls(neb_vasp_input_set=neb_set, spec=spec, neb_terminals=neb_terminals, relax_terminals=True,
+                   n_insert=n_insert, n_nebs=n_nebs, relax_vasp_input_set=relax_vasp_input_set,
+                   initial_neb_structures=None)
+
+    @classmethod
+    def get_final_structure(cls, wf):
+        pass

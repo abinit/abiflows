@@ -11,15 +11,20 @@ from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.src_tasks_abc import SRCTaskIndex
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
+from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
+from abiflows.core.mastermind_abc import ControlProcedure
 from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import explicit_serialize
-from fireworks.core.firework import Firework
+from fireworks.core.firework import Firework, Workflow
+from fireworks.core.firework import FWAction
 from pymatgen.serializers.json_coders import pmg_serialize
 from pymatgen.io.abinit.utils import Directory
 from pymatgen.io.vasp import Vasprun
+from abiflows.fireworks.tasks.vasp_sets import MPNEBSet
 from custodian.custodian import Custodian
 from custodian.vasp.jobs import VaspJob
 from fireworks.utilities.fw_serializers import serialize_fw
+from fireworks.core.firework import FireTaskBase
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
@@ -171,18 +176,16 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
         return init_obj_info
 
 
-from fireworks.core.firework import FireTaskBase
 @explicit_serialize
-class MyTestTask(FireTaskBase):
-
+class GenerateVacanciesRelaxationTask(FireTaskBase):
     def __init__(self):
         from abiflows.fireworks.tasks.utility_tasks import print_myself
         print_myself()
 
 
     def run_task(self, fw_spec):
-        from abiflows.fireworks.tasks.utility_tasks import print_myself
-        print_myself()
+        from magdesign.diffusion.neb_structures import generate_terminal_vacancies
+        terminal_vacancies = generate_terminal_vacancies(None, None)
 
     @serialize_fw
     def to_dict(self):
@@ -192,6 +195,47 @@ class MyTestTask(FireTaskBase):
     def from_dict(cls, d):
         return cls()
 
+
+@explicit_serialize
+class GenerateNEBRelaxationTask(FireTaskBase):
+
+    def __init__(self, n_insert=1):
+        self.n_insert = n_insert
+
+    def run_task(self, fw_spec):
+        from magdesign.diffusion.neb_structures import neb_structures_insert_in_existing
+        structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=1)
+        neb_vis = MPNEBSet(structures=structs, user_incar_settings={'NPAR': 4, 'ISIF': 0, 'SIGMA': 0.2, 'ISMEAR': 0})
+        task_helper = MPNEBTaskHelper()
+        task_type = 'MPNEBVasp'
+        if 'additional_controllers' in fw_spec:
+            additional_controllers = fw_spec['additional_controllers']
+            fw_spec.pop('additional_controllers')
+        else:
+            additional_controllers = [WalltimeController(), MemoryController(), VaspXMLValidatorController()]
+
+        control_procedure = ControlProcedure(controllers=additional_controllers)
+
+        # Define the task_index as "MPNEBVaspN" where N is the number of structures in the NEB (e.g. 3 when two end
+        #  points plus one structure are computed)
+        task_index = 'MPNEBVasp{:d}'.format(len(structs))
+
+        src_fws = createVaspSRCFireworks(vasp_input_set=neb_vis, task_helper=task_helper, task_type=task_type,
+                                         control_procedure=control_procedure,
+                                         custodian_handlers=[], max_restarts=10, src_cleaning=None,
+                                         task_index=task_index,
+                                         spec=None,
+                                         setup_spec_update=None, run_spec_update=None)
+        wf = Workflow(fireworks=src_fws['fws'], links_dict=src_fws['links_dict'])
+        return FWAction(detours=[wf])
+
+    @serialize_fw
+    def to_dict(self):
+        return {"n_insert": self.n_insert}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(n_insert=d["n_insert"])
 
 
 def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_procedure,
@@ -297,8 +341,8 @@ class VaspTaskHelper(MSONable):
         return cls()
 
 
-class MITRelaxTaskHelper(VaspTaskHelper):
-    task_type = "MITRelaxVasp"
+class MPRelaxTaskHelper(VaspTaskHelper):
+    task_type = "MPRelaxVasp"
 
     def restart(self, restart_info):
         pass
@@ -311,8 +355,8 @@ class MITRelaxTaskHelper(VaspTaskHelper):
         return vasprun.final_structure
 
 
-class MITNEBTaskHelper(VaspTaskHelper):
-    task_type = "MITNEBVasp"
+class MPNEBTaskHelper(VaspTaskHelper):
+    task_type = "MPNEBVasp"
 
     def restart(self, restart_info):
         pass
