@@ -232,7 +232,7 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                 gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings)
                 gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb{:d}'.format(ineb))
                 fws.append(gen_neb_fw)
-                linkupdate = {prev_gen_neb_fw['control_fw'].fw_id: gen_neb_fw.fw_id}
+                linkupdate = {prev_gen_neb_fw.fw_id: gen_neb_fw.fw_id}
                 links_dict_update(links_dict=links_dict,
                                   links_update=linkupdate)
 
