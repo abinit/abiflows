@@ -144,7 +144,8 @@ class VaspRunTask(VaspSRCMixin, RunTask):
         else:
             jobs = [VaspJob(vasp_cmd=vasp_cmd, auto_npar=False,
                             output_file=os.path.join(self.run_dir, 'vasp.out'),
-                            stderr_file=os.path.join(self.run_dir, 'std_err.txt'))]
+                            stderr_file=os.path.join(self.run_dir, 'std_err.txt'),
+                            backup=False)]
         custodian = Custodian(handlers=self.custodian_handlers, jobs=jobs,
                               validators=None, max_errors=10,
                               polling_time_step=10, monitor_freq=30)
@@ -208,7 +209,6 @@ class GenerateNEBRelaxationTask(FireTaskBase):
     def run_task(self, fw_spec):
         from magdesign.diffusion.neb_structures import neb_structures_insert_in_existing
         structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=1)
-        print(structs)
         neb_vis = MPNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
         task_helper = MPNEBTaskHelper()
         task_type = 'MPNEBVasp'
