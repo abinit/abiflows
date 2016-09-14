@@ -145,7 +145,8 @@ class VaspRunTask(VaspSRCMixin, RunTask):
             jobs = [VaspJob(vasp_cmd=vasp_cmd, auto_npar=False,
                             output_file=os.path.join(self.run_dir, 'vasp.out'),
                             stderr_file=os.path.join(self.run_dir, 'std_err.txt'),
-                            backup=False)]
+                            backup=False,
+                            auto_gamma=False)]
         custodian = Custodian(handlers=self.custodian_handlers, jobs=jobs,
                               validators=None, max_errors=10,
                               polling_time_step=10, monitor_freq=30)
