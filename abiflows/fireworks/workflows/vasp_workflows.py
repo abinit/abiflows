@@ -21,6 +21,7 @@ from abiflows.fireworks.tasks.vasp_tasks_src import MPRelaxTaskHelper
 from abiflows.fireworks.tasks.vasp_tasks_src import GenerateNEBRelaxationTask
 from abiflows.fireworks.tasks.vasp_sets import MPNEBSet
 from abiflows.fireworks.tasks.utility_tasks import DatabaseInsertTask
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 
 from pymatgen.io.vasp.sets import MPRelaxSet
 
@@ -73,7 +74,7 @@ class AbstractFWWorkflow(Workflow):
             composition = structure.composition
             metadata['nsites'] = len(structure)
             metadata['elements'] = [el.symbol for el in composition.elements]
-            metadata['reduced_formula'] = compossrc_fwsition.reduced_formula
+            metadata['reduced_formula'] = composition.reduced_formula
 
         metadata.update(additional_metadata)
 
@@ -184,6 +185,7 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
         gen_neb_spec['terminal_start'] = neb_terminals[0]
         gen_neb_spec['terminal_end'] = neb_terminals[1]
         gen_neb_spec['structures'] = neb_terminals
+        gen_neb_spec = set_short_single_core_to_spec(gen_neb_spec)
         gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings)
         gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb1')
         fws.append(gen_neb_fw)
@@ -229,6 +231,7 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                 gen_neb_spec['terminal_start'] = neb_terminals[0]
                 gen_neb_spec['terminal_end'] = neb_terminals[1]
                 gen_neb_spec['structures'] = neb_terminals
+                gen_neb_spec = set_short_single_core_to_spec(gen_neb_spec)
                 gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings)
                 gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb{:d}'.format(ineb))
                 fws.append(gen_neb_fw)

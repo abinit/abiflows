@@ -208,6 +208,7 @@ class GenerateNEBRelaxationTask(FireTaskBase):
     def run_task(self, fw_spec):
         from magdesign.diffusion.neb_structures import neb_structures_insert_in_existing
         structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=1)
+        print(structs)
         neb_vis = MPNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
         task_helper = MPNEBTaskHelper()
         task_type = 'MPNEBVasp'
