@@ -291,7 +291,8 @@ class GenerateNEBRelaxationTask(FireTaskBase):
                 "climbing_image": self.climbing_image,
                 "task_index": self.task_index,
                 "terminal_start_task_type": self.terminal_start_task_type,
-                "terminal_end_task_type": self.terminal_end_task_type
+                "terminal_end_task_type": self.terminal_end_task_type,
+                "prev_neb_task_type": self.prev_neb_task_type
                 }
 
     @classmethod
@@ -301,7 +302,8 @@ class GenerateNEBRelaxationTask(FireTaskBase):
                    climbing_image=d["climbing_image"],
                    task_index=d["task_index"],
                    terminal_start_task_type=d["terminal_start_task_type"],
-                   terminal_end_task_type=d["terminal_end_task_type"]
+                   terminal_end_task_type=d["terminal_end_task_type"],
+                   prev_neb_task_type=d["prev_neb_task_type"]
                    )
 
 

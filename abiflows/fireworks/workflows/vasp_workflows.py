@@ -247,7 +247,8 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                 gen_neb_spec = set_short_single_core_to_spec(gen_neb_spec)
                 gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings,
                                                          climbing_image=climbing_image,
-                                                         task_index='neb{:d}'.format(ineb))
+                                                         task_index='neb{:d}'.format(ineb),
+                                                         prev_neb_task_type='neb{:d}'.format(ineb-1))
                 gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb{:d}'.format(ineb))
                 fws.append(gen_neb_fw)
                 linkupdate = {prev_gen_neb_fw.fw_id: gen_neb_fw.fw_id}
