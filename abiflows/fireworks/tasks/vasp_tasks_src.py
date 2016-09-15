@@ -20,6 +20,7 @@ from fireworks.core.firework import FWAction
 from pymatgen.serializers.json_coders import pmg_serialize
 from pymatgen.io.abinit.utils import Directory
 from pymatgen.io.vasp import Vasprun
+from pymatgen.analysis.transition_state import NEBAnalysis
 from abiflows.fireworks.tasks.vasp_sets import MPNEBSet
 from abiflows.fireworks.tasks.vasp_sets import MPcNEBSet
 from custodian.custodian import Custodian
@@ -203,7 +204,7 @@ class GenerateVacanciesRelaxationTask(FireTaskBase):
 class GenerateNEBRelaxationTask(FireTaskBase):
 
     def __init__(self, n_insert=1, user_incar_settings=None, climbing_image=True, task_index=None,
-                 terminal_start_task_type=None, terminal_end_task_type=None):
+                 terminal_start_task_type=None, terminal_end_task_type=None, prev_neb_task_type=None):
         if user_incar_settings is None:
             user_incar_settings = {}
         self.user_incar_settings = user_incar_settings
@@ -212,6 +213,7 @@ class GenerateNEBRelaxationTask(FireTaskBase):
         self.task_index = task_index
         self.terminal_start_task_type = terminal_start_task_type
         self.terminal_end_task_type = terminal_end_task_type
+        self.prev_neb_task_type = prev_neb_task_type
 
     def run_task(self, fw_spec):
         from magdesign.diffusion.neb_structures import neb_structures_insert_in_existing
@@ -220,8 +222,14 @@ class GenerateNEBRelaxationTask(FireTaskBase):
                 structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=self.n_insert)
             else:
                 # Get the structures from the previous nebs ...
-                raise NotImplementedError('Still to be done ...')
-                pass
+                if len(fw_spec['previous_fws'][self.prev_neb_task_type]) != 1:
+                    raise RuntimeError('Multiple or no fws with task_type "{}"'.format(self.prev_neb_task_type))
+                prev_neb_rundir = fw_spec['previous_fws'][self.prev_neb_task_type][0]['dir']
+                terminal_start_rundir = fw_spec['previous_fws'][self.terminal_start_task_type][0]['dir']
+                terminal_end_rundir = fw_spec['previous_fws'][self.terminal_end_task_type][0]['dir']
+                prev_neb_analysis = NEBAnalysis.from_dir(prev_neb_rundir,
+                                                         relaxation_dirs=(terminal_start_rundir, terminal_end_rundir))
+                structs = neb_structures_insert_in_existing(prev_neb_analysis.structures, n_insert=self.n_insert)
         else:
             if fw_spec['terminal_start'] is not None:
                 structs = neb_structures_insert_in_existing([fw_spec['terminal_start'],
@@ -230,9 +238,9 @@ class GenerateNEBRelaxationTask(FireTaskBase):
             else:
                 # Get the terminals from the relaxation of the terminals.
                 if len(fw_spec['previous_fws'][self.terminal_start_task_type]) != 1:
-                    raise RuntimeError('Multiple fws with task_type "{}"'.format(self.terminal_start_task_type))
+                    raise RuntimeError('Multiple or no fws with task_type "{}"'.format(self.terminal_start_task_type))
                 if len(fw_spec['previous_fws'][self.terminal_end_task_type]) != 1:
-                    raise RuntimeError('Multiple fws with task_type "{}"'.format(self.terminal_end_task_type))
+                    raise RuntimeError('Multiple or no fws with task_type "{}"'.format(self.terminal_end_task_type))
                 terminal_start_rundir = fw_spec['previous_fws'][self.terminal_start_task_type][0]['dir']
                 terminal_end_rundir = fw_spec['previous_fws'][self.terminal_end_task_type][0]['dir']
                 terminal_start_vasprun = Vasprun(os.path.join(terminal_start_rundir, 'vasprun.xml'))
