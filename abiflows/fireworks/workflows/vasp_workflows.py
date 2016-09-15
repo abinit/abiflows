@@ -248,12 +248,23 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                 gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings,
                                                          climbing_image=climbing_image,
                                                          task_index='neb{:d}'.format(ineb),
-                                                         prev_neb_task_type='neb{:d}'.format(ineb-1))
+                                                         prev_neb_task_type='neb{:d}'.format(ineb-1),
+                                                         terminal_start_task_type=terminal_start_task_type,
+                                                         terminal_end_task_type=terminal_end_task_type
+                                                         )
                 gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb{:d}'.format(ineb))
                 fws.append(gen_neb_fw)
                 linkupdate = {prev_gen_neb_fw.fw_id: gen_neb_fw.fw_id}
                 links_dict_update(links_dict=links_dict,
                                   links_update=linkupdate)
+                if relax_terminals:
+                    linkupdate = {start_src_fws['control_fw'].fw_id: gen_neb_fw.fw_id}
+                    links_dict_update(links_dict=links_dict,
+                                      links_update=linkupdate)
+                    linkupdate = {end_src_fws['control_fw'].fw_id: gen_neb_fw.fw_id}
+                    links_dict_update(links_dict=links_dict,
+                                      links_update=linkupdate)
+
         if climbing_image:
             wfname = "MPcNEBRelaxFWWorkflowSRC"
         else:
