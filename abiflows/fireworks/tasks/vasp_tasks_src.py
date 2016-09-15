@@ -21,6 +21,7 @@ from pymatgen.serializers.json_coders import pmg_serialize
 from pymatgen.io.abinit.utils import Directory
 from pymatgen.io.vasp import Vasprun
 from abiflows.fireworks.tasks.vasp_sets import MPNEBSet
+from abiflows.fireworks.tasks.vasp_sets import MPcNEBSet
 from custodian.custodian import Custodian
 from custodian.vasp.jobs import VaspJob
 from fireworks.utilities.fw_serializers import serialize_fw
@@ -201,18 +202,49 @@ class GenerateVacanciesRelaxationTask(FireTaskBase):
 @explicit_serialize
 class GenerateNEBRelaxationTask(FireTaskBase):
 
-    def __init__(self, n_insert=1, user_incar_settings=None):
+    def __init__(self, n_insert=1, user_incar_settings=None, climbing_image=True, task_index=None,
+                 terminal_start_task_type=None, terminal_end_task_type=None):
         if user_incar_settings is None:
             user_incar_settings = {}
         self.user_incar_settings = user_incar_settings
         self.n_insert = n_insert
+        self.climbing_image = climbing_image
+        self.task_index = task_index
+        self.terminal_start_task_type = terminal_start_task_type
+        self.terminal_end_task_type = terminal_end_task_type
 
     def run_task(self, fw_spec):
         from magdesign.diffusion.neb_structures import neb_structures_insert_in_existing
-        structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=1)
-        neb_vis = MPNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
-        task_helper = MPNEBTaskHelper()
-        task_type = 'MPNEBVasp'
+        if 'structures' in fw_spec:
+            if fw_spec['structures'] is not None:
+                structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=self.n_insert)
+            else:
+                # Get the structures from the previous nebs ...
+                raise NotImplementedError('Still to be done ...')
+                pass
+        else:
+            if fw_spec['terminal_start'] is not None:
+                structs = neb_structures_insert_in_existing([fw_spec['terminal_start'],
+                                                             fw_spec['terminal_end']],
+                                                            n_insert=self.n_insert)
+            else:
+                # Get the terminals from the relaxation of the terminals.
+                terminal_start_rundir = fw_spec['previous_fws'][self.terminal_start_task_type]['dir']
+                terminal_end_rundir = fw_spec['previous_fws'][self.terminal_end_task_type]['dir']
+                terminal_start_vasprun = Vasprun(os.path.join(terminal_start_rundir, 'vasprun.xml'))
+                terminal_end_vasprun = Vasprun(os.path.join(terminal_end_rundir, 'vasprun.xml'))
+                terminal_start_structure = terminal_start_vasprun.final_structure
+                terminal_end_structure = terminal_end_vasprun.final_structure
+                structs = neb_structures_insert_in_existing([terminal_start_structure, terminal_end_structure],
+                                                            n_insert=self.n_insert)
+        if self.climbing_image:
+            neb_vis = MPcNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
+            task_helper = MPcNEBTaskHelper()
+            task_type = 'MPcNEBVasp'
+        else:
+            neb_vis = MPNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
+            task_helper = MPNEBTaskHelper()
+            task_type = 'MPNEBVasp'
         if 'additional_controllers' in fw_spec:
             additional_controllers = fw_spec['additional_controllers']
             fw_spec.pop('additional_controllers')
@@ -221,9 +253,15 @@ class GenerateNEBRelaxationTask(FireTaskBase):
 
         control_procedure = ControlProcedure(controllers=additional_controllers)
 
-        # Define the task_index as "MPNEBVaspN" where N is the number of structures in the NEB (e.g. 3 when two end
-        #  points plus one structure are computed)
-        task_index = 'MPNEBVasp{:d}'.format(len(structs))
+        if self.task_index is None:
+            # Define the task_index as "MPNEBVaspN" where N is the number of structures in the NEB (e.g. 3 when two end
+            #  points plus one structure are computed)
+            if self.climbing_image:
+                task_index = 'MPcNEBVasp{:d}'.format(len(structs))
+            else:
+                task_index = 'MPNEBVasp{:d}'.format(len(structs))
+        else:
+            task_index = self.task_index
 
         src_fws = createVaspSRCFireworks(vasp_input_set=neb_vis, task_helper=task_helper, task_type=task_type,
                                          control_procedure=control_procedure,
@@ -237,12 +275,14 @@ class GenerateNEBRelaxationTask(FireTaskBase):
     @serialize_fw
     def to_dict(self):
         return {"n_insert": self.n_insert,
-                "user_incar_settings": self.user_incar_settings}
+                "user_incar_settings": self.user_incar_settings,
+                "climbing_image": self.climbing_image}
 
     @classmethod
     def from_dict(cls, d):
         return cls(n_insert=d["n_insert"],
-                   user_incar_settings=d["user_incar_settings"])
+                   user_incar_settings=d["user_incar_settings"],
+                   climbing_image=d["climbing_image"])
 
 
 def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_procedure,
@@ -364,6 +404,13 @@ class MPRelaxTaskHelper(VaspTaskHelper):
 
 class MPNEBTaskHelper(VaspTaskHelper):
     task_type = "MPNEBVasp"
+
+    def restart(self, restart_info):
+        pass
+
+
+class MPcNEBTaskHelper(VaspTaskHelper):
+    task_type = "MPcNEBVasp"
 
     def restart(self, restart_info):
         pass

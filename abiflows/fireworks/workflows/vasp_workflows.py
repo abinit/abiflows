@@ -161,7 +161,7 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
     workflow_module = 'abiflows.fireworks.workflows.vasp_workflows'
 
     def __init__(self, neb_vasp_input_set, spec, neb_terminals, relax_terminals=True, n_insert=1, n_nebs=3,
-                 relax_vasp_input_set=None, initial_neb_structures=None):
+                 relax_vasp_input_set=None, initial_neb_structures=None, climbing_image=True):
         user_incar_settings = {'NPAR': 4, 'ISIF': 0, 'SIGMA': 0.2, 'ISMEAR': 0}
         if n_nebs < 1:
             raise ValueError('Minimum one NEB ...')
@@ -182,11 +182,18 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
 
         # First NEB
         gen_neb_spec = spec.copy()
-        gen_neb_spec['terminal_start'] = neb_terminals[0]
-        gen_neb_spec['terminal_end'] = neb_terminals[1]
-        gen_neb_spec['structures'] = neb_terminals
+        if relax_terminals:
+            gen_neb_spec['terminal_start'] = None
+            gen_neb_spec['terminal_end'] = None
+        else:
+            gen_neb_spec['terminal_start'] = neb_terminals[0]
+            gen_neb_spec['terminal_end'] = neb_terminals[1]
+
+        # gen_neb_spec['structures'] = neb_terminals
         gen_neb_spec = set_short_single_core_to_spec(gen_neb_spec)
-        gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings)
+        gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings,
+                                                 climbing_image=climbing_image, task_index='neb1',
+                                                 terminal_start_task_type=None, terminal_end_task_type=None)
         gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb1')
         fws.append(gen_neb_fw)
 
@@ -228,21 +235,24 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
             for ineb in range(2, n_nebs+1):
                 prev_gen_neb_fw = gen_neb_fw
                 gen_neb_spec = spec.copy()
-                gen_neb_spec['terminal_start'] = neb_terminals[0]
-                gen_neb_spec['terminal_end'] = neb_terminals[1]
-                gen_neb_spec['structures'] = neb_terminals
+                gen_neb_spec['structures'] = None
                 gen_neb_spec = set_short_single_core_to_spec(gen_neb_spec)
-                gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings)
+                gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings,
+                                                         climbing_image=climbing_image,
+                                                         task_index='neb{:d}'.format(ineb))
                 gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb{:d}'.format(ineb))
                 fws.append(gen_neb_fw)
                 linkupdate = {prev_gen_neb_fw.fw_id: gen_neb_fw.fw_id}
                 links_dict_update(links_dict=links_dict,
                                   links_update=linkupdate)
-
+        if climbing_image:
+            wfname = "MPcNEBRelaxFWWorkflowSRC"
+        else:
+            wfname = "MPcNEBRelaxFWWorkflowSRC"
         self.wf = Workflow(fireworks=fws, links_dict=links_dict,
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module},
-                           name="MPNEBRelaxFWWorkflowSRC")
+                           name=wfname)
 
 
     @classmethod

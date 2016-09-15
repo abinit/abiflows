@@ -98,3 +98,11 @@ class MPNEBSet(MPRelaxSet):
                 sites.add(PeriodicSite(site.species_and_occu, site.frac_coords, l))
             path = Structure.from_sites(sorted(sites))
             path.to(filename=os.path.join(output_dir, 'path.cif'))
+
+
+class MPcNEBSet(MPNEBSet):
+    def __init__(self, structures, unset_encut=False, **kwargs):
+        super(MPcNEBSet, self).__init__(structures, unset_encut=False, **kwargs)
+        # cNEB specific defaults
+        defaults = {'LCLIMB': True}
+        self.config_dict["INCAR"].update(defaults)
