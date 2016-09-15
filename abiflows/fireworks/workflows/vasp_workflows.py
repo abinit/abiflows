@@ -191,19 +191,27 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
 
         # gen_neb_spec['structures'] = neb_terminals
         gen_neb_spec = set_short_single_core_to_spec(gen_neb_spec)
+
+        terminal_start_relax_task_type = 'MPRelaxVasp-start'
+        terminal_end_relax_task_type = 'MPRelaxVasp-end'
+        terminal_start_task_type = None
+        terminal_end_task_type = None
+        if relax_terminals:
+            terminal_start_task_type = terminal_start_relax_task_type
+            terminal_end_task_type = terminal_end_relax_task_type
         gen_neb_task = GenerateNEBRelaxationTask(n_insert=n_insert, user_incar_settings=user_incar_settings,
                                                  climbing_image=climbing_image, task_index='neb1',
-                                                 terminal_start_task_type=None, terminal_end_task_type=None)
+                                                 terminal_start_task_type=terminal_start_task_type,
+                                                 terminal_end_task_type=terminal_end_task_type)
         gen_neb_fw = Firework([gen_neb_task], spec=gen_neb_spec, name='gen-neb1')
         fws.append(gen_neb_fw)
 
         if relax_terminals:
             # Start terminal
             relax_task_helper = MPRelaxTaskHelper()
-            relax_task_type = 'MPRelaxVasp-start'
             vis_start = relax_vasp_input_set(neb_terminals[0], user_incar_settings=user_incar_settings)
             start_src_fws = createVaspSRCFireworks(vasp_input_set=vis_start, task_helper=relax_task_helper,
-                                                   task_type=relax_task_type,
+                                                   task_type=terminal_start_relax_task_type,
                                                    control_procedure=control_procedure,
                                                    custodian_handlers=[], max_restarts=10, src_cleaning=None,
                                                    task_index=None,
@@ -216,10 +224,10 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                               links_update=linkupdate)
 
             # End terminal
-            relax_task_type = 'MPRelaxVasp-end'
+
             vis_end = relax_vasp_input_set(neb_terminals[1], user_incar_settings=user_incar_settings)
             end_src_fws = createVaspSRCFireworks(vasp_input_set=vis_end, task_helper=relax_task_helper,
-                                                 task_type=relax_task_type,
+                                                 task_type=terminal_end_relax_task_type,
                                                  control_procedure=control_procedure,
                                                  custodian_handlers=[], max_restarts=10, src_cleaning=None,
                                                  task_index=None,

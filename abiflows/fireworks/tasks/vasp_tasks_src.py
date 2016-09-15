@@ -276,13 +276,21 @@ class GenerateNEBRelaxationTask(FireTaskBase):
     def to_dict(self):
         return {"n_insert": self.n_insert,
                 "user_incar_settings": self.user_incar_settings,
-                "climbing_image": self.climbing_image}
+                "climbing_image": self.climbing_image,
+                "task_index": self.task_index,
+                "terminal_start_task_type": self.terminal_start_task_type,
+                "terminal_end_task_type": self.terminal_end_task_type
+                }
 
     @classmethod
     def from_dict(cls, d):
         return cls(n_insert=d["n_insert"],
                    user_incar_settings=d["user_incar_settings"],
-                   climbing_image=d["climbing_image"])
+                   climbing_image=d["climbing_image"],
+                   task_index=d["task_index"],
+                   terminal_start_task_type=d["terminal_start_task_type"],
+                   terminal_end_task_type=d["terminal_end_task_type"]
+                   )
 
 
 def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_procedure,
