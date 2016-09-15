@@ -252,11 +252,9 @@ class GenerateNEBRelaxationTask(FireTaskBase):
         if self.climbing_image:
             neb_vis = MPcNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
             task_helper = MPcNEBTaskHelper()
-            task_type = 'MPcNEBVasp'
         else:
             neb_vis = MPNEBSet(structures=structs, user_incar_settings=self.user_incar_settings)
             task_helper = MPNEBTaskHelper()
-            task_type = 'MPNEBVasp'
         if 'additional_controllers' in fw_spec:
             additional_controllers = fw_spec['additional_controllers']
             fw_spec.pop('additional_controllers')
@@ -274,6 +272,9 @@ class GenerateNEBRelaxationTask(FireTaskBase):
                 task_index = 'MPNEBVasp{:d}'.format(len(structs))
         else:
             task_index = self.task_index
+
+        task_index = SRCTaskIndex.from_any(task_index)
+        task_type = task_index.task_type
 
         src_fws = createVaspSRCFireworks(vasp_input_set=neb_vis, task_helper=task_helper, task_type=task_type,
                                          control_procedure=control_procedure,
