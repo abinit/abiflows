@@ -229,8 +229,12 @@ class GenerateNEBRelaxationTask(FireTaskBase):
                                                             n_insert=self.n_insert)
             else:
                 # Get the terminals from the relaxation of the terminals.
-                terminal_start_rundir = fw_spec['previous_fws'][self.terminal_start_task_type]['dir']
-                terminal_end_rundir = fw_spec['previous_fws'][self.terminal_end_task_type]['dir']
+                if len(fw_spec['previous_fws'][self.terminal_start_task_type]) != 1:
+                    raise RuntimeError('Multiple fws with task_type "{}"'.format(self.terminal_start_task_type))
+                if len(fw_spec['previous_fws'][self.terminal_end_task_type]) != 1:
+                    raise RuntimeError('Multiple fws with task_type "{}"'.format(self.terminal_end_task_type))
+                terminal_start_rundir = fw_spec['previous_fws'][self.terminal_start_task_type][0]['dir']
+                terminal_end_rundir = fw_spec['previous_fws'][self.terminal_end_task_type][0]['dir']
                 terminal_start_vasprun = Vasprun(os.path.join(terminal_start_rundir, 'vasprun.xml'))
                 terminal_end_vasprun = Vasprun(os.path.join(terminal_end_rundir, 'vasprun.xml'))
                 terminal_start_structure = terminal_start_vasprun.final_structure
