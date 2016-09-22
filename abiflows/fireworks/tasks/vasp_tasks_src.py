@@ -82,7 +82,10 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
         pconf = ParalHints({}, [{'tot_ncpus': 1, 'mpi_ncpus': 1, 'efficiency': 1}])
         tm.select_qadapter(pconf)
         tm.qadapter.set_master_mem_overhead(mem_mb=1000)
-        tm.qadapter.set_timelimit(6000)
+        if 'timelimit' in fw_spec:
+            tm.qadapter.set_timelimit(fw_spec['timelimit'])
+        else:
+            tm.qadapter.set_timelimit(24000)
         qtk_params = self.task_helper.qtk_parallelization(self.vasp_input_set)
         mpi_procs = qtk_params.pop('mpi_procs', 12)
         if len(qtk_params) != 0:
