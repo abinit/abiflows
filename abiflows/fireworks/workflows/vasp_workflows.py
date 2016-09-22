@@ -121,8 +121,8 @@ class MPRelaxFWWorkflowSRC(AbstractFWWorkflow):
                            name='MPRelaxFWWorkflowSRC')
 
     @classmethod
-    def from_structure(cls, structure, spec):
-        vis = MPRelaxSet(structure=structure, user_incar_settings={'NPAR': 4, 'ISIF': 0, 'SIGMA': 0.2, 'ISMEAR': 0})
+    def from_structure(cls, structure, spec, user_incar_settings=None):
+        vis = MPRelaxSet(structure=structure, user_incar_settings=user_incar_settings)
         return cls(vasp_input_set=vis, spec=spec)
 
     @classmethod
