@@ -431,6 +431,18 @@ class MPRelaxTaskHelper(VaspTaskHelper):
 class MPNEBTaskHelper(VaspTaskHelper):
     task_type = "MPNEBVasp"
 
+    def qtk_parallelization(self, vasp_input_set):
+        ftm = FWTaskManager.from_user_config()
+        qadapters = ftm.task_manager.qads
+        cpus_per_node = []
+        cpus_min = []
+        cpus_max = []
+        for qad in qadapters:
+            cpus_per_node.append(qad.hw.cores_per_node)
+            cpus_min.append(qad.min_cores)
+            cpus_max.append(qad.max_cores)
+        return {'mpi_procs': 24*(len(vasp_input_set.structures)-2)}
+
     def restart(self, restart_info):
         pass
 
