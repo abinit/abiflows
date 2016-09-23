@@ -180,8 +180,8 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
         task_helper.set_task(run_task)
         init_obj_info = {'vasprun_xml_file': {'object': os.path.join(run_dir, 'vasprun.xml')},
                          'run_dir': {'object': run_dir},
-                         'additional_vasp_wf_info': run_fw.spec['additional_vasp_wf_info']
-                         if 'additional_vasp_wf_info' in run_fw.spec else {}}
+                         'additional_vasp_wf_info': {'object': run_fw.spec['additional_vasp_wf_info']
+                         if 'additional_vasp_wf_info' in run_fw.spec else {}}}
 
         return init_obj_info
 

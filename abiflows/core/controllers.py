@@ -1074,8 +1074,8 @@ class VaspNEBValidatorController(Controller):
         note = ControllerNote(controller=self)
         note.state = ControllerNote.EVERYTHING_OK
         note.is_valid = True
-        terminal_dirs = [kwargs['additional_vasp_wf_info']['terminal_start_run_dir'],
-                         kwargs['additional_vasp_wf_info']['terminal_end_run_dir']]
+        terminal_dirs = (kwargs['additional_vasp_wf_info']['terminal_start_run_dir'],
+                         kwargs['additional_vasp_wf_info']['terminal_end_run_dir'])
         try:
             NEBAnalysis.from_dir(run_dir, relaxation_dirs=terminal_dirs)
         except:
