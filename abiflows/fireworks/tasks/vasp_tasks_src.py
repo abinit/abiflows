@@ -12,6 +12,7 @@ from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.src_tasks_abc import SRCTaskIndex
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
+from abiflows.core.controllers import VaspNEBValidatorController
 from abiflows.core.mastermind_abc import ControlProcedure
 from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import explicit_serialize
@@ -178,7 +179,9 @@ class VaspControlTask(VaspSRCMixin, ControlTask):
         task_helper = run_task.task_helper
         task_helper.set_task(run_task)
         init_obj_info = {'vasprun_xml_file': {'object': os.path.join(run_dir, 'vasprun.xml')},
-                         'run_dir': {'object': run_dir}}
+                         'run_dir': {'object': run_dir},
+                         'additional_vasp_wf_info': run_fw.spec['additional_vasp_wf_info']
+                         if 'additional_vasp_wf_info' in run_fw.spec else {}}
 
         return init_obj_info
 
@@ -191,8 +194,9 @@ class GenerateVacanciesRelaxationTask(FireTaskBase):
 
 
     def run_task(self, fw_spec):
-        from magdesign.diffusion.neb_structures import generate_terminal_vacancies
-        terminal_vacancies = generate_terminal_vacancies(None, None)
+        pass
+        # from magdesign.diffusion.neb_structures import generate_terminal_vacancies
+        # terminal_vacancies = generate_terminal_vacancies(None, None)
 
     @serialize_fw
     def to_dict(self):
@@ -220,6 +224,8 @@ class GenerateNEBRelaxationTask(FireTaskBase):
 
     def run_task(self, fw_spec):
         from magdesign.diffusion.neb_structures import neb_structures_insert_in_existing
+        terminal_start_rundir = fw_spec['previous_fws'][self.terminal_start_task_type][0]['dir']
+        terminal_end_rundir = fw_spec['previous_fws'][self.terminal_end_task_type][0]['dir']
         if 'structures' in fw_spec:
             if fw_spec['structures'] is not None:
                 structs = neb_structures_insert_in_existing(fw_spec['structures'], n_insert=self.n_insert)
@@ -228,8 +234,6 @@ class GenerateNEBRelaxationTask(FireTaskBase):
                 if len(fw_spec['previous_fws'][self.prev_neb_task_type]) != 1:
                     raise RuntimeError('Multiple or no fws with task_type "{}"'.format(self.prev_neb_task_type))
                 prev_neb_rundir = fw_spec['previous_fws'][self.prev_neb_task_type][0]['dir']
-                terminal_start_rundir = fw_spec['previous_fws'][self.terminal_start_task_type][0]['dir']
-                terminal_end_rundir = fw_spec['previous_fws'][self.terminal_end_task_type][0]['dir']
                 prev_neb_analysis = NEBAnalysis.from_dir(prev_neb_rundir,
                                                          relaxation_dirs=(terminal_start_rundir, terminal_end_rundir))
                 structs = neb_structures_insert_in_existing(prev_neb_analysis.structures, n_insert=self.n_insert)
@@ -262,7 +266,7 @@ class GenerateNEBRelaxationTask(FireTaskBase):
             additional_controllers = fw_spec['additional_controllers']
             fw_spec.pop('additional_controllers')
         else:
-            additional_controllers = [WalltimeController(), MemoryController(), VaspXMLValidatorController()]
+            additional_controllers = [WalltimeController(), MemoryController(), VaspNEBValidatorController()]
 
         control_procedure = ControlProcedure(controllers=additional_controllers)
 
@@ -283,8 +287,10 @@ class GenerateNEBRelaxationTask(FireTaskBase):
                                          control_procedure=control_procedure,
                                          custodian_handlers=[], max_restarts=10, src_cleaning=None,
                                          task_index=task_index,
-                                         spec=None,
-                                         setup_spec_update=None, run_spec_update=None)
+                                         spec={'additional_vasp_wf_info': {'terminal_start_run_dir': terminal_start_rundir,
+                                                                           'terminal_end_run_dir': terminal_end_rundir}},
+                                         setup_spec_update=None,
+                                         run_spec_update=None)
         wf = Workflow(fireworks=src_fws['fws'], links_dict=src_fws['links_dict'])
         return FWAction(detours=[wf])
 
