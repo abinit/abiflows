@@ -9,6 +9,7 @@ import sys
 
 import abc
 import os
+import re
 import six
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.launchpad import LaunchPad
@@ -24,6 +25,7 @@ from abiflows.fireworks.tasks.utility_tasks import DatabaseInsertTask
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 
 from pymatgen.io.vasp.sets import MPRelaxSet
+from pymatgen.analysis.transition_state import NEBAnalysis
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -284,5 +286,59 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                    initial_neb_structures=None)
 
     @classmethod
-    def get_final_structure(cls, wf):
-        pass
+    def get_nebs_analysis(cls, wf):
+        assert wf.metadata['workflow_class'] == cls.workflow_class
+        assert wf.metadata['workflow_module'] == cls.workflow_module
+
+        terminal_start_step_index = -1
+        terminal_start_final_fw_id = None
+        terminal_end_step_index = -1
+        terminal_end_final_fw_id = None
+
+        neb_tasks_step_index = {}
+        neb_tasks_step_final_fw_id = {}
+
+        for fw_id, fw in wf.id_fw.items():
+            if 'SRC_task_index' in fw.spec:
+                if fw.tasks[-1].src_type != 'run':
+                    continue
+                task_index = fw.spec['SRC_task_index']
+                if re.match("\<neb\d\>", task_index.task_type):
+                    if task_index.task_type not in neb_tasks_step_index:
+                        neb_tasks_step_index[task_index.task_type] = task_index.index
+                        neb_tasks_step_final_fw_id[task_index.task_type] = fw_id
+                    else:
+                        if task_index.index > neb_tasks_step_index[task_index.task_type]:
+                            neb_tasks_step_index[task_index.task_type] = task_index.index
+                            neb_tasks_step_final_fw_id[task_index.task_type] = fw_id
+                elif task_index.task_type == 'MPRelaxVasp-start':
+                    if task_index.index > terminal_start_step_index:
+                        terminal_start_step_index = task_index.index
+                        terminal_start_final_fw_id = fw_id
+                elif task_index.task_type == 'MPRelaxVasp-end':
+                    if task_index.index > terminal_end_step_index:
+                        terminal_end_step_index = task_index.index
+                        terminal_end_final_fw_id = fw_id
+        if terminal_start_final_fw_id is None:
+            raise RuntimeError('No terminal-start relaxation found ...')
+        if terminal_end_final_fw_id is None:
+            raise RuntimeError('No terminal-end relaxation found ...')
+        if len(neb_tasks_step_index) == 0:
+            raise RuntimeError('No NEB analysis found ...')
+        # Terminal start dir
+        terminal_start_fw = wf.id_fw[terminal_start_final_fw_id]
+        terminal_start_last_launch = (terminal_start_fw.archived_launches + terminal_start_fw.launches)[-1]
+        terminal_start_run_dir = terminal_start_last_launch.launch_dir
+        # Terminal end dir
+        terminal_end_fw = wf.id_fw[terminal_end_final_fw_id]
+        terminal_end_last_launch = (terminal_end_fw.archived_launches + terminal_end_fw.launches)[-1]
+        terminal_end_run_dir = terminal_end_last_launch.launch_dir
+        nebs_analysis = []
+        for ineb in range(1, len(neb_tasks_step_index)+1):
+            neb_task = 'neb{:d}'.format(ineb)
+            nebfw = wf.id_fw[neb_tasks_step_final_fw_id[neb_task]]
+            last_launch = (nebfw.archived_launches + nebfw.launches)[-1]
+            neb_analysis = NEBAnalysis.from_dir(last_launch.launch_dir,
+                                                relaxation_dirs=(terminal_start_run_dir, terminal_end_run_dir))
+            nebs_analysis.append(neb_analysis)
+        return {'nebs_analysis': [neb_analysis.as_dict() for neb_analysis in nebs_analysis]}
