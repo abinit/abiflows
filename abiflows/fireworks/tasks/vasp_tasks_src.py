@@ -86,7 +86,7 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
         if 'timelimit' in fw_spec:
             tm.qadapter.set_timelimit(fw_spec['timelimit'])
         else:
-            tm.qadapter.set_timelimit(24000)
+            tm.qadapter.set_timelimit(86000)
         qtk_params = self.task_helper.qtk_parallelization(self.vasp_input_set)
         mpi_procs = qtk_params.pop('mpi_procs', 12)
         if len(qtk_params) != 0:
