@@ -81,7 +81,8 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
         ftm = self.get_fw_task_manager(fw_spec=fw_spec)
         tm = ftm.task_manager
         qtk_params = self.task_helper.qtk_parallelization(self.vasp_input_set)
-        mpi_procs = qtk_params.pop('mpi_procs', 12)
+        mpi_procs = qtk_params.pop('mpi_procs', 24)
+        qnodes = qtk_params.pop('qnodes', None)
         if len(qtk_params) != 0:
             raise ValueError('Too many parameters for qtk ...')
         pconf = ParalHints({}, [{'tot_ncpus': mpi_procs, 'mpi_ncpus': mpi_procs, 'efficiency': 1}])
@@ -93,8 +94,10 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
             tm.qadapter.set_timelimit(86000)
         tm.qadapter.set_mpi_procs(mpi_procs)
         qtk_qadapter = tm.qadapter
+        if qnodes is not None:
+            qtk_qadapter.qnodes = qnodes
 
-        return {'_queueadapter': qtk_qadapter.get_subs_dict(), 'qtk_queueadapter': qtk_qadapter}
+        return {'_queueadapter': qtk_qadapter.get_subs_dict(qnodes=qnodes), 'qtk_queueadapter': qtk_qadapter}
 
     def file_transfers(self, fw_spec):
         pass
@@ -391,7 +394,7 @@ class VaspTaskHelper(MSONable):
             cpus_per_node.append(qad.hw.cores_per_node)
             cpus_min.append(qad.min_cores)
             cpus_max.append(qad.max_cores)
-        return {'mpi_procs': 24}
+        return {'mpi_procs': 24, 'qnodes': 'exclusive'}
 
     def set_task(self, task):
         self.task = task
@@ -440,36 +443,21 @@ class MPNEBTaskHelper(VaspTaskHelper):
     def qtk_parallelization(self, vasp_input_set):
         ftm = FWTaskManager.from_user_config()
         qadapters = ftm.task_manager.qads
-        cpus_per_node = []
-        cpus_min = []
-        cpus_max = []
+        cores_per_node = []
+        cores_min = []
+        cores_max = []
         for qad in qadapters:
-            cpus_per_node.append(qad.hw.cores_per_node)
-            cpus_min.append(qad.min_cores)
-            cpus_max.append(qad.max_cores)
-        return {'mpi_procs': 24*(len(vasp_input_set.structures)-2)}
+            cores_per_node.append(qad.hw.cores_per_node)
+            cores_min.append(qad.min_cores)
+            cores_max.append(qad.max_cores)
+        return {'mpi_procs': 24*(len(vasp_input_set.structures)-2), 'qnodes': 'exclusive'}
 
     def restart(self, restart_info):
         pass
 
 
-class MPcNEBTaskHelper(VaspTaskHelper):
+class MPcNEBTaskHelper(MPNEBTaskHelper):
     task_type = "MPcNEBVasp"
-
-    def qtk_parallelization(self, vasp_input_set):
-        ftm = FWTaskManager.from_user_config()
-        qadapters = ftm.task_manager.qads
-        cpus_per_node = []
-        cpus_min = []
-        cpus_max = []
-        for qad in qadapters:
-            cpus_per_node.append(qad.hw.cores_per_node)
-            cpus_min.append(qad.min_cores)
-            cpus_max.append(qad.max_cores)
-        return {'mpi_procs': 24*(len(vasp_input_set.structures)-2)}
-
-    def restart(self, restart_info):
-        pass
 
 
 ####################
