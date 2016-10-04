@@ -10,6 +10,7 @@ import pymongo
 import paramiko
 import os
 import stat
+import shutil
 
 
 class MongoDatabase(MSONable):
@@ -110,24 +111,29 @@ class StorageServer(MSONable):
     """
     Storage server class for moving files to/from a given server
     """
+    REMOTE_SERVER = 'REMOTE_SERVER'
+    LOCAL_SERVER = 'LOCAL_SERVER'
 
-    def __init__(self, hostname, port=22, username=None, password=None):
+    def __init__(self, hostname, port=22, username=None, password=None, server_type=REMOTE_SERVER):
         self.hostname = hostname
         self.port = port
         self.username = username
         self.password = password
+        self.server_type = server_type
         # self.connect()
 
     def connect(self):
-        self.ssh_client = paramiko.SSHClient()
-        self.ssh_client.load_system_host_keys()
-        self.ssh_client.connect(hostname=self.hostname, port=self.port,
-                                username=self.username, password=self.password)
-        self.sftp_client = self.ssh_client.open_sftp()
+        if self.server_type == self.REMOTE_SERVER:
+            self.ssh_client = paramiko.SSHClient()
+            self.ssh_client.load_system_host_keys()
+            self.ssh_client.connect(hostname=self.hostname, port=self.port,
+                                    username=self.username, password=self.password)
+            self.sftp_client = self.ssh_client.open_sftp()
 
     def disconnect(self):
-        self.sftp_client.close()
-        self.ssh_client.close()
+        if self.server_type == self.REMOTE_SERVER:
+            self.sftp_client.close()
+            self.ssh_client.close()
 
     def remotepath_exists(self, path):
         try:
@@ -150,43 +156,65 @@ class StorageServer(MSONable):
         self.sftp_client.mkdir(path=path)
 
     def put(self, localpath, remotepath, overwrite=False, makedirs=True):
-        self.connect()
-        if not os.path.exists(localpath):
-            raise IOError('Local path "{}" does not exist'.format(localpath))
-        if not overwrite and self.remotepath_exists(remotepath):
-            raise IOError('Remote path "{}" exists'.format(remotepath))
-        rdirname, rfilename = os.path.split(remotepath)
-        if not rfilename or rfilename in ['.', '..']:
-            raise IOError('Remote path "{}" is not a valid filepath'.format(remotepath))
-        if not self.remotepath_exists(rdirname):
-            if makedirs:
-                self.remote_makedirs(rdirname)
-            else:
-                raise IOError('Directory of remote path "{}" does not exists and '
-                              '"makedirs" is set to False'.format(remotepath))
-        sftp_stat = self.sftp_client.put(localpath=localpath, remotepath=remotepath)
-        self.disconnect()
-        return sftp_stat
+        if self.server_type == self.REMOTE_SERVER:
+            self.connect()
+            if not os.path.exists(localpath):
+                raise IOError('Local path "{}" does not exist'.format(localpath))
+            if not overwrite and self.remotepath_exists(remotepath):
+                raise IOError('Remote path "{}" exists'.format(remotepath))
+            rdirname, rfilename = os.path.split(remotepath)
+            if not rfilename or rfilename in ['.', '..']:
+                raise IOError('Remote path "{}" is not a valid filepath'.format(remotepath))
+            if not self.remotepath_exists(rdirname):
+                if makedirs:
+                    self.remote_makedirs(rdirname)
+                else:
+                    raise IOError('Directory of remote path "{}" does not exists and '
+                                  '"makedirs" is set to False'.format(remotepath))
+            sftp_stat = self.sftp_client.put(localpath=localpath, remotepath=remotepath)
+            self.disconnect()
+            return sftp_stat
+        elif self.server_type == self.LOCAL_SERVER:
+            if not os.path.exists(localpath):
+                raise IOError('Source path "{}" does not exist'.format(localpath))
+            if os.path.exists(remotepath) and not overwrite:
+                raise IOError('Dest path "{}" exists'.format(remotepath))
+            if not os.path.isfile(localpath):
+                raise NotImplementedError('Only files can be copied in LOCAL_SERVER mode.')
+            shutil.copyfile(src=localpath, dst=remotepath)
+        else:
+            raise ValueError('Server type "{}" is not allowed'.format(self.server_type))
 
     def get(self, remotepath, localpath=None, overwrite=False, makedirs=True):
-        self.connect()
-        if not self.remotepath_exists(remotepath):
-            raise IOError('Remote path "{}" does not exist'.format(remotepath))
-        if localpath is None:
-            head, tail = os.path.split(remotepath)
-            localpath = tail
-        localpath = os.path.expanduser(localpath)
-        if not overwrite and os.path.exists(localpath):
-            raise IOError('Local path "{}" exists'.format(localpath))
-        # Check if the remotepath is a regular file (right now, this is the only option that is implemented,
-        #  directories should be implemented, symbolic links should be handled in some way).
-        remotepath_stat = self.sftp_client.stat(remotepath)
-        if stat.S_ISREG(remotepath_stat.st_mode):
-            sftp_stat = self.sftp_client.get(remotepath, localpath)
+        if self.server_type == self.REMOTE_SERVER:
+            self.connect()
+            if not self.remotepath_exists(remotepath):
+                raise IOError('Remote path "{}" does not exist'.format(remotepath))
+            if localpath is None:
+                head, tail = os.path.split(remotepath)
+                localpath = tail
+            localpath = os.path.expanduser(localpath)
+            if not overwrite and os.path.exists(localpath):
+                raise IOError('Local path "{}" exists'.format(localpath))
+            # Check if the remotepath is a regular file (right now, this is the only option that is implemented,
+            #  directories should be implemented, symbolic links should be handled in some way).
+            remotepath_stat = self.sftp_client.stat(remotepath)
+            if stat.S_ISREG(remotepath_stat.st_mode):
+                sftp_stat = self.sftp_client.get(remotepath, localpath)
+            else:
+                raise NotImplementedError('Remote path "{}" is not a regular file'.format(remotepath))
+            self.disconnect()
+            return sftp_stat
+        elif self.server_type == self.LOCAL_SERVER:
+            if not os.path.exists(remotepath):
+                raise IOError('Source path "{}" does not exist'.format(remotepath))
+            if os.path.exists(localpath) and not overwrite:
+                raise IOError('Dest path "{}" exists'.format(localpath))
+            if not os.path.isfile(remotepath):
+                raise NotImplementedError('Only files can be copied in LOCAL_SERVER mode.')
+            shutil.copyfile(src=remotepath, dst=localpath)
         else:
-            raise NotImplementedError('Remote path "{}" is not a regular file'.format(remotepath))
-        self.disconnect()
-        return sftp_stat
+            raise ValueError('Server type "{}" is not allowed'.format(self.server_type))
 
     def as_dict(self):
         """
@@ -197,10 +225,12 @@ class StorageServer(MSONable):
               "hostname": self.hostname,
               "port": self.port,
               "username": self.username,
-              "password": self.password}
+              "password": self.password,
+              "server_type": self.server_type}
         return dd
 
     @classmethod
     def from_dict(cls, d):
         return cls(hostname=d['hostname'], port=d['port'],
-                   username=d['username'], password=d['password'])
+                   username=d['username'], password=d['password'],
+                   server_type=d['server_type'] if 'server_type' in d else cls.REMOTE_SERVER)

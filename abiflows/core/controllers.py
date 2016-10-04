@@ -20,6 +20,8 @@ from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancel
 from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
 from pymatgen.io.abinit.scheduler_error_parsers import TimeCancelError
 from pymatgen.io.abinit.utils import Directory, File
+from pymatgen.io.vasp.outputs import Vasprun
+from pymatgen.analysis.transition_state import NEBAnalysis
 from pymatgen.core.structure import Structure
 from abipy.abio.inputs import AbinitInput
 import logging
@@ -982,6 +984,108 @@ class SimpleValidatorController(Controller):
     def validated(self):
         return True
 
+
+class VaspXMLValidatorController(Controller):
+    """
+    Checks that a valid vasprun.xml was generated
+    """
+    can_validate = True
+    _controlled_item_types = [ControlledItemType.task_completed()]
+
+    def __init__(self):
+        super(VaspXMLValidatorController, self).__init__()
+        self.priority = PRIORITY_LOWEST
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls()
+
+    @property
+    def skip_remaining_handlers(self):
+        return True
+
+    @property
+    def skip_lower_priority_controllers(self):
+        return True
+
+    def process(self, **kwargs):
+        # Create the Controller Note
+        if 'vasprun_xml_file' not in kwargs:
+            raise ValueError('kwarg "vasprun_xml_file" is required to validate vasprun.xml file')
+        vasprun_xml_file = kwargs['vasprun_xml_file']
+        note = ControllerNote(controller=self)
+        note.state = ControllerNote.EVERYTHING_OK
+        note.is_valid = True
+        try:
+            Vasprun(vasprun_xml_file)
+        except:
+            note.state = ControllerNote.ERROR_NOFIX
+            note.is_valid = False
+        return note
+
+    @property
+    def validated(self):
+        return True
+
+class VaspNEBValidatorController(Controller):
+    """
+    Checks that a valid vasprun.xml was generated
+    """
+    can_validate = True
+    _controlled_item_types = [ControlledItemType.task_completed()]
+
+    def __init__(self):
+        super(VaspNEBValidatorController, self).__init__()
+        self.priority = PRIORITY_LOWEST
+
+    def as_dict(self):
+        return {'@class': self.__class__.__name__,
+                '@module': self.__class__.__module__}
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls()
+
+    @property
+    def skip_remaining_handlers(self):
+        return True
+
+    @property
+    def skip_lower_priority_controllers(self):
+        return True
+
+    def process(self, **kwargs):
+        # Create the Controller Note
+        if 'run_dir' not in kwargs:
+            raise ValueError('kwarg "run_dir" is required to validate NEB vasp calculations')
+        if 'additional_vasp_wf_info' not in kwargs:
+            raise ValueError('kwarg "additional_vasp_wf_info" is required to validate NEB vasp calculations')
+        if 'terminal_start_run_dir' not in kwargs['additional_vasp_wf_info']:
+            raise ValueError('"terminal_start_run_dir" has to be in additional_vasp_wf_info is required '
+                             'to validate NEB vasp calculations')
+        if 'terminal_end_run_dir' not in kwargs['additional_vasp_wf_info']:
+            raise ValueError('"terminal_end_run_dir" has to be in additional_vasp_wf_info is required '
+                             'to validate NEB vasp calculations')
+        run_dir = kwargs['run_dir']
+        note = ControllerNote(controller=self)
+        note.state = ControllerNote.EVERYTHING_OK
+        note.is_valid = True
+        terminal_dirs = (kwargs['additional_vasp_wf_info']['terminal_start_run_dir'],
+                         kwargs['additional_vasp_wf_info']['terminal_end_run_dir'])
+        try:
+            NEBAnalysis.from_dir(run_dir, relaxation_dirs=terminal_dirs)
+        except:
+            note.state = ControllerNote.ERROR_NOFIX
+            note.is_valid = False
+        return note
+
+    @property
+    def validated(self):
+        return True
 
 # logger = logging.getLogger(__name__)
 #

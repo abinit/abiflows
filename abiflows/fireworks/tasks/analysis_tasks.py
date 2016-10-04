@@ -37,14 +37,24 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                 raise ValueError('Either structure or identifier with source = MaterialsProject and material_id '
                                  'should be provided')
 
+        info = {}
         # Compute the structure environments
         lgf.setup_structure(structure)
-        try:
-            bva = BVAnalyzer()
-            valences = bva.get_valences(structure=structure)
-        except:
-            valences = 'undefined'
-        se = lgf.compute_structure_environments(only_cations=False, valences=valences)
+        if 'valences' in fw_spec:
+            valences = fw_spec['valences']
+        else:
+            try:
+                bva = BVAnalyzer()
+                valences = bva.get_valences(structure=structure)
+                info['valences'] = {'origin': 'BVAnalyzer'}
+            except:
+                valences = 'undefined'
+                info['valences'] = {'origin': 'None'}
+        excluded_atoms = None
+        if 'excluded_atoms' in fw_spec:
+            excluded_atoms = fw_spec['excluded_atoms']
+
+        se = lgf.compute_structure_environments(only_cations=False, valences=valences, excluded_atoms=excluded_atoms)
 
         # Write to json file
         if 'json_file' in fw_spec:
@@ -127,7 +137,16 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
 
         # Compute the light structure environments
         chemenv_strategy = fw_spec['chemenv_strategy']
-        lse = LightStructureEnvironments(strategy=chemenv_strategy, structure_environments=se)
+        if 'valences' in fw_spec:
+            valences = fw_spec['valences']
+            valences_origin = fw_spec['valences_origin']
+        else:
+            valences = 'undefined'
+            valences_origin = 'None'
+        lse = LightStructureEnvironments.from_structure_environments(strategy=chemenv_strategy,
+                                                                     structure_environments=se,
+                                                                     valences=valences,
+                                                                     valences_origin=valences_origin)
 
         # Write to json file
         if 'json_file' in fw_spec:
@@ -146,7 +165,7 @@ class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
                      'nelements': len(lse.structure.composition.elements),
                      'pretty_formula': lse.structure.composition.reduced_formula,
                      'nsites': len(lse.structure),
-                     'chemenv_statistics': lse.get_statistics(bson_compatible=True)
+                     'chemenv_statistics': lse.get_statistics(statistics_fields='ALL', bson_compatible=True)
                      }
             saving_option = fw_spec['saving_option']
             if saving_option == 'gridfs':
