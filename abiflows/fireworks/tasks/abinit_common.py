@@ -3,6 +3,8 @@ __author__ = 'waroquiers'
 import json
 from math import ceil
 import os
+from monty.dev import deprecated
+import abipy.abio.inputs as abinit_inputs
 
 TMPDIR_NAME = "tmpdata"
 OUTDIR_NAME = "outdata"
@@ -23,6 +25,7 @@ HISTORY_JSON = "history.json"
 module_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+@deprecated(abinit_inputs.Cut3DInput, "Switch to the new version defined in abipy")
 class Cut3DInput(object):
 
     def __init__(self, cut3d_input):
@@ -34,13 +37,30 @@ class Cut3DInput(object):
 
     @classmethod
     def den_to_cube(cls, density_filepath, cube_filename):
-        input = [density_filepath]          # Path to the _DEN file
-        input.append('1')                   # _DEN file is a binary file
-        input.append('0')                   # Use the total density
-        input.append('14')                  # Option to convert _DEN file to a .cube file
-        input.append(cube_filename)         # Name of the output .cube file
-        input.append('0')                   # No more analysis
-        return cls(cut3d_input=input)
+        lines = [density_filepath]          # Path to the _DEN file
+        # input.append('1')                   # _DEN file is a binary file. Not needed after abinit 8
+        # input.append('0')                   # Use the total density. Not needed
+        lines.append('14')                  # Option to convert _DEN file to a .cube file
+        lines.append(cube_filename)         # Name of the output .cube file
+        lines.append('0')                   # No more analysis
+        return cls(cut3d_input=lines)
+
+    @classmethod
+    def hirshfeld(cls, density_file_path, all_el_dens_paths):
+        lines = [density_filepath]  # Path to the _DEN file
+        lines.append('11')  # Option to convert _DEN file to a .cube file
+        for p in all_el_dens_paths:
+            lines.append(p)
+
+        return cls(lines)
+
+    @classmethod
+    def hirshfeld_from_fhi_path(cls, density_file_path, structure, fhi_all_el_path):
+        all_el_dens_paths = []
+        for e in structure.composition.elements:
+            all_el_dens_paths.append(os.path.join(fhi_all_el_path), "0.{}-{}.8.density.AE")
+
+        return cls.hirshfeld(density_file_path, all_el_dens_paths)
 
 def unprime_nband(nband, number_of_primes=10):
     allowed_nbands = []

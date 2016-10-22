@@ -20,6 +20,8 @@ import importlib
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
+from abiflows.database.mongoengine.utils import DatabaseData
+from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize
 from monty.json import MontyDecoder
@@ -214,6 +216,51 @@ class DatabaseInsertTask(FireTaskBase):
 
         logging.info("Inserted data:\n{}".format('- {}\n'.join(inserted)))
         return FWAction()
+
+
+@explicit_serialize
+class MongoEngineDBInsertionTask(FireTaskBase):
+
+    def __init__(self, db_data, object_id=None):
+        self.db_data = db_data
+        #TODO allow for updates based on object_id. A bit tricky as one need to know the class of the Document
+        # before calling get_results. (add object_id to dict methods)
+        self.object_id = object_id
+
+    @serialize_fw
+    def to_dict(self):
+        return dict(db_data=self.db_data)
+
+    @classmethod
+    def from_dict(cls, m_dict):
+        return cls(db_data=DatabaseData.from_dict(m_dict['db_data']))
+
+    def run_task(self, fw_spec):
+        self.db_data.connect_mongoengine()
+
+        try:
+            fw_dict = loadfn('FW.json')
+        except IOError:
+            try:
+                fw_dict = loadfn('FW.yaml')
+            except IOError:
+                raise RuntimeError("No FW.json nor FW.yaml file present: impossible to determine fw_id")
+
+        fw_id = fw_dict['fw_id']
+        lp = LaunchPad.auto_load()
+        wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
+        wf_module = importlib.import_module(wf.metadata['workflow_module'])
+        wf_class = getattr(wf_module, wf.metadata['workflow_class'])
+
+        get_results_method = getattr(wf_class, 'get_mongoengine_results')
+
+        #TODO extend for multiple documents?
+        document = get_results_method(wf)
+
+        with self.db_data.switch_collection(document.__class__) as document.__class__:
+            #TODO it would be better to try to remove automatically the FileFields already saved if the save of
+            # the document fails.
+            document.save()
 
 
 @explicit_serialize

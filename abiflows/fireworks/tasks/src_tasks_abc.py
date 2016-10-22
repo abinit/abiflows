@@ -868,6 +868,8 @@ def createSRCFireworks(setup_task, run_task, control_task, spec=None, initializa
     # Make a full copy of the spec
     if spec is None:
         spec = {}
+    if initialization_info is None:
+        initialization_info = {}
     spec = copy.deepcopy(spec)
     spec['_add_launchpad_and_fw_id'] = True
     spec['_add_fworker'] = True

@@ -284,3 +284,11 @@ def links_dict_update(links_dict, links_update):
                 links_dict[parent_id].append(child_id)
         else:
             links_dict[parent_id] = child_ids
+
+
+def get_last_completed_launch(fw):
+    """
+    Given a Firework object returns the last completed launch
+    """
+    return next((l for l in reversed(fw.archived_launches + fw.launches) if
+                 l.state == 'COMPLETED'), None)
