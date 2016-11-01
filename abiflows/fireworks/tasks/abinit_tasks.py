@@ -412,7 +412,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
             if self.ftm.fw_policy.mpirun_cmd:
                 command.extend(self.ftm.fw_policy.mpirun_cmd.split())
                 if 'mpi_ncpus' in fw_spec:
-                    command.extend(['-np', str(fw_spec['mpi_ncpus'])])
+                    command.extend(['-n', str(fw_spec['mpi_ncpus'])])
             command.append(self.ftm.fw_policy.abinit_cmd)
             if self.use_SRC_scheme:
                 mytimelimit = fw_spec['qtk_queueadapter'].timelimit-SRC_TIMELIMIT_BUFFER
@@ -807,14 +807,15 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         # check if there is a rerun of the FW with info on the exception.
         # if that's the case use the restart information stored there to continue the calculation
         exception_details = fw_spec.get('_exception_details', None)
-        if exception_details:
-            error_code = exception_details.get('error_code', '')
+        # assume that DECODE_MONTY=True so that a handeled exception has already been deserialized
+        if exception_details and isinstance(exception_details, AbinitRuntimeError):
+            error_code = exception_details.error_code
             if (self.ftm.fw_policy.continue_unconverged_on_rerun and error_code==ErrorCode.UNCONVERGED and
-                    exception_details.get('abiinput', None) and exception_details.get('restart_info', None) and
-                    exception_details.get('history', None)):
-                self.abiinput = AbinitInput.from_dict(exception_details['abiinput'])
-                self.restart_info = RestartInfo.from_dict(exception_details['restart_info'])
-                self.history = TaskHistory.from_dict(exception_details['history'])
+                    exception_details.abiinput and exception_details.restart_info and
+                    exception_details.history):
+                self.abiinput = exception_details.abiinput
+                self.restart_info = exception_details.restart_info
+                self.history = exception_details.history
 
     def run_task(self, fw_spec):
         if self.use_SRC_scheme:
@@ -2004,16 +2005,18 @@ class AutoparalTask(AbiFireTask):
     task_type = "autoparal"
 
     def __init__(self, abiinput, restart_info=None, handlers=[], deps=None, history=[], is_autoparal=True,
-                 use_SRC_scheme=False, task_type=None, forward_spec=False):
+                 use_SRC_scheme=False, task_type=None, forward_spec=False, skip_spec_keys=None):
         """
         Note that the method still takes is_autoparal as input even if this is switched to True irrespcetively of the
         provided value, as the point of the task is to run autoparal. This is done to preserve the API in cases where
         automatic generation of tasks is involved.
+        skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: default ['wf_task_index']
         #FIXME find a better solution if this model is preserved
         """
         super(AutoparalTask, self).__init__(abiinput, restart_info=restart_info, handlers=handlers, is_autoparal=True,
                                             deps=deps, history=history, use_SRC_scheme=use_SRC_scheme, task_type=task_type)
         self.forward_spec = forward_spec
+        self.skip_spec_keys = skip_spec_keys or ['wf_task_index']
 
     def autoparal(self, fw_spec):
         """
@@ -2031,14 +2034,14 @@ class AutoparalTask(AbiFireTask):
 
         if self.forward_spec:
             # forward all the specs of the task
-            new_spec = {k: v for k, v in fw_spec.items() if k != '_tasks'}
+            new_spec = {k: v for k, v in fw_spec.items() if k != '_tasks' and k not in self.skip_spec_keys}
         else:
             new_spec = {}
         # set quadapter specification. Note that mpi_ncpus may be different from ntasks
         new_spec['_queueadapter'] = qadapter_spec
         new_spec['mpi_ncpus'] = optconf['mpi_ncpus']
 
-        return FWAction(update_spec=new_spec)
+        return FWAction(update_spec=new_spec, mod_spec=mod_spec)
 
 ##############################
 # Generation tasks

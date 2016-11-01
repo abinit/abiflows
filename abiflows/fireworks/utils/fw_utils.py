@@ -96,7 +96,7 @@ def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0, return_qt
             tm.select_qadapter(pconf)
             #TODO make a FW_task_manager parameter
             if timelimit is None:
-                tm.qadapter.set_timelimit(timelimit=600)
+                tm.qadapter.set_timelimit(timelimit=ftm.fw_policy.short_job_timelimit)
             else:
                 tm.qadapter.set_timelimit(timelimit=timelimit)
             tm.qadapter.set_master_mem_overhead(master_mem_overhead)
@@ -148,7 +148,8 @@ class FWTaskManager(object):
                               walltime_command=None,
                               continue_unconverged_on_rerun=True,
                               allow_local_restart=False,
-                              timelimit_buffer=120)
+                              timelimit_buffer=120,
+                              short_job_timelimit=600)
     FWPolicy = namedtuple("FWPolicy", fw_policy_defaults.keys())
 
     def __init__(self, **kwargs):

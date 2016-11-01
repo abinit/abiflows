@@ -1174,17 +1174,6 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
 
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
-        # ph_generation_task = GeneratePhononFlowFWAbinitTask(phonon_factory, previous_task_type=scf_task.task_type,
-        #                                                     with_autoparal=autoparal)
-
-        # spec['wf_task_index'] = 'gen_ph'
-
-        # self.ph_generation_fw = Firework(ph_generation_task, spec=spec, name=rf+"_gen_ph")
-
-        # self.wf = Workflow([self.scf_fw, self.ph_generation_fw], {self.scf_fw: self.ph_generation_fw},
-        #                    metadata={'workflow_class': self.workflow_class,
-        #                              'workflow_module': self.workflow_module})
-
         self.wf = Workflow([self.scf_fw],
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module})
