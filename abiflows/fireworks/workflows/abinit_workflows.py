@@ -982,6 +982,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
             raise ValueError("qppa is incompatible with ph_ngqpt and qpoints")
 
         if qppa is not None:
+            if structure is None:
+                structure = gs_input.structure
             initialization_info['qppa'] = qppa
             ph_ngqpt = KSampling.automatic_density(structure, qppa, chksymbreak=0).kpts[0]
 
@@ -1239,6 +1241,11 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
         return fw, fw_deps
 
     def generate_ph(self, ph_inputs, previous_input, autoparal, spec, initialization_info, previous_task_type):
+
+        # Since everything is being generated here factories should be used to generate the AbinitInput
+
+        if isinstance(previous_input, InputFactory):
+            previous_input = previous_input.build_input()
 
         if isinstance(ph_inputs, InputFactory):
             ph_inputs = ph_inputs.build_input(previous_input)
