@@ -1333,7 +1333,7 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
         if task_type is None:
             task_type = 'cut3d-den-to-cube'
 
-        cut3d_input = Cut3DInput.den_to_cube(density_filepath=None, filepath='density.cube')
+        cut3d_input = Cut3DInput.den_to_cube(density_filepath=None, output_filepath='density.cube')
 
         return cls(cut3d_input=cut3d_input, deps=deps, task_type=task_type)
 
