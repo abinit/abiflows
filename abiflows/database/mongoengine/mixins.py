@@ -108,7 +108,7 @@ class CalculationTypeMixin(object):
     # other possibile fields: magnetization_type (unpolarized, polarized, non collinear), has_spin_orbit
 
 
-class GroundStateMixin(object):
+class GroundStateOutputMixin(object):
     """
     Mixin providing generic fiels for ground state calculation
     """
@@ -118,14 +118,6 @@ class GroundStateMixin(object):
     total_magnetization = FloatField(help_text="Total magnetization computed") # does pymatgen have a default unit for this?
 
     structure = MSONField(required=True, help_text="The structure used for the calculation. If a relaxation the final structure.")
-
-
-class RelaxMixin(GroundStateMixin):
-    """
-    Mixin providing generic fiels for relaxation calculation
-    """
-
-    initial_structure = MSONField(required=True, help_text="The initial structure of the relaxation")
 
 
 class HubbardsField(DictField):

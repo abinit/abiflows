@@ -404,7 +404,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         ion_fws = [fw for fw in wf.fws if fw.spec.get('wf_task_index', '').startswith('ion_') and not fw.spec.get('wf_task_index', '').endswith('autoparal')]
         ion_fws.sort(key=lambda l: int(l.spec.get('wf_task_index', '0').split('_')[-1]))
-        first_ion_fw = ioncell_fws[-1]
+        first_ion_fw = ioncell_fws[0]
         last_ion_fw = ioncell_fws[-1]
         last_ion_launch = get_last_completed_launch(last_ion_fw)
 
@@ -416,23 +416,24 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         document = RelaxResult()
 
-        document.initial_structure = first_ion_fw.tasks[0].abiinput.structure.as_dict()
-        document.structure = structure.as_dict()
+        document.abinit_output.structure = structure.as_dict()
         document.set_material_data_from_structure(structure)
 
         final_input = history_ioncell.get_events_by_types(TaskEvent.FINALIZED)[0].details['final_input']
-        document.abinit_data.last_input = final_input.as_dict()
-        document.abinit_data.set_abinit_basic_from_abinit_input(final_input)
+        document.abinit_input.last_input = final_input.as_dict()
+        document.abinit_input.set_abinit_basic_from_abinit_input(final_input)
+        # need to set the structure as the initial one
+        document.abinit_input.structure = first_ion_fw.tasks[0].abiinput.structure.as_dict()
 
         document.history = history_ioncell.as_dict()
 
         document.set_dir_names_from_fws_wf(wf)
 
         initialization_info = history_ioncell.get_events_by_types(TaskEvent.INITIALIZED)[0].details.get('initialization_info', {})
-        document.kppa = initialization_info.get('kppa', None)
+        document.abinit_input.kppa = initialization_info.get('kppa', None)
         document.mp_id = initialization_info.get('mp_id', None)
 
-        document.set_pseudos_from_files_file(relax_task.files_file.path, len(structure.composition.elements))
+        document.abinit_input.pseudopotentials.set_pseudos_from_files_file(relax_task.files_file.path, len(structure.composition.elements))
 
         document.time_report = get_time_report_for_wf(wf).as_dict()
 
@@ -442,7 +443,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         document.modified_on = datetime.datetime.now()
 
         with open(relax_task.gsr_path, "rb") as f:
-            document.gsr.put(f)
+            document.abinit_output.gsr.put(f)
 
         # first get all the file paths. If something goes wrong in this loop no file is left dangling in the db
         hist_files_path = {}
@@ -463,8 +464,8 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
                 file_field.put(f)
                 hist_files[task_index] = file_field
 
-        document.abinit_data.hist_files = hist_files
-        document.hist_files = hist_files
+        document.abinit_input.hist_files = hist_files
+        document.abinit_output.hist_files = hist_files
 
         return document
 
@@ -951,7 +952,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         initialization_info['ngqpt'] = ph_ngqpt
         initialization_info['qpoints'] = qpoints
-        initialization_info['kppa'] = kppa
+        if 'kppa' not in initialization_info:
+            initialization_info['kppa'] = kppa
 
         extra_abivars_scf = dict(extra_abivars)
         extra_abivars_scf['tolwfr'] = scf_tol if scf_tol else 1.e-22
@@ -1019,9 +1021,9 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         return ph_wf
 
-    def add_anaddb_ph_bs_fw(self, structure, ph_ngqpt, nqsmall=15):
-        anaddb_input = AnaddbInput.phbands_and_dos(structure=structure, ngqpt=ph_ngqpt, nqsmall=nqsmall, asr=2,
-                                                   chneut=1, dipdip=1, lo_to_splitting=True)
+    def add_anaddb_ph_bs_fw(self, structure, ph_ngqpt, ndivsm=20, nqsmall=15):
+        anaddb_input = AnaddbInput.phbands_and_dos(structure=structure, ngqpt=ph_ngqpt, ndivsm=ndivsm,nqsmall=nqsmall,
+                                                   asr=2, chneut=1, dipdip=1, lo_to_splitting=True)
         anaddb_task = AnaDdbAbinitTask(anaddb_input, deps={MergeDdbAbinitTask.task_type: "DDB"})
         spec = dict(self.scf_fw.spec)
         spec['wf_task_index'] = 'anaddb'
@@ -1087,11 +1089,11 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         gs_input = scf_history.get_events_by_types(TaskEvent.FINALIZED)[0].details['final_input']
 
-        document.abinit_data.gs_input = gs_input.as_dict()
-        document.abinit_data.set_abinit_basic_from_abinit_input(gs_input)
+        document.abinit_input.gs_input = gs_input.as_dict()
+        document.abinit_input.set_abinit_basic_from_abinit_input(gs_input)
 
         structure = gs_input.structure
-        document.structure = structure.as_dict()
+        document.abinit_output.structure = structure.as_dict()
         document.set_material_data_from_structure(structure)
 
         initialization_info = scf_history.get_events_by_types(TaskEvent.INITIALIZED)[0].details.get('initialization_info', {})
@@ -1100,12 +1102,13 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         document.relax_db = initialization_info['relax_db'].as_dict() if 'relax_db' in initialization_info else None
         document.relax_id = initialization_info.get('relax_id', None)
 
-        document.ngqpt = initialization_info.get('ngqpt', None)
-        document.qpoints = initialization_info.get('qpoints', None)
-        document.qppa = initialization_info.get('qppa', None)
-        document.kppa = initialization_info.get('kppa', None)
+        document.abinit_input.ngqpt = initialization_info.get('ngqpt', None)
+        document.abinit_input.qpoints = initialization_info.get('qpoints', None)
+        document.abinit_input.qppa = initialization_info.get('qppa', None)
+        document.abinit_input.kppa = initialization_info.get('kppa', None)
 
-        document.set_pseudos_from_files_file(scf_task.files_file.path, len(structure.composition.elements))
+        document.abinit_input.pseudopotentials.set_pseudos_from_files_file(scf_task.files_file.path,
+                                                                           len(structure.composition.elements))
 
         document.created_on = datetime.datetime.now()
         document.modified_on = datetime.datetime.now()
@@ -1113,38 +1116,38 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         document.set_dir_names_from_fws_wf(wf)
 
         with open(mrgddb_task.merged_ddb_path, "rt") as f:
-            document.ddb.put(f)
+            document.abinit_output.ddb.put(f)
 
         if ph_index > 0:
             ph_task = ph_fw.tasks[-1]
-            document.abinit_data.ph_input = ph_task.abiinput.as_dict()
+            document.abinit_input.ph_input = ph_task.abiinput.as_dict()
 
         if ddk_index > 0:
             ddk_task = ddk_fw.tasks[-1]
-            document.abinit_data.ddk_input = ddk_task.abiinput.as_dict()
+            document.abinit_input.ddk_input = ddk_task.abiinput.as_dict()
 
         if dde_index > 0:
             dde_task = dde_fw.tasks[-1]
-            document.abinit_data.dde_input = dde_task.abiinput.as_dict()
+            document.abinit_input.dde_input = dde_task.abiinput.as_dict()
 
         if wfq_index > 0:
             wfq_task = wfq_fw.tasks[-1]
-            document.abinit_data.wfq_input = wfq_task.abiinput.as_dict()
+            document.abinit_input.wfq_input = wfq_task.abiinput.as_dict()
 
-        if anaddb_task:
+        if anaddb_task is not None:
             with open(anaddb_task.phbst_path, "rb") as f:
-                document.phbst.put(f)
+                document.abinit_output.phbst.put(f)
             with open(anaddb_task.phdos_path, "rb") as f:
-                document.phdos.put(f)
+                document.abinit_output.phdos.put(f)
             with open(anaddb_task.anaddb_nc_path, "rb") as f:
-                document.anaddb_nc.put(f)
+                document.abinit_output.anaddb_nc.put(f)
 
         document.fw_id = scf_fw.fw_id
 
         document.time_report = get_time_report_for_wf(wf).as_dict()
 
         with open(scf_task.gsr_path, "rb") as f:
-            document.gs_gsr.put(f)
+            document.abinit_output.gs_gsr.put(f)
 
         return document
 

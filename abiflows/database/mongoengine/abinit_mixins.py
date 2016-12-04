@@ -10,41 +10,11 @@ from mongoengine import *
 from abiflows.core.models import AbiFileField, MSONField
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.abinit.pseudos import Pseudo
-from abiflows.database.mongoengine.mixins import GroundStateMixin, RelaxMixin
+from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
 
-
-class AbinitBasicMixin(object):
+class AbinitPseudoData(EmbeddedDocument):
     """
-    Mixin providing some basic fields that are required to run a calculation.
-    """
-    #TODO add more variables
-    ecut = FloatField()
-    nshiftk = IntField()
-    shiftk = ListField(ListField(FloatField()))
-    ngkpt = ListField(IntField())
-    kptrlatt = ListField(ListField(IntField()))
-    dilatmx = FloatField(default=1)
-    occopt = IntField()
-    tsmear = FloatField()
-
-
-    def set_abinit_basic_from_abinit_input(self, abinit_input):
-        """
-        create the object from an AbinitInput object
-        """
-        self.ecut = abinit_input['ecut']
-        # kpoints may be defined in different ways
-        self.nshiftk = abinit_input.get('nshiftk', None)
-        self.shiftk = abinit_input.get('shiftk', None)
-        self.ngkpt = abinit_input.get('ngkpt', None)
-        self.kptrlatt = abinit_input.get('kptrlatt', None)
-        self.dilatmx = abinit_input.get('dilatmx', 1)
-        self.occopt = abinit_input.get('occopt', 1)
-        self.tsmear = abinit_input.get('tsmear', None)
-
-class AbinitPseudoMixin(object):
-    """
-    Mixin providing some fields and function to save abinit pseudopotential data
+    Embedded document providing some fields and function to save abinit pseudopotential data
     """
 
     pseudos_name = ListField(StringField())
@@ -79,21 +49,48 @@ class AbinitPseudoMixin(object):
 
         self.set_pseudos_vars(pseudos_path)
 
-class AbinitGSMixin(GroundStateMixin):
+
+class AbinitBasicInputMixin(object):
+    """
+    Mixin providing some basic fields that are required to run a calculation.
+    """
+    #TODO add more variables
+    structure = MSONField()
+    ecut = FloatField()
+    nshiftk = IntField()
+    shiftk = ListField(ListField(FloatField()))
+    ngkpt = ListField(IntField())
+    kptrlatt = ListField(ListField(IntField()))
+    dilatmx = FloatField(default=1)
+    occopt = IntField()
+    tsmear = FloatField()
+    pseudopotentials = EmbeddedDocumentField(AbinitPseudoData, default=AbinitPseudoData)
+
+
+    def set_abinit_basic_from_abinit_input(self, abinit_input):
+        """
+        create the object from an AbinitInput object
+        """
+        self.structure = abinit_input.structure.as_dict()
+        self.ecut = abinit_input['ecut']
+        # kpoints may be defined in different ways
+        self.nshiftk = abinit_input.get('nshiftk', None)
+        self.shiftk = abinit_input.get('shiftk', None)
+        self.ngkpt = abinit_input.get('ngkpt', None)
+        self.kptrlatt = abinit_input.get('kptrlatt', None)
+        self.dilatmx = abinit_input.get('dilatmx', 1)
+        self.occopt = abinit_input.get('occopt', 1)
+        self.tsmear = abinit_input.get('tsmear', None)
+
+
+class AbinitGSOutputMixin(GroundStateOutputMixin):
     """
     Mixin providing generic fiels for abinit ground state calculation
     """
     gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation")
 
 
-class AbinitRelaxMixin(RelaxMixin):
-    """
-    Mixin providing generic fiels for abinit ground state calculation
-    """
-    gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Final gsr file produced by the relaxation")
-
-
-class AbinitDftpMixin(object):
+class AbinitDftpOutputMixin(object):
     """
     Mixin providing generic fiels for dfpt calculation
     """
@@ -102,7 +99,7 @@ class AbinitDftpMixin(object):
     structure = MSONField()
 
 
-class AbinitPhononMixin(AbinitDftpMixin):
+class AbinitPhononOutputMixin(AbinitDftpOutputMixin):
     """
     Mixin providing generic fiels for phonon calculation
     """
