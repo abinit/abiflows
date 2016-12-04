@@ -1809,7 +1809,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
             if self.ftm.fw_policy.mpirun_cmd:
                 command.append(self.ftm.fw_policy.mpirun_cmd)
                 if 'mpi_ncpus' in fw_spec:
-                    command.extend(['-np', str(fw_spec['mpi_ncpus'])])
+                    command.extend(['-n', str(fw_spec['mpi_ncpus'])])
             command.append(self.ftm.fw_policy.anaddb_cmd)
             with open(self.files_file.path, 'r') as stdin, open(self.log_file.path, 'w') as stdout, \
                     open(self.stderr_file.path, 'w') as stderr:
@@ -1906,6 +1906,8 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
                 json.dump(self.history, f, cls=MontyEncoder, indent=4, sort_keys=4)
 
     def task_analysis(self, fw_spec):
+        if self.returncode != 0:
+            raise RuntimeError("Return code different from 0: {}".format(self.returncode))
         return FWAction()
 
     def set_workdir(self, workdir):
