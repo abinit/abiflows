@@ -1120,7 +1120,7 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         if ph_index > 0:
             ph_task = ph_fw.tasks[-1]
-            document.abinit_input.ph_input = ph_task.abiinput.as_dict()
+            document.abinit_input.phonon_input = ph_task.abiinput.as_dict()
 
         if ddk_index > 0:
             ddk_task = ddk_fw.tasks[-1]

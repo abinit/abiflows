@@ -34,7 +34,7 @@ class PhononAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
     ddk_input = MSONField(help_text="The last input used to calculate one of the ddk.")
     dde_input = MSONField(help_text="The last input used to calculate one of the dde.")
     wfq_input = MSONField(help_text="The last input used to calculate one of the wfq.")
-    ph_input = MSONField(help_text="The last input used to calculate one of the phonons.")
+    phonon_input = MSONField(help_text="The last input used to calculate one of the phonons.")
     kppa = IntField()
     ngqpt = ListField(IntField())
     qpoints = DictField()
