@@ -10,10 +10,11 @@ class RelaxAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
 
 
 class RelaxAbinitOutput(AbinitGSOutputMixin, EmbeddedDocument):
-    hist_files =  DictField(field=AbiFileField(abiext="HIST.nc", abiform="b"),
+    hist_files =  DictField(field=AbiFileField(abiext="HIST.nc", abiform="b", collection_name='relax_hist_fs'),
                             help_text="Series of HIST files produced during the relaxation. Keys should provide the type"
-                                      " of relaxation (ion, ioncell) and the ordering")
-    outfile_ioncell = AbiGzipFileField(abiext="abo", abiform="t")
+                                      " of relaxation (ion, ioncell) and the ordering", db_field='relax_hist_files_ids')
+    outfile_ioncell = AbiGzipFileField(abiext="abo", abiform="t", db_field='outfile_ioncell_id',
+                                       collection_name='relax_outfile_fs')
 
 
 class RelaxResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
@@ -42,8 +43,10 @@ class PhononAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
 
 
 class PhononAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
-    gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation")
-    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t")
+    gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
+                          db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
+    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
+                                 collection_name='phonon_gs_outfile_fs')
 
 
 class PhononResult(MaterialMixin, DateMixin, DirectoryMixin, Document):

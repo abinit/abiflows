@@ -455,16 +455,21 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
             hist_files_path[task_index] = task.hist_nc_path
 
         # now save all the files in the db
-        #TODO I would prefer to avoid the import of mongoengine in this module and delegate to some specific module
-        from abiflows.core.models import AbiGridFSProxy
+        #TODO I would prefer to avoid the import of mongoengine related objects here and delegate to some other specific module
+        #from abiflows.core.models import AbiGridFSProxy
+        # This is an alternative from importing the object explicitely. Still quite a dirty hack
+        proxy_class = RelaxResult.abinit_output.default.hist_files.field.proxy_class
+        collection_name = RelaxResult.abinit_output.default.hist_files.field.collection_name
         hist_files = {}
         for task_index, file_path in six.iteritems(hist_files_path):
             with open(file_path) as f:
-                file_field = AbiGridFSProxy()
+                file_field = proxy_class(collection_name=collection_name)
                 file_field.put(f)
                 hist_files[task_index] = file_field
 
-        document.abinit_input.hist_files = hist_files
+        with open(relax_task.output_file.path, 'rt') as f:
+            document.abinit_output.outfile_ioncell.put(f)
+
         document.abinit_output.hist_files = hist_files
 
         return document
@@ -1136,9 +1141,9 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         if anaddb_task is not None:
             with open(anaddb_task.phbst_path, "rb") as f:
-                document.abinit_output.phbst.put(f)
+                document.abinit_output.phonon_bs.put(f)
             with open(anaddb_task.phdos_path, "rb") as f:
-                document.abinit_output.phdos.put(f)
+                document.abinit_output.phonon_dos.put(f)
             with open(anaddb_task.anaddb_nc_path, "rb") as f:
                 document.abinit_output.anaddb_nc.put(f)
 
@@ -1148,6 +1153,9 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         with open(scf_task.gsr_path, "rb") as f:
             document.abinit_output.gs_gsr.put(f)
+
+        with open(scf_task.output_file.path, "rt") as f:
+            document.abinit_output.gs_outfile.put(f)
 
         return document
 

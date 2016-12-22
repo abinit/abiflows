@@ -87,7 +87,8 @@ class AbinitGSOutputMixin(GroundStateOutputMixin):
     """
     Mixin providing generic fiels for abinit ground state calculation
     """
-    gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation")
+    gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
+                       db_field='gsr_id', collection_name='gs_gsr_fs')
 
 
 class AbinitDftpOutputMixin(object):
@@ -95,7 +96,8 @@ class AbinitDftpOutputMixin(object):
     Mixin providing generic fiels for dfpt calculation
     """
 
-    ddb = AbiFileField(abiext="DDB", abiform="t", help_text="DDB file produced by a dfpt falculation")
+    ddb = AbiFileField(abiext="DDB", abiform="t", help_text="DDB file produced by a dfpt falculation",
+                       db_field='ddb_id', collection_name='ddb_fs')
     structure = MSONField()
 
 
@@ -104,6 +106,6 @@ class AbinitPhononOutputMixin(AbinitDftpOutputMixin):
     Mixin providing generic fiels for phonon calculation
     """
 
-    phbst = AbiFileField(abiext="PHBST.nc", abiform="b")
-    phdos = AbiFileField(abiext="PHDOS.nc", abiform="b")
-    anaddb_nc = AbiFileField(abiext="anaddb.nc", abiform="b")
+    phonon_bs = AbiFileField(abiext="PHBST.nc", abiform="b", db_field='phonon_bs_id', collection_name='phonon_bs_fs')
+    phonon_dos = AbiFileField(abiext="PHDOS.nc", abiform="b", db_field='phonon_dos_id', collection_name='phonon_dos_fs')
+    anaddb_nc = AbiFileField(abiext="anaddb.nc", abiform="b", db_field='anaddb_nc_id', collection_name='anaddb_nc_fs')
