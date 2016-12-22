@@ -229,6 +229,16 @@ class AbstractFWWorkflow(Workflow):
     def set_preserve_fworker(self):
         self.add_spec_to_all_fws(dict(_preserve_fworker=True))
 
+    def fix_fworker(self, name=None):
+        """
+        Sets the _fworker key to the name specified and adds _preserve_fworker to the spec of all the fws.
+        If name is None the name is taken from ~/.fireworks/my_fworker.yaml
+        """
+        if name == None:
+            name = loadfn(os.path.expanduser("~/.fireworks/my_fworker.yaml"))['name']
+
+        self.add_spec_to_all_fws(dict(_preserve_fworker=True, _fworker=name))
+
 
 class InputFWWorkflow(AbstractFWWorkflow):
     def __init__(self, abiinput, task_type=AbiFireTask, autoparal=False, spec={}, initialization_info={}):
