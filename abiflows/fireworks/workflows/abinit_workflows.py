@@ -1269,9 +1269,9 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
             previous_input = previous_input.build_input()
 
         if isinstance(ph_inputs, InputFactory):
-            ph_inputs = ph_inputs.build_input(previous_input)
             initialization_info['input_factory'] = ph_inputs.as_dict()
             spec['initialization_info']['input_factory'] = ph_inputs.as_dict()
+            ph_inputs = ph_inputs.build_input(previous_input)
 
         ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
         ddk_inputs = ph_inputs.filter_by_tags(DDK)
