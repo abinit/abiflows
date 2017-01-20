@@ -251,13 +251,17 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
     CRITICAL_EVENTS = [
     ]
 
-    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+    def __init__(self, abiinput, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None,
                  use_SRC_scheme=False, task_type=None):
         """
         Basic __init__, subclasses are supposed to define the same input parameters, add their own and call super for
         the basic ones. The input parameter should be stored as attributes of the instance for serialization and
         for inspection.
         """
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
         self.abiinput = abiinput
         self.restart_info = restart_info
 
@@ -1063,7 +1067,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
             # if dest already exists should be overwritten. see also resolve_deps and config_run
             try:
                 os.symlink(out_file, dest)
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EEXIST:
                     os.remove(dest)
                     os.symlink(out_file, dest)
@@ -1449,8 +1453,12 @@ class StrainPertTask(DfptTask):
 
 @explicit_serialize
 class RelaxDilatmxFWTask(RelaxFWTask):
-    def __init__(self, abiinput, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+    def __init__(self, abiinput, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None,
                  target_dilatmx=1.01):
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
         self.target_dilatmx = target_dilatmx
         super(RelaxDilatmxFWTask, self).__init__(abiinput=abiinput, restart_info=restart_info, handlers=handlers,
                                                  is_autoparal=is_autoparal, deps=deps, history=history)
@@ -1676,8 +1684,14 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     task_type = "anaddb"
 
-    def __init__(self, anaddb_input, restart_info=None, handlers=[], is_autoparal=None, deps=None, history=[],
+    def __init__(self, anaddb_input, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None,
                  use_SRC_scheme=False, task_type=None):
+
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
+
         self.anaddb_input = anaddb_input
         self.restart_info = restart_info
 
@@ -2051,7 +2065,9 @@ class AutoparalTask(AbiFireTask):
 
 @explicit_serialize
 class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
-    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[], with_autoparal=None, ddb_file=None):
+    def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=None, with_autoparal=None, ddb_file=None):
+        if handlers is None:
+            handlers = []
         self.phonon_factory = phonon_factory
         self.previous_task_type = previous_task_type
         self.handlers = handlers

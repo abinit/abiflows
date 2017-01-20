@@ -174,7 +174,7 @@ class FWTaskManager(object):
             self.task_manager = None
 
     @classmethod
-    def from_user_config(cls, fw_policy={}):
+    def from_user_config(cls, fw_policy=None):
         """
         Initialize the manager using the dict in the following order of preference:
         - the "fw_manager.yaml" file in the folder where the command is executed
@@ -182,6 +182,9 @@ class FWTaskManager(object):
         - the "fw_manager.yaml" in the ~/.abinit/abipy folder
         - if no file available, fall back to default values
         """
+
+        if fw_policy is None:
+            fw_policy = {}
 
         # Try in the current directory then in user configuration directory.
         paths = [os.path.join(os.getcwd(), cls.YAML_FILE), os.getenv("FW_TASK_MANAGER"),

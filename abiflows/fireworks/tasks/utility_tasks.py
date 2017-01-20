@@ -83,7 +83,9 @@ def createSRCFireworksOld(task_class, task_input, SRC_spec, initialization_info,
 class FinalCleanUpTask(FireTaskBase):
     task_type = 'finalclnup'
 
-    def __init__(self, out_exts=["WFK", "1WF"]):
+    def __init__(self, out_exts=None):
+        if out_exts is None:
+            out_exts = ["WFK", "1WF"]
         if isinstance(out_exts, str):
             out_exts = [s.strip() for s in out_exts.split(',')]
 
@@ -155,7 +157,9 @@ class FinalCleanUpTask(FireTaskBase):
 class DatabaseInsertTask(FireTaskBase):
     task_type = 'dbinsert'
 
-    def __init__(self, insertion_data={'structure': 'get_final_structure_and_history'}, criteria=None):
+    def __init__(self, insertion_data=None, criteria=None):
+        if insertion_data is None:
+            insertion_data = {'structure': 'get_final_structure_and_history'}
         self.insertion_data = insertion_data
         self.criteria = criteria
 
