@@ -809,7 +809,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         exception_details = fw_spec.get('_exception_details', None)
         # assume that DECODE_MONTY=True so that a handeled exception has already been deserialized
         if exception_details and isinstance(exception_details, AbinitRuntimeError):
-            error_code = exception_details.error_code
+            error_code = exception_details.ERROR_CODE
             if (self.ftm.fw_policy.continue_unconverged_on_rerun and error_code==ErrorCode.UNCONVERGED and
                     exception_details.abiinput and exception_details.restart_info and
                     exception_details.history):
