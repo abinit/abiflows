@@ -6,6 +6,7 @@ import pytest
 
 import abipy.abilab as abilab
 from abipy.electrons.gsr import GsrFile
+import abiflows.fireworks.tasks.abinit_common
 from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
@@ -23,7 +24,7 @@ pytestmark = [pytest.mark.usefixtures("cleandb"), pytest.mark.check_abiflow]
 
 
 def match_results(fw, abitask):
-    fw_gsr_path = Directory(os.path.join(fw.launches[-1].launch_dir, abinit_tasks.OUTDIR_NAME)).has_abiext("GSR")
+    fw_gsr_path = Directory(os.path.join(fw.launches[-1].launch_dir, abiflows.fireworks.tasks.abinit_common.OUTDIR_NAME)).has_abiext("GSR")
     with GsrFile(fw_gsr_path) as gsr1, abitask.open_gsr() as gsr2:
         if gsr1.energy - gsr2.energy > 0.0001:
             return False

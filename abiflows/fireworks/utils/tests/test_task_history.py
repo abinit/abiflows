@@ -26,10 +26,10 @@ class TestTaskHistory(AbipyTest):
 
         th.log_converge_params({'dilatmx': 1.03}, si_relax_input)
 
-        self.assertPMGSONable(th)
+        self.assertMSONable(th)
 
         for te in th:
-            self.assertPMGSONable(te)
+            self.assertMSONable(te)
 
     def test_get_events_by_types(self):
         th = TaskHistory()

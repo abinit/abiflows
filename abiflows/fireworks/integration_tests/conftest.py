@@ -5,7 +5,7 @@ import os
 import pytest
 import abipy.abilab as abilab
 import abipy.data as abidata
-from abipy.abio.factories import ebands_input
+from abipy.abio.factories import ebands_input, ion_ioncell_relax_input
 from abipy.data.benchmark_structures import simple_semiconductors, simple_metals
 
 from fireworks import LaunchPad, FWorker
@@ -48,6 +48,17 @@ def input_scf_si_low():
     structure = abilab.Structure.from_file(cif_file)
 
     return ebands_input(structure, pseudos, kppa=100, ecut=6).split_datasets()[0]
+
+
+@pytest.fixture(scope="function")
+def inputs_relax_si_low():
+    pseudos = abidata.pseudos("14si.pspnc")
+    cif_file = abidata.cif_file("si.cif")
+    structure = abilab.Structure.from_file(cif_file)
+    structure.apply_strain(0.005)
+    structure.translate_sites(0, [0.001, -0.003, 0.005])
+    structure.translate_sites(1, [0.007, 0.006, -0.005])
+    return ion_ioncell_relax_input(structure, pseudos, kppa=100, ecut=4).split_datasets()
 
 
 @pytest.fixture(scope="function", params=simple_semiconductors)

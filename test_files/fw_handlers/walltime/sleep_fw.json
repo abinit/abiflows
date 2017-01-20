@@ -1,0 +1,98 @@
+{
+    "name": "sleep_fw",
+    "launches": [
+        {
+            "fworker": {
+                "category": "",
+                "query": "{}",
+                "name": "zenobe",
+                "env": {}
+            },
+            "trackers": [],
+            "ip": "10.2.0.120",
+            "fw_id": 4717,
+            "state": "FIZZLED",
+            "host": "node0120",
+            "launch_dir": "fw_handlers/walltime",
+            "action": null,
+            "launch_id": 3147,
+            "state_history": [
+                {
+                    "updated_on": "2015-11-17T10:33:08.712413",
+                    "state": "RESERVED",
+                    "reservation_id": "6771538",
+                    "created_on": "2015-11-17T10:33:08.712406"
+                },
+                {
+                    "updated_on": "2015-11-17T10:33:36.085377",
+                    "state": "RUNNING",
+                    "created_on": "2015-11-17T10:33:35.973363"
+                },
+                {
+                    "state": "FIZZLED",
+                    "created_on": "2015-11-17T10:36:21.045259"
+                }
+            ]
+        }
+    ],
+    "fw_id": 4717,
+    "state": "FIZZLED",
+    "created_on": "2015-11-17T10:32:52.543990",
+    "updated_on": "2015-11-17T10:36:21.154111",
+    "spec": {
+        "_queueadapter": {
+            "pvmem": 1200,
+            "group_list": "napsimu",
+            "queue": "main",
+            "qverbatim": "#PBS -r y\n",
+            "select": "1:ncpus=1:vmem=1200mb:mpiprocs=1",
+            "walltime": "0:1:0"
+        },
+        "_tasks": [
+            {
+                "use_shell": true,
+                "_fw_name": "ScriptTask",
+                "script": [
+                    "sleep 180"
+                ]
+            }
+        ],
+        "SRCScheme": true,
+        "qtk_queueadapter": {
+            "hardware": {
+                "cores_per_socket": 6,
+                "sockets_per_node": 2,
+                "mem_per_node": "23961.0 Mb",
+                "num_nodes": 274
+            },
+            "master_mem_overhead": 0,
+            "mem_per_proc": 1200,
+            "limits": {
+                "timelimit": 60.0,
+                "timelimit_hard": 86340.0,
+                "min_mem_per_proc": 1900,
+                "max_cores": 32,
+                "min_cores": 1,
+                "max_mem_per_proc": 23961
+            },
+            "queue": {
+                "qtype": "pbspro",
+                "qparams": {
+                    "pvmem": 1200,
+                    "qverbatim": "#PBS -r y\n",
+                    "queue": "main",
+                    "group_list": "napsimu",
+                    "select": "1:ncpus=1:vmem=1200mb:mpiprocs=1",
+                    "walltime": "0:1:0"
+                },
+                "qname": "main",
+                "qnodes": "shared"
+            },
+            "@module": "pymatgen.io.abinit.qadapters",
+            "priority": 99,
+            "job": {},
+            "@class": "PbsProAdapter",
+            "mpi_procs": 1
+        }
+    }
+}

@@ -4,12 +4,12 @@ Task history related objects
 """
 from __future__ import print_function, division, unicode_literals
 
-from monty.json import MontyDecoder, jsanitize
-from pymatgen.serializers.json_coders import PMGSONable, pmg_serialize
+from monty.json import MontyDecoder, jsanitize, MSONable
+from pymatgen.serializers.json_coders import pmg_serialize
 import collections
 import traceback
 
-class TaskHistory(collections.deque, PMGSONable):
+class TaskHistory(collections.deque, MSONable):
     """
     History class for tracking the creation and actions performed during a task.
     The objects provided should be PGMSONable, thus dicts, lists or PGMSONable objects.
@@ -105,7 +105,7 @@ class TaskHistory(collections.deque, PMGSONable):
 
 
 
-class TaskEvent(PMGSONable):
+class TaskEvent(MSONable):
 
     INITIALIZED = 'initialized'
     CORRECTIONS = 'corrections'

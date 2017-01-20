@@ -50,7 +50,7 @@ def find_package_data():
     """Find abiflows package_data."""
     # This is not enough for these things to appear in an sdist.
     # We need to muck with the MANIFEST to get this to work
-    package_data = {
+    package_data = {'abiflows.fireworks.tasks': ['n1000multiples_primes.json']
     #    'abipy.data.refs' : [
     #        "al_g0w0_spfunc/*",
     #        "alas_phonons/*",
@@ -119,6 +119,7 @@ install_requires = [
     "flask",
     "flask-mongoengine",
     "fireworks",
+    "paramiko"
     #"abipy",
     #"apscheduler==2.1.0",
     #"pydispatcher>=2.0.3",
