@@ -43,7 +43,6 @@ from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, IND
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
-from abiflows.fireworks.utils.task_history import TaskHistory
 from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld
 
 logger = logging.getLogger(__name__)
@@ -1190,7 +1189,7 @@ class NscfFWTask(GsFWTask):
             if not restart_file:
                 msg = "Cannot find the WFK file to restart from."
                 logger.error(msg)
-                raise AbinitRuntimeError(msg)
+                raise RestartError(msg)
 
             # Move out --> in.
             self.out_to_in(restart_file)
@@ -1199,6 +1198,66 @@ class NscfFWTask(GsFWTask):
             irdvars = irdvars_for_ext(ext)
             self.abiinput.set_vars(irdvars)
 
+
+@explicit_serialize
+class NscfWfqFWTask(NscfFWTask):
+    task_type = "nscf_wfq"
+
+    def restart(self):
+        """
+        NSCF calculations can be restarted only if we have the WFK file.
+        Wfq calculations require a WFK file for restart. The produced out_WFQ
+        needs to be linked as a in_WFK with appropriate irdwfk=1.
+        """
+        if self.restart_info.reset:
+            # remove non reset keys that may have been added in a previous restart
+            self.remove_restart_vars(["WFQ", "WFK"])
+        else:
+            ext = "WFQ"
+            restart_file = self.restart_info.prev_outdir.has_abiext(ext)
+            if not restart_file:
+                msg = "Cannot find the WFK file to restart from."
+                logger.error(msg)
+                raise RestartError(msg)
+
+            # Move out --> in.
+            self.out_to_in(restart_file)
+
+            # Add the appropriate variable for restarting.
+            irdvars = irdvars_for_ext("WFK")
+            self.abiinput.set_vars(irdvars)
+
+    def out_to_in(self, out_file):
+        """
+        links or copies, according to the fw_policy, the output file to the input data directory of this task
+        and rename the file so that ABINIT will read it as an input data file.
+        In the case of Wfq calculations out_WFQ needs to be linked as a in_WFK
+
+        Returns:
+            The absolute path of the new file in the indata directory.
+        """
+        in_file = os.path.basename(out_file).replace("out", "in", 1)
+        in_file = os.path.basename(in_file).replace("WFQ", "WFK", 1)
+        dest = os.path.join(self.indir.path, in_file)
+
+        if os.path.exists(dest) and not os.path.islink(dest):
+            logger.warning("Will overwrite %s with %s" % (dest, out_file))
+
+        # if rerunning in the same folder the file should be moved anyway
+        if self.ftm.fw_policy.copy_deps or self.workdir == self.restart_info.previous_dir:
+            shutil.copyfile(out_file, dest)
+        else:
+            # if dest already exists should be overwritten. see also resolve_deps and config_run
+            try:
+                os.symlink(out_file, dest)
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    os.remove(dest)
+                    os.symlink(out_file, dest)
+                else:
+                    raise e
+
+        return dest
 
 @explicit_serialize
 class RelaxFWTask(GsFWTask):
@@ -1269,9 +1328,11 @@ class RelaxFWTask(GsFWTask):
                     # Find the last TIM?_DEN file.
                     last_timden = self.restart_info.prev_outdir.find_last_timden_file()
                     if last_timden is not None:
-                        ofile = self.restart_info.prev_outdir.path_in("out_DEN")
-                        os.rename(last_timden.path, ofile)
-                        restart_file = self.out_to_in(ofile)
+                        if last_timden.path.endswith(".nc"):
+                            in_file_name = ("in_DEN.nc")
+                        else:
+                            in_file_name = ("in_DEN")
+                        restart_file = self.out_to_in_tim(last_timden.path, in_file_name)
                         irdvars = irdvars_for_ext("DEN")
 
                 if restart_file is None:
@@ -1302,6 +1363,36 @@ class RelaxFWTask(GsFWTask):
             path = self.outdir.has_abiext("HIST")
             if path: self._hist_nc_path = path
             return path
+
+    def out_to_in_tim(self, out_file, in_file):
+        """
+        links or copies, according to the fw_policy, the output file to the input data directory of this task
+        and rename the file so that ABINIT will read it as an input data file. for the TIM file the input needs to
+        be specified as depends on the specific iteration.
+
+        Returns:
+            The absolute path of the new file in the indata directory.
+        """
+        dest = os.path.join(self.indir.path, in_file)
+
+        if os.path.exists(dest) and not os.path.islink(dest):
+            logger.warning("Will overwrite %s with %s" % (dest, out_file))
+
+        # if rerunning in the same folder the file should be moved anyway
+        if self.ftm.fw_policy.copy_deps or self.workdir == self.restart_info.previous_dir:
+            shutil.copyfile(out_file, dest)
+        else:
+            # if dest already exists should be overwritten. see also resolve_deps and config_run
+            try:
+                os.symlink(out_file, dest)
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    os.remove(dest)
+                    os.symlink(out_file, dest)
+                else:
+                    raise e
+
+        return dest
 
 
 @explicit_serialize
@@ -1821,7 +1912,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
             command = []
             #consider the case of serial execution
             if self.ftm.fw_policy.mpirun_cmd:
-                command.append(self.ftm.fw_policy.mpirun_cmd)
+                command.extend(self.ftm.fw_policy.mpirun_cmd.split())
                 if 'mpi_ncpus' in fw_spec:
                     command.extend(['-n', str(fw_spec['mpi_ncpus'])])
             command.append(self.ftm.fw_policy.anaddb_cmd)
@@ -2020,7 +2111,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 class AutoparalTask(AbiFireTask):
     task_type = "autoparal"
 
-    def __init__(self, abiinput, restart_info=None, handlers=[], deps=None, history=[], is_autoparal=True,
+    def __init__(self, abiinput, restart_info=None, handlers=None, deps=None, history=None, is_autoparal=True,
                  use_SRC_scheme=False, task_type=None, forward_spec=False, skip_spec_keys=None):
         """
         Note that the method still takes is_autoparal as input even if this is switched to True irrespcetively of the
@@ -2029,6 +2120,10 @@ class AutoparalTask(AbiFireTask):
         skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: default ['wf_task_index']
         #FIXME find a better solution if this model is preserved
         """
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
         super(AutoparalTask, self).__init__(abiinput, restart_info=restart_info, handlers=handlers, is_autoparal=True,
                                             deps=deps, history=history, use_SRC_scheme=use_SRC_scheme, task_type=task_type)
         self.forward_spec = forward_spec
@@ -2154,7 +2249,7 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
         nscf_fws = []
         if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfFWTask,
+            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfWfqFWTask,
                                                  {self.previous_task_type: "WFK", self.previous_task_type: "DEN"}, new_spec, ftm)
 
         ph_fws = []

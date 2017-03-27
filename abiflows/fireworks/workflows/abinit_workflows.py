@@ -36,6 +36,7 @@ from abiflows.fireworks.tasks.abinit_tasks_src import BaderTask
 from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask, AutoparalTask, DdeTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTask, DdkTask, MergeDdbAbinitTask
+from abiflows.fireworks.tasks.abinit_tasks import NscfWfqFWTask
 from abiflows.fireworks.tasks.handlers import MemoryHandler, WalltimeHandler
 from abiflows.fireworks.tasks.src_tasks_abc import createSRCFireworks
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask, MongoEngineDBInsertionTask
@@ -242,7 +243,7 @@ class AbstractFWWorkflow(Workflow):
         Sets the _fworker key to the name specified and adds _preserve_fworker to the spec of all the fws.
         If name is None the name is taken from ~/.fireworks/my_fworker.yaml
         """
-        if name == None:
+        if name is None:
             name = loadfn(os.path.expanduser("~/.fireworks/my_fworker.yaml"))['name']
 
         self.add_spec_to_all_fws(dict(_preserve_fworker=True, _fworker=name))
@@ -1213,7 +1214,7 @@ class PhononFWWorkflow(AbstractFWWorkflow):
                 if current_index > dde_index:
                     dde_index = current_index
                     dde_fw = fw
-            elif task_index.startswith('nscf_0') and not task_index.endswith('autoparal'):
+            elif task_index.startswith('nscf_wfq_0') and not task_index.endswith('autoparal'):
                 current_index = int(task_index.split('_')[-1])
                 if current_index > wfq_index:
                     wfq_index = current_index
@@ -1406,7 +1407,7 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
 
         nscf_fws = []
         if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfFWTask,
+            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfWfqFWTask,
                                                  {previous_task_type: "WFK", previous_task_type: "DEN"}, spec)
 
         ph_fws = []
