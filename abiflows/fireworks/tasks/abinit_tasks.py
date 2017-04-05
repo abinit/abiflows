@@ -157,6 +157,32 @@ class BasicAbinitTaskMixin(object):
 
         return optconf, qadapter_spec, manager.qadapter
 
+    def run_fake_autoparal(self, ftm):
+        """
+        In cases where the autoparal is not supported a fake run autoparal can be used to set the queueadapter.
+        Takes the number of processors suggested by the manager given that the paral hints contain all the
+        number of processors up tu max_cores and they all have the same efficiency.
+        """
+        manager = ftm.task_manager
+        if not manager:
+            msg = 'No task manager available: autoparal could not be performed.'
+            logger.error(msg)
+            raise InitializationError(msg)
+
+        # all the options have the same priority, let the qadapter decide which is preferred.
+        fake_conf_list = list({'tot_ncpus': i, 'mpi_ncpus': i, 'efficiency': 1} for i in range(1, manager.max_cores+1))
+        from pymatgen.io.abinit.tasks import ParalHints
+        pconfs = ParalHints({}, fake_conf_list)
+
+        optconf = manager.select_qadapter(pconfs)
+        qadapter_spec = manager.qadapter.get_subs_dict()
+
+        d = pconfs.as_dict()
+        d["optimal_conf"] = optconf
+        json_pretty_dump(d, os.path.join(os.getcwd(), "autoparal.json"))
+
+        return optconf, qadapter_spec, manager.qadapter
+
     def get_final_mod_spec(self, fw_spec):
         return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
         # if 'previous_fws' in fw_spec:
@@ -180,8 +206,8 @@ class BasicAbinitTaskMixin(object):
         dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext)
         if not os.path.exists(source):
             # Try netcdf file. TODO: this case should be treated in a cleaner way.
-            source += "-etsf.nc"
-            if os.path.exists(source): dest += "-etsf.nc"
+            source += ".nc"
+            if os.path.exists(source): dest += ".nc"
         if not os.path.exists(source):
             if strict:
                 msg = "{} is needed by this task but it does not exist".format(source)
@@ -227,6 +253,46 @@ class BasicAbinitTaskMixin(object):
             ddk_files.append(self.link_ext(ext, source_dir))
 
         return ddk_files
+
+    #TODO to avoid any regression this function will only be used to link 1WF and 1DEN files.
+    # Once tests will be performed this could replace the whole link_ext method, as it should be more general
+    def link_1ext(self, ext, source_dir, strict=True):
+        # 1DEN is used as a general reference and to trigger the correct ird variable,
+        # but the real extension in DEN.
+        if "1DEN" in ext:
+            ext = "DEN"
+        source = Directory(os.path.join(source_dir,os.path.split(self.prefix.odata)[0])).has_abiext(ext)
+        if not source:
+            if strict:
+                msg = "output file with extension {} is needed from {} dir, " \
+                      "but it does not exist".format(ext, source_dir)
+                logger.error(msg)
+                raise InitializationError(msg)
+            else:
+                return None
+        logger.info("Need path {} with ext {}".format(source, ext))
+        # determine the correct extension
+        #TODO check if this is correct for all the possible extensions, apart from 1WF
+        ext_full = source.split('_')[-1]
+        dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext_full)
+
+        # Link path to dest if dest link does not exist.
+        # else check that it points to the expected file.
+        logger.info("Linking path {} --> {}".format(source, dest))
+        if not os.path.exists(dest) or not strict:
+            if self.ftm.fw_policy.copy_deps:
+                shutil.copyfile(source, dest)
+            else:
+                os.symlink(source, dest)
+            return dest
+        else:
+            # check links but only if we haven't performed the restart.
+            # in this case, indeed we may have replaced the file pointer with the
+            # previous output file of the present task.
+            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
+                msg = "dest {} does not point to path {}".format(dest, source)
+                logger.error(msg)
+                raise InitializationError(msg)
 
     #from Task
     # Prefixes for Abinit (input, output, temporary) files.
@@ -970,6 +1036,8 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                     self.abiinput.set_vars(irdvars_for_ext(d))
                     if d == "DDK":
                         self.link_ddk(source_dir)
+                    elif d == "1WF" or d == "1DEN":
+                        self.link_1ext(d, source_dir)
                     else:
                         self.link_ext(d, source_dir)
 
@@ -1538,6 +1606,24 @@ class StrainPertTask(DfptTask):
     task_type = "strain_pert"
 
 
+@explicit_serialize
+class DteTask(DfptTask):
+    """
+    Task to handle the third derivatives with respect to the electric field.
+    """
+
+    CRITICAL_EVENTS = []
+
+    task_type = "dte"
+
+    # non-linear does not support autoparal. Take the suggested number of processors.
+    def run_autoparal(self, abiinput, autoparal_dir, ftm, clean_up='move'):
+        """
+        Non-linear does not support autoparal, so this will provide a fake run of the autoparal.
+        """
+        return self.run_fake_autoparal(ftm)
+
+
 ##############################
 # Convergence tasks
 ##############################
@@ -1582,7 +1668,7 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         """
 
         if ddb_source_task_types is None:
-            ddb_source_task_types = [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
+            ddb_source_task_types = [PhononTask.task_type, DdeTask.task_type, BecTask.task_type, DteTask.task_type]
         elif not isinstance(ddb_source_task_types, (list, tuple)):
             ddb_source_task_types = [ddb_source_task_types]
 
@@ -2114,10 +2200,12 @@ class AutoparalTask(AbiFireTask):
     def __init__(self, abiinput, restart_info=None, handlers=None, deps=None, history=None, is_autoparal=True,
                  use_SRC_scheme=False, task_type=None, forward_spec=False, skip_spec_keys=None):
         """
-        Note that the method still takes is_autoparal as input even if this is switched to True irrespcetively of the
+        Note that the method still takes is_autoparal as input even if this is switched to True irrespectively of the
         provided value, as the point of the task is to run autoparal. This is done to preserve the API in cases where
         automatic generation of tasks is involved.
         skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: default ['wf_task_index']
+        If abiinput is None, autoparal it will not run and it will be chosen a the preferred configuration will be
+        chosen based on the options set in the manager.
         #FIXME find a better solution if this model is preserved
         """
         if handlers is None:
@@ -2137,10 +2225,12 @@ class AutoparalTask(AbiFireTask):
         # Copy the appropriate dependencies in the in dir. needed in some cases
         self.resolve_deps(fw_spec)
 
-        optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        if self.abiinput is None:
+            optconf, qadapter_spec, qtk_qadapter = self.run_fake_autoparal(self.ftm)
+        else:
+            optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
 
         self.history.log_autoparal(optconf)
-        self.abiinput.set_vars(optconf.vars)
         mod_spec = [{'_push_all': {'spec->_tasks->0->abiinput->abi_args': list(optconf.vars.items())}}]
 
         if self.forward_spec:
