@@ -43,7 +43,6 @@ from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, IND
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
-from abiflows.fireworks.utils.task_history import TaskHistory
 from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld
 
 logger = logging.getLogger(__name__)
@@ -158,6 +157,32 @@ class BasicAbinitTaskMixin(object):
 
         return optconf, qadapter_spec, manager.qadapter
 
+    def run_fake_autoparal(self, ftm):
+        """
+        In cases where the autoparal is not supported a fake run autoparal can be used to set the queueadapter.
+        Takes the number of processors suggested by the manager given that the paral hints contain all the
+        number of processors up tu max_cores and they all have the same efficiency.
+        """
+        manager = ftm.task_manager
+        if not manager:
+            msg = 'No task manager available: autoparal could not be performed.'
+            logger.error(msg)
+            raise InitializationError(msg)
+
+        # all the options have the same priority, let the qadapter decide which is preferred.
+        fake_conf_list = list({'tot_ncpus': i, 'mpi_ncpus': i, 'efficiency': 1} for i in range(1, manager.max_cores+1))
+        from pymatgen.io.abinit.tasks import ParalHints
+        pconfs = ParalHints({}, fake_conf_list)
+
+        optconf = manager.select_qadapter(pconfs)
+        qadapter_spec = manager.qadapter.get_subs_dict()
+
+        d = pconfs.as_dict()
+        d["optimal_conf"] = optconf
+        json_pretty_dump(d, os.path.join(os.getcwd(), "autoparal.json"))
+
+        return optconf, qadapter_spec, manager.qadapter
+
     def get_final_mod_spec(self, fw_spec):
         return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
         # if 'previous_fws' in fw_spec:
@@ -181,8 +206,8 @@ class BasicAbinitTaskMixin(object):
         dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext)
         if not os.path.exists(source):
             # Try netcdf file. TODO: this case should be treated in a cleaner way.
-            source += "-etsf.nc"
-            if os.path.exists(source): dest += "-etsf.nc"
+            source += ".nc"
+            if os.path.exists(source): dest += ".nc"
         if not os.path.exists(source):
             if strict:
                 msg = "{} is needed by this task but it does not exist".format(source)
@@ -228,6 +253,46 @@ class BasicAbinitTaskMixin(object):
             ddk_files.append(self.link_ext(ext, source_dir))
 
         return ddk_files
+
+    #TODO to avoid any regression this function will only be used to link 1WF and 1DEN files.
+    # Once tests will be performed this could replace the whole link_ext method, as it should be more general
+    def link_1ext(self, ext, source_dir, strict=True):
+        # 1DEN is used as a general reference and to trigger the correct ird variable,
+        # but the real extension in DEN.
+        if "1DEN" in ext:
+            ext = "DEN"
+        source = Directory(os.path.join(source_dir,os.path.split(self.prefix.odata)[0])).has_abiext(ext)
+        if not source:
+            if strict:
+                msg = "output file with extension {} is needed from {} dir, " \
+                      "but it does not exist".format(ext, source_dir)
+                logger.error(msg)
+                raise InitializationError(msg)
+            else:
+                return None
+        logger.info("Need path {} with ext {}".format(source, ext))
+        # determine the correct extension
+        #TODO check if this is correct for all the possible extensions, apart from 1WF
+        ext_full = source.split('_')[-1]
+        dest = os.path.join(self.workdir, self.prefix.idata + "_" + ext_full)
+
+        # Link path to dest if dest link does not exist.
+        # else check that it points to the expected file.
+        logger.info("Linking path {} --> {}".format(source, dest))
+        if not os.path.exists(dest) or not strict:
+            if self.ftm.fw_policy.copy_deps:
+                shutil.copyfile(source, dest)
+            else:
+                os.symlink(source, dest)
+            return dest
+        else:
+            # check links but only if we haven't performed the restart.
+            # in this case, indeed we may have replaced the file pointer with the
+            # previous output file of the present task.
+            if not self.ftm.fw_policy.copy_deps and os.path.realpath(dest) != source and not self.restart_info:
+                msg = "dest {} does not point to path {}".format(dest, source)
+                logger.error(msg)
+                raise InitializationError(msg)
 
     #from Task
     # Prefixes for Abinit (input, output, temporary) files.
@@ -971,6 +1036,8 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                     self.abiinput.set_vars(irdvars_for_ext(d))
                     if d == "DDK":
                         self.link_ddk(source_dir)
+                    elif d == "1WF" or d == "1DEN":
+                        self.link_1ext(d, source_dir)
                     else:
                         self.link_ext(d, source_dir)
 
@@ -1190,7 +1257,7 @@ class NscfFWTask(GsFWTask):
             if not restart_file:
                 msg = "Cannot find the WFK file to restart from."
                 logger.error(msg)
-                raise AbinitRuntimeError(msg)
+                raise RestartError(msg)
 
             # Move out --> in.
             self.out_to_in(restart_file)
@@ -1199,6 +1266,66 @@ class NscfFWTask(GsFWTask):
             irdvars = irdvars_for_ext(ext)
             self.abiinput.set_vars(irdvars)
 
+
+@explicit_serialize
+class NscfWfqFWTask(NscfFWTask):
+    task_type = "nscf_wfq"
+
+    def restart(self):
+        """
+        NSCF calculations can be restarted only if we have the WFK file.
+        Wfq calculations require a WFK file for restart. The produced out_WFQ
+        needs to be linked as a in_WFK with appropriate irdwfk=1.
+        """
+        if self.restart_info.reset:
+            # remove non reset keys that may have been added in a previous restart
+            self.remove_restart_vars(["WFQ", "WFK"])
+        else:
+            ext = "WFQ"
+            restart_file = self.restart_info.prev_outdir.has_abiext(ext)
+            if not restart_file:
+                msg = "Cannot find the WFK file to restart from."
+                logger.error(msg)
+                raise RestartError(msg)
+
+            # Move out --> in.
+            self.out_to_in(restart_file)
+
+            # Add the appropriate variable for restarting.
+            irdvars = irdvars_for_ext("WFK")
+            self.abiinput.set_vars(irdvars)
+
+    def out_to_in(self, out_file):
+        """
+        links or copies, according to the fw_policy, the output file to the input data directory of this task
+        and rename the file so that ABINIT will read it as an input data file.
+        In the case of Wfq calculations out_WFQ needs to be linked as a in_WFK
+
+        Returns:
+            The absolute path of the new file in the indata directory.
+        """
+        in_file = os.path.basename(out_file).replace("out", "in", 1)
+        in_file = os.path.basename(in_file).replace("WFQ", "WFK", 1)
+        dest = os.path.join(self.indir.path, in_file)
+
+        if os.path.exists(dest) and not os.path.islink(dest):
+            logger.warning("Will overwrite %s with %s" % (dest, out_file))
+
+        # if rerunning in the same folder the file should be moved anyway
+        if self.ftm.fw_policy.copy_deps or self.workdir == self.restart_info.previous_dir:
+            shutil.copyfile(out_file, dest)
+        else:
+            # if dest already exists should be overwritten. see also resolve_deps and config_run
+            try:
+                os.symlink(out_file, dest)
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    os.remove(dest)
+                    os.symlink(out_file, dest)
+                else:
+                    raise e
+
+        return dest
 
 @explicit_serialize
 class RelaxFWTask(GsFWTask):
@@ -1269,9 +1396,11 @@ class RelaxFWTask(GsFWTask):
                     # Find the last TIM?_DEN file.
                     last_timden = self.restart_info.prev_outdir.find_last_timden_file()
                     if last_timden is not None:
-                        ofile = self.restart_info.prev_outdir.path_in("out_DEN")
-                        os.rename(last_timden.path, ofile)
-                        restart_file = self.out_to_in(ofile)
+                        if last_timden.path.endswith(".nc"):
+                            in_file_name = ("in_DEN.nc")
+                        else:
+                            in_file_name = ("in_DEN")
+                        restart_file = self.out_to_in_tim(last_timden.path, in_file_name)
                         irdvars = irdvars_for_ext("DEN")
 
                 if restart_file is None:
@@ -1302,6 +1431,36 @@ class RelaxFWTask(GsFWTask):
             path = self.outdir.has_abiext("HIST")
             if path: self._hist_nc_path = path
             return path
+
+    def out_to_in_tim(self, out_file, in_file):
+        """
+        links or copies, according to the fw_policy, the output file to the input data directory of this task
+        and rename the file so that ABINIT will read it as an input data file. for the TIM file the input needs to
+        be specified as depends on the specific iteration.
+
+        Returns:
+            The absolute path of the new file in the indata directory.
+        """
+        dest = os.path.join(self.indir.path, in_file)
+
+        if os.path.exists(dest) and not os.path.islink(dest):
+            logger.warning("Will overwrite %s with %s" % (dest, out_file))
+
+        # if rerunning in the same folder the file should be moved anyway
+        if self.ftm.fw_policy.copy_deps or self.workdir == self.restart_info.previous_dir:
+            shutil.copyfile(out_file, dest)
+        else:
+            # if dest already exists should be overwritten. see also resolve_deps and config_run
+            try:
+                os.symlink(out_file, dest)
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    os.remove(dest)
+                    os.symlink(out_file, dest)
+                else:
+                    raise e
+
+        return dest
 
 
 @explicit_serialize
@@ -1447,6 +1606,24 @@ class StrainPertTask(DfptTask):
     task_type = "strain_pert"
 
 
+@explicit_serialize
+class DteTask(DfptTask):
+    """
+    Task to handle the third derivatives with respect to the electric field.
+    """
+
+    CRITICAL_EVENTS = []
+
+    task_type = "dte"
+
+    # non-linear does not support autoparal. Take the suggested number of processors.
+    def run_autoparal(self, abiinput, autoparal_dir, ftm, clean_up='move'):
+        """
+        Non-linear does not support autoparal, so this will provide a fake run of the autoparal.
+        """
+        return self.run_fake_autoparal(ftm)
+
+
 ##############################
 # Convergence tasks
 ##############################
@@ -1491,7 +1668,7 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         """
 
         if ddb_source_task_types is None:
-            ddb_source_task_types = [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]
+            ddb_source_task_types = [PhononTask.task_type, DdeTask.task_type, BecTask.task_type, DteTask.task_type]
         elif not isinstance(ddb_source_task_types, (list, tuple)):
             ddb_source_task_types = [ddb_source_task_types]
 
@@ -1821,7 +1998,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
             command = []
             #consider the case of serial execution
             if self.ftm.fw_policy.mpirun_cmd:
-                command.append(self.ftm.fw_policy.mpirun_cmd)
+                command.extend(self.ftm.fw_policy.mpirun_cmd.split())
                 if 'mpi_ncpus' in fw_spec:
                     command.extend(['-n', str(fw_spec['mpi_ncpus'])])
             command.append(self.ftm.fw_policy.anaddb_cmd)
@@ -2020,15 +2197,21 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 class AutoparalTask(AbiFireTask):
     task_type = "autoparal"
 
-    def __init__(self, abiinput, restart_info=None, handlers=[], deps=None, history=[], is_autoparal=True,
+    def __init__(self, abiinput, restart_info=None, handlers=None, deps=None, history=None, is_autoparal=True,
                  use_SRC_scheme=False, task_type=None, forward_spec=False, skip_spec_keys=None):
         """
-        Note that the method still takes is_autoparal as input even if this is switched to True irrespcetively of the
+        Note that the method still takes is_autoparal as input even if this is switched to True irrespectively of the
         provided value, as the point of the task is to run autoparal. This is done to preserve the API in cases where
         automatic generation of tasks is involved.
         skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: default ['wf_task_index']
+        If abiinput is None, autoparal it will not run and it will be chosen a the preferred configuration will be
+        chosen based on the options set in the manager.
         #FIXME find a better solution if this model is preserved
         """
+        if handlers is None:
+            handlers = []
+        if history is None:
+            history = []
         super(AutoparalTask, self).__init__(abiinput, restart_info=restart_info, handlers=handlers, is_autoparal=True,
                                             deps=deps, history=history, use_SRC_scheme=use_SRC_scheme, task_type=task_type)
         self.forward_spec = forward_spec
@@ -2042,10 +2225,12 @@ class AutoparalTask(AbiFireTask):
         # Copy the appropriate dependencies in the in dir. needed in some cases
         self.resolve_deps(fw_spec)
 
-        optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
+        if self.abiinput is None:
+            optconf, qadapter_spec, qtk_qadapter = self.run_fake_autoparal(self.ftm)
+        else:
+            optconf, qadapter_spec, qtk_qadapter = self.run_autoparal(self.abiinput, os.path.abspath('.'), self.ftm)
 
         self.history.log_autoparal(optconf)
-        self.abiinput.set_vars(optconf.vars)
         mod_spec = [{'_push_all': {'spec->_tasks->0->abiinput->abi_args': list(optconf.vars.items())}}]
 
         if self.forward_spec:
@@ -2154,7 +2339,7 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
         nscf_fws = []
         if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfFWTask,
+            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfWfqFWTask,
                                                  {self.previous_task_type: "WFK", self.previous_task_type: "DEN"}, new_spec, ftm)
 
         ph_fws = []

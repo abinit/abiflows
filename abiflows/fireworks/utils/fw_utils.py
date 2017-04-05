@@ -114,7 +114,10 @@ def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0, return_qt
 
 
 def set_short_single_core_to_spec(spec={}, master_mem_overhead=0):
-        spec = dict(spec)
+        if spec is None:
+            spec = {}
+        else:
+            spec = dict(spec)
 
         qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead)
         spec['mpi_ncpus'] = 1

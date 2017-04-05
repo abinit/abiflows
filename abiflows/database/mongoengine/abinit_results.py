@@ -1,6 +1,6 @@
 from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin
 from abiflows.database.mongoengine.abinit_mixins import AbinitPhononOutputMixin, AbinitBasicInputMixin, \
-    AbinitGSOutputMixin, AbinitPhononOutputMixin
+    AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin
 from mongoengine import *
 from abiflows.core.models import AbiFileField, MSONField, AbiGzipFileField
 
@@ -63,4 +63,43 @@ class PhononResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
     fw_id = IntField()
     abinit_input = EmbeddedDocumentField(PhononAbinitInput, default=PhononAbinitInput)
     abinit_output = EmbeddedDocumentField(PhononAbinitOutput, default=PhononAbinitOutput)
+
+
+class DteAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
+    gs_input = MSONField(help_text="The last input used to calculate the wafunctions.")
+    ddk_input = MSONField(help_text="The last input used to calculate one of the ddk.")
+    dde_input = MSONField(help_text="The last input used to calculate one of the dde.")
+    dte_input = MSONField(help_text="The last input used to calculate one of the dte.")
+    phonon_input = MSONField(help_text="The last input used to calculate one of the phonons.")
+    kppa = IntField()
+    with_phonons = BooleanField(help_text="Whether the phonon perturbations have been included or not")
+
+
+class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
+    gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
+                          db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
+    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
+                                 collection_name='phonon_gs_outfile_fs')
+    anaddb_nc = AbiFileField(abiext="anaddb.nc", abiform="b", db_field='anaddb_nc_id', collection_name='anaddb_nc_fs')
+
+    emacro = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
+    emacro_rlx= ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
+    dchide= ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
+    dchidt= ListField(ListField(ListField(ListField(FloatField()))),
+                      help_text="First-order change in the linear dielectric susceptibility")
+
+
+class DteResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
+    """
+    Document containing the results for a dte workflow.
+    Includes information from the various steps of the workflow (scf, ddk, dde, ph, dte, anaddb)
+    """
+
+    mp_id = StringField()
+    relax_db = MSONField()
+    relax_id = StringField()
+    time_report = MSONField()
+    fw_id = IntField()
+    abinit_input = EmbeddedDocumentField(DteAbinitInput, default=DteAbinitInput)
+    abinit_output = EmbeddedDocumentField(DteAbinitOutput, default=DteAbinitOutput)
 
