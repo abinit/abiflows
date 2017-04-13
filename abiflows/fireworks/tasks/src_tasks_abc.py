@@ -718,7 +718,7 @@ class SRCCleanerOptions(MSONable):
         if this_step_state not in self.current_src_states_allowed:
             return []
         if self._which_src_steps_to_clean_pattern == 'all':
-            return range(1, this_step_index+1)
+            return list(range(1, this_step_index+1))
         elif self._which_src_steps_to_clean_pattern == 'this_one':
             return [this_step_index]
         elif self._which_src_steps_to_clean_pattern == 'the_one_before_this_one':
@@ -736,12 +736,12 @@ class SRCCleanerOptions(MSONable):
                 return []
             return [istep]
         elif self._which_src_steps_to_clean_pattern == 'all_before_this_one':
-            return range(1, this_step_index)
+            return list(range(1, this_step_index))
         elif self._which_src_steps_to_clean_pattern == 'all_before_the_previous_one':
-            return range(1, this_step_index-1)
+            return list(range(1, this_step_index-1))
         elif self._which_src_steps_to_clean_pattern == 'all_before_the_N_previous_ones':
             iprev = int(self.which_src_steps_to_clean.split('_')[3])
-            return range(1, this_step_index-iprev)
+            return list(range(1, this_step_index-iprev))
         elif self._which_src_steps_to_clean_pattern == 'single_N':
             istep = int(self.which_src_steps_to_clean.split('_')[1])
             if istep > this_step_index:
