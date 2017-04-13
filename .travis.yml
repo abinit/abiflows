@@ -54,10 +54,10 @@ install:
   #- git clone https://github.com/materialsproject/pymatgen.git && cd pymatgen && pip install -q -r requirements.txt && pip install -q -r requirements-optional.txt && python setup.py install && cd ../
 
   - python setup.py install
-  - mkdir -p ${HOME}/.abinit/abipy 
-  - cp abipy/data/managers/travis_scheduler.yml ${HOME}/.abinit/abipy/scheduler.yml
-  - cp abipy/data/managers/travis_manager.yml ${HOME}/.abinit/abipy/manager.yml
-  - ./dev_scripts/pyclean.py .
+  #- mkdir -p ${HOME}/.abinit/abipy 
+  #- cp abipy/data/managers/travis_scheduler.yml ${HOME}/.abinit/abipy/scheduler.yml
+  #- cp abipy/data/managers/travis_manager.yml ${HOME}/.abinit/abipy/manager.yml
+  #- ./dev_scripts/pyclean.py .
 
 before_script:
     # https://github.com/travis-ci/travis-ci/issues/6307
