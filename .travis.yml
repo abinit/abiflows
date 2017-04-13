@@ -35,7 +35,7 @@ install:
   - conda install mock
   - conda install pymongo 
   - pip install mongoengine
-  - conda install fireworks flask flask-mongoengine
+  - pip install fireworks flask flask-mongoengine
   - pip install pep8 python-coveralls
 
   # Install abinit from abinit conda channel.
