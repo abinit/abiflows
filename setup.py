@@ -105,7 +105,7 @@ install_requires = [
     "six",
     "prettytable",
     "numpy",
-    "python-daemon",
+    #"python-daemon",
     "jinja2",
     "pymongo",
     "mongoengine",
