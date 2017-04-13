@@ -33,7 +33,8 @@ install:
   - pip install pytest scripttest nose nose-exclude
   #- if [[ "${PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
   - conda install mock
-  - conda install pymongo mongoengine
+  - conda install pymongo 
+  - pip install mongoengine
   - pip install pep8 python-coveralls
   #- conda install matplotlib seaborn
   #- conda install ipython jupyter nbformat
