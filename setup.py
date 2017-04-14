@@ -51,15 +51,7 @@ def find_package_data():
     # This is not enough for these things to appear in an sdist.
     # We need to muck with the MANIFEST to get this to work
     package_data = {'abiflows.fireworks.tasks': ['n1000multiples_primes.json']
-    #    'abipy.data.refs' : [
-    #        "al_g0w0_spfunc/*",
-    #        "alas_phonons/*",
-    #        "si_bse/*",
-    #        "si_ebands/*",
-    #        "si_g0w0/*",
-    #        ],
-    }
-
+            }
     return package_data
 
 
@@ -113,22 +105,16 @@ install_requires = [
     "six",
     "prettytable",
     "numpy",
-    "python-daemon",
+    #"python-daemon",
+    "jinja2",
     "pymongo",
     "mongoengine",
     "flask",
     "flask-mongoengine",
+    "paramiko",
+    "abipy>=0.2.0",
+    "custodian",
     "fireworks",
-    "paramiko"
-    #"abipy",
-    #"apscheduler==2.1.0",
-    #"pydispatcher>=2.0.3",
-    #"pyyaml>=3.11",
-    #"pandas",
-    #"netCDF4",
-    #"html2text",
-    #"pigments",
-    #"jinja2",    
 ]
 
 #---------------------------------------------------------------------------
