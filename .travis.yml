@@ -25,11 +25,6 @@ install:
 
   # See https://github.com/BVLC/caffe/issues/3884 and https://docs.continuum.io/mkl-optimizations/
   - conda install nomkl
-  - conda install gcc scipy sympy
-  #- conda install pandas
-  #- conda install netcdf4 
-  # See https://github.com/ContinuumIO/anaconda-issues/issues/1360
-  #- conda install hdf4=4.2.12
   - pip install pytest scripttest nose nose-exclude
   #- if [[ "${PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
   - conda install mock
@@ -41,10 +36,7 @@ install:
   # Install abinit from abinit conda channel.
   - conda config --add channels conda-forge
   - conda install -c abinit abinit=8.2.2
-
-  # phonopy is not a requirement but we test scripts in data/runs that use it
-  #- conda install -c conda-forge phonopy
-
+  #
   # Get pymatgen from matsci
   - conda config --add channels matsci
   - conda install pymatgen #=4.7.2
@@ -54,10 +46,10 @@ install:
   #- git clone https://github.com/materialsproject/pymatgen.git && cd pymatgen && pip install -q -r requirements.txt && pip install -q -r requirements-optional.txt && python setup.py install && cd ../
 
   - python setup.py install
-  #- mkdir -p ${HOME}/.abinit/abipy 
-  #- cp abipy/data/managers/travis_scheduler.yml ${HOME}/.abinit/abipy/scheduler.yml
-  #- cp abipy/data/managers/travis_manager.yml ${HOME}/.abinit/abipy/manager.yml
-  #- ./dev_scripts/pyclean.py .
+  - mkdir -p ${HOME}/.abinit/abipy 
+  - cp ./dev_scripts/travis_scheduler.yml ${HOME}/.abinit/abipy/scheduler.yml
+  - cp ./dev_scripts/travis_manager.yml ${HOME}/.abinit/abipy/manager.yml
+  - ./dev_scripts/pyclean.py .
 
 before_script:
     # https://github.com/travis-ci/travis-ci/issues/6307
