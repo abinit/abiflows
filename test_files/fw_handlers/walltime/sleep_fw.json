@@ -41,7 +41,6 @@
     "updated_on": "2015-11-17T10:36:21.154111",
     "spec": {
         "_queueadapter": {
-            "pvmem": 1200,
             "group_list": "napsimu",
             "queue": "main",
             "qverbatim": "#PBS -r y\n",
@@ -78,7 +77,6 @@
             "queue": {
                 "qtype": "pbspro",
                 "qparams": {
-                    "pvmem": 1200,
                     "qverbatim": "#PBS -r y\n",
                     "queue": "main",
                     "group_list": "napsimu",

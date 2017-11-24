@@ -6,13 +6,13 @@ import shutil
 
 from abiflows.core.mastermind_abc import Cleaner
 
-from pymatgen.util.testing import PymatgenTest
+from abiflows.core.testing import AbiflowsTest
 
 
 test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
                         "test_files")
 
-class TestCleaner(PymatgenTest):
+class TestCleaner(AbiflowsTest):
 
     def test_cleaner(self):
         # Keep current working directory, create tmp directory and change to tmp directory

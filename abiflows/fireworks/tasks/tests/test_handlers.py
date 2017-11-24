@@ -3,7 +3,7 @@ from __future__ import unicode_literals, division, print_function
 
 import json
 import os
-from abipy.core.testing import AbipyTest
+from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.handlers import WalltimeHandler
 from abiflows.fireworks.tasks.utility_tasks import CheckTask
 from pymatgen.io.abinit.qadapters import QueueAdapter
@@ -13,7 +13,7 @@ from fireworks.core.firework import Firework
 test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
                         "test_files")
 
-class TestWalltimeHandler(AbipyTest):
+class TestWalltimeHandler(AbiflowsTest):
 
     def test_walltime_handler(self):
         # Simple test from a queue_adapter

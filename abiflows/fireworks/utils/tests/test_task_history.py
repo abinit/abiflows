@@ -6,11 +6,11 @@ import abipy.data as abidata
 import abipy.abilab as abilab
 from abiflows.fireworks.tasks.abinit_tasks import RestartInfo
 from abiflows.fireworks.utils.task_history import TaskHistory, TaskEvent
-from abipy.core.testing import AbipyTest
+from abiflows.core.testing import AbiflowsTest
 from abipy.abio.factories import ion_ioncell_relax_input
 from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 
-class TestTaskHistory(AbipyTest):
+class TestTaskHistory(AbiflowsTest):
 
     def test_task_history_and_events(self):
         th = TaskHistory()

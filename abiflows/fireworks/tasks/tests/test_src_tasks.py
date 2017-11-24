@@ -1,11 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals, division, print_function
 
-from abipy.core.testing import AbipyTest
+from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.src_tasks_abc import SRCCleanerOptions
 
 
-class TestSRCCleanerOptions(AbipyTest):
+class TestSRCCleanerOptions(AbiflowsTest):
     def test_steps_to_clean(self):
         # Clean all option
         opt = SRCCleanerOptions.clean_all()

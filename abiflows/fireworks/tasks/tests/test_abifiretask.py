@@ -8,14 +8,14 @@ import abipy.data as abidata
 import abipy.abilab as abilab
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
 from abipy.abio.factories import *
-from abipy.core.testing import AbipyTest
+from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.tests import mock_objects
 from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 from fireworks import FWAction
 import abiflows.fireworks.utils.fw_utils
 
 
-class TestAbiFireTask(AbipyTest):
+class TestAbiFireTask(AbiflowsTest):
 
     def setUp(self):
         si = abilab.Structure.from_file(abidata.cif_file("si.cif"))
@@ -33,7 +33,7 @@ class TestAbiFireTask(AbipyTest):
         self.assertFwSerializable(task)
 
 
-class TestTaskAnalysis(AbipyTest):
+class TestTaskAnalysis(AbiflowsTest):
     def setUp(self):
         si = abilab.Structure.from_file(abidata.cif_file("si.cif"))
         self.si_scf_input = ebands_input(si, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10).split_datasets()[0]
@@ -83,7 +83,7 @@ class TestTaskAnalysis(AbipyTest):
             scf_task.task_analysis(fake_spec)
 
 
-class TestFWTaskManager(AbipyTest):
+class TestFWTaskManager(AbiflowsTest):
     def tearDown(self):
         try:
             os.remove(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE)
