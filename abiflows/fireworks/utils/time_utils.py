@@ -4,9 +4,20 @@ from monty.json import MSONable
 
 
 def seconds_to_hms(seconds):
+    """
+    Args:
+        seconds: number of seconds
+
+    Returns:
+        A string representing the seconds with the format "h:mm:ss". An empty string if seconds is None.
+    """
+    if seconds is None:
+        return ""
+
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)
+
 
 class TimeReport(MSONable):
     def __init__(self, total_run_time, n_fws, total_cpu_time=None, contributed_cpu_time=0, total_run_time_per_tag=None,

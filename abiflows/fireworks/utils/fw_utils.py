@@ -113,13 +113,13 @@ def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0, return_qt
     return {}
 
 
-def set_short_single_core_to_spec(spec={}, master_mem_overhead=0):
+def set_short_single_core_to_spec(spec={}, master_mem_overhead=0, fw_manager=None):
         if spec is None:
             spec = {}
         else:
             spec = dict(spec)
 
-        qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead)
+        qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead, fw_manager=fw_manager)
         spec['mpi_ncpus'] = 1
         spec['_queueadapter'] = qadapter_spec
         return spec
@@ -299,3 +299,60 @@ def get_last_completed_launch(fw):
     """
     return next((l for l in reversed(fw.archived_launches + fw.launches) if
                  l.state == 'COMPLETED'), None)
+
+
+def load_abitask(fw):
+    """
+    Given a Firework object returns the abinit related task contained. Sets the list of directories set from the
+    last completed launch. If no abinit related firetasks are found or the task has no completed launch returns None.
+    """
+
+    from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, AnaDdbAbinitTask, MergeDdbAbinitTask
+
+    for t in fw.tasks:
+        if isinstance(task, (AbiFireTask, AnaDdbAbinitTask, MergeDdbAbinitTask)):
+            launch = get_last_completed_launch()
+            if launch:
+                task.set_workdir(workdir=t.launch[-1].launch_dir)
+                return t
+
+    return None
+
+def get_fw_by_task_index(wf, task_tag, index=1):
+    """
+    Given a workflow object (with connection to the db) returns the wf corresponding to the task_type.
+
+    Args:
+        wf: a fireworks Workflow object.
+        task_tag: the task tag associated with the task as defined in abinit_workflows. Should not include the index.
+        index: the numerical or text index of the task. If None the last fw corresponding to task_tag will be selected.
+
+    Returns:
+        a fireworks Firework object. None if no match is found.
+    """
+
+    task_index = None
+    if index is not None:
+        task_index = "{}_{}".format(task_tag, index)
+
+    selected_fw = None
+    max_ind = -1
+    for fw in wf.fws:
+        fw_task_index = fw.spec.get('wf_task_index', '')
+        if task_index:
+            if fw_task_index == task_index:
+                return fw
+        else:
+            if task_tag in fw_task_index:
+                # the last part of the task_index can be text (i.e. "autoparal") so the conversion to int may fail
+                # if no other indices has been found select that one
+                try:
+                    fw_ind = int(fw_task_index.split('_')[-1])
+                    if  fw_ind > max_ind:
+                        selected_fw = fw
+                        max_ind = fw_ind
+                except:
+                    if selected_fw is None:
+                        selected_fw = fw
+
+    return selected_fw

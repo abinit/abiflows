@@ -81,9 +81,18 @@ def createSRCFireworksOld(task_class, task_input, SRC_spec, initialization_info,
 
 @explicit_serialize
 class FinalCleanUpTask(FireTaskBase):
+    """
+    Eliminates all the files in outdata based on the extension of the files and deletes of the files in
+    indata and tmpdata.
+    """
     task_type = 'finalclnup'
 
     def __init__(self, out_exts=None):
+        """
+        Args:
+            out_exts: list of extensions. can be a list or a single string with extensions separated by a ",".
+                If None "WFK" and "1WF" will be deleted
+        """
         if out_exts is None:
             out_exts = ["WFK", "1WF"]
         if isinstance(out_exts, str):
@@ -233,7 +242,7 @@ class MongoEngineDBInsertionTask(FireTaskBase):
 
     @serialize_fw
     def to_dict(self):
-        return dict(db_data=self.db_data)
+        return dict(db_data=self.db_data.as_dict())
 
     @classmethod
     def from_dict(cls, m_dict):

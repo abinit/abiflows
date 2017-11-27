@@ -51,8 +51,7 @@ class DatabaseData(MSONable):
 
     @pmg_serialize
     def as_dict_no_credentials(self):
-        return dict(database=self.database, host=self.host, port=self.port, collection=self.collection,
-                    username=self.username, password=self.password)
+        return dict(database=self.database, host=self.host, port=self.port, collection=self.collection)
 
     def connect_mongoengine(self, alias=DEFAULT_CONNECTION_NAME):
         connect(db=self.database, host=self.host, port=self.port, username=self.username,

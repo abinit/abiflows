@@ -644,7 +644,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                     else:
                         return FWAction(detours=restart_fw, stored_data=stored_data)
                 else:
-                    msg = "Critical events couldn't be fixed by handlers. return code".format(self.returncode)
+                    msg = "Critical events couldn't be fixed by handlers. return code {}".format(self.returncode)
                     logger.error(msg)
                     raise AbinitRuntimeError(self, "Critical events couldn't be fixed by handlers")
 
@@ -680,7 +680,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         if self.restart_info:
             num_restarts = self.restart_info.num_restarts + 1
         else:
-            num_restarts = 1
+            num_restarts = 0
 
         self.restart_info = RestartInfo(previous_dir=self.workdir, reset=reset, num_restarts=num_restarts)
 
@@ -749,7 +749,8 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         new_fw = Firework([restart_task], spec=new_spec)
 
         # At this point the event report should be present
-        stored_data = self.report.as_dict()
+        stored_data = {}
+        stored_data['report'] = self.report.as_dict()
         stored_data['finalized'] = False
         stored_data['restarted'] = True
 
@@ -946,7 +947,8 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         pass
 
     def conclude_task(self, fw_spec):
-        stored_data = self.report.as_dict()
+        stored_data = {}
+        stored_data['report'] = self.report.as_dict()
         stored_data['finalized'] = True
         self.history.log_finalized(self.abiinput)
         stored_data['history'] = self.history.as_dict()
@@ -1556,7 +1558,7 @@ class DfptTask(AbiFireTask):
 
 
 @explicit_serialize
-class DdkTask(AbiFireTask):
+class DdkTask(DfptTask):
     task_type = "ddk"
 
     def conclude_task(self, fw_spec):
@@ -2157,10 +2159,10 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         """Absolute path of the run.abo_PHDOS.nc file. Empty string if file is not present."""
         # Lazy property to avoid multiple calls to has_abiext.
         try:
-            return self._phbst_path
+            return self._phdos_path
         except AttributeError:
             path = os.path.join(self.workdir, "run.abo_PHDOS.nc")
-            if path: self._phbst_path = path
+            if path: self._phdos_path = path
             return path
 
     @property
@@ -2168,10 +2170,10 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         """Absolute path of the anaddb.nc file. Empty string if file is not present."""
         # Lazy property to avoid multiple calls to has_abiext.
         try:
-            return self._phbst_path
+            return self._anaddbnc_path
         except AttributeError:
             path = os.path.join(self.workdir, "anaddb.nc")
-            if path: self._phbst_path = path
+            if path: self._anaddbnc_path = path
             return path
 
     def open_phbst(self):
@@ -2204,8 +2206,8 @@ class AutoparalTask(AbiFireTask):
         provided value, as the point of the task is to run autoparal. This is done to preserve the API in cases where
         automatic generation of tasks is involved.
         skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: default ['wf_task_index']
-        If abiinput is None, autoparal it will not run and it will be chosen a the preferred configuration will be
-        chosen based on the options set in the manager.
+        If abiinput is None, autoparal will not run and the preferred configuration will be chosen based on
+        the options set in the manager.
         #FIXME find a better solution if this model is preserved
         """
         if handlers is None:
@@ -2750,7 +2752,7 @@ class AbinitRuntimeError(AbiFWError):
         # would have been disabled. As this will be translated to SRC version this is just to make it work for now.
         super(AbinitRuntimeError, self).__init__(msg)
         self.task = task
-        if self.task:
+        if self.task is not None and hasattr(self.task, "report") and self.task.report is not None:
             report = self.task.report
             self.num_errors = report.num_errors
             self.num_warnings = report.num_warnings
@@ -2768,12 +2770,12 @@ class AbinitRuntimeError(AbiFWError):
         d = {}
         d['num_errors'] = self.num_errors
         d['num_warnings'] = self.num_warnings
-        if self.num_errors:
+        if self.errors:
             errors = []
             for error in self.errors:
                 errors.append(error.as_dict())
             d['errors'] = errors
-        if self.num_warnings:
+        if self.warnings:
             warnings = []
             for warning in self.warnings:
                 warnings.append(warning.as_dict())

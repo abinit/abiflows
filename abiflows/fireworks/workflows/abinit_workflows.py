@@ -789,6 +789,9 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
 
 
 class NscfFWWorkflow(AbstractFWWorkflow):
+    workflow_class = 'NscfFWWorkflow'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
     def __init__(self, scf_input, nscf_input, autoparal=False, spec=None, initialization_info=None):
 
         start_task_index = 1
@@ -1323,12 +1326,111 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
 
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
-        self.wf = Workflow([self.scf_fw],
+
+        # Generate the phononic part of the workflow
+
+        # Since everything is being generated here factories should be used to generate the AbinitInput
+        if isinstance(scf_inp, InputFactory):
+            scf_inp = scf_inp.build_input()
+
+        if isinstance(phonon_factory, InputFactory):
+            initialization_info['input_factory'] = ph_inputs.as_dict()
+            spec['initialization_info']['input_factory'] = ph_inputs.as_dict()
+            ph_inputs = ph_inputs.build_input(scf_inp)
+        else:
+            ph_inputs = phonon_factory
+
+        ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
+        ddk_inputs = ph_inputs.filter_by_tags(DDK)
+        dde_inputs = ph_inputs.filter_by_tags(DDE)
+        bec_inputs = ph_inputs.filter_by_tags(BEC)
+
+        nscf_inputs = ph_inputs.filter_by_tags(NSCF)
+
+        previous_task_type = scf_task.task_type
+
+        nscf_fws = []
+        if nscf_inputs is not None:
+            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfWfqFWTask,
+                                                 {previous_task_type: "WFK", previous_task_type: "DEN"}, spec)
+
+        ph_fws = []
+        if ph_q_pert_inputs:
+            ph_q_pert_inputs.set_vars(prtwf=-1)
+            ph_fws, ph_fw_deps = self.get_fws(ph_q_pert_inputs, PhononTask, {previous_task_type: "WFK"}, spec,
+                                              nscf_fws)
+
+        ddk_fws = []
+        if ddk_inputs:
+            ddk_fws, ddk_fw_deps = self.get_fws(ddk_inputs, DdkTask, {previous_task_type: "WFK"}, spec)
+
+        dde_fws = []
+        if dde_inputs:
+            dde_inputs.set_vars(prtwf=-1)
+            dde_fws, dde_fw_deps = self.get_fws(dde_inputs, DdeTask,
+                                                {previous_task_type: "WFK", DdkTask.task_type: "DDK"}, spec)
+
+        bec_fws = []
+        if bec_inputs:
+            bec_inputs.set_vars(prtwf=-1)
+            bec_fws, bec_fw_deps = self.get_fws(bec_inputs, BecTask,
+                                                {previous_task_type: "WFK", DdkTask.task_type: "DDK"}, spec)
+
+        mrgddb_spec = dict(spec)
+        mrgddb_spec['wf_task_index'] = 'mrgddb'
+        #FIXME import here to avoid circular imports.
+        from abiflows.fireworks.utils.fw_utils import get_short_single_core_spec
+        qadapter_spec = self.set_short_single_core_to_spec(mrgddb_spec)
+        mrgddb_spec['mpi_ncpus'] = 1
+        # Set a higher priority to favour the end of the WF
+        #TODO improve the handling of the priorities
+        mrgddb_spec['_priority'] = 10
+        num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
+        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
+                             name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
+
+        fws_deps = defaultdict(list)
+
+        autoparal_fws = []
+        if autoparal:
+            # add an AutoparalTask for each type and relative dependencies
+            dfpt_autoparal_fw = self.get_autoparal_fw(ph_q_pert_inputs[0], 'dfpt', {previous_task_type: "WFK"}, spec,
+                                                      nscf_fws)[0]
+            autoparal_fws.append(dfpt_autoparal_fw)
+
+            fws_deps[dfpt_autoparal_fw] = ph_fws + ddk_fws + dde_fws + bec_fws
+            fws_deps[self.scf_fw].append(dfpt_autoparal_fw)
+
+            if nscf_fws:
+                nscf_autoparal_fw = self.get_autoparal_fw(nscf_inputs[0], 'nscf',
+                                                          {previous_task_type: "WFK", previous_task_type: "DEN"}, spec)[0]
+                fws_deps[nscf_autoparal_fw] = nscf_fws
+                autoparal_fws.append(nscf_autoparal_fw)
+
+        if ddk_fws:
+            for ddk_fw in ddk_fws:
+                if dde_fws:
+                    fws_deps[ddk_fw] = dde_fws
+                if bec_fws:
+                    fws_deps[ddk_fw] = bec_fws
+
+        # all the abinit related FWs should depend on the scf calculation for the WFK
+        abinit_fws = nscf_fws + ddk_fws + dde_fws + ph_fws + bec_fws
+        fws_deps[self.scf_fw].extend(abinit_fws)
+
+        ddb_fws = dde_fws + ph_fws + bec_fws
+        #TODO pass all the tasks to the MergeDdbTask for logging or easier retrieve of the DDK?
+        for ddb_fw in ddb_fws:
+            fws_deps[ddb_fw] = mrgddb_fw
+
+        total_list_fws = [self.scf_fw] + ddb_fws+ddk_fws+[mrgddb_fw] + nscf_fws + autoparal_fws
+
+        fws_deps.update(ph_fw_deps)
+
+        self.wf = Workflow(total_list_fws, links_dict=fws_deps,
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module})
-        self.wf.append_wf(self.generate_ph(phonon_factory, scf_inp, autoparal=autoparal, spec=spec,
-                                           initialization_info=initialization_info, previous_task_type=ScfFWTask.task_type),
-                          fw_ids=[self.scf_fw.fw_id])
+
 
     def get_fws(self, multi_inp, task_class, deps, spec, nscf_fws=None):
         formula = multi_inp[0].structure.composition.reduced_formula
@@ -1386,102 +1488,6 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
             fw_deps[parent_fw].append(fw)
 
         return fw, fw_deps
-
-    def generate_ph(self, ph_inputs, previous_input, autoparal, spec, initialization_info, previous_task_type):
-
-        # Since everything is being generated here factories should be used to generate the AbinitInput
-
-        if isinstance(previous_input, InputFactory):
-            previous_input = previous_input.build_input()
-
-        if isinstance(ph_inputs, InputFactory):
-            initialization_info['input_factory'] = ph_inputs.as_dict()
-            spec['initialization_info']['input_factory'] = ph_inputs.as_dict()
-            ph_inputs = ph_inputs.build_input(previous_input)
-
-        ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
-        ddk_inputs = ph_inputs.filter_by_tags(DDK)
-        dde_inputs = ph_inputs.filter_by_tags(DDE)
-        bec_inputs = ph_inputs.filter_by_tags(BEC)
-
-        nscf_inputs = ph_inputs.filter_by_tags(NSCF)
-
-        nscf_fws = []
-        if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfWfqFWTask,
-                                                 {previous_task_type: "WFK", previous_task_type: "DEN"}, spec)
-
-        ph_fws = []
-        if ph_q_pert_inputs:
-            ph_q_pert_inputs.set_vars(prtwf=-1)
-            ph_fws, ph_fw_deps = self.get_fws(ph_q_pert_inputs, PhononTask, {previous_task_type: "WFK"}, spec,
-                                              nscf_fws)
-
-        ddk_fws = []
-        if ddk_inputs:
-            ddk_fws, ddk_fw_deps = self.get_fws(ddk_inputs, DdkTask, {previous_task_type: "WFK"}, spec)
-
-        dde_fws = []
-        if dde_inputs:
-            dde_inputs.set_vars(prtwf=-1)
-            dde_fws, dde_fw_deps = self.get_fws(dde_inputs, DdeTask,
-                                                {previous_task_type: "WFK", DdkTask.task_type: "DDK"}, spec)
-
-        bec_fws = []
-        if bec_inputs:
-            bec_inputs.set_vars(prtwf=-1)
-            bec_fws, bec_fw_deps = self.get_fws(bec_inputs, BecTask,
-                                                {previous_task_type: "WFK", DdkTask.task_type: "DDK"}, spec)
-
-        mrgddb_spec = dict(spec)
-        mrgddb_spec['wf_task_index'] = 'mrgddb'
-        #FIXME import here to avoid circular imports.
-        from abiflows.fireworks.utils.fw_utils import get_short_single_core_spec
-        qadapter_spec = self.set_short_single_core_to_spec(mrgddb_spec)
-        mrgddb_spec['mpi_ncpus'] = 1
-        # Set a higher priority to favour the end of the WF
-        #TODO improve the handling of the priorities
-        mrgddb_spec['_priority'] = 10
-        num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
-        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
-                             name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
-
-        fws_deps = {}
-
-        autoparal_fws = []
-        if autoparal:
-            # add an AutoparalTask for each type and relative dependencies
-            dfpt_autoparal_fw = self.get_autoparal_fw(ph_q_pert_inputs[0], 'dfpt', {previous_task_type: "WFK"}, spec,
-                                                      nscf_fws)[0]
-            autoparal_fws.append(dfpt_autoparal_fw)
-
-            fws_deps[dfpt_autoparal_fw] = ph_fws + ddk_fws + dde_fws + bec_fws
-
-            if nscf_fws:
-                nscf_autoparal_fw = self.get_autoparal_fw(nscf_inputs[0], 'nscf',
-                                                          {previous_task_type: "WFK", previous_task_type: "DEN"}, spec)[0]
-                fws_deps[nscf_autoparal_fw] = nscf_fws
-                autoparal_fws.append(nscf_autoparal_fw)
-
-        if ddk_fws:
-            for ddk_fw in ddk_fws:
-                if dde_fws:
-                    fws_deps[ddk_fw] = dde_fws
-                if bec_fws:
-                    fws_deps[ddk_fw] = bec_fws
-
-        ddb_fws = dde_fws + ph_fws + bec_fws
-        #TODO pass all the tasks to the MergeDdbTask for logging or easier retrieve of the DDK?
-        for ddb_fw in ddb_fws:
-            fws_deps[ddb_fw] = mrgddb_fw
-
-        total_list_fws = ddb_fws+ddk_fws+[mrgddb_fw] + nscf_fws + autoparal_fws
-
-        fws_deps.update(ph_fw_deps)
-
-        ph_wf = Workflow(total_list_fws, fws_deps)
-
-        return ph_wf
 
 
 class DteFWWorkflow(AbstractFWWorkflow):
