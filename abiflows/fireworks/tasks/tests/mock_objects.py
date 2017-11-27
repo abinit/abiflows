@@ -1,8 +1,12 @@
 from __future__ import print_function, division, unicode_literals
 
+import os
+
 from pymatgen.io.abinit.events import EventReport, ScfConvergenceWarning, RelaxConvergenceWarning, AbinitError
 
-from fireworks import Firework, FireTaskBase, FWAction
+from fireworks import Firework, FireTaskBase, FWAction, explicit_serialize
+from abiflows.fireworks.workflows.abinit_workflows import AbstractFWWorkflow
+from mongoengine import Document, StringField, IntField
 
 ##########################
 # Test reports
@@ -26,97 +30,47 @@ def report_AbinitError():
 # Fake Tasks
 ##########################
 
-
+@explicit_serialize
 class FakeTask(FireTaskBase):
     def run_task(self, fw_spec):
         return FWAction()
 
 fake_fw = Firework([FakeTask()])
 
+
+@explicit_serialize
+class CreateOutputsTask(FireTaskBase):
+    """
+    Creates temporary files in with the specified extensions in the "indata", "outdata" and "tmpdata" folders.
+    """
+
+    prefix = "tmp_"
+
+    def run_task(self, fw_spec):
+        dirs = ["indata", "outdata", "tmpdata"]
+        for d in dirs:
+            os.mkdir(d)
+            for e in self.get('extensions', []):
+                with open(os.path.join(d, "{}{}".format(self.prefix, e)), "wt") as f:
+                    f.write(" ")
+        return FWAction()
+
+
 ##########################
-# Test FWTaskManager
+# Fake Workflows
 ##########################
 
-MANAGER_OK="""# lemaitre2 hardware: http://www.ceci-hpc.be/clusters.html#lemaitre2
-hardware: &hardware
-   num_nodes: 112
-   sockets_per_node: 2
-   cores_per_socket: 6
-   mem_per_node: 48Gb
+class DataDocument(Document):
 
-job: &job
-    mpi_runner: mpirun
-    shell_env:
-        PATH: $HOME/local/bin:$PATH
-    modules:
-        - python/2.7
-    # pre_run is a string in verbatim mode (note |)
-    pre_run: |
-        ulimit unlimited
+    test_field_string = StringField()
+    test_field_int = IntField()
 
-# queues
-qadapters:
-  - priority: 1
-    queue:
-       qname: defq
-       qtype: slurm
-    limits:
-       timelimit: 3-0:0:0
-       min_cores: 1
-       max_cores: 12
-    hardware: *hardware
-    job: *job
+class SaveDataWorkflow(AbstractFWWorkflow):
 
-fw_policy:
-    rerun_same_dir: True,
-    max_restarts: 20
-    autoparal: True
-"""
+    workflow_class = 'SaveDataWorkflow'
+    workflow_module = 'abiflows.fireworks.tasks.tests.mock_objects'
 
-MANAGER_NO_QADAPTERS="""# lemaitre2 hardware: http://www.ceci-hpc.be/clusters.html#lemaitre2
-hardware: &hardware
-   num_nodes: 112
-   sockets_per_node: 2
-   cores_per_socket: 6
-   mem_per_node: 48Gb
-
-job: &job
-    mpi_runner: mpirun
-    shell_env:
-        PATH: $HOME/local/bin:$PATH
-    modules:
-        - python/2.7
-    # pre_run is a string in verbatim mode (note |)
-    pre_run: |
-        ulimit unlimited
-
-fw_policy:
-    rerun_same_dir: True,
-    max_restarts: 20
-    autoparal: True
-"""
-
-MANAGER_UNKNOWN_KEYS="""# lemaitre2 hardware: http://www.ceci-hpc.be/clusters.html#lemaitre2
-hardware: &hardware
-   num_nodes: 112
-   sockets_per_node: 2
-   cores_per_socket: 6
-   mem_per_node: 48Gb
-
-job: &job
-    mpi_runner: mpirun
-    shell_env:
-        PATH: $HOME/local/bin:$PATH
-    modules:
-        - python/2.7
-    # pre_run is a string in verbatim mode (note |)
-    pre_run: |
-        ulimit unlimited
-
-fw_policy:
-    rerun_same_dir: True,
-    max_restarts: 20
-    autoparal: True
-    wrong_key: 1
-"""
+    @classmethod
+    def get_mongoengine_results(cls, wf):
+        return DataDocument(test_field_string="test_text", test_field_int=5)
 

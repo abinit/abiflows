@@ -8,6 +8,8 @@ import abipy.data as abidata
 import abipy.abilab as abilab
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
 from abipy.abio.factories import *
+from abipy.abio.factories import ScfForPhononsFactory
+from abipy.abio.inputs import AnaddbInput
 from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.tests import mock_objects
 from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
@@ -15,11 +17,16 @@ from fireworks import FWAction
 import abiflows.fireworks.utils.fw_utils
 
 
+test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
+                        "test_files", "fw_task_managers")
+
+
 class TestAbiFireTask(AbiflowsTest):
 
     def setUp(self):
-        si = abilab.Structure.from_file(abidata.cif_file("si.cif"))
-        self.si_scf_input = ebands_input(si, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10).split_datasets()[0]
+        self.si_structure = abilab.Structure.from_file(abidata.cif_file("si.cif"))
+        self.si_scf_input = ebands_input(self.si_structure, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10).split_datasets()[0]
+        self.si_scf_factory = ScfForPhononsFactory(self.si_structure, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10)
 
     def test_AbiFireTask(self):
         task = abinit_tasks.AbiFireTask(self.si_scf_input)
@@ -32,16 +39,27 @@ class TestAbiFireTask(AbiflowsTest):
         task.to_dict()
         self.assertFwSerializable(task)
 
+        task = abinit_tasks.ScfFWTask(self.si_scf_factory)
+        task.to_dict()
+        self.assertFwSerializable(task)
+
+    def test_AnaDdbAbinitTask(self):
+        ana_inp = AnaddbInput.phbands_and_dos(self.si_structure, ngqpt=[4,4,4], nqsmall=10)
+        task = abinit_tasks.AnaDdbAbinitTask(ana_inp)
+        task.to_dict()
+        self.assertFwSerializable(task)
+
 
 class TestTaskAnalysis(AbiflowsTest):
     def setUp(self):
-        si = abilab.Structure.from_file(abidata.cif_file("si.cif"))
-        self.si_scf_input = ebands_input(si, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10).split_datasets()[0]
+        self.si_structure = abilab.Structure.from_file(abidata.cif_file("si.cif"))
+        self.si_scf_input = ebands_input(self.si_structure, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10).split_datasets()[0]
 
     @mock.patch.object(abinit_tasks.AbiFireTask, 'get_event_report')
     def test_scf_unconverged(self, report):
         scf_task = abinit_tasks.ScfFWTask(self.si_scf_input)
-        scf_task.ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
+        ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
+        scf_task.ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_file(ftm_path)
 
         report.return_value = mock_objects.report_ScfConvergenceWarning()
 
@@ -53,7 +71,7 @@ class TestTaskAnalysis(AbiflowsTest):
             self.assertIsInstance(action, FWAction)
 
             scf_task.restart_info = abinit_tasks.RestartInfo(
-                previous_dir='.', num_restarts=abiflows.fireworks.utils.fw_utils.FWTaskManager.fw_policy_defaults['max_restarts'])
+                previous_dir='.', num_restarts=scf_task.ftm.fw_policy.max_restarts)
             with self.assertRaises(abinit_tasks.UnconvergedError):
                 scf_task.task_analysis(fake_spec)
 
@@ -83,39 +101,36 @@ class TestTaskAnalysis(AbiflowsTest):
             scf_task.task_analysis(fake_spec)
 
 
-class TestFWTaskManager(AbiflowsTest):
-    def tearDown(self):
+class TestErrorClasses(AbiflowsTest):
+
+    def setUp(self):
+        self.si_structure = abilab.Structure.from_file(abidata.cif_file("si.cif"))
+        self.si_scf_input = ebands_input(self.si_structure, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10).split_datasets()[0]
+
+    @mock.patch.object(abinit_tasks.AbiFireTask, 'get_event_report')
+    def test_abinit_runtime_error(self, report):
+        err = abinit_tasks.AbinitRuntimeError(msg="test error", num_errors=5)
+        err.to_dict()
+
+        scf_task = abinit_tasks.ScfFWTask(self.si_scf_input)
+
+        report.return_value = mock_objects.report_AbinitError()
+
+        fake_spec = {'test': 1}
+
         try:
-            os.remove(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE)
-        except OSError:
-            pass
+            # set the returncode to avoid logging problems
+            scf_task.returncode = 10
+            scf_task.task_analysis(fake_spec)
+        except abinit_tasks.AbinitRuntimeError as e:
+            e.to_dict()
+            assert e.num_errors == 1
 
-    def test_no_file(self):
-        abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
 
-    def test_ok(self):
-        with open(os.path.abspath(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE), 'w') as f:
-            f.write(mock_objects.MANAGER_OK)
+class TestRestartInfo(AbiflowsTest):
 
-        ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config()
-        ftm.update_fw_policy({'max_restarts': 30})
-
-        self.assertTrue(ftm.fw_policy.rerun_same_dir)
-        self.assertEqual(ftm.fw_policy.max_restarts, 30)
-        self.assertTrue(ftm.fw_policy.autoparal)
-
-    def test_no_qadapter(self):
-        with open(os.path.abspath(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE), 'w') as f:
-            f.write(mock_objects.MANAGER_NO_QADAPTERS)
-
-        ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
-
-        self.assertIsNone(ftm.task_manager)
-
-    def test_unknown_keys(self):
-        with open(os.path.abspath(abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE), 'w') as f:
-            f.write(mock_objects.MANAGER_UNKNOWN_KEYS)
-
-        with self.assertRaises(RuntimeError):
-            abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config({})
-
+    def test_restart_info(self):
+        ri = abinit_tasks.RestartInfo("/path/to/dir", reset=False, num_restarts=4)
+        self.assertMSONable(ri)
+        ri.prev_indir
+        ri.prev_outdir
