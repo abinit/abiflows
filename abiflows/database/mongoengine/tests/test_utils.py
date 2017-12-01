@@ -47,9 +47,6 @@ class TestDatabaseData(AbiflowsTest):
         documents = collection.find()
         assert documents.count() == 1
         assert documents[0]['test'] == "abc"
-        self.assertAlmostEqual()
-        import math
-        math.close
 
     @unittest.skipUnless(has_mongodb(), "A local mongodb is required.")
     def test_connection_alias(self):
