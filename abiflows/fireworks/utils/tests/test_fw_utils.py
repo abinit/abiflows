@@ -65,6 +65,10 @@ class TestFunctions(AbiflowsTest):
     def tearDownClass(cls):
         cls.teardown_fireworks(module_dir=MODULE_DIR)
 
+    def tearDown(self):
+        if self.lp:
+            self.lp.reset(password=None,require_password=False)
+
     def test_get_short_single_core_spec(self):
         ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
         ftm = FWTaskManager.from_file(ftm_path)

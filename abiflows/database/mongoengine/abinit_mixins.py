@@ -11,6 +11,7 @@ from abiflows.core.models import AbiFileField, MSONField
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.abinit.pseudos import Pseudo
 from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
+from monty.json import jsanitize
 
 class AbinitPseudoData(EmbeddedDocument):
     """
@@ -49,6 +50,10 @@ class AbinitPseudoData(EmbeddedDocument):
 
         self.set_pseudos_vars(pseudos_path)
 
+    def set_pseudos_from_abinit_input(self, abinit_input):
+        pseudos_path = [i.path for i in abinit_input.pseudos]
+        self.set_pseudos_vars(pseudos_path)
+
 
 class AbinitBasicInputMixin(object):
     """
@@ -74,13 +79,17 @@ class AbinitBasicInputMixin(object):
         self.structure = abinit_input.structure.as_dict()
         self.ecut = abinit_input['ecut']
         # kpoints may be defined in different ways
-        self.nshiftk = abinit_input.get('nshiftk', None)
-        self.shiftk = abinit_input.get('shiftk', None)
-        self.ngkpt = abinit_input.get('ngkpt', None)
+        self.nshiftk = jsanitize(abinit_input.get('nshiftk', None))
+        self.shiftk = jsanitize(abinit_input.get('shiftk', None))
+        self.ngkpt = jsanitize(abinit_input.get('ngkpt', None))
         self.kptrlatt = abinit_input.get('kptrlatt', None)
         self.dilatmx = abinit_input.get('dilatmx', 1)
         self.occopt = abinit_input.get('occopt', 1)
         self.tsmear = abinit_input.get('tsmear', None)
+
+        pseudo_data = AbinitPseudoData()
+        pseudo_data.set_pseudos_from_abinit_input(abinit_input)
+        self.pseudopotentials = pseudo_data
 
 
 class AbinitGSOutputMixin(GroundStateOutputMixin):
@@ -98,7 +107,7 @@ class AbinitDftpOutputMixin(object):
 
     ddb = AbiFileField(abiext="DDB", abiform="t", help_text="DDB file produced by a dfpt falculation",
                        db_field='ddb_id', collection_name='ddb_fs')
-    structure = MSONField()
+    structure = MSONField(required=True, help_text="The structure used for the calculation.")
 
 
 class AbinitPhononOutputMixin(AbinitDftpOutputMixin):

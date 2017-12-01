@@ -2,17 +2,24 @@ from __future__ import print_function, division, unicode_literals
 
 import pytest
 import os
+import glob
 import unittest
+import tempfile
+import filecmp
+import numpy.testing.utils as nptu
+import numpy as np
 
 from abiflows.fireworks.workflows.abinit_workflows import RelaxFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import RelaxFWTask
-from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
+from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index,load_abitask,get_last_completed_launch
+from abiflows.core.testing import AbiflowsIntegrationTest
 from fireworks.core.rocket_launcher import rapidfire
 from abipy.dynamics.hist import HistFile
 from pymatgen.io.abinit.utils import Directory
 from pymatgen.io.abinit.events import DilatmxError
+from pymatgen.core.structure import Structure
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
-
+from abiflows.core.testing import AbiflowsTest
 
 ABINIT_VERSION = "8.6.1"
 
@@ -20,15 +27,20 @@ ABINIT_VERSION = "8.6.1"
 #               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
 
-# pytestmark = pytest.mark.usefixtures("cleandb")
+pytestmark = pytest.mark.usefixtures("cleandb")
 
-class ItestRelax():
+class ItestRelax(AbiflowsIntegrationTest):
 
-    def itest_relax(self, lp, fworker, tmpdir, inputs_relax_si_low, use_autoparal):
+    def itest_relax_wf(self, lp, fworker, tmpdir, inputs_relax_si_low, use_autoparal, db_data):
         """
         Tests the basic functionality of a RelaxFWWorkflow with autoparal True and False.
         """
-        wf = RelaxFWWorkflow(*inputs_relax_si_low, autoparal=use_autoparal)
+        wf = RelaxFWWorkflow(*inputs_relax_si_low, autoparal=use_autoparal,
+                             initialization_info={"kppa": 100})
+
+        wf.add_mongoengine_db_insertion(db_data)
+        wf.add_final_cleanup(["WFK"])
+
         initial_ion_structure = inputs_relax_si_low[0].structure
 
         ion_fw_id = wf.ion_fw.fw_id
@@ -43,15 +55,54 @@ class ItestRelax():
 
         assert wf.state == "COMPLETED"
 
-        ioncell_fw = get_fw_by_task_index(wf, "ioncell", index=None)
+        ioncell_fw = get_fw_by_task_index(wf, "ioncell", index=-1)
+        ioncell_task = load_abitask(ioncell_fw)
 
-        ioncell_hist_path = Directory(os.path.join(ioncell_fw.launches[-1].launch_dir,
-                                                   abinit_tasks.OUTDIR_NAME)).has_abiext("HIST")
+        ioncell_hist_path = ioncell_task.outdir.has_abiext("HIST")
 
         with HistFile(ioncell_hist_path) as hist:
             initial_ioncell_structure = hist.structures[0]
 
         assert initial_ion_structure != initial_ioncell_structure
+
+        # check the effect of the final cleanup
+        assert len(glob.glob(os.path.join(ioncell_task.outdir.path, "*_WFK"))) == 0
+        assert len(glob.glob(os.path.join(ioncell_task.outdir.path, "*_DEN"))) > 0
+        assert len(glob.glob(os.path.join(ioncell_task.tmpdir.path, "*"))) == 0
+        assert len(glob.glob(os.path.join(ioncell_task.indir.path, "*"))) == 0
+
+        # check the result in the DB
+        from abiflows.database.mongoengine.abinit_results import RelaxResult
+        with db_data.switch_collection(RelaxResult) as RelaxResult:
+            results = RelaxResult.objects()
+            assert len(results) == 1
+            r = results[0]
+
+            # test input structure
+            assert r.abinit_input.structure.to_mgobj() == initial_ion_structure
+            # test output structure
+            # remove site properties, otherwise the "cartesian_forces" won't match due to the presence of a
+            # list instead of an array in the deserialization
+            db_structure = r.abinit_output.structure.to_mgobj()
+            for s in db_structure:
+                s._properties = {}
+            hist_structure = hist.structures[-1]
+            for s in hist_structure:
+                s._properties = {}
+            assert db_structure == hist_structure
+            assert r.abinit_input.ecut == inputs_relax_si_low[0]['ecut']
+            assert r.abinit_input.kppa == 100
+            nptu.assert_array_equal(r.abinit_input.last_input.to_mgobj()['ngkpt'], inputs_relax_si_low[0]['ngkpt'])
+
+            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+                db_file.write(r.abinit_output.gsr.read())
+                assert filecmp.cmp(ioncell_task.gsr_path, db_file.name)
+
+        if self.check_numerical_values:
+            with ioncell_task.open_gsr() as gsr:
+                assert gsr.energy == pytest.approx(-240.28203726305696, rel=0.01)
+                assert gsr.structure.lattice.abc == pytest.approx(
+                    np.array((3.8101419256822333, 3.8101444012342616, 3.8101434297177068)), rel=0.05)
 
     def itest_uncoverged(self, lp, fworker, tmpdir, inputs_relax_si_low):
         """
@@ -89,7 +140,7 @@ class ItestRelax():
         fw_detour_id = links_ion[0]
 
         # run the detour
-        rapidfire(lp, fworker, m_dir=str(tmpdir), nlaunches=1)
+        rapidfire(lp, fworker, m_dir=str(tmpdir))
 
         fw_detour = lp.get_fw_by_id(fw_detour_id)
 
@@ -97,8 +148,19 @@ class ItestRelax():
 
         restart_structure = fw_detour.spec['_tasks'][0].abiinput.structure
 
+        wf = lp.get_wf_by_fw_id(ion_fw_id)
+
+        assert wf.state == "COMPLETED"
+
         # check that the structure has been updated when restarting
         assert initial_ion_structure != restart_structure
+
+        if self.check_numerical_values:
+            last_ioncell_task = load_abitask(get_fw_by_task_index(wf, "ioncell", index=-1))
+            with last_ioncell_task.open_gsr() as gsr:
+                assert gsr.energy == pytest.approx(-240.28203726305696, rel=0.01)
+                assert gsr.structure.lattice.abc == pytest.approx(
+                    np.array((3.8101428225862084, 3.810143911539674, 3.8101432797789698)), rel=0.05)
 
     def itest_dilatmx(self, lp, fworker, tmpdir, inputs_relax_si_low):
         """
@@ -135,7 +197,7 @@ class ItestRelax():
         fw_detour_id = links_ioncell[0]
 
         # run the detour with lowered dilatmx
-        rapidfire(lp, fworker, m_dir=str(tmpdir), nlaunches=1)
+        rapidfire(lp, fworker, m_dir=str(tmpdir))
 
         fw_detour = lp.get_fw_by_id(fw_detour_id)
 
@@ -150,7 +212,20 @@ class ItestRelax():
         # check that the structure has been updated when restarting
         assert initial_ion_structure != restart_structure
 
-    def itest_dilatmx_error(self, lp, fworker, tmpdir, inputs_relax_si_low):
+        wf = lp.get_wf_by_fw_id(ion_fw_id)
+
+        assert wf.state == "COMPLETED"
+
+        # check that the structure has been updated when restarting
+        assert initial_ion_structure != restart_structure
+
+        if self.check_numerical_values:
+            last_ioncell_task = load_abitask(get_fw_by_task_index(wf, "ioncell", index=-1))
+            with last_ioncell_task.open_gsr() as gsr:
+                assert gsr.structure.lattice.abc == pytest.approx(
+                    np.array((3.8101419255677951, 3.8101444011173897, 3.8101434296150889)), rel=0.05)
+
+    def itest_dilatmx_error(self, lp, fworker, tmpdir, inputs_relax_si_low, db_data):
         """
         Test the workflow when a dilatmx error shows up.
         Also tests the skip_ion option of RelaxFWWorkflow
@@ -162,6 +237,8 @@ class ItestRelax():
 
         # also test the skip_ion
         wf = RelaxFWWorkflow(*inputs_relax_si_low, autoparal=False, skip_ion=True)
+        wf.add_mongoengine_db_insertion(db_data)
+
         initial_ion_structure = inputs_relax_si_low[0].structure
 
         ioncell_fw_id = wf.ioncell_fw.fw_id
@@ -181,14 +258,14 @@ class ItestRelax():
         links_ioncell = lp.get_wf_by_fw_id(ioncell_fw_id).links[ioncell_fw_id]
 
         # there should be an additional child (the detour)
-        assert len(links_ioncell) == 1
+        assert len(links_ioncell) == 2
 
-        fw_detour_id = links_ioncell[0]
-
-        # run the detour with lowered dilatmx
+        # run the detour restarting froom previous structure
         rapidfire(lp, fworker, m_dir=str(tmpdir), nlaunches=1)
 
-        fw_detour = lp.get_fw_by_id(fw_detour_id)
+        wf = lp.get_wf_by_fw_id(ioncell_fw_id)
+
+        fw_detour = get_fw_by_task_index(wf, "ioncell", index=2)
 
         assert fw_detour.state == "COMPLETED"
 
@@ -200,3 +277,10 @@ class ItestRelax():
 
         # check that the structure has been updated when restarting
         assert initial_ion_structure != restart_structure
+
+        # complete the wf. Just check that the saving without the ion tasks completes without error
+        rapidfire(lp, fworker, m_dir=str(tmpdir))
+
+        wf = lp.get_wf_by_fw_id(ioncell_fw_id)
+
+        assert wf.state == "COMPLETED"

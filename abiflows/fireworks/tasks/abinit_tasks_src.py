@@ -24,7 +24,7 @@ from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, IND
 from fireworks import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
-from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
+from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
 from pymatgen.io.abinit.utils import Directory, File
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit import events

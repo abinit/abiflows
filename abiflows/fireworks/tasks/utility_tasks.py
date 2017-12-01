@@ -120,6 +120,8 @@ class FinalCleanUpTask(FireTaskBase):
                             os.unlink(fp)
                         elif os.path.isdir(fp):
                             shutil.rmtree(fp)
+                        elif os.path.islink(fp):
+                            os.unlink(fp)
                         deleted_files.append(fp)
                     except:
                         logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))

@@ -3,10 +3,12 @@ from __future__ import print_function, division, unicode_literals
 
 import os
 import pytest
+from pymongo import MongoClient
 import abipy.abilab as abilab
 import abipy.data as abidata
 from abipy.abio.factories import ebands_input, ion_ioncell_relax_input, scf_for_phonons, phonons_from_gsinput
 from abipy.data.benchmark_structures import simple_semiconductors, simple_metals
+from abiflows.database.mongoengine.utils import DatabaseData
 
 from fireworks import LaunchPad, FWorker
 
@@ -15,6 +17,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 TESTDB_NAME = 'abiflows_unittest'
+TESTCOLLECTION_NAME = 'test_results'
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -26,7 +29,7 @@ def lp(request):
     def fin():
         lp.connection.drop_database(TESTDB_NAME)
 
-    # request.addfinalizer(fin)
+    request.addfinalizer(fin)
     return lp
 
 
@@ -113,6 +116,18 @@ def input_scf_phonon_gan_low():
                              smearing=None)
 
     return  scf_in
+
+@pytest.fixture(scope="function")
+def db_data():
+    """
+    Creates an instance of DatabaseData with TESTDB_NAME and TESTCOLLECTION_NAME.
+    Drops the collection.
+    """
+    db_data = DatabaseData(TESTDB_NAME, collection=TESTCOLLECTION_NAME)
+    connection = db_data.connect_mongoengine()
+    connection[TESTDB_NAME].drop_collection(TESTCOLLECTION_NAME)
+
+    return db_data
 
 
 @pytest.fixture(scope="function", params=simple_semiconductors)

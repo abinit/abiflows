@@ -310,10 +310,10 @@ def load_abitask(fw):
     from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, AnaDdbAbinitTask, MergeDdbAbinitTask
 
     for t in fw.tasks:
-        if isinstance(task, (AbiFireTask, AnaDdbAbinitTask, MergeDdbAbinitTask)):
-            launch = get_last_completed_launch()
+        if isinstance(t, (AbiFireTask, AnaDdbAbinitTask, MergeDdbAbinitTask)):
+            launch = get_last_completed_launch(fw)
             if launch:
-                task.set_workdir(workdir=t.launch[-1].launch_dir)
+                t.set_workdir(workdir=launch.launch_dir)
                 return t
 
     return None
@@ -325,14 +325,15 @@ def get_fw_by_task_index(wf, task_tag, index=1):
     Args:
         wf: a fireworks Workflow object.
         task_tag: the task tag associated with the task as defined in abinit_workflows. Should not include the index.
-        index: the numerical or text index of the task. If None the last fw corresponding to task_tag will be selected.
+        index: the numerical or text index of the task. If negative the the last fw corresponding to task_tag will
+            be selected. If None, no index will be considered and the first match will be returned.
 
     Returns:
         a fireworks Firework object. None if no match is found.
     """
 
     task_index = None
-    if index is not None:
+    if index is not None and index >=0:
         task_index = "{}_{}".format(task_tag, index)
 
     selected_fw = None
@@ -344,6 +345,8 @@ def get_fw_by_task_index(wf, task_tag, index=1):
                 return fw
         else:
             if task_tag in fw_task_index:
+                if index is None:
+                    return fw
                 # the last part of the task_index can be text (i.e. "autoparal") so the conversion to int may fail
                 # if no other indices has been found select that one
                 try:

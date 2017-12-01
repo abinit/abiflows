@@ -279,8 +279,12 @@ class ScfFWWorkflow(AbstractFWWorkflow):
 
         spec = dict(spec)
         spec['initialization_info'] = initialization_info
+        start_task_index = 1
         if autoparal:
             spec = self.set_short_single_core_to_spec(spec)
+            start_task_index = 'autoparal'
+
+        spec['wf_task_index'] = 'scf_' + str(start_task_index)
 
         self.scf_fw = Firework(abitask, spec=spec)
 
@@ -460,15 +464,15 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         ion_fws = [fw for fw in wf.fws if fw.spec.get('wf_task_index', '').startswith('ion_') and not fw.spec.get('wf_task_index', '').endswith('autoparal')]
         ion_fws.sort(key=lambda l: int(l.spec.get('wf_task_index', '0').split('_')[-1]))
-        first_ion_fw = ioncell_fws[0]
-        last_ion_fw = ioncell_fws[-1]
-        last_ion_launch = get_last_completed_launch(last_ion_fw)
+        if ion_fws:
+            first_fw = ion_fws[0]
+        else:
+            first_fw = ioncell_fws[0]
 
         relax_task = last_ioncell_fw.tasks[-1]
         relax_task.set_workdir(workdir=last_ioncell_launch.launch_dir)
         structure = relax_task.get_final_structure()
         history_ioncell = loadfn(os.path.join(last_ioncell_launch.launch_dir, 'history.json'))
-        history_ion = loadfn(os.path.join(last_ion_launch.launch_dir, 'history.json'))
 
         document = RelaxResult()
 
@@ -479,7 +483,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         document.abinit_input.last_input = final_input.as_dict()
         document.abinit_input.set_abinit_basic_from_abinit_input(final_input)
         # need to set the structure as the initial one
-        document.abinit_input.structure = first_ion_fw.tasks[0].abiinput.structure.as_dict()
+        document.abinit_input.structure = first_fw.tasks[0].abiinput.structure.as_dict()
 
         document.history = history_ioncell.as_dict()
 
@@ -493,7 +497,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         document.time_report = get_time_report_for_wf(wf).as_dict()
 
-        document.fw_id = last_ion_fw.fw_id
+        document.fw_id = last_ioncell_fw.fw_id
 
         document.created_on = datetime.datetime.now()
         document.modified_on = datetime.datetime.now()
@@ -1159,10 +1163,6 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         ph_wf = cls(scf_inp, phonon_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
 
-        # if all the q points for a grid are calculated in this WF, add an anaddb task
-        if ph_ngqpt and not qpoints_to_skip:
-            ph_wf.add_anaddb_ph_bs_fw(Structure.as_structure(structure), ph_ngqpt)
-
         return ph_wf
 
     def add_anaddb_ph_bs_fw(self, structure, ph_ngqpt, ndivsm=20, nqsmall=15):
@@ -1334,9 +1334,9 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
             scf_inp = scf_inp.build_input()
 
         if isinstance(phonon_factory, InputFactory):
-            initialization_info['input_factory'] = ph_inputs.as_dict()
-            spec['initialization_info']['input_factory'] = ph_inputs.as_dict()
-            ph_inputs = ph_inputs.build_input(scf_inp)
+            initialization_info['input_factory'] = phonon_factory.as_dict()
+            spec['initialization_info']['input_factory'] = phonon_factory.as_dict()
+            ph_inputs = phonon_factory.build_input(scf_inp)
         else:
             ph_inputs = phonon_factory
 

@@ -2,11 +2,16 @@ from __future__ import print_function, division, unicode_literals
 
 import pytest
 import os
+import glob
 import unittest
+import tempfile
+import filecmp
+import numpy.testing.utils as nptu
 
 from abiflows.fireworks.workflows.abinit_workflows import PhononFullFWWorkflow, PhononFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import RelaxFWTask
 from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
+from abiflows.core.testing import AbiflowsIntegrationTest
 from fireworks.core.rocket_launcher import rapidfire
 from abipy.dynamics.hist import HistFile
 from pymatgen.io.abinit.utils import Directory
@@ -20,11 +25,11 @@ ABINIT_VERSION = "8.6.1"
 #               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
 
-# pytestmark = pytest.mark.usefixtures("cleandb")
+pytestmark = pytest.mark.usefixtures("cleandb")
 
-class ItestPhonon():
+class ItestPhonon(AbiflowsIntegrationTest):
 
-    def itest_phonon(self, lp, fworker, tmpdir, input_scf_phonon_si_low, use_autoparal):
+    def itest_phonon_wf(self, lp, fworker, tmpdir, input_scf_phonon_si_low, use_autoparal, db_data):
         """
         Tests the complete running of PhononFullFWWorkflow and PhononFWWorkflow
         """
@@ -32,9 +37,14 @@ class ItestPhonon():
         # test at gamma
         ph_fac = PhononsFromGsFactory(qpoints=[[0,0,0]], ph_tol = {"tolvrs": 1.0e-7}, ddk_tol = {"tolwfr": 1.0e-16},
                                       dde_tol = {"tolvrs": 1.0e-7}, wfq_tol = {"tolwfr": 1.0e-16})
-        wf_gen = PhononFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=use_autoparal)
+
+        # first run the phonon workflow with generation task
+        wf_gen = PhononFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=use_autoparal,
+                                  initialization_info={"ngqpt": [1,1,1], "kppa": 100})
 
         wf_gen.add_anaddb_ph_bs_fw(input_scf_phonon_si_low.structure, ph_ngqpt=[1,1,1], ndivsm=2, nqsmall=2)
+        wf_gen.add_mongoengine_db_insertion(db_data)
+        wf_gen.add_final_cleanup(["WFK"])
 
         scf_id = wf_gen.scf_fw.fw_id
         ph_generation_fw_id = wf_gen.ph_generation_fw.fw_id
@@ -49,7 +59,44 @@ class ItestPhonon():
 
         assert wf_gen.state == "COMPLETED"
 
+        ph_task = load_abitask(get_fw_by_task_index(wf_gen, "phonon_0", index=-1))
+
+        # check the effect of the final cleanup
+        assert len(glob.glob(os.path.join(ph_task.outdir.path, "*_WFK"))) == 0
+        assert len(glob.glob(os.path.join(ph_task.outdir.path, "*_DEN1"))) > 0
+        assert len(glob.glob(os.path.join(ph_task.tmpdir.path, "*"))) == 0
+        assert len(glob.glob(os.path.join(ph_task.indir.path, "*"))) == 0
+
+        # check the save in the DB
+        from abiflows.database.mongoengine.abinit_results import PhononResult
+        with db_data.switch_collection(PhononResult) as PhononResult:
+            results = PhononResult.objects()
+            assert len(results) == 1
+            r = results[0]
+
+            assert r.abinit_input.structure.to_mgobj() == input_scf_phonon_si_low.structure
+            assert r.abinit_output.structure.to_mgobj() == input_scf_phonon_si_low.structure
+            assert r.abinit_input.ecut == input_scf_phonon_si_low['ecut']
+            assert r.abinit_input.kppa == 100
+            nptu.assert_array_equal(r.abinit_input.gs_input.to_mgobj()['ngkpt'], input_scf_phonon_si_low['ngkpt'])
+            nptu.assert_array_equal(r.abinit_input.ngqpt, [1,1,1])
+
+            ana_task = load_abitask(get_fw_by_task_index(wf_gen, "anaddb", index=None))
+
+            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+                db_file.write(r.abinit_output.phonon_bs.read())
+                assert filecmp.cmp(ana_task.phbst_path, db_file.name)
+
+            mrgddb_task = load_abitask(get_fw_by_task_index(wf_gen, "mrgddb", index=None))
+
+            with tempfile.NamedTemporaryFile(mode="wt", bufsize=0) as db_file:
+                db_file.write(r.abinit_output.ddb.read())
+                assert filecmp.cmp(mrgddb_task.merged_ddb_path, db_file.name)
+
+        # then rerun a similar workflow, but completely generated at its creation
         wf_full = PhononFullFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=use_autoparal)
+        wf_full.add_anaddb_ph_bs_fw(input_scf_phonon_si_low.structure, ph_ngqpt=[1,1,1], ndivsm=2, nqsmall=2)
+        wf_full.add_mongoengine_db_insertion(db_data)
 
         scf_id = wf_full.scf_fw.fw_id
         old_new = wf_full.add_to_db(lpad=lp)
@@ -62,13 +109,37 @@ class ItestPhonon():
 
         assert wf_full.state == "COMPLETED"
 
-        # the full workflow doesn't contain the generation FW and the anaddb, but should have the same amount of
-        # perturbations.
+        # the full workflow doesn't contain the generation FW and the cleanup tasks, but should have the same
+        # amount of perturbations.
         if use_autoparal:
             diff = 1
         else:
             diff = 2
         assert len(wf_full.id_fw) + diff == len(wf_gen.id_fw)
+
+        if self.check_numerical_values:
+            gen_scf_task = load_abitask(get_fw_by_task_index(wf_gen, "scf", index=-1))
+            with gen_scf_task.open_gsr() as gen_gsr:
+                gen_energy = gen_gsr.energy
+                assert gen_energy == pytest.approx(-240.264972012, rel=0.01)
+
+            gen_ana_task = load_abitask(get_fw_by_task_index(wf_gen, "anaddb", index=None))
+            with gen_ana_task.open_phbst() as gen_phbst:
+                gen_phfreq = gen_phbst.phbands.phfreqs[0, 3]
+                assert gen_phfreq == pytest.approx(0.06029885, rel=0.1)
+
+            full_scf_task = load_abitask(get_fw_by_task_index(wf_gen, "scf", index=-1))
+            with full_scf_task.open_gsr() as full_gsr:
+                full_energy = full_gsr.energy
+                assert full_energy == pytest.approx(-240.264972012, rel=0.01)
+
+            full_ana_task = load_abitask(get_fw_by_task_index(wf_gen, "anaddb", index=None))
+            with full_ana_task.open_phbst() as full_phbst:
+                full_phfreqs = full_phbst.phbands.phfreqs[0, 3]
+                assert full_phfreqs == pytest.approx(0.06029885, rel=0.1)
+
+            assert gen_energy == pytest.approx(full_energy, rel=1e-6)
+            assert gen_phfreq == pytest.approx(full_phfreqs, rel=1e-6)
 
     def check_restart_task_type(self, lp, fworker, tmpdir, fw_id, task_tag):
 
@@ -93,7 +164,7 @@ class ItestPhonon():
         rapidfire(lp, fworker, m_dir=str(tmpdir))
 
         wf = lp.get_wf_by_fw_id(fw_id)
-        fw = get_fw_by_task_index(wf, task_tag, index=None)
+        fw = get_fw_by_task_index(wf, task_tag, index=-1)
 
         assert fw.state == "COMPLETED"
 

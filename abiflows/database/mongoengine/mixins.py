@@ -7,6 +7,7 @@ from __future__ import print_function, division, unicode_literals
 
 from mongoengine import *
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.core.periodic_table import Element
 from abiflows.core.models import AbiFileField, MSONField
 
 
@@ -125,8 +126,7 @@ class HubbardsField(DictField):
     Dictfield to validate the passed values
     """
     def validate(self, value):
-        from pymatgen.core.periodic_table import ALL_ELEMENT_SYMBOLS
-        if not all(k in ALL_ELEMENT_SYMBOLS for k in value.keys()):
+        if not all(Element.is_valid_symbol(k) for k in value.keys()):
             self.error('Keys should be element symbols')
         if not all(isinstance(v, (float, int)) for v in value.values()):
             self.error('Values should be numbers')

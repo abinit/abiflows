@@ -29,7 +29,7 @@ from pymatgen.io.abinit import events, tasks
 from pymatgen.io.abinit.utils import irdvars_for_ext
 from pymatgen.io.abinit.wrappers import Mrgddb
 from pymatgen.io.abinit.qutils import time2slurm
-from pymatgen.serializers.json_coders import json_pretty_dump, pmg_serialize
+from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
 from monty.json import MontyEncoder, MontyDecoder, MSONable
 from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
@@ -1491,16 +1491,18 @@ class HybridFWTask(GsFWTask):
         sigres_path = self.sigres_path
 
         if not sigres_path:
-            logger.critical("%s didn't produce a SIGRES file in %s" % (self, self.outdir))
-            return None
+            msg = "%s didn't produce a SIGRES file in %s" % (self, self.outdir)
+            logger.critical(msg)
+            raise PostProcessError(msg)
 
         # Open the SIGRES file and add its data to results.out
         from abipy.electrons.gw import SigresFile
         try:
             return SigresFile(sigres_path)
         except Exception as exc:
-            logger.critical("Exception while reading SIGRES file at %s:\n%s" % (sigres_path, str(exc)))
-            return None
+            msg = "Exception while reading SIGRES file at %s:\n%s" % (sigres_path, str(exc))
+            logger.critical(msg)
+            raise PostProcessError(msg)
 
 
 @explicit_serialize
@@ -2190,9 +2192,45 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         try:
             return PhbstFile(self.phbst_path)
         except Exception as exc:
-            msg = "Exception while reading GSR file at %s:\n%s" % (self.phbst_path, str(exc))
+            msg = "Exception while reading PHBST file at %s:\n%s" % (self.phbst_path, str(exc))
             logger.critical(msg)
-            return PostProcessError(msg)
+            raise PostProcessError(msg)
+
+    def open_phdos(self):
+        """
+        Open PHDOS file produced by Anaddb and returns :class:`PhdosFile` object.
+        Raise a PostProcessError exception if file could not be found or file is not readable.
+        """
+        from abipy.dfpt.phonons import PhdosFile
+        if not self.phdos_path:
+            msg = "No PHDOS file available for task {} in {}".format(self, self.outdir)
+            logger.critical(msg)
+            raise PostProcessError(msg)
+
+        try:
+            return PhdosFile(self.phdos_path)
+        except Exception as exc:
+            msg = "Exception while reading PHDOS file at %s:\n%s" % (self.phdos_path, str(exc))
+            logger.critical(msg)
+            raise PostProcessError(msg)
+
+    def open_anaddbnc(self):
+        """
+        Open anaddb.nc file produced by Anaddb and returns :class:`AnaddbNcFile` object.
+        Raise a PostProcessError exception if file could not be found or file is not readable.
+        """
+        from abipy.dfpt.anaddbnc import AnaddbNcFile
+        if not self.anaddb_nc_path:
+            msg = "No anaddb.nc file available for task {} in {}".format(self, self.outdir)
+            logger.critical(msg)
+            raise PostProcessError(msg)
+
+        try:
+            return AnaddbNcFile(self.anaddb_nc_path)
+        except Exception as exc:
+            msg = "Exception while reading anaddb.nc file at %s:\n%s" % (self.anaddb_nc_path, str(exc))
+            logger.critical(msg)
+            raise PostProcessError(msg)
 
 
 @explicit_serialize

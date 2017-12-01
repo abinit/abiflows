@@ -32,6 +32,10 @@ class TestFinalCleanUpTask(AbiflowsTest):
     def tearDownClass(cls):
         cls.teardown_fireworks(module_dir=MODULE_DIR)
 
+    def tearDown(self):
+        if self.lp:
+            self.lp.reset(password=None,require_password=False)
+
     def test_class(self):
         """Test of basic methods"""
 

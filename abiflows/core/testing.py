@@ -17,6 +17,8 @@ import shutil
 import glob
 import unittest
 import numpy.testing.utils as nptu
+from mongoengine import connect, Document
+from mongoengine.connection import get_db, get_connection
 
 from monty.os.path import which
 from monty.string import is_string
@@ -93,3 +95,48 @@ class AbiflowsTest(AbipyTest):
         if module_dir:
             for ldir in glob.glob(os.path.join(module_dir,"launcher_*")):
                 shutil.rmtree(ldir)
+
+    @classmethod
+    def setup_mongoengine(cls):
+        try:
+            cls._connection = connect(db=TESTDB_NAME)
+            cls._connection.drop_database(TESTDB_NAME)
+            cls.db = get_db()
+        except:
+            cls.db = None
+            cls._connection = None
+
+    @classmethod
+    def teardown_mongoengine(cls):
+        if cls._connection:
+            cls._connection.drop_database(TESTDB_NAME)
+
+
+    def get_document_class_from_mixin(self, mixin_cls):
+        """
+        Utility function to generate a mongoengine Document class from the mixin.
+        Needed to save the object in the db with mongoengine
+        """
+
+        class TestDocument(mixin_cls, Document):
+            meta = {'collection': "test_{}".format(mixin_cls.__name__)}
+
+        return TestDocument
+
+
+class AbiflowsIntegrationTest(object):
+    """
+    Provides utility methods and variables for integration tests, that can't subclass unittest.TestCase
+    """
+
+    # variable to enable/disable the checks on the numerical quantities as output of the workflow
+    check_numerical_values = True
+
+    @staticmethod
+    def assertArrayAlmostEqual(actual, desired, decimal=7, err_msg='',
+                               verbose=True):
+        """
+        Tests if two arrays are almost equal to a tolerance. The CamelCase
+        naming is so that it is consistent with standard unittest methods.
+        """
+        return nptu.assert_almost_equal(actual, desired, decimal, err_msg, verbose)

@@ -1,9 +1,14 @@
 from __future__ import print_function, division, unicode_literals
 
 import pytest
+import os
+import glob
 
+from abipy.electrons.gsr import GsrFile
 from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow, ScfFWWorkflow
-from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask
+from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask, OUTDIR_NAME, INDIR_NAME, TMPDIR_NAME
+from abiflows.fireworks.utils.fw_utils import load_abitask, get_fw_by_task_index
+from abiflows.core.testing import AbiflowsIntegrationTest
 from fireworks.core.rocket_launcher import rapidfire
 
 
@@ -13,9 +18,10 @@ ABINIT_VERSION = "8.6.1"
 #               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
 
-# pytestmark = pytest.mark.usefixtures("cleandb")
+pytestmark = pytest.mark.usefixtures("cleandb")
 
-class ItestScf():
+
+class ItestScf(AbiflowsIntegrationTest):
 
     def itest_input_wf(self, lp, fworker, tmpdir, input_scf_si_low, use_autoparal):
         """
@@ -33,11 +39,25 @@ class ItestScf():
 
         assert fw.state == "COMPLETED"
 
+        wf = lp.get_wf_by_fw_id(scf_fw_id)
+
+        assert wf.state == "COMPLETED"
+        assert len(wf.leaf_fw_ids) == 1
+
+        if self.check_numerical_values:
+            task = load_abitask(lp.get_fw_by_id(wf.leaf_fw_ids[0]))
+
+            with task.open_gsr() as gsr:
+                assert gsr.energy == pytest.approx(-241.239839134, rel=0.05)
+
+
     def itest_scf_wf(self, lp, fworker, tmpdir, input_scf_si_low, use_autoparal):
         """
         Tests a simple scf run with the ScfFWWorkflow
         """
         wf = ScfFWWorkflow(input_scf_si_low, autoparal=use_autoparal)
+
+        wf.add_final_cleanup(["WFK"])
 
         scf_fw_id = wf.scf_fw.fw_id
         old_new = wf.add_to_db(lpad=lp)
@@ -49,13 +69,29 @@ class ItestScf():
 
         assert fw.state == "COMPLETED"
 
+        wf = lp.get_wf_by_fw_id(scf_fw_id)
+
+        assert wf.state == "COMPLETED"
+
+        # check the effect of the final cleanup
+        scf_task = load_abitask(get_fw_by_task_index(wf, "scf", index=1))
+
+        assert len(glob.glob(os.path.join(scf_task.outdir.path, "*_WFK"))) == 0
+        assert len(glob.glob(os.path.join(scf_task.outdir.path, "*_DEN"))) == 1
+        assert len(glob.glob(os.path.join(scf_task.tmpdir.path, "*"))) == 0
+        assert len(glob.glob(os.path.join(scf_task.indir.path, "*"))) == 0
+
+        if self.check_numerical_values:
+            with scf_task.open_gsr() as gsr:
+                assert gsr.energy == pytest.approx(-241.239839134, rel=0.05)
+
     def itest_not_converged(self, lp, fworker, tmpdir, input_scf_si_low):
         """
         Tests the ScfFWWorkflow with a calculation that does not converge on the first run.
         The calculation is continued until convergence is reached
         """
 
-        input_scf_si_low.set_vars(nstep=5)
+        input_scf_si_low.set_vars(nstep=3)
 
         wf = ScfFWWorkflow(input_scf_si_low, autoparal=False)
 
@@ -71,7 +107,8 @@ class ItestScf():
 
         launch = fw.launches[-1]
 
-        assert any(event.yaml_tag == ScfFWTask.CRITICAL_EVENTS[0].yaml_tag for event in launch.action.stored_data['report'])
+        assert any(event.yaml_tag == ScfFWTask.CRITICAL_EVENTS[0].yaml_tag
+                   for event in launch.action.stored_data['report'])
 
         links = lp.get_wf_by_fw_id(scf_fw_id).links
 
@@ -82,14 +119,23 @@ class ItestScf():
 
         assert fw_child.state == "READY"
 
-        rapidfire(lp, fworker, m_dir=str(tmpdir), nlaunches=1)
+        # run all the workflow to check that the calculation converged
+        rapidfire(lp, fworker, m_dir=str(tmpdir))
 
         fw_child = lp.get_fw_by_id(fw_child_id)
 
         assert fw_child.state == "COMPLETED"
 
-        # check that the new fw didn't generate further fws
-        assert fw_child not in lp.get_wf_by_fw_id(scf_fw_id).links
+        wf = lp.get_wf_by_fw_id(scf_fw_id)
+
+        assert wf.state == "COMPLETED"
+
+        if self.check_numerical_values:
+            task = load_abitask(lp.get_fw_by_id(wf.leaf_fw_ids[0]))
+
+            with task.open_gsr() as gsr:
+                assert gsr.energy == pytest.approx(-241.239839133, rel=0.05)
+
 
     def itest_not_converged_fizzled(self, lp, fworker, tmpdir, input_scf_si_low):
         """

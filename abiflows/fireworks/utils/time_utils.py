@@ -1,5 +1,5 @@
 import prettytable as pt
-from pymatgen.serializers.json_coders import pmg_serialize
+from pymatgen.util.serialization import pmg_serialize
 from monty.json import MSONable
 
 

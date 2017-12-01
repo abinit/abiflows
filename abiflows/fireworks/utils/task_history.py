@@ -5,7 +5,7 @@ Task history related objects
 from __future__ import print_function, division, unicode_literals
 
 from monty.json import MontyDecoder, jsanitize, MSONable
-from pymatgen.serializers.json_coders import pmg_serialize
+from pymatgen.util.serialization import pmg_serialize
 import collections
 import traceback
 
