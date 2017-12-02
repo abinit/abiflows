@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Setup script for abipy."""
+"""Setup script for abiflows."""
 from __future__ import print_function
 
 import sys
@@ -57,7 +57,7 @@ def find_package_data():
 
 def find_exclude_package_data():
     package_data = {
-    #    'abipy.data' : ["managers", 'benchmarks','runs/flow_*'],
+    #    'abiflows.data' : ["managers", 'benchmarks','runs/flow_*'],
     }
     return package_data
 
@@ -67,9 +67,9 @@ def find_exclude_package_data():
 #---------------------------------------------------------------------------
 
 def find_scripts():
-    """Find abipy scripts."""
+    """Find abiflows scripts."""
     scripts = []
-    # All python files in abipy/scripts
+    # All python files in abiflows/scripts
     pyfiles = glob(os.path.join('abiflows', 'scripts', "*.py"))
     scripts.extend(pyfiles)
     return scripts

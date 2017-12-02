@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ev  # exit on first error, print each command
 
-echo Installing abipy dependencies with conda.
+echo Installing abiflows dependencies with conda.
 echo Adding conda-forge, mastci and abinit to channels
 echo Working in CONDA_PREFIX: %{CONDA_PREFIX}
 conda config --add channels conda-forge

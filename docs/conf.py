@@ -299,7 +299,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'abiflows.tex', u'abiflows Documentation',
-   u'M. Giantomassi', 'manual'),
+   u'The Abinit group', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -343,7 +343,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'abiflows', u'abiflows Documentation',
-   u'M. Giantomassi', 'abiflows', 'One line description of project.',
+   u'The Abinit group', 'abiflows', 'One line description of project.',
    'Miscellaneous'),
 ]
 
