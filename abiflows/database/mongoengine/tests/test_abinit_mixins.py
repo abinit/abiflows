@@ -96,7 +96,7 @@ class TestAbinitMixins(AbiflowsTest):
             doc.structure = self.si_structure.as_dict()
             gsr_path = abidata.ref_file('si_scf_GSR.nc')
 
-            with open(gsr_path) as gsr:
+            with open(gsr_path, "rb") as gsr:
                 doc.gsr.put(gsr)
 
             doc.save()
@@ -105,8 +105,9 @@ class TestAbinitMixins(AbiflowsTest):
 
             assert len(query_result) == 1
             saved_doc = query_result[0]
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(saved_doc.gsr.read())
+                db_file.seek(0)
 
                 assert filecmp.cmp(gsr_path, db_file.name)
 
@@ -119,7 +120,8 @@ class TestAbinitMixins(AbiflowsTest):
             doc.structure = self.si_structure.as_dict()
             ddb_path = os.path.join(abidata.dirpath, 'refs', 'znse_phonons', 'ZnSe_hex_qpt_DDB')
 
-            with open(ddb_path, "rt") as ddb:
+            # read/write in binary for py3k compatibility with mongoengine
+            with open(ddb_path, "rb") as ddb:
                 doc.ddb.put(ddb)
 
             doc.save()
@@ -128,8 +130,9 @@ class TestAbinitMixins(AbiflowsTest):
 
             assert len(query_result) == 1
             saved_doc = query_result[0]
-            with tempfile.NamedTemporaryFile(mode="wt", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(saved_doc.ddb.read())
+                db_file.seek(0)
 
                 assert filecmp.cmp(ddb_path, db_file.name)
 
@@ -144,11 +147,11 @@ class TestAbinitMixins(AbiflowsTest):
             phdos_path = abidata.ref_file('ZnSe_hex_886.out_PHDOS.nc')
             ananc_path = abidata.ref_file('ZnSe_hex_886.anaddb.nc')
 
-            with open(phbst_path) as phbst:
+            with open(phbst_path, "rb") as phbst:
                 doc.phonon_bs.put(phbst)
-            with open(phdos_path) as phdos:
+            with open(phdos_path, "rb") as phdos:
                 doc.phonon_dos.put(phdos)
-            with open(ananc_path) as anaddb_nc:
+            with open(ananc_path, "rb") as anaddb_nc:
                 doc.anaddb_nc.put(anaddb_nc)
 
             doc.save()
@@ -157,14 +160,17 @@ class TestAbinitMixins(AbiflowsTest):
 
             assert len(query_result) == 1
             saved_doc = query_result[0]
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(saved_doc.phonon_bs.read())
+                db_file.seek(0)
                 assert filecmp.cmp(phbst_path, db_file.name)
 
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="r+b") as db_file:
                 db_file.write(saved_doc.phonon_dos.read())
+                db_file.seek(0)
                 assert filecmp.cmp(phdos_path, db_file.name)
 
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="r+b") as db_file:
                 db_file.write(saved_doc.anaddb_nc.read())
+                db_file.seek(0)
                 assert filecmp.cmp(ananc_path, db_file.name)

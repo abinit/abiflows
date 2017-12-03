@@ -83,14 +83,17 @@ class ItestPhonon(AbiflowsIntegrationTest):
 
             ana_task = load_abitask(get_fw_by_task_index(wf_gen, "anaddb", index=None))
 
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(r.abinit_output.phonon_bs.read())
+                db_file.seek(0)
                 assert filecmp.cmp(ana_task.phbst_path, db_file.name)
 
             mrgddb_task = load_abitask(get_fw_by_task_index(wf_gen, "mrgddb", index=None))
 
-            with tempfile.NamedTemporaryFile(mode="wt", bufsize=0) as db_file:
+            # read/write in binary for py3k compatibility with mongoengine
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(r.abinit_output.ddb.read())
+                db_file.seek(0)
                 assert filecmp.cmp(mrgddb_task.merged_ddb_path, db_file.name)
 
         # then rerun a similar workflow, but completely generated at its creation

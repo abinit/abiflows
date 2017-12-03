@@ -80,14 +80,16 @@ class ItestDte(AbiflowsIntegrationTest):
 
             ana_task = load_abitask(get_fw_by_task_index(wf, "anaddb", index=None))
 
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(r.abinit_output.anaddb_nc.read())
+                db_file.seek(0)
                 assert filecmp.cmp(ana_task.anaddb_nc_path, db_file.name)
 
             mrgddb_task = load_abitask(get_fw_by_task_index(wf, "mrgddb", index=None))
 
-            with tempfile.NamedTemporaryFile(mode="wt", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(r.abinit_output.ddb.read())
+                db_file.seek(0)
                 assert filecmp.cmp(mrgddb_task.merged_ddb_path, db_file.name)
 
         if self.check_numerical_values:
@@ -96,7 +98,7 @@ class ItestDte(AbiflowsIntegrationTest):
 
             ana_task = load_abitask(get_fw_by_task_index(wf, "anaddb", index=None))
             with ana_task.open_anaddbnc() as ananc:
-                assert ananc.dchide[0,0,2] == pytest.approx(1.69318716, rel=0.15)
+                assert float(ananc.dchide[0,0,2]) == pytest.approx(-1.69328765210, rel=0.15)
 
     def itest_dte_skip_permutations(self, lp, fworker, tmpdir, input_scf_phonon_gan_low):
         """
@@ -133,4 +135,4 @@ class ItestDte(AbiflowsIntegrationTest):
 
             ana_task = load_abitask(get_fw_by_task_index(wf, "anaddb", index=None))
             with ana_task.open_anaddbnc() as ananc:
-                assert ananc.dchide[0,0,2] == pytest.approx(1.69318716, rel=0.15)
+                assert float(ananc.dchide[0,0,2]) == pytest.approx(-1.69328765210, rel=0.15)

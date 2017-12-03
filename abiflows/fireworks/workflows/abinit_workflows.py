@@ -522,12 +522,13 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         collection_name = RelaxResult.abinit_output.default.hist_files.field.collection_name
         hist_files = {}
         for task_index, file_path in six.iteritems(hist_files_path):
-            with open(file_path) as f:
+            with open(file_path, "rb") as f:
                 file_field = proxy_class(collection_name=collection_name)
                 file_field.put(f)
                 hist_files[task_index] = file_field
 
-        with open(relax_task.output_file.path, 'rt') as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(relax_task.output_file.path, 'rb') as f:
             document.abinit_output.outfile_ioncell.put(f)
 
         document.abinit_output.hist_files = hist_files
@@ -1259,7 +1260,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         document.set_dir_names_from_fws_wf(wf)
 
-        with open(mrgddb_task.merged_ddb_path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(mrgddb_task.merged_ddb_path, "rb") as f:
             document.abinit_output.ddb.put(f)
 
         if ph_index > 0:
@@ -1293,7 +1295,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         with open(scf_task.gsr_path, "rb") as f:
             document.abinit_output.gs_gsr.put(f)
 
-        with open(scf_task.output_file.path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(scf_task.output_file.path, "rb") as f:
             document.abinit_output.gs_outfile.put(f)
 
         return document
@@ -1806,7 +1809,8 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
         document.set_dir_names_from_fws_wf(wf)
 
-        with open(mrgddb_task.merged_ddb_path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(mrgddb_task.merged_ddb_path, "rb") as f:
             document.abinit_output.ddb.put(f)
 
         if ph_index > 0:
@@ -1855,7 +1859,8 @@ class DteFWWorkflow(AbstractFWWorkflow):
         with open(scf_task.gsr_path, "rb") as f:
             document.abinit_output.gs_gsr.put(f)
 
-        with open(scf_task.output_file.path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(scf_task.output_file.path, "rb") as f:
             document.abinit_output.gs_outfile.put(f)
 
         return document

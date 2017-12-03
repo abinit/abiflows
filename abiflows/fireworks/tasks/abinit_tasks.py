@@ -769,7 +769,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err =p.communicate()
                 status = p.returncode
-                if status == 0:
+                if status == 0 and out:
                     self.walltime = int(out)
                 else:
                     logger.warning("Impossible to get the walltime: " + err)

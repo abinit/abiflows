@@ -44,7 +44,7 @@ class TestAbinitResults(AbiflowsTest):
         if has_mongodb():
             hist_path = abidata.ref_file('sic_relax_HIST.nc')
 
-            with open(hist_path) as hist:
+            with open(hist_path, "rb") as hist:
                 # the proxy class and collection name of the hist file field
                 proxy_class = RelaxResult.abinit_output.default.hist_files.field.proxy_class
                 collection_name = RelaxResult.abinit_output.default.hist_files.field.collection_name
@@ -55,7 +55,8 @@ class TestAbinitResults(AbiflowsTest):
 
             outfile_path = self.out_file
 
-            with open(outfile_path) as outfile:
+            # read/write in binary for py3k compatibility with mongoengine
+            with open(outfile_path, "rb") as outfile:
                 doc.abinit_output.outfile_ioncell.put(outfile)
 
             doc.save()
@@ -64,8 +65,9 @@ class TestAbinitResults(AbiflowsTest):
 
             assert len(query_result) == 1
             saved_doc = query_result[0]
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(saved_doc.abinit_output.hist_files["test_hist"].read())
+                db_file.seek(0)
                 assert filecmp.cmp(hist_path, db_file.name)
 
     def test_phonon_result(self):
@@ -87,12 +89,13 @@ class TestAbinitResults(AbiflowsTest):
         if has_mongodb():
             gsr_path = abidata.ref_file('si_scf_GSR.nc')
 
-            with open(gsr_path) as gsr:
+            with open(gsr_path, "rb") as gsr:
                 doc.abinit_output.gs_gsr.put(gsr)
 
             gs_outfile_path = self.out_file
 
-            with open(gs_outfile_path, "rt") as gs_outfile:
+            # read/write in binary for py3k compatibility with mongoengine
+            with open(gs_outfile_path, "rb") as gs_outfile:
                 doc.abinit_output.gs_outfile.put(gs_outfile)
 
             doc.save()
@@ -101,12 +104,14 @@ class TestAbinitResults(AbiflowsTest):
 
             assert len(query_result) == 1
             saved_doc = query_result[0]
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(saved_doc.abinit_output.gs_gsr.read())
+                db_file.seek(0)
                 assert filecmp.cmp(gsr_path, db_file.name)
 
-            with tempfile.NamedTemporaryFile(mode="wt", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wt") as db_file:
                 saved_doc.abinit_output.gs_outfile.unzip(filepath=db_file.name)
+                db_file.seek(0)
                 assert filecmp.cmp(gs_outfile_path, db_file.name)
 
     def test_dte_result(self):
@@ -131,17 +136,18 @@ class TestAbinitResults(AbiflowsTest):
         if has_mongodb():
             gsr_path = abidata.ref_file('si_scf_GSR.nc')
 
-            with open(gsr_path) as gsr:
+            with open(gsr_path, "rb") as gsr:
                 doc.abinit_output.gs_gsr.put(gsr)
 
             gs_outfile_path = self.out_file
 
-            with open(gs_outfile_path, "rt") as gs_outfile:
+            # read/write in binary for py3k compatibility with mongoengine
+            with open(gs_outfile_path, "rb") as gs_outfile:
                 doc.abinit_output.gs_outfile.put(gs_outfile)
 
             anaddb_nc_path = abidata.ref_file('ZnSe_hex_886.anaddb.nc')
 
-            with open(anaddb_nc_path) as anaddb_nc:
+            with open(anaddb_nc_path, "rb") as anaddb_nc:
                 doc.abinit_output.anaddb_nc.put(anaddb_nc)
 
             doc.save()
@@ -150,14 +156,17 @@ class TestAbinitResults(AbiflowsTest):
 
             assert len(query_result) == 1
             saved_doc = query_result[0]
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(saved_doc.abinit_output.gs_gsr.read())
+                db_file.seek(0)
                 assert filecmp.cmp(gsr_path, db_file.name)
 
-            with tempfile.NamedTemporaryFile(mode="wt", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wt") as db_file:
                 saved_doc.abinit_output.gs_outfile.unzip(filepath=db_file.name)
+                db_file.seek(0)
                 assert filecmp.cmp(gs_outfile_path, db_file.name)
 
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(saved_doc.abinit_output.anaddb_nc.read())
+                db_file.seek(0)
                 assert filecmp.cmp(anaddb_nc_path, db_file.name)

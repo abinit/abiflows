@@ -510,7 +510,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
             # if dest already exists should be overwritten. see also resolve_deps and config_run
             try:
                 os.symlink(out_file, dest)
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EEXIST:
                     os.remove(dest)
                     os.symlink(out_file, dest)

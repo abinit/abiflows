@@ -58,8 +58,7 @@ class ItestNscf(AbiflowsIntegrationTest):
 
             nscf_task = load_abitask(lp.get_fw_by_id(nscf_fw_id))
             with nscf_task.open_gsr() as nscf_gsr:
-                assert nscf_gsr.ebands.eigens[0, 0, :3] == pytest.approx(
-                    np.array((-6.2581504, 5.5974646, 5.5974646)), rel=0.1)
+                assert np.allclose((-6.2581504, 5.5974646, 5.5974646), nscf_gsr.ebands.eigens[0, 0, :3], rtol=0.1)
 
 
     def itest_not_converged(self, lp, fworker, tmpdir, input_ebands_si_low):
@@ -112,8 +111,7 @@ class ItestNscf(AbiflowsIntegrationTest):
 
             last_nscf_task = load_abitask(get_fw_by_task_index(wf, "nscf", index=-1))
             with last_nscf_task.open_gsr() as nscf_gsr:
-                assert nscf_gsr.ebands.eigens[0, 0, :3] == pytest.approx(
-                    np.array((-6.2581504, 5.5974646, 5.5974646)), rel=0.1)
+                assert np.allclose((-6.2581504, 5.5974646, 5.5974646), nscf_gsr.ebands.eigens[0, 0, :3], rtol=0.1)
 
 
 

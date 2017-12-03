@@ -162,7 +162,7 @@ class ItestScf(AbiflowsIntegrationTest):
         assert len(wf.id_fw) == 4
 
         # find the fw_id of the last FW
-        fw_ids = wf.id_fw.keys()
+        fw_ids = list(wf.id_fw.keys())
         for father_id, children_ids in wf.links.items():
             if children_ids:
                 fw_ids.remove(father_id)

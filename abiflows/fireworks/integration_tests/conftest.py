@@ -57,13 +57,13 @@ def get_si_structure():
     cif_file = abidata.cif_file("si.cif")
     structure = abilab.Structure.from_file(cif_file)
 
-    return SpacegroupAnalyzer(structure, symprec=1e-2).get_primitive_standard_structure()
+    return structure
 
 def get_gan_structure():
     cif_file = abidata.cif_file("gan.cif")
     structure = abilab.Structure.from_file(cif_file)
 
-    return SpacegroupAnalyzer(structure, symprec=1e-2).get_primitive_standard_structure()
+    return structure
 
 
 @pytest.fixture(scope="function")

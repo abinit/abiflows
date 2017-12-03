@@ -94,15 +94,16 @@ class ItestRelax(AbiflowsIntegrationTest):
             assert r.abinit_input.kppa == 100
             nptu.assert_array_equal(r.abinit_input.last_input.to_mgobj()['ngkpt'], inputs_relax_si_low[0]['ngkpt'])
 
-            with tempfile.NamedTemporaryFile(mode="wb", bufsize=0) as db_file:
+            with tempfile.NamedTemporaryFile(mode="wb") as db_file:
                 db_file.write(r.abinit_output.gsr.read())
+                db_file.seek(0)
                 assert filecmp.cmp(ioncell_task.gsr_path, db_file.name)
 
         if self.check_numerical_values:
             with ioncell_task.open_gsr() as gsr:
                 assert gsr.energy == pytest.approx(-240.28203726305696, rel=0.01)
-                assert gsr.structure.lattice.abc == pytest.approx(
-                    np.array((3.8101419256822333, 3.8101444012342616, 3.8101434297177068)), rel=0.05)
+                assert np.allclose((3.8101419256822333, 3.8101444012342616, 3.8101434297177068),
+                                   gsr.structure.lattice.abc, rtol=0.05)
 
     def itest_uncoverged(self, lp, fworker, tmpdir, inputs_relax_si_low):
         """
