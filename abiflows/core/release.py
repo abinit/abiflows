@@ -1,5 +1,8 @@
 # coding: utf-8
-"""Release data for the abipy project."""
+"""Release data for the abiflows project."""
+from __future__ import print_function, division, unicode_literals
+
+from collections import OrderedDict
 
 # Name of the package for release purposes.  This is the name which labels
 # the tarballs and RPMs made by distutils, so it's best to lowercase it.
@@ -22,44 +25,44 @@ __version__ = '.'.join(map(str, _ver))
 
 version = __version__  # backwards compatibility name
 
+# The minimum Abinit version compatible with AbiFlows
+#min_abinit_version = "8.0.8"
+
 description = "Framework for high-throughput calculations with ABINIT"
 
 long_description = \
     """
-    The latest development version is always available from site <https://github.com/gmatteo/abiflows>
+    The latest development version is always available from site <https://github.com/abinit/abiflows>
     """
 
 license = 'GPL'
 
-authors = {
-    'Matteo': ('Matteo Giantomassi', 'gmatteo at gmail.com'),
-}
+author = 'The Abinit group'
+author_email = 'matteo.giantomassi at uclouvain.be'
+maintainer = "Matteo Giantomassi"
+maintainer_email = author_email
+authors = OrderedDict([
+    ('Guido', ('G. Petretto', 'guido.petretto at gmail.com')),
+    ('David', ('D. Waroquiers', '')),
+    ('Matteo', ('M. Giantomassi', 'matteo.giantomassi at uclouvain.be')),
+    ('Michiel', ('M. J. van Setten', 'mjvansetten at gmail.com')),
+])
 
-author = 'The ABINIT group'
-
-author_email = 'gmatteo at gmail com'
-
-url = 'https://github.com/gmatteo/abiflows'
-
-#download_url = 'https://github.com/gmatteo/abiflows'
-
+url = "https://github.com/abinit/abiflows"
+download_url = "https://github.com/abinit/abiflows"
 platforms = ['Linux', 'darwin']
-
-keywords = ["ABINIT", "ab initio", "first principles"]
-
+keywords = ["ABINIT", "ab-initio", "density-function-theory", "first-principles", "electronic-structure", "pymatgen"]
 classifiers=[
     "Programming Language :: Python :: 2",
     "Programming Language :: Python :: 2.7",
-    #"Programming Language :: Python :: 3",
-    #"Programming Language :: Python :: 3.2",
-    #"Programming Language :: Python :: 3.3",
-    "Programming Language :: Python :: 3.4",
-    #"Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    #"License :: OSI Approved :: MIT License",
-    #"Operating System :: OS Independent",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Scientific/Engineering :: Chemistry",
-    "Topic :: Software Development :: Libraries :: Python Modules"
-],
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
