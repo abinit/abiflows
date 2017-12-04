@@ -9,6 +9,7 @@ from mongoengine import *
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
 from abiflows.core.models import AbiFileField, MSONField
+from monty.dev import deprecated
 
 
 class CalculationMetadataMixin(object):
@@ -47,7 +48,11 @@ class SpaceGroupMixin(object):
     symbol = StringField()
     #TODO tolerances?
 
+    @deprecated(message="fill_from_structure has been renamed set_space_group_from_structure.")
     def fill_from_structure(self, structure):
+        self.set_space_group_from_structure(structure)
+
+    def set_space_group_from_structure(self, structure):
         spga = SpacegroupAnalyzer(structure=structure)
         self.crystal_system = spga.get_crystal_system()
         self.hall = spga.get_hall()

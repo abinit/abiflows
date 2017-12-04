@@ -63,7 +63,7 @@ class TestMixins(AbiflowsTest):
     def test_spacegroup(self):
         doc_class = self.get_document_class_from_mixin(SpaceGroupMixin)
         doc = doc_class()
-        doc.fill_from_structure(self.si_structure)
+        doc.set_space_group_from_structure(self.si_structure)
         assert doc.number == 227
 
         if has_mongodb():

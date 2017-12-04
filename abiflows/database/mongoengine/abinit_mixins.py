@@ -12,6 +12,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.abinit.pseudos import Pseudo
 from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
 from monty.json import jsanitize
+from monty.dev import deprecated
 
 class AbinitPseudoData(EmbeddedDocument):
     """
@@ -22,7 +23,11 @@ class AbinitPseudoData(EmbeddedDocument):
     pseudos_md5 = ListField(StringField())
     pseudos_path = ListField(StringField())
 
+    @deprecated(message="set_pseudos_vars has been renamed set_pseudos_from_paths.")
     def set_pseudos_vars(self, pseudos_path):
+        self.set_pseudos_from_paths(pseudos_path)
+
+    def set_pseudos_from_paths(self, pseudos_path):
         # this should be compatible with both version prior and after 0.3 of the pseudo dojo
         pseudos_name = []
         pseudos_md5 = []
@@ -48,11 +53,11 @@ class AbinitPseudoData(EmbeddedDocument):
             else:
                 pseudos_path.append(os.path.abspath(os.path.join(run_dir, pseudo_line)))
 
-        self.set_pseudos_vars(pseudos_path)
+        self.set_pseudos_from_paths(pseudos_path)
 
     def set_pseudos_from_abinit_input(self, abinit_input):
         pseudos_path = [i.path for i in abinit_input.pseudos]
-        self.set_pseudos_vars(pseudos_path)
+        self.set_pseudos_from_paths(pseudos_path)
 
 
 class AbinitBasicInputMixin(object):
