@@ -68,7 +68,8 @@ class TestFinalCleanUpTask(AbiflowsTest):
     @unittest.skipUnless(has_mongodb(), "A local mongodb is required.")
     def test_run(self):
         create_fw = Firework([mock_objects.CreateOutputsTask(extensions=["WFK", "DEN"])], fw_id=1)
-        delete_fw = Firework([FinalCleanUpTask(["WFK", "1WF"])], parents=create_fw, fw_id=2)
+        delete_fw = Firework([FinalCleanUpTask(["WFK", "1WF"])], parents=create_fw, fw_id=2,
+                             spec={"_add_launchpad_and_fw_id": True})
 
         wf = Workflow([create_fw, delete_fw])
 
@@ -119,7 +120,7 @@ class TestMongoEngineDBInsertionTask(AbiflowsTest):
         db = DatabaseData(self.lp.name, collection="test_MongoEngineDBInsertionTask", username=self.lp.username,
                           password=self.lp.password)
         task = MongoEngineDBInsertionTask(db)
-        fw = Firework([task], fw_id=1)
+        fw = Firework([task], fw_id=1, spec={"_add_launchpad_and_fw_id": True})
         wf = Workflow([fw], metadata={'workflow_class': SaveDataWorkflow.workflow_class,
                                      'workflow_module': SaveDataWorkflow.workflow_module})
         self.lp.add_wf(wf)
