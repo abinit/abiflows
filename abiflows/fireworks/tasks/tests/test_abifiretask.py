@@ -3,7 +3,13 @@ from __future__ import unicode_literals, division, print_function
 
 import os
 
-import mock
+try:
+    # import in python 3
+    import unittest.mock as mock
+except:
+    # import in python 2
+    import mock
+
 import abipy.data as abidata
 import abipy.abilab as abilab
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks

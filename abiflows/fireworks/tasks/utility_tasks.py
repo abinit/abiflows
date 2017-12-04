@@ -253,16 +253,22 @@ class MongoEngineDBInsertionTask(FireTaskBase):
     def run_task(self, fw_spec):
         self.db_data.connect_mongoengine()
 
-        try:
-            fw_dict = loadfn('FW.json')
-        except IOError:
+        if '_add_launchpad_and_fw_id' in fw_spec:
+            lp = self.launchpad
+            fw_id = self.fw_id
+        else:
             try:
-                fw_dict = loadfn('FW.yaml')
+                fw_dict = loadfn('FW.json')
             except IOError:
-                raise RuntimeError("No FW.json nor FW.yaml file present: impossible to determine fw_id")
+                try:
+                    fw_dict = loadfn('FW.yaml')
+                except IOError:
+                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+                                       "impossible to determine fw_id")
 
-        fw_id = fw_dict['fw_id']
-        lp = LaunchPad.auto_load()
+            fw_id = fw_dict['fw_id']
+            lp = LaunchPad.auto_load()
+
         wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
         wf_module = importlib.import_module(wf.metadata['workflow_module'])
         wf_class = getattr(wf_module, wf.metadata['workflow_class'])
