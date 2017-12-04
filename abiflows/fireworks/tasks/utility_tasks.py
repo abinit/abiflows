@@ -19,7 +19,7 @@ import traceback
 import importlib
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
-from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager, get_lp_and_fw_id_from_task
 from abiflows.database.mongoengine.utils import DatabaseData
 from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
@@ -129,23 +129,7 @@ class FinalCleanUpTask(FireTaskBase):
         return deleted_files
 
     def run_task(self, fw_spec):
-        # the FW.json/yaml file is mandatory to get the fw_id
-        # no need to deserialize the whole FW
-
-        if '_add_launchpad_and_fw_id' in fw_spec:
-            lp = self.launchpad
-            fw_id = self.fw_id
-        else:
-            try:
-                fw_dict = loadfn('FW.json')
-            except IOError:
-                try:
-                    fw_dict = loadfn('FW.yaml')
-                except IOError:
-                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
-                                       "impossible to determine fw_id")
-            lp = LaunchPad.auto_load()
-            fw_id = fw_dict['fw_id']
+        lp, fw_id = get_lp_and_fw_id_from_task(self, fw_spec)
 
         wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
 
@@ -188,23 +172,7 @@ class DatabaseInsertTask(FireTaskBase):
         return None
 
     def run_task(self, fw_spec):
-        # the FW.json/yaml file is mandatory to get the fw_id
-        # no need to deserialize the whole FW
-
-        if '_add_launchpad_and_fw_id' in fw_spec:
-            lp = self.launchpad
-            fw_id = self.fw_id
-        else:
-            try:
-                fw_dict = loadfn('FW.json')
-            except IOError:
-                try:
-                    fw_dict = loadfn('FW.yaml')
-                except IOError:
-                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
-                                       "impossible to determine fw_id")
-            lp = LaunchPad.auto_load()
-            fw_id = fw_dict['fw_id']
+        lp, fw_id = get_lp_and_fw_id_from_task(self, fw_spec)
 
         wf = lp.get_wf_by_fw_id(fw_id)
         wf_module = importlib.import_module(wf.metadata['workflow_module'])
@@ -253,21 +221,7 @@ class MongoEngineDBInsertionTask(FireTaskBase):
     def run_task(self, fw_spec):
         self.db_data.connect_mongoengine()
 
-        if '_add_launchpad_and_fw_id' in fw_spec:
-            lp = self.launchpad
-            fw_id = self.fw_id
-        else:
-            try:
-                fw_dict = loadfn('FW.json')
-            except IOError:
-                try:
-                    fw_dict = loadfn('FW.yaml')
-                except IOError:
-                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
-                                       "impossible to determine fw_id")
-
-            fw_id = fw_dict['fw_id']
-            lp = LaunchPad.auto_load()
+        lp, fw_id = get_lp_and_fw_id_from_task(self, fw_spec)
 
         wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
         wf_module = importlib.import_module(wf.metadata['workflow_module'])

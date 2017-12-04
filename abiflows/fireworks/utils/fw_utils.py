@@ -4,18 +4,20 @@ Utilities for fireworks
 """
 
 from __future__ import print_function, division, unicode_literals
+
 from collections import namedtuple
 import copy
-from monty.serialization import loadfn
 import os
-from pymatgen.io.abinit import TaskManager
-
-from pymatgen.io.abinit.tasks import ParalHints
-from fireworks import Workflow
 import traceback
 import logging
-from abiflows.fireworks.utils.time_utils import TimeReport
+
+from monty.serialization import loadfn
+from pymatgen.io.abinit import TaskManager
+from pymatgen.io.abinit.tasks import ParalHints
+from fireworks import Workflow
 from fireworks.core.firework import Firework
+from fireworks.core.launchpad import LaunchPad
+from abiflows.fireworks.utils.time_utils import TimeReport
 
 logger = logging.getLogger(__name__)
 
@@ -359,3 +361,62 @@ def get_fw_by_task_index(wf, task_tag, index=1):
                         selected_fw = fw
 
     return selected_fw
+
+
+def get_lp_and_fw_id_from_task(task, fw_spec):
+    """
+    Given an instance of a running task and its spec, tries to load the LaunchPad and the current fw_id.
+    It will first check for "_add_launchpad_and_fw_id", then try to load from FW.json/FW.yaml file.
+
+    Should be used inside tasks that require to access to the LaunchPad and to the whole workflow.
+    Args:
+        task: An instance of a running task
+        fw_spec: The spec of the task
+
+    Returns:
+        an instance of LaunchPah and the fw_id of the current task
+    """
+    if '_add_launchpad_and_fw_id' in fw_spec:
+        lp = task.launchpad
+        fw_id = task.fw_id
+
+        # lp may be None in offline mode
+        if lp is None:
+            raise RuntimeError("The LaunchPad in spec is None.")
+    else:
+        try:
+            fw_dict = loadfn('FW.json')
+        except IOError:
+            try:
+                fw_dict = loadfn('FW.yaml')
+            except IOError:
+                raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+                                   "impossible to determine fw_id")
+
+        logger.warning("LaunchPad not available from spec. Generated with auto_load.")
+        lp = LaunchPad.auto_load()
+        fw_id = fw_dict['fw_id']
+
+        # since it is not given that the LaunchPad is the correct one, try to verify if the workflow
+        # and the fw_id are being accessed correctly
+        try:
+            fw = lp.get_fw_by_id(fw_id)
+        except ValueError as e:
+            traceback.print_exc(e)
+            raise RuntimeError("The firework with id {} is not present in the LaunchPad {}. The LaunchPad is "
+                               "probably incorrect.". format(fw_id, lp))
+
+        if fw.state != "RUNNING":
+            raise RuntimeError("The firework with id {} from LaunchPad {} is {}. There might be an error in the "
+                               "selection of the LaunchPad". format(fw_id, lp, fw.state))
+
+        if len(fw.tasks) != len(fw_dict['spec']['_tasks']):
+            raise RuntimeError("The firework with id {} from LaunchPad {} is has different number of tasks "
+                               "from the current.".format(fw_id, lp))
+
+        for db_t, dict_t in zip(fw.tasks, fw_dict['spec']['_tasks']):
+            if db_t.fw_name != dict_t['fw_name']:
+                raise RuntimeError("The firework with id {} from LaunchPad {} has task that don't  match: "
+                                   "{} and {}.".format(fw_id, lp, db_t.fw_name, dict_t['fw_name']))
+
+    return lp, fw_id

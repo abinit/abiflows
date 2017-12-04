@@ -4,11 +4,11 @@ from __future__ import unicode_literals, division, print_function
 import os
 import shutil
 import unittest
-from abiflows.core.testing import AbiflowsTest, has_mongodb
+from abiflows.core.testing import AbiflowsTest, has_mongodb, TESTDB_NAME
 from abiflows.fireworks.utils.fw_utils import *
-from abiflows.fireworks.workflows.abinit_workflows import AbstractFWWorkflow
+from abiflows.fireworks.utils.tests.tasks import LpTask
 from monty.tempfile import ScratchDir
-from fireworks import Firework
+from fireworks import Firework, LaunchPad
 from fireworks.core.rocket_launcher import rapidfire
 from fireworks.user_objects.firetasks.script_task import PyTask
 
@@ -105,3 +105,35 @@ class TestFunctions(AbiflowsTest):
 
         assert tr.n_fws == 2
         assert tr.total_run_time > 1
+
+    @unittest.skipUnless(has_mongodb(), "A local mongodb is required.")
+    def test_get_lp_and_fw_id_from_task(self):
+        """
+        Tests the get_lp_and_fw_id_from_task. This test relies on the fact that the LaunchPad loaded from auto_load
+        will be different from what is defined in TESTDB_NAME. If this is not the case the test will be skipped.
+        """
+        lp = LaunchPad.auto_load()
+
+        if not lp or lp.db.name == TESTDB_NAME:
+            raise unittest.SkipTest("LaunchPad lp {} is not suitable for this test. Should be available and different"
+                                    "from {}".format(lp, TESTDB_NAME))
+
+        task = LpTask()
+        # this will pass the lp
+        fw1 = Firework([task], spec={'_add_launchpad_and_fw_id': True}, fw_id=1)
+        # this will not have the lp and should fail
+        fw2 = Firework([task], spec={}, fw_id=2, parents=[fw1])
+        wf = Workflow([fw1, fw2])
+        self.lp.add_wf(wf)
+
+        rapidfire(self.lp, self.fworker, m_dir=MODULE_DIR, nlaunches=1)
+
+        fw = self.lp.get_fw_by_id(1)
+
+        assert fw.state == "COMPLETED"
+
+        rapidfire(self.lp, self.fworker, m_dir=MODULE_DIR, nlaunches=1)
+
+        fw = self.lp.get_fw_by_id(2)
+
+        assert fw.state == "FIZZLED"
