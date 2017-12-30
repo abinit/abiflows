@@ -9,8 +9,10 @@ import os
 from mongoengine import *
 from abiflows.core.models import AbiFileField, MSONField
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.io.abinit.pseudos import Pseudo
+from abipy.flowtk.pseudos import Pseudo
 from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
+from monty.json import jsanitize
+from monty.dev import deprecated
 
 class AbinitPseudoData(EmbeddedDocument):
     """
@@ -21,7 +23,11 @@ class AbinitPseudoData(EmbeddedDocument):
     pseudos_md5 = ListField(StringField())
     pseudos_path = ListField(StringField())
 
+    @deprecated(message="set_pseudos_vars has been renamed set_pseudos_from_paths.")
     def set_pseudos_vars(self, pseudos_path):
+        self.set_pseudos_from_paths(pseudos_path)
+
+    def set_pseudos_from_paths(self, pseudos_path):
         # this should be compatible with both version prior and after 0.3 of the pseudo dojo
         pseudos_name = []
         pseudos_md5 = []
@@ -35,6 +41,13 @@ class AbinitPseudoData(EmbeddedDocument):
         self.pseudos_path = pseudos_path
 
     def set_pseudos_from_files_file(self, files_file_path, num_pseudo):
+        """
+        Sets the fields of the Document reading from the ".files" file.
+
+        Args:
+            files_file_path: path to the .files file
+            num_pseudo: number of pseudos that should be read
+        """
         pseudos_path = []
         with open(files_file_path) as f:
             lines = f.readlines()
@@ -47,7 +60,17 @@ class AbinitPseudoData(EmbeddedDocument):
             else:
                 pseudos_path.append(os.path.abspath(os.path.join(run_dir, pseudo_line)))
 
-        self.set_pseudos_vars(pseudos_path)
+        self.set_pseudos_from_paths(pseudos_path)
+
+    def set_pseudos_from_abinit_input(self, abinit_input):
+        """
+        Sets the fields of the document using an AbinitInput object.
+
+        Args:
+            abinit_input: An AbinitInput object
+        """
+        pseudos_path = [i.path for i in abinit_input.pseudos]
+        self.set_pseudos_from_paths(pseudos_path)
 
 
 class AbinitBasicInputMixin(object):
@@ -69,18 +92,23 @@ class AbinitBasicInputMixin(object):
 
     def set_abinit_basic_from_abinit_input(self, abinit_input):
         """
-        create the object from an AbinitInput object
+        sets the fields of the object from an AbinitInput object
         """
+
         self.structure = abinit_input.structure.as_dict()
         self.ecut = abinit_input['ecut']
         # kpoints may be defined in different ways
-        self.nshiftk = abinit_input.get('nshiftk', None)
-        self.shiftk = abinit_input.get('shiftk', None)
-        self.ngkpt = abinit_input.get('ngkpt', None)
+        self.nshiftk = jsanitize(abinit_input.get('nshiftk', None))
+        self.shiftk = jsanitize(abinit_input.get('shiftk', None))
+        self.ngkpt = jsanitize(abinit_input.get('ngkpt', None))
         self.kptrlatt = abinit_input.get('kptrlatt', None)
         self.dilatmx = abinit_input.get('dilatmx', 1)
         self.occopt = abinit_input.get('occopt', 1)
         self.tsmear = abinit_input.get('tsmear', None)
+
+        pseudo_data = AbinitPseudoData()
+        pseudo_data.set_pseudos_from_abinit_input(abinit_input)
+        self.pseudopotentials = pseudo_data
 
 
 class AbinitGSOutputMixin(GroundStateOutputMixin):
@@ -98,7 +126,7 @@ class AbinitDftpOutputMixin(object):
 
     ddb = AbiFileField(abiext="DDB", abiform="t", help_text="DDB file produced by a dfpt falculation",
                        db_field='ddb_id', collection_name='ddb_fs')
-    structure = MSONField()
+    structure = MSONField(required=True, help_text="The structure used for the calculation.")
 
 
 class AbinitPhononOutputMixin(AbinitDftpOutputMixin):

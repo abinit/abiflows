@@ -18,7 +18,7 @@ from pymatgen.io.abinit.tasks import ParalHints
 from fireworks import explicit_serialize
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.firework import FWAction
-from pymatgen.serializers.json_coders import pmg_serialize
+from pymatgen.util.serialization import pmg_serialize
 from pymatgen.io.abinit.utils import Directory
 from pymatgen.io.vasp import Vasprun
 from pymatgen.analysis.transition_state import NEBAnalysis

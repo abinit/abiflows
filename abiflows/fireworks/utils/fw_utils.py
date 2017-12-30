@@ -4,18 +4,19 @@ Utilities for fireworks
 """
 
 from __future__ import print_function, division, unicode_literals
+
 from collections import namedtuple
 import copy
-from monty.serialization import loadfn
 import os
-from pymatgen.io.abinit import TaskManager
-
-from pymatgen.io.abinit.tasks import ParalHints
-from fireworks import Workflow
 import traceback
 import logging
+import warnings
+
+from monty.serialization import loadfn
+from abipy.flowtk.tasks import TaskManager, ParalHints
+from fireworks.core.firework import Firework, Workflow
+from fireworks.core.launchpad import LaunchPad
 from abiflows.fireworks.utils.time_utils import TimeReport
-from fireworks.core.firework import Firework
 
 logger = logging.getLogger(__name__)
 
@@ -113,13 +114,13 @@ def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0, return_qt
     return {}
 
 
-def set_short_single_core_to_spec(spec={}, master_mem_overhead=0):
+def set_short_single_core_to_spec(spec={}, master_mem_overhead=0, fw_manager=None):
         if spec is None:
             spec = {}
         else:
             spec = dict(spec)
 
-        qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead)
+        qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead, fw_manager=fw_manager)
         spec['mpi_ncpus'] = 1
         spec['_queueadapter'] = qadapter_spec
         return spec
@@ -130,10 +131,13 @@ class FWTaskManager(object):
     Object containing the configuration parameters and policies to run abipy.
     The policies needed for the abinit FW will always be available through default values. These can be overridden
     also setting the parameters in the spec.
-    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal.
+    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal or
+    factories if needed.
     The rationale behind this choice, instead of subclassing, is to not force the user to fill the qadapter part
     of the task manager, which is needed only for the autoparal, but is required in the TaskManager initialization.
-    Wherever the TaskManager is needed just pass the ftm.task_manager
+    Wherever the TaskManager is needed just pass the ftm.task_manager.
+    The TaskManager part can be loaded from an external manager.yml file using the "abipy_manager" key in fw_policy.
+    This is now the preferred choice. If this value is not defined, it will be loaded with TaskManager.from_user_config
     """
 
     YAML_FILE = "fw_manager.yaml"
@@ -152,7 +156,8 @@ class FWTaskManager(object):
                               continue_unconverged_on_rerun=True,
                               allow_local_restart=False,
                               timelimit_buffer=120,
-                              short_job_timelimit=600)
+                              short_job_timelimit=600,
+                              abipy_manager=None)
     FWPolicy = namedtuple("FWPolicy", fw_policy_defaults.keys())
 
     def __init__(self, **kwargs):
@@ -173,8 +178,19 @@ class FWTaskManager(object):
         # create the task manager only if possibile
         if 'qadapters' in kwargs:
             self.task_manager = TaskManager.from_dict(kwargs)
+            msg = "Loading the abipy TaskManager from inside the fw_manager.yaml file is deprecated. " \
+                  "Use a separate file"
+            logger.warning(msg)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
         else:
-            self.task_manager = None
+            if self.fw_policy.abipy_manager:
+                self.task_manager = TaskManager.from_file(self.fw_policy.abipy_manager)
+            else:
+                try:
+                    self.task_manager = TaskManager.from_user_config()
+                except:
+                    logger.warning("Couldn't load the abipy task manager.")
+                    self.task_manager = None
 
     @classmethod
     def from_user_config(cls, fw_policy=None):
@@ -299,3 +315,122 @@ def get_last_completed_launch(fw):
     """
     return next((l for l in reversed(fw.archived_launches + fw.launches) if
                  l.state == 'COMPLETED'), None)
+
+
+def load_abitask(fw):
+    """
+    Given a Firework object returns the abinit related task contained. Sets the list of directories set from the
+    last completed launch. If no abinit related firetasks are found or the task has no completed launch returns None.
+    """
+
+    from abiflows.fireworks.tasks.abinit_tasks import AbiFireTask, AnaDdbAbinitTask, MergeDdbAbinitTask
+
+    for t in fw.tasks:
+        if isinstance(t, (AbiFireTask, AnaDdbAbinitTask, MergeDdbAbinitTask)):
+            launch = get_last_completed_launch(fw)
+            if launch:
+                t.set_workdir(workdir=launch.launch_dir)
+                return t
+
+    return None
+
+def get_fw_by_task_index(wf, task_tag, index=1):
+    """
+    Given a workflow object (with connection to the db) returns the wf corresponding to the task_type.
+
+    Args:
+        wf: a fireworks Workflow object.
+        task_tag: the task tag associated with the task as defined in abinit_workflows. Should not include the index.
+        index: the numerical or text index of the task. If negative the the last fw corresponding to task_tag will
+            be selected. If None, no index will be considered and the first match will be returned.
+
+    Returns:
+        a fireworks Firework object. None if no match is found.
+    """
+
+    task_index = None
+    if index is not None and index >=0:
+        task_index = "{}_{}".format(task_tag, index)
+
+    selected_fw = None
+    max_ind = -1
+    for fw in wf.fws:
+        fw_task_index = fw.spec.get('wf_task_index', '')
+        if task_index:
+            if fw_task_index == task_index:
+                return fw
+        else:
+            if task_tag in fw_task_index:
+                if index is None:
+                    return fw
+                # the last part of the task_index can be text (i.e. "autoparal") so the conversion to int may fail
+                # if no other indices has been found select that one
+                try:
+                    fw_ind = int(fw_task_index.split('_')[-1])
+                    if  fw_ind > max_ind:
+                        selected_fw = fw
+                        max_ind = fw_ind
+                except:
+                    if selected_fw is None:
+                        selected_fw = fw
+
+    return selected_fw
+
+
+def get_lp_and_fw_id_from_task(task, fw_spec):
+    """
+    Given an instance of a running task and its spec, tries to load the LaunchPad and the current fw_id.
+    It will first check for "_add_launchpad_and_fw_id", then try to load from FW.json/FW.yaml file.
+
+    Should be used inside tasks that require to access to the LaunchPad and to the whole workflow.
+    Args:
+        task: An instance of a running task
+        fw_spec: The spec of the task
+
+    Returns:
+        an instance of LaunchPah and the fw_id of the current task
+    """
+    if '_add_launchpad_and_fw_id' in fw_spec:
+        lp = task.launchpad
+        fw_id = task.fw_id
+
+        # lp may be None in offline mode
+        if lp is None:
+            raise RuntimeError("The LaunchPad in spec is None.")
+    else:
+        try:
+            fw_dict = loadfn('FW.json')
+        except IOError:
+            try:
+                fw_dict = loadfn('FW.yaml')
+            except IOError:
+                raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
+                                   "impossible to determine fw_id")
+
+        logger.warning("LaunchPad not available from spec. Generated with auto_load.")
+        lp = LaunchPad.auto_load()
+        fw_id = fw_dict['fw_id']
+
+        # since it is not given that the LaunchPad is the correct one, try to verify if the workflow
+        # and the fw_id are being accessed correctly
+        try:
+            fw = lp.get_fw_by_id(fw_id)
+        except ValueError as e:
+            traceback.print_exc()
+            raise RuntimeError("The firework with id {} is not present in the LaunchPad {}. The LaunchPad is "
+                               "probably incorrect.". format(fw_id, lp))
+
+        if fw.state != "RUNNING":
+            raise RuntimeError("The firework with id {} from LaunchPad {} is {}. There might be an error in the "
+                               "selection of the LaunchPad". format(fw_id, lp, fw.state))
+
+        if len(fw.tasks) != len(fw_dict['spec']['_tasks']):
+            raise RuntimeError("The firework with id {} from LaunchPad {} is has different number of tasks "
+                               "from the current.".format(fw_id, lp))
+
+        for db_t, dict_t in zip(fw.tasks, fw_dict['spec']['_tasks']):
+            if db_t.fw_name != dict_t['fw_name']:
+                raise RuntimeError("The firework with id {} from LaunchPad {} has task that don't  match: "
+                                   "{} and {}.".format(fw_id, lp, db_t.fw_name, dict_t['fw_name']))
+
+    return lp, fw_id

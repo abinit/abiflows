@@ -19,9 +19,8 @@ import traceback
 import importlib
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
-from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager, get_lp_and_fw_id_from_task
 from abiflows.database.mongoengine.utils import DatabaseData
-from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize
 from monty.json import MontyDecoder
@@ -81,9 +80,18 @@ def createSRCFireworksOld(task_class, task_input, SRC_spec, initialization_info,
 
 @explicit_serialize
 class FinalCleanUpTask(FireTaskBase):
+    """
+    Eliminates all the files in outdata based on the extension of the files and deletes of the files in
+    indata and tmpdata.
+    """
     task_type = 'finalclnup'
 
     def __init__(self, out_exts=None):
+        """
+        Args:
+            out_exts: list of extensions. can be a list or a single string with extensions separated by a ",".
+                If None "WFK" and "1WF" will be deleted
+        """
         if out_exts is None:
             out_exts = ["WFK", "1WF"]
         if isinstance(out_exts, str):
@@ -111,6 +119,8 @@ class FinalCleanUpTask(FireTaskBase):
                             os.unlink(fp)
                         elif os.path.isdir(fp):
                             shutil.rmtree(fp)
+                        elif os.path.islink(fp):
+                            os.unlink(fp)
                         deleted_files.append(fp)
                     except:
                         logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
@@ -118,23 +128,7 @@ class FinalCleanUpTask(FireTaskBase):
         return deleted_files
 
     def run_task(self, fw_spec):
-        # the FW.json/yaml file is mandatory to get the fw_id
-        # no need to deserialize the whole FW
-
-        if '_add_launchpad_and_fw_id' in fw_spec:
-            lp = self.launchpad
-            fw_id = self.fw_id
-        else:
-            try:
-                fw_dict = loadfn('FW.json')
-            except IOError:
-                try:
-                    fw_dict = loadfn('FW.yaml')
-                except IOError:
-                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
-                                       "impossible to determine fw_id")
-            lp = LaunchPad.auto_load()
-            fw_id = fw_dict['fw_id']
+        lp, fw_id = get_lp_and_fw_id_from_task(self, fw_spec)
 
         wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
 
@@ -177,23 +171,7 @@ class DatabaseInsertTask(FireTaskBase):
         return None
 
     def run_task(self, fw_spec):
-        # the FW.json/yaml file is mandatory to get the fw_id
-        # no need to deserialize the whole FW
-
-        if '_add_launchpad_and_fw_id' in fw_spec:
-            lp = self.launchpad
-            fw_id = self.fw_id
-        else:
-            try:
-                fw_dict = loadfn('FW.json')
-            except IOError:
-                try:
-                    fw_dict = loadfn('FW.yaml')
-                except IOError:
-                    raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
-                                       "impossible to determine fw_id")
-            lp = LaunchPad.auto_load()
-            fw_id = fw_dict['fw_id']
+        lp, fw_id = get_lp_and_fw_id_from_task(self, fw_spec)
 
         wf = lp.get_wf_by_fw_id(fw_id)
         wf_module = importlib.import_module(wf.metadata['workflow_module'])
@@ -224,6 +202,11 @@ class DatabaseInsertTask(FireTaskBase):
 
 @explicit_serialize
 class MongoEngineDBInsertionTask(FireTaskBase):
+    """
+    Task that insert the results of a workflow in a database. The method calls the "get_mongoengine_results"
+    of the workflow generator.
+    The database is defined according to a DatabaseData.
+    """
 
     def __init__(self, db_data, object_id=None):
         self.db_data = db_data
@@ -233,7 +216,7 @@ class MongoEngineDBInsertionTask(FireTaskBase):
 
     @serialize_fw
     def to_dict(self):
-        return dict(db_data=self.db_data)
+        return dict(db_data=self.db_data.as_dict())
 
     @classmethod
     def from_dict(cls, m_dict):
@@ -242,16 +225,8 @@ class MongoEngineDBInsertionTask(FireTaskBase):
     def run_task(self, fw_spec):
         self.db_data.connect_mongoengine()
 
-        try:
-            fw_dict = loadfn('FW.json')
-        except IOError:
-            try:
-                fw_dict = loadfn('FW.yaml')
-            except IOError:
-                raise RuntimeError("No FW.json nor FW.yaml file present: impossible to determine fw_id")
+        lp, fw_id = get_lp_and_fw_id_from_task(self, fw_spec)
 
-        fw_id = fw_dict['fw_id']
-        lp = LaunchPad.auto_load()
         wf = lp.get_wf_by_fw_id_lzyfw(fw_id)
         wf_module = importlib.import_module(wf.metadata['workflow_module'])
         wf_class = getattr(wf_module, wf.metadata['workflow_class'])

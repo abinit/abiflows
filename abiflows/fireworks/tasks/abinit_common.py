@@ -46,7 +46,7 @@ class Cut3DInput(object):
         return cls(cut3d_input=lines)
 
     @classmethod
-    def hirshfeld(cls, density_file_path, all_el_dens_paths):
+    def hirshfeld(cls, density_filepath, all_el_dens_paths):
         lines = [density_filepath]  # Path to the _DEN file
         lines.append('11')  # Option to convert _DEN file to a .cube file
         for p in all_el_dens_paths:

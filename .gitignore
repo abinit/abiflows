@@ -42,6 +42,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
+_integration_tests_
 
 # Translations
 *.mo

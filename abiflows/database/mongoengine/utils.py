@@ -3,7 +3,7 @@
 Utilities to handle mongoengine classes and connections.
 """
 
-from pymatgen.serializers.json_coders import pmg_serialize
+from pymatgen.util.serialization import pmg_serialize
 from monty.json import MSONable
 from mongoengine import connect
 from mongoengine.context_managers import switch_collection
@@ -51,20 +51,24 @@ class DatabaseData(MSONable):
 
     @pmg_serialize
     def as_dict_no_credentials(self):
-        return dict(database=self.database, host=self.host, port=self.port, collection=self.collection,
-                    username=self.username, password=self.password)
+        return dict(database=self.database, host=self.host, port=self.port, collection=self.collection)
 
     def connect_mongoengine(self, alias=DEFAULT_CONNECTION_NAME):
-        connect(db=self.database, host=self.host, port=self.port, username=self.username,
-                password=self.password, alias=alias)
+        """
+        Open the connection to the selected database
+        """
+
+        return connect(db=self.database, host=self.host, port=self.port, username=self.username,
+                       password=self.password, alias=alias)
 
     @contextlib.contextmanager
     def switch_collection(self, cls):
+        """
+        Switches to the chosen collection using Mongoengine's switch_collection.
+        """
+
         if self.collection:
             with switch_collection(cls, self.collection) as new_cls:
                 yield new_cls
         else:
             yield cls
-
-
-

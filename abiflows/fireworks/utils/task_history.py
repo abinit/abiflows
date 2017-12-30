@@ -5,9 +5,14 @@ Task history related objects
 from __future__ import print_function, division, unicode_literals
 
 from monty.json import MontyDecoder, jsanitize, MSONable
-from pymatgen.serializers.json_coders import pmg_serialize
+from pymatgen.util.serialization import pmg_serialize
 import collections
 import traceback
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class TaskHistory(collections.deque, MSONable):
     """
@@ -104,8 +109,10 @@ class TaskHistory(collections.deque, MSONable):
         return total_run_time
 
 
-
 class TaskEvent(MSONable):
+    """
+    Object used to categorize the events in the TaskHistory.
+    """
 
     INITIALIZED = 'initialized'
     CORRECTIONS = 'corrections'

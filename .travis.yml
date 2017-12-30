@@ -1,4 +1,5 @@
 language: python
+services: mongodb
 
 # We don't actually use the Travis Python but conda
 matrix:
@@ -33,6 +34,8 @@ install:
   - conda install nomkl
   - pip install pytest scripttest nose nose-exclude
   - if [[ "${PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
+  - conda install pandas
+  - conda install netcdf4
   - pip install pep8 python-coveralls
 
   # Install abinit from abinit conda channel.
@@ -40,6 +43,7 @@ install:
   - conda install -c gmatteo abinit=8.6.1
   - abinit --version
   - abinit --build
+
   # Get pymatgen from matsci
   #- conda config --add channels matsci
   #- conda install pymatgen #=4.7.2

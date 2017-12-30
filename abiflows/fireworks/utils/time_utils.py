@@ -1,14 +1,32 @@
 import prettytable as pt
-from pymatgen.serializers.json_coders import pmg_serialize
+from pymatgen.util.serialization import pmg_serialize
 from monty.json import MSONable
 
 
 def seconds_to_hms(seconds):
+    """
+    Converts second to the format "h:mm:ss"
+
+    Args:
+        seconds: number of seconds
+
+    Returns:
+        A string representing the seconds with the format "h:mm:ss". An empty string if seconds is None.
+    """
+    if seconds is None:
+        return ""
+
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)
 
+
 class TimeReport(MSONable):
+    """
+    Report of the time consumed for the whole workflow and for each single step.
+    Includes both the time required for the calculations as well as the cpu time consumed.
+    """
+
     def __init__(self, total_run_time, n_fws, total_cpu_time=None, contributed_cpu_time=0, total_run_time_per_tag=None,
                  total_cpu_time_per_tag=None, contributed_cpu_time_per_tag=None, worker=None):
         self.total_run_time = total_run_time

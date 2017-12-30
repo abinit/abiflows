@@ -6,11 +6,12 @@ import abipy.data as abidata
 import abipy.abilab as abilab
 from abiflows.fireworks.tasks.abinit_tasks import RestartInfo
 from abiflows.fireworks.utils.task_history import TaskHistory, TaskEvent
-from abipy.core.testing import AbipyTest
+from abiflows.core.testing import AbiflowsTest
 from abipy.abio.factories import ion_ioncell_relax_input
-from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
+from abipy.flowtk import events# Correction, DilatmxErrorHandler, DilatmxError
 
-class TestTaskHistory(AbipyTest):
+
+class TestTaskHistory(AbiflowsTest):
 
     def test_task_history_and_events(self):
         th = TaskHistory()
@@ -18,7 +19,7 @@ class TestTaskHistory(AbipyTest):
         th.log_finalized()
         th.log_restart(RestartInfo(os.path.abspath('.'), reset=True, num_restarts=2))
         th.log_unconverged()
-        th.log_corrections([Correction(DilatmxErrorHandler(), {}, DilatmxError('', '', '',), )])
+        th.log_corrections([events.Correction(events.DilatmxErrorHandler(), {}, events.DilatmxError('', '', '',), )])
         th.log_abinit_stop(run_time=100)
 
         si = abilab.Structure.from_file(abidata.cif_file("si.cif"))

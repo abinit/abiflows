@@ -5,11 +5,19 @@ from mongoengine import *
 from abiflows.core.models import AbiFileField, MSONField, AbiGzipFileField
 
 class RelaxAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical inputs for a relaxation workflow.
+    """
+
     last_input = MSONField(help_text="The last input used for the calculation.")
     kppa = IntField()
 
 
 class RelaxAbinitOutput(AbinitGSOutputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical outputs for a relaxation workflow.
+    """
+
     hist_files =  DictField(field=AbiFileField(abiext="HIST.nc", abiform="b", collection_name='relax_hist_fs'),
                             help_text="Series of HIST files produced during the relaxation. Keys should provide the type"
                                       " of relaxation (ion, ioncell) and the ordering", db_field='relax_hist_files_ids')
@@ -31,6 +39,10 @@ class RelaxResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
 
 
 class PhononAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical inputs for a phonon workflow.
+    """
+
     gs_input = MSONField(help_text="The last input used to calculate the wafunctions.")
     ddk_input = MSONField(help_text="The last input used to calculate one of the ddk.")
     dde_input = MSONField(help_text="The last input used to calculate one of the dde.")
@@ -43,6 +55,10 @@ class PhononAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
 
 
 class PhononAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical outputs for a phonon workflow.
+    """
+
     gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
                           db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
     gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
@@ -66,6 +82,10 @@ class PhononResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
 
 
 class DteAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical inputs for a DTE workflow.
+    """
+
     gs_input = MSONField(help_text="The last input used to calculate the wafunctions.")
     ddk_input = MSONField(help_text="The last input used to calculate one of the ddk.")
     dde_input = MSONField(help_text="The last input used to calculate one of the dde.")
@@ -76,6 +96,10 @@ class DteAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
 
 
 class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical outputs for a DTE workflow.
+    """
+
     gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
                           db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
     gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',

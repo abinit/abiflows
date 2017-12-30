@@ -1,7 +1,8 @@
 # coding: utf-8
 """
-Firework workflows
+Generators of Firework workflows
 """
+
 from __future__ import print_function, division, unicode_literals
 
 import logging
@@ -21,7 +22,7 @@ from abipy.abio.abivars_db import get_abinit_variables
 from abipy.abio.input_tags import *
 from abipy.core.structure import Structure
 from abipy.dfpt.anaddbnc import AnaddbNcFile
-from fireworks.core.firework import Firework, Workflow
+from fireworks.core.firework import Firework, Workflow, FWorker
 from fireworks.core.launchpad import LaunchPad
 from monty.serialization import loadfn
 
@@ -35,7 +36,7 @@ from abiflows.fireworks.tasks.abinit_tasks_src import GeneratePiezoElasticFlowFW
 from abiflows.fireworks.tasks.abinit_tasks_src import Cut3DAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks_src import BaderTask
 from abiflows.fireworks.tasks.abinit_tasks import HybridFWTask, RelaxDilatmxFWTask, GeneratePhononFlowFWAbinitTask
-from abiflows.fireworks.tasks.abinit_tasks import GeneratePiezoElasticFlowFWAbinitTask, AutoparalTask, DdeTask
+from abiflows.fireworks.tasks.abinit_tasks import AutoparalTask, DdeTask
 from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTask, DdkTask, MergeDdbAbinitTask
 from abiflows.fireworks.tasks.abinit_tasks import NscfWfqFWTask
 from abiflows.fireworks.tasks.handlers import MemoryHandler, WalltimeHandler
@@ -44,35 +45,64 @@ from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseIns
 from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get_last_completed_launch
-from abiflows.fireworks.utils.fw_utils import get_time_report_for_wf
+from abiflows.fireworks.utils.fw_utils import get_time_report_for_wf, FWTaskManager
 from abiflows.database.mongoengine.abinit_results import RelaxResult, PhononResult, DteResult
 from abiflows.fireworks.utils.task_history import TaskEvent
-from pymatgen.io.abinit.abiobjects import KSampling
+from abipy.flowtk.abiobjects import KSampling
 
 # logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-
+#TODO AbstractFWWorkflow should not be a subclass of Workflow, should be removed.
 @six.add_metaclass(abc.ABCMeta)
 class AbstractFWWorkflow(Workflow):
     """
-    Abstract Workflow class.
+    Abstract class of the workflow generators.
+    Subclasses should define a "wf" attribute at the end of the init, containing an instance of a fireworks Workflow.
+    Normally subclasses should alse define attributes containing the different Fireworks that have been generated.
     """
 
     def add_to_db(self, lpad=None):
+        """
+        Add the workflows to the fireworks DB.
+
+        Args:
+            lpad: A LaunchPad. If None the LaunchPad will be generated with auto_load.
+
+        Returns:
+            dict: mapping between old and new Firework ids
+        """
+
         if not lpad:
             lpad = LaunchPad.auto_load()
         return lpad.add_wf(self.wf)
 
     def append_fw(self, fw, short_single_spec=False):
+        """
+        Append a Firework at the end of the workflow.
+
+        Args:
+            fw: A Firework object
+            short_single_spec: if True the _queueadapter parameters will be set to a single core for a short time.
+        """
+
         if short_single_spec:
             fw.spec.update(self.set_short_single_core_to_spec())
         append_fw_to_wf(fw, self.wf)
 
     @staticmethod
     def set_short_single_core_to_spec(spec=None, master_mem_overhead=0):
+        """
+        Sets the _queueadapter parameter in the spec for a single process job with a short run time.
+        Args:
+            spec: A spec. If None a new dictionary will be created.
+            master_mem_overhead:
+
+        Returns:
+            The spec with the _queueadapter parameters set.
+        """
         if spec is None:
                 spec = {}
         spec = dict(spec)
@@ -83,9 +113,25 @@ class AbstractFWWorkflow(Workflow):
         return spec
 
     def add_mongoengine_db_insertion(self, db_data):
-        self.append_fw(Firework([MongoEngineDBInsertionTask(db_data=db_data)]), short_single_spec=True)
+        """
+        Adds a Firework containing a task for the insertion of the results in the database, based on mongoengine.
+
+        Args:
+            db_data: A DatabaseData with the connection information to the database.
+        """
+
+        self.append_fw(Firework([MongoEngineDBInsertionTask(db_data=db_data)],
+                                spec={'_add_launchpad_and_fw_id': True}), short_single_spec=True)
 
     def add_final_cleanup(self, out_exts=None, additional_spec=None):
+        """
+        Adds a Firework with a FinalCleanUpTask.
+        _queueadapter parameter in the spec are set for a single process job with a short run time
+        Args:
+            out_exts: list of extensions that should be cleaned
+            additional_spec: dict with additional keys to be added to the spec
+        """
+
         if out_exts is None:
             out_exts = ["WFK", "1WF", "DEN"]
         spec = self.set_short_single_core_to_spec()
@@ -94,14 +140,24 @@ class AbstractFWWorkflow(Workflow):
         # high priority
         #TODO improve the handling of the priorities
         spec['_priority'] = 100
+        spec['_add_launchpad_and_fw_id'] = True
         cleanup_fw = Firework(FinalCleanUpTask(out_exts=out_exts), spec=spec,
                               name=(self.wf.name+"_cleanup")[:15])
-        spec['_add_launchpad_and_fw_id'] = True
 
         append_fw_to_wf(cleanup_fw, self.wf)
 
     def add_db_insert_and_cleanup(self, mongo_database, out_exts=None, insertion_data=None,
                                   criteria=None):
+        """
+        Appends a Firework with a DatabaseInsertTask and a FinalCleanUpTask. N.B. this does not add a
+        MongoEngineDBInsertionTask.
+        Args:
+            mongo_database: a MongoDatabase object describing the connection to the database.
+            out_exts: list of extensions that should be cleaned.
+            insertion_data: dictionary describing the functions that should be called to insert the data.
+            criteria: identifies the entry that should be updated. If None a new entry will be created.
+        """
+
         if out_exts is None:
             out_exts = ["WFK", "1WF", "DEN"]
         if insertion_data is None:
@@ -117,6 +173,12 @@ class AbstractFWWorkflow(Workflow):
         append_fw_to_wf(insert_and_cleanup_fw, self.wf)
 
     def add_cut3d_den_to_cube_task(self, den_task_type_source=None):
+        """
+        Appends a FW with a task to convert a DEN file to cube format using cut3d.
+
+        Args:
+            den_task_type_source: Option to be i.
+        """
         spec = self.set_short_single_core_to_spec()
         spec['_add_launchpad_and_fw_id'] = True
         if den_task_type_source is None:
@@ -128,6 +190,13 @@ class AbstractFWWorkflow(Workflow):
         append_fw_to_wf(cut3d_fw, self.wf)
 
     def add_bader_task(self, den_task_type_source=None):
+        """
+        Appends a FW with a task to calculate the bader charges.
+
+        Args:
+            den_task_type_source: The task type from which the DEN file should be taken. If None the default is 'scf'.
+        """
+
         spec = self.set_short_single_core_to_spec()
         spec['_add_launchpad_and_fw_id'] = True
         if den_task_type_source is None:
@@ -219,6 +288,11 @@ class AbstractFWWorkflow(Workflow):
         self.wf.metadata.update(metadata)
 
     def get_reduced_formula(self, input):
+        """
+        Gets the reduced formula of the structure used in the workflow.
+        Args:
+            input: An AbinitInput object or a Structure
+        """
         structure = None
         try:
             if isinstance(input, AbinitInput):
@@ -233,25 +307,47 @@ class AbstractFWWorkflow(Workflow):
         return structure.composition.reduced_formula if structure else ""
 
     def add_spec_to_all_fws(self, spec):
+        """
+        Updates the spec of all the Fireworks with the input dictionary
+        """
+
         for fw in self.wf.fws:
             fw.spec.update(spec)
 
     def set_preserve_fworker(self):
+        """
+        Sets the _preserve_fworker key in the spec of all the Fireworks
+        """
+
         self.add_spec_to_all_fws(dict(_preserve_fworker=True))
 
     def fix_fworker(self, name=None):
         """
         Sets the _fworker key to the name specified and adds _preserve_fworker to the spec of all the fws.
-        If name is None the name is taken from ~/.fireworks/my_fworker.yaml
+        If name is None the name is taken from the FWorker loaded with FWorker.auto_load (the default being the
+        file ~/.fireworks/my_fworker.yaml)
         """
         if name is None:
-            name = loadfn(os.path.expanduser("~/.fireworks/my_fworker.yaml"))['name']
+            name = FWorker.auto_load().name
 
         self.add_spec_to_all_fws(dict(_preserve_fworker=True, _fworker=name))
 
 
 class InputFWWorkflow(AbstractFWWorkflow):
+    """
+    Generator of a fireworks workflow with a single abinit task based on a generic AbinitInput
+    """
+
     def __init__(self, abiinput, task_type=AbiFireTask, autoparal=False, spec=None, initialization_info=None):
+        """
+        Args:
+            abiinput: an AbinitInput
+            task_type: the class of the task created
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+        """
+
         if spec is None:
             spec = {}
         if initialization_info is None:
@@ -266,11 +362,21 @@ class InputFWWorkflow(AbstractFWWorkflow):
         self.fw = Firework(abitask, spec=spec)
 
         self.wf = Workflow([self.fw])
-        # Workflow.__init__([self.fw])
 
 
 class ScfFWWorkflow(AbstractFWWorkflow):
+    """
+    Generator of a fireworks workflow with a single abinit task performing a SCF calculation
+    """
+
     def __init__(self, abiinput, autoparal=False, spec=None, initialization_info=None):
+        """
+        Args:
+            abiinput: an AbinitInput for a SCF calculation.
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+        """
         if spec is None:
             spec = {}
         if initialization_info is None:
@@ -279,8 +385,12 @@ class ScfFWWorkflow(AbstractFWWorkflow):
 
         spec = dict(spec)
         spec['initialization_info'] = initialization_info
+        start_task_index = 1
         if autoparal:
             spec = self.set_short_single_core_to_spec(spec)
+            start_task_index = 'autoparal'
+
+        spec['wf_task_index'] = 'scf_' + str(start_task_index)
 
         self.scf_fw = Firework(abitask, spec=spec)
 
@@ -291,6 +401,10 @@ class ScfFWWorkflow(AbstractFWWorkflow):
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      shift_mode="Monkhorst-Pack", extra_abivars=None, decorators=None, autoparal=False, spec=None,
                      initialization_info=None):
+        """
+        Creates an instance of ScfFWWorkflow using the scf_input factory function. See the description
+        of the factory for the definition of the arguments.
+        """
 
         if extra_abivars is None:
                 extra_abivars = {}
@@ -361,11 +475,27 @@ class ScfFWWorkflowSRC(AbstractFWWorkflow):
 
 
 class RelaxFWWorkflow(AbstractFWWorkflow):
+    """
+    Generator of a firework workflow performing a relax of structure (atomic positions, cell shape and size).
+    Can converge the dilatmx during the cell relaxtion up to a custom value.
+    """
+
     workflow_class = 'RelaxFWWorkflow'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    def __init__(self, ion_input, ioncell_input, autoparal=False, spec=None, initialization_info=None, target_dilatmx=None,
-                 skip_ion=False):
+    def __init__(self, ion_input, ioncell_input, autoparal=False, spec=None, initialization_info=None,
+                 target_dilatmx=None, skip_ion=False):
+        """
+        Args:
+            ion_input: an AbinitInput for the relax of the atomic position calculation.
+            ioncell_input: an AbinitInput for the relax of both atomic position and cell size and shape.
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+            target_dilatmx: target value for the dilatmx. The workflow will progressively reduce the value of
+                dilatmx and relax the structure again until this value is reached.
+            skip_ion: if True the first step with relax of the atomic position will not be performed.
+        """
         if spec is None:
             spec = {}
         if initialization_info is None:
@@ -450,6 +580,18 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
     @classmethod
     def get_mongoengine_results(cls, wf):
+        """
+        Generates the RelaxResult mongoengine document containing the results of the calculation.
+        The workflow should have been generated from this class and requires an open connection to the
+        fireworks database and access to the file system containing the calculations.
+
+        Args:
+            wf: the fireworks Workflow instance of the workflow.
+
+        Returns:
+            A RelaxResult document.
+        """
+
         assert wf.metadata['workflow_class'] == cls.workflow_class
         assert wf.metadata['workflow_module'] == cls.workflow_module
 
@@ -460,15 +602,15 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         ion_fws = [fw for fw in wf.fws if fw.spec.get('wf_task_index', '').startswith('ion_') and not fw.spec.get('wf_task_index', '').endswith('autoparal')]
         ion_fws.sort(key=lambda l: int(l.spec.get('wf_task_index', '0').split('_')[-1]))
-        first_ion_fw = ioncell_fws[0]
-        last_ion_fw = ioncell_fws[-1]
-        last_ion_launch = get_last_completed_launch(last_ion_fw)
+        if ion_fws:
+            first_fw = ion_fws[0]
+        else:
+            first_fw = ioncell_fws[0]
 
         relax_task = last_ioncell_fw.tasks[-1]
         relax_task.set_workdir(workdir=last_ioncell_launch.launch_dir)
         structure = relax_task.get_final_structure()
         history_ioncell = loadfn(os.path.join(last_ioncell_launch.launch_dir, 'history.json'))
-        history_ion = loadfn(os.path.join(last_ion_launch.launch_dir, 'history.json'))
 
         document = RelaxResult()
 
@@ -479,7 +621,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         document.abinit_input.last_input = final_input.as_dict()
         document.abinit_input.set_abinit_basic_from_abinit_input(final_input)
         # need to set the structure as the initial one
-        document.abinit_input.structure = first_ion_fw.tasks[0].abiinput.structure.as_dict()
+        document.abinit_input.structure = first_fw.tasks[0].abiinput.structure.as_dict()
 
         document.history = history_ioncell.as_dict()
 
@@ -493,7 +635,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
 
         document.time_report = get_time_report_for_wf(wf).as_dict()
 
-        document.fw_id = last_ion_fw.fw_id
+        document.fw_id = last_ioncell_fw.fw_id
 
         document.created_on = datetime.datetime.now()
         document.modified_on = datetime.datetime.now()
@@ -518,12 +660,13 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         collection_name = RelaxResult.abinit_output.default.hist_files.field.collection_name
         hist_files = {}
         for task_index, file_path in six.iteritems(hist_files_path):
-            with open(file_path) as f:
+            with open(file_path, "rb") as f:
                 file_field = proxy_class(collection_name=collection_name)
                 file_field.put(f)
                 hist_files[task_index] = file_field
 
-        with open(relax_task.output_file.path, 'rt') as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(relax_task.output_file.path, 'rb') as f:
             document.abinit_output.outfile_ioncell.put(f)
 
         document.abinit_output.hist_files = hist_files
@@ -535,6 +678,10 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      extra_abivars=None, decorators=None, autoparal=False, spec=None, initialization_info=None,
                      target_dilatmx=None, skip_ion=False, shift_mode="Monkhorst-Pack"):
+        """
+        Creates an instance of RelaxFWWorkflow using the ion_ioncell_relax_input factory function. See the description
+        of the factory for the definition of the arguments.
+        """
 
         if extra_abivars is None:
                 extra_abivars = {}
@@ -789,7 +936,23 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
 
 
 class NscfFWWorkflow(AbstractFWWorkflow):
+    """
+    Generator of a fireworks workflow with a SCF followed by a NSCF calculation. For the calculation of
+    band structure or DOS.
+    """
+
+    workflow_class = 'NscfFWWorkflow'
+    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+
     def __init__(self, scf_input, nscf_input, autoparal=False, spec=None, initialization_info=None):
+        """
+        Args:
+            scf_input: an AbinitInput for the SCF calculation.
+            nscf_input: an AbinitInput for the NSCF calculation.
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+        """
 
         start_task_index = 1
         if spec is None:
@@ -893,7 +1056,20 @@ class NscfFWWorkflowSRC(AbstractFWWorkflow):
 
 
 class HybridOneShotFWWorkflow(AbstractFWWorkflow):
+    """
+    Generator of a fireworks workflow that performs a SCF calculation with hybrid functional based on GW.
+    """
+
     def __init__(self, scf_inp, hybrid_input, autoparal=False, spec=None, initialization_info=None):
+        """
+        Args:
+            scf_input: an AbinitInput for the SCF calculation.
+            hybrid_input: an AbinitInput for the hybrid functional calculation.
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+        """
+
         if spec is None:
             spec = {}
         if initialization_info is None:
@@ -920,6 +1096,10 @@ class HybridOneShotFWWorkflow(AbstractFWWorkflow):
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      shift_mode="Monkhorst-Pack", hybrid_functional="hse06", ecutsigx=None, gw_qprange=1,
                      extra_abivars=None, decorators=None, autoparal=False, spec=None, initialization_info=None):
+        """
+        Creates an instance of HybridOneShotFWWorkflow using the scf_input and  hybrid_oneshot_input factory functions.
+        See the description of the factories for the definition of the arguments.
+        """
 
         if extra_abivars is None:
             extra_abivars = {}
@@ -940,23 +1120,12 @@ class HybridOneShotFWWorkflow(AbstractFWWorkflow):
         return cls(scf_fact, hybrid_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
 
 
-# class NscfFWWorkflow(AbstractFWWorkflow):
-#     def __init__(self, scf_input, nscf_input, autoparal=False, spec={}):
-#
-#         spec = dict(spec)
-#         if autoparal:
-#             spec = self.set_short_single_core_to_spec(spec)
-#
-#         ion_task = ScfFWTask(scf_input, is_autoparal=autoparal)
-#         self.ion_fw = Firework(ion_task, spec=spec)
-#
-#         ioncell_task = NscfFWTask(nscf_input, deps={ion_task.task_type: 'DEN'}, is_autoparal=autoparal)
-#         self.ioncell_fw = Firework(ioncell_task, spec=spec)
-#
-#         self.wf = Workflow([self.ion_fw, self.ioncell_fw], {self.ion_fw: [self.ioncell_fw]})
-
-
 class PhononFWWorkflowOld(AbstractFWWorkflow):
+    """
+    First version of the generator of a fireworks workflow for the calculation of phonon properties.
+    Deprecated.
+    """
+
     workflow_class = 'PhononFWWorkflowOld'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
@@ -1024,10 +1193,28 @@ class PhononFWWorkflowOld(AbstractFWWorkflow):
 
 
 class PhononFWWorkflow(AbstractFWWorkflow):
+    """
+    Generator of a fireworks workflow for the calculation of phonon properties with DFPT.
+    Parallelization over all the perturbations. The phononic perturbations will be generated at runtime based on the
+    last input used in the SCF calculation.
+    Warning: for calculations requiring a large number of perturbations (>1000 perturbations) the generation step will
+    fail due to limitations in the size of documents in mongodb database. Use PhononFullFWWorkflow if this may
+    be an issue.
+    """
+
     workflow_class = 'PhononFWWorkflow'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
     def __init__(self, scf_inp, phonon_factory, autoparal=False, spec=None, initialization_info=None):
+        """
+        Args:
+            scf_inp: an AbinitInput for the SCF calculation.
+            phonon_factory: an PhononsFromGsFactory for the generation of the inputs for phonon perturbations.
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+        """
+
         if spec is None:
             spec = {}
         if initialization_info is None:
@@ -1065,7 +1252,13 @@ class PhononFWWorkflow(AbstractFWWorkflow):
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      shift_mode="Symmetric", ph_ngqpt=None, qpoints=None, qppa=None, with_ddk=True, with_dde=True,
                      with_bec=False, scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None, wfq_tol=None,
-                     qpoints_to_skip=None, extra_abivars=None, decorators=None, autoparal=False, spec=None, initialization_info=None):
+                     qpoints_to_skip=None, extra_abivars=None, decorators=None, autoparal=False, spec=None,
+                     initialization_info=None, manager=None):
+        """
+        Creates an instance of PhononFWWorkflow using the scf_for_phonons and phonons_from_gsinput factory functions.
+        See the description of the factories for the definition of the arguments.
+        The manager can be a TaskManager or a FWTaskManager.
+        """
 
         if extra_abivars is None:
             extra_abivars = {}
@@ -1075,6 +1268,11 @@ class PhononFWWorkflow(AbstractFWWorkflow):
             spec = {}
         if initialization_info is None:
             initialization_info = {}
+
+        if isinstance(manager, FWTaskManager):
+            manager = manager.task_manager
+            if manager is None:
+                raise ValueError("A TaskManager is required in the FWTaskManager.")
 
         if qppa is not None and (ph_ngqpt is not None or qpoints is not None):
             raise ValueError("qppa is incompatible with ph_ngqpt and qpoints")
@@ -1098,20 +1296,25 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         phonon_fact = PhononsFromGsFactory(ph_ngqpt=ph_ngqpt, with_ddk=with_ddk, with_dde=with_dde, with_bec=with_bec,
                                            ph_tol=ph_tol, ddk_tol=ddk_tol, dde_tol=dde_tol, wfq_tol=wfq_tol,
                                            qpoints_to_skip=qpoints_to_skip, extra_abivars=extra_abivars,
-                                           decorators=decorators)
+                                           decorators=decorators, manager=manager)
 
         ph_wf = cls(scf_fact, phonon_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
-
-        # if all the q points for a grid are calculated in this WF, add an anaddb task
-        if ph_ngqpt and not qpoints_to_skip:
-            ph_wf.add_anaddb_ph_bs_fw(Structure.as_structure(structure), ph_ngqpt)
 
         return ph_wf
 
     @classmethod
-    def from_gs_input(cls, pseudos, gs_input, structure=None, ph_ngqpt=None, qpoints=None, qppa=None, with_ddk=True,
+    def from_gs_input(cls, gs_input, structure=None, ph_ngqpt=None, qpoints=None, qppa=None, with_ddk=True,
                       with_dde=True, with_bec=False, scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None, wfq_tol=None,
-                      qpoints_to_skip=None, extra_abivars=None, decorators=None, autoparal=False, spec=None, initialization_info=None):
+                      qpoints_to_skip=None, extra_abivars=None, decorators=None, autoparal=False, spec=None,
+                      initialization_info=None, manager=None):
+        """
+        Creates an instance of PhononFWWorkflow using a custom AbinitInput for a ground state calculation and the
+        phonons_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
+        default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
+        See the description of the phonons_from_gsinput factory for the definition of the arguments.
+        The manager can be a TaskManager or a FWTaskManager.
+        """
+
         if extra_abivars is None:
             extra_abivars = {}
         if decorators is None:
@@ -1120,6 +1323,11 @@ class PhononFWWorkflow(AbstractFWWorkflow):
             spec = {}
         if initialization_info is None:
             initialization_info = {}
+
+        if isinstance(manager, FWTaskManager):
+            manager = manager.task_manager
+            if manager is None:
+                raise ValueError("A TaskManager is required in the FWTaskManager.")
 
         if qppa is not None and (ph_ngqpt is not None or qpoints is not None):
             raise ValueError("qppa is incompatible with ph_ngqpt and qpoints")
@@ -1152,17 +1360,25 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         phonon_fact = PhononsFromGsFactory(ph_ngqpt=ph_ngqpt, with_ddk=with_ddk, with_dde=with_dde, with_bec=with_bec,
                                            ph_tol=ph_tol, ddk_tol=ddk_tol, dde_tol=dde_tol, wfq_tol=wfq_tol,
                                            qpoints_to_skip=qpoints_to_skip, extra_abivars=extra_abivars,
-                                           decorators=decorators)
+                                           decorators=decorators, manager=manager)
 
         ph_wf = cls(scf_inp, phonon_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info)
-
-        # if all the q points for a grid are calculated in this WF, add an anaddb task
-        if ph_ngqpt and not qpoints_to_skip:
-            ph_wf.add_anaddb_ph_bs_fw(Structure.as_structure(structure), ph_ngqpt)
 
         return ph_wf
 
     def add_anaddb_ph_bs_fw(self, structure, ph_ngqpt, ndivsm=20, nqsmall=15):
+        """
+        Appends a Firework with a task for the calculation of phonon band structure and dos with anaddb.
+
+        Args:
+            structure: the input structure
+            ngqpt: Monkhorst-Pack divisions for the phonon Q-mesh (coarse one)
+            nqsmall: Used to generate the (dense) mesh for the DOS.
+                It defines the number of q-points used to sample the smallest lattice vector.
+            ndivsm: Used to generate a normalized path for the phonon bands.
+                If gives the number of divisions for the smallest segment of the path.
+        """
+
         anaddb_input = AnaddbInput.phbands_and_dos(structure=structure, ngqpt=ph_ngqpt, ndivsm=ndivsm,nqsmall=nqsmall,
                                                    asr=2, chneut=1, dipdip=1, lo_to_splitting=True)
         anaddb_task = AnaDdbAbinitTask(anaddb_input, deps={MergeDdbAbinitTask.task_type: "DDB"})
@@ -1175,6 +1391,18 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
     @classmethod
     def get_mongoengine_results(cls, wf):
+        """
+        Generates the PhononResult mongoengine document containing the results of the calculation.
+        The workflow should have been generated from this class and requires an open connection to the
+        fireworks database and access to the file system containing the calculations.
+
+        Args:
+            wf: the fireworks Workflow instance of the workflow.
+
+        Returns:
+            A PhononResult document.
+        """
+
         assert wf.metadata['workflow_class'] == cls.workflow_class
         assert wf.metadata['workflow_module'] == cls.workflow_module
 
@@ -1256,7 +1484,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         document.set_dir_names_from_fws_wf(wf)
 
-        with open(mrgddb_task.merged_ddb_path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(mrgddb_task.merged_ddb_path, "rb") as f:
             document.abinit_output.ddb.put(f)
 
         if ph_index > 0:
@@ -1290,7 +1519,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         with open(scf_task.gsr_path, "rb") as f:
             document.abinit_output.gs_gsr.put(f)
 
-        with open(scf_task.output_file.path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(scf_task.output_file.path, "rb") as f:
             document.abinit_output.gs_outfile.put(f)
 
         return document
@@ -1298,12 +1528,24 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
 class PhononFullFWWorkflow(PhononFWWorkflow):
     """
-    Same as PhononFWWorkflow, but the phonon FWs are generated immediately
+    Generator of a fireworks workflow for the calculation of phonon properties with DFPT.
+    Parallelization over all the perturbations.
+    Subclass of PhononFWWorkflow but the Fireworks with phonon perturbations will be generated immediately.
     """
+
     workflow_class = 'PhononFullFWWorkflow'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
     def __init__(self, scf_inp, phonon_factory, autoparal=False, spec=None, initialization_info=None):
+        """
+        Args:
+            scf_inp: an AbinitInput for the SCF calculation.
+            phonon_factory: an PhononsFromGsFactory for the generation of the inputs for phonon perturbations.
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+        """
+
         spec = spec or {}
         initialization_info = initialization_info or {}
         start_task_index = 1
@@ -1323,81 +1565,19 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
 
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
-        self.wf = Workflow([self.scf_fw],
-                           metadata={'workflow_class': self.workflow_class,
-                                     'workflow_module': self.workflow_module})
-        self.wf.append_wf(self.generate_ph(phonon_factory, scf_inp, autoparal=autoparal, spec=spec,
-                                           initialization_info=initialization_info, previous_task_type=ScfFWTask.task_type),
-                          fw_ids=[self.scf_fw.fw_id])
 
-    def get_fws(self, multi_inp, task_class, deps, spec, nscf_fws=None):
-        formula = multi_inp[0].structure.composition.reduced_formula
-        fws = []
-        fw_deps = defaultdict(list)
-        autoparal_spec = {}
-        for i, inp in enumerate(multi_inp):
-            spec = dict(spec)
-            start_task_index = 1
-
-            current_deps = dict(deps)
-            parent_fw = None
-            if nscf_fws:
-                qpt = inp['qpt']
-                for nscf_fw in nscf_fws:
-                    if np.allclose(nscf_fw.tasks[0].abiinput['qpt'], qpt):
-                        parent_fw = nscf_fw
-                        current_deps[nscf_fw.tasks[0].task_type] = "WFQ"
-                        break
-
-            task = task_class(inp, deps=current_deps, is_autoparal=False)
-            # this index is for the different task, each performing a different perturbation
-            indexed_task_type = task_class.task_type + '_' + str(i)
-            # this index is to index the restarts of the single task
-            spec['wf_task_index'] = indexed_task_type + '_' + str(start_task_index)
-            fw = Firework(task, spec=spec, name=(formula + '_' + indexed_task_type)[:15])
-            fws.append(fw)
-            if parent_fw is not None:
-                fw_deps[parent_fw].append(fw)
-
-        return fws, fw_deps
-
-    def get_autoparal_fw(self, inp, task_type, deps, spec, nscf_fws=None):
-        formula = inp.structure.composition.reduced_formula
-        fw_deps = defaultdict(list)
-        spec = dict(spec)
-
-        current_deps = dict(deps)
-        parent_fw = None
-        if nscf_fws:
-            qpt = inp['qpt']
-            for nscf_fw in nscf_fws:
-                if np.allclose(nscf_fw.tasks[0].abiinput['qpt'], qpt):
-                    parent_fw = nscf_fw
-                    current_deps[nscf_fw.tasks[0].task_type] = "WFQ"
-                    break
-
-        task = AutoparalTask(inp, deps=current_deps, forward_spec=True)
-        # this index is for the different task, each performing a different perturbation
-        indexed_task_type = AutoparalTask.task_type
-        # this index is to index the restarts of the single task
-        spec['wf_task_index'] = indexed_task_type + '_' + task_type
-        fw = Firework(task, spec=spec, name=(formula + '_' + indexed_task_type)[:15])
-        if parent_fw is not None:
-            fw_deps[parent_fw].append(fw)
-
-        return fw, fw_deps
-
-    def generate_ph(self, ph_inputs, previous_input, autoparal, spec, initialization_info, previous_task_type):
+        # Generate the phononic part of the workflow
 
         # Since everything is being generated here factories should be used to generate the AbinitInput
+        if isinstance(scf_inp, InputFactory):
+            scf_inp = scf_inp.build_input()
 
-        if isinstance(previous_input, InputFactory):
-            previous_input = previous_input.build_input()
-
-        if isinstance(ph_inputs, InputFactory):
-            initialization_info['input_factory'] = ph_inputs.as_dict()
-            spec['initialization_info']['input_factory'] = ph_inputs.as_dict()
-            ph_inputs = ph_inputs.build_input(previous_input)
+        if isinstance(phonon_factory, InputFactory):
+            initialization_info['input_factory'] = phonon_factory.as_dict()
+            spec['initialization_info']['input_factory'] = phonon_factory.as_dict()
+            ph_inputs = phonon_factory.build_input(scf_inp)
+        else:
+            ph_inputs = phonon_factory
 
         ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
         ddk_inputs = ph_inputs.filter_by_tags(DDK)
@@ -1405,6 +1585,8 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
         bec_inputs = ph_inputs.filter_by_tags(BEC)
 
         nscf_inputs = ph_inputs.filter_by_tags(NSCF)
+
+        previous_task_type = scf_task.task_type
 
         nscf_fws = []
         if nscf_inputs is not None:
@@ -1446,7 +1628,7 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
         mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
                              name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
 
-        fws_deps = {}
+        fws_deps = defaultdict(list)
 
         autoparal_fws = []
         if autoparal:
@@ -1456,6 +1638,7 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
             autoparal_fws.append(dfpt_autoparal_fw)
 
             fws_deps[dfpt_autoparal_fw] = ph_fws + ddk_fws + dde_fws + bec_fws
+            fws_deps[self.scf_fw].append(dfpt_autoparal_fw)
 
             if nscf_fws:
                 nscf_autoparal_fw = self.get_autoparal_fw(nscf_inputs[0], 'nscf',
@@ -1470,25 +1653,142 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
                 if bec_fws:
                     fws_deps[ddk_fw] = bec_fws
 
+        # all the abinit related FWs should depend on the scf calculation for the WFK
+        abinit_fws = nscf_fws + ddk_fws + dde_fws + ph_fws + bec_fws
+        fws_deps[self.scf_fw].extend(abinit_fws)
+
         ddb_fws = dde_fws + ph_fws + bec_fws
         #TODO pass all the tasks to the MergeDdbTask for logging or easier retrieve of the DDK?
         for ddb_fw in ddb_fws:
             fws_deps[ddb_fw] = mrgddb_fw
 
-        total_list_fws = ddb_fws+ddk_fws+[mrgddb_fw] + nscf_fws + autoparal_fws
+        total_list_fws = [self.scf_fw] + ddb_fws+ddk_fws+[mrgddb_fw] + nscf_fws + autoparal_fws
 
         fws_deps.update(ph_fw_deps)
 
-        ph_wf = Workflow(total_list_fws, fws_deps)
+        self.wf = Workflow(total_list_fws, links_dict=fws_deps,
+                           metadata={'workflow_class': self.workflow_class,
+                                     'workflow_module': self.workflow_module})
 
-        return ph_wf
+    def get_fws(self, multi_inp, task_class, deps, spec, nscf_fws=None):
+        """
+        Prepares the fireworks for a specific type of calculation
+
+        Args:
+            multi_inp: MultiDataset with the inputs that should be run
+            task_class: class of the tasks that should be generated
+            deps: dict with the dependencies already set for this type of task
+            spec: spec for the new Fireworks that will be created
+            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present. Will be linked
+                if needed.
+
+        Returns:
+            (tuple): tuple containing:
+                fws (list): The list of new Fireworks.
+                fw_deps (dict): The dependencies related to these fireworks. Should be used when generating
+                    the workflow.
+        """
+
+        formula = multi_inp[0].structure.composition.reduced_formula
+        fws = []
+        fw_deps = defaultdict(list)
+        autoparal_spec = {}
+        for i, inp in enumerate(multi_inp):
+            spec = dict(spec)
+            start_task_index = 1
+
+            current_deps = dict(deps)
+            parent_fw = None
+            if nscf_fws:
+                qpt = inp['qpt']
+                for nscf_fw in nscf_fws:
+                    if np.allclose(nscf_fw.tasks[0].abiinput['qpt'], qpt):
+                        parent_fw = nscf_fw
+                        current_deps[nscf_fw.tasks[0].task_type] = "WFQ"
+                        break
+
+            task = task_class(inp, deps=current_deps, is_autoparal=False)
+            # this index is for the different task, each performing a different perturbation
+            indexed_task_type = task_class.task_type + '_' + str(i)
+            # this index is to index the restarts of the single task
+            spec['wf_task_index'] = indexed_task_type + '_' + str(start_task_index)
+            fw = Firework(task, spec=spec, name=(formula + '_' + indexed_task_type)[:15])
+            fws.append(fw)
+            if parent_fw is not None:
+                fw_deps[parent_fw].append(fw)
+
+        return fws, fw_deps
+
+    def get_autoparal_fw(self, inp, task_type, deps, spec, nscf_fws=None):
+        """
+        Prepares a single Firework conatining an AutoparalTask to perform the autoparal for each group of calculations.
+
+        Args:
+            inp: one of the inputs for which the autoparal should be run
+            task_type: task_type of the class for the current type of calculation
+            deps: dict with the dependencies already set for this type of task
+            spec: spec for the new Fireworks that will be created
+            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present. Will be linked
+                if needed.
+
+        Returns:
+            (tuple): tuple containing:
+                fws (list): The new Firework.
+                fw_deps (dict): The dependencies between related to this firework. Should be used when generating
+                    the workflow.
+        """
+
+        formula = inp.structure.composition.reduced_formula
+        fw_deps = defaultdict(list)
+        spec = dict(spec)
+
+        current_deps = dict(deps)
+        parent_fw = None
+        if nscf_fws:
+            qpt = inp['qpt']
+            for nscf_fw in nscf_fws:
+                if np.allclose(nscf_fw.tasks[0].abiinput['qpt'], qpt):
+                    parent_fw = nscf_fw
+                    current_deps[nscf_fw.tasks[0].task_type] = "WFQ"
+                    break
+
+        task = AutoparalTask(inp, deps=current_deps, forward_spec=True)
+        # this index is for the different task, each performing a different perturbation
+        indexed_task_type = AutoparalTask.task_type
+        # this index is to index the restarts of the single task
+        spec['wf_task_index'] = indexed_task_type + '_' + task_type
+        fw = Firework(task, spec=spec, name=(formula + '_' + indexed_task_type)[:15])
+        if parent_fw is not None:
+            fw_deps[parent_fw].append(fw)
+
+        return fw, fw_deps
 
 
 class DteFWWorkflow(AbstractFWWorkflow):
+    """
+    Generator of a fireworks workflow for the calculation of third derivatives with respect to electric field and
+    atomic position to calculate  non-linear optical susceptibilities of a material using DFPT.
+    Parallelization over all the perturbations. The phonon perturbations are optional.
+    """
+
     workflow_class = 'DteFWWorkflow'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-    def __init__(self, scf_inp, ddk_inp, dde_inp, dte_inp, ph_inp=None, autoparal=False, spec=None, initialization_info=None):
+    def __init__(self, scf_inp, ddk_inp, dde_inp, dte_inp, ph_inp=None, autoparal=False, spec=None,
+                 initialization_info=None):
+        """
+        Args:
+            scf_inp: an AbinitInput for the SCF calculation.
+            ddk_inp: a MultiDataset with the inputs for the DDK perturbations.
+            dde_inp: a MultiDataset with the inputs for the DDE perturbations.
+            dte_inp: a MultiDataset with the inputs for the DTE perturbations.
+            ph_inp: a MultiDataset with the inputs for the phonon perturbations. If None phonon perturbations
+                will not be considered.
+            autoparal: if True autoparal will be used at runtime to optimize the number of processes.
+            spec: a dict with additional spec for the Firework.
+            initialization_info: a dict defining additional information about the initialization of the workflow.
+        """
+
         if spec is None:
             spec = {}
         if initialization_info is None:
@@ -1575,6 +1875,19 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
 
     def get_fws(self, multi_inp, task_class, deps, spec):
+        """
+        Prepares the fireworks for a specific type of calculation
+
+        Args:
+            multi_inp: MultiDataset with the inputs that should be run
+            task_class: class of the tasks that should be generated
+            deps: dict with the dependencies already set for this type of task
+            spec: spec for the new Fireworks that will be created
+
+        Returns:
+            The list of new Fireworks.
+        """
+
         formula = multi_inp[0].structure.composition.reduced_formula
         fws = []
         autoparal_spec = {}
@@ -1592,6 +1905,19 @@ class DteFWWorkflow(AbstractFWWorkflow):
         return fws
 
     def get_autoparal_fw(self, inp, task_type, deps, spec, formula=None):
+        """
+        Prepares a single Firework conatining an AutoparalTask to perform the autoparal for each group of calculations.
+
+        Args:
+            inp: one of the inputs for which the autoparal should be run
+            task_type: task_type of the class for the current type of calculation
+            deps: dict with the dependencies already set for this type of task
+            spec: spec for the new Fireworks that will be created
+
+        Returns:
+            The Firework with the autoparal.
+        """
+
         if deps is None:
             deps = {}
         if formula is None:
@@ -1611,7 +1937,12 @@ class DteFWWorkflow(AbstractFWWorkflow):
                      spin_mode="polarized", smearing="fermi_dirac:0.1 eV", charge=0.0, scf_algorithm=None,
                      shift_mode="Symmetric", scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None, dte_tol=None,
                      use_phonons=False, extra_abivars=None, decorators=None, autoparal=False, spec=None,
-                     initialization_info=None, skip_dte_permutations=False):
+                     initialization_info=None, skip_dte_permutations=False, manager=None):
+        """
+        Creates an instance of DteFWWorkflow using the scf_for_phonons and dte_from_gsinput factory functions.
+        See the description of the factories for the definition of the arguments.
+        The manager can be a TaskManager or a FWTaskManager.
+        """
 
         if extra_abivars is None:
             extra_abivars = {}
@@ -1622,6 +1953,10 @@ class DteFWWorkflow(AbstractFWWorkflow):
         if initialization_info is None:
             initialization_info = {}
 
+        if isinstance(manager, FWTaskManager):
+            manager = manager.task_manager
+            if manager is None:
+                raise ValueError("A TaskManager is required in the FWTaskManager.")
 
         initialization_info['use_phonons'] = use_phonons
         if 'kppa' not in initialization_info:
@@ -1642,7 +1977,7 @@ class DteFWWorkflow(AbstractFWWorkflow):
             d(scf_inp)
 
         inp = dte_from_gsinput(scf_inp, use_phonons=use_phonons, dde_tol=dde_tol, ddk_tol=ddk_tol, ph_tol=ph_tol,
-                               dte_tol=dte_tol, skip_dte_permutations=skip_dte_permutations)
+                               dte_tol=dte_tol, skip_dte_permutations=skip_dte_permutations, manager=manager)
 
         # set the additional variables coming from the user
         scf_inp.set_vars(extra_abivars)
@@ -1656,9 +1991,17 @@ class DteFWWorkflow(AbstractFWWorkflow):
         return dte_wf
 
     @classmethod
-    def from_gs_input(cls, pseudos, gs_input, structure=None, scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None,
+    def from_gs_input(cls, gs_input, structure=None, scf_tol=None, ph_tol=None, ddk_tol=None, dde_tol=None,
                       dte_tol=None, use_phonons=False, extra_abivars=None, decorators=None, autoparal=False, spec=None,
-                      initialization_info=None, skip_dte_permutations=False):
+                      initialization_info=None, skip_dte_permutations=False, manager=None):
+        """
+        Creates an instance of DteFWWorkflow using a custom AbinitInput for a ground state calculation and the
+        dte_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
+        default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
+        See the description of the dte_from_gsinput factory for the definition of the arguments.
+        The manager can be a TaskManager or a FWTaskManager.
+        """
+
         if extra_abivars is None:
             extra_abivars = {}
         if decorators is None:
@@ -1667,6 +2010,11 @@ class DteFWWorkflow(AbstractFWWorkflow):
             spec = {}
         if initialization_info is None:
             initialization_info = {}
+
+        if isinstance(manager, FWTaskManager):
+            manager = manager.task_manager
+            if manager is None:
+                raise ValueError("A TaskManager is required in the FWTaskManager.")
 
         initialization_info['use_phonos'] = use_phonons
 
@@ -1694,7 +2042,7 @@ class DteFWWorkflow(AbstractFWWorkflow):
             d(scf_inp)
 
         inp = dte_from_gsinput(scf_inp, use_phonons=use_phonons, dde_tol=dde_tol, ddk_tol=ddk_tol, ph_tol=ph_tol,
-                               dte_tol=dte_tol, skip_dte_permutations=skip_dte_permutations)
+                               dte_tol=dte_tol, skip_dte_permutations=skip_dte_permutations, manager=manager)
 
         # set the additional variables coming from the user
         scf_inp.set_vars(extra_abivars)
@@ -1708,6 +2056,20 @@ class DteFWWorkflow(AbstractFWWorkflow):
         return dte_wf
 
     def add_anaddb_dte_fw(self, structure, dieflag=1, nlflag=1, ramansr=1, alphon=1, prtmbm=1):
+        """
+        Appends a Firework with a task for the calculation of the third derivatives with anaddb.
+
+        Args:
+            structure: the input structure.
+            dieflag: see anaddb documentation.
+            nlflag: see anaddb documentation.
+            ramansr: see anaddb documentation.
+            alphon: see anaddb documentation.
+            prtmbm: see anaddb documentation.
+
+        Returns:
+
+        """
         anaddb_input = AnaddbInput(structure=structure)
         anaddb_input.set_vars(dieflag=dieflag, nlflag=nlflag, ramansr=ramansr, alphon=alphon, prtmbm=prtmbm)
         anaddb_task = AnaDdbAbinitTask(anaddb_input, deps={MergeDdbAbinitTask.task_type: "DDB"})
@@ -1720,6 +2082,18 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
     @classmethod
     def get_mongoengine_results(cls, wf):
+        """
+        Generates the DteResult mongoengine document containing the results of the calculation.
+        The workflow should have been generated from this class and requires an open connection to the
+        fireworks database and access to the file system containing the calculations.
+
+        Args:
+            wf: the fireworks Workflow instance of the workflow.
+
+        Returns:
+            A DteResult document.
+        """
+
         assert wf.metadata['workflow_class'] == cls.workflow_class
         assert wf.metadata['workflow_module'] == cls.workflow_module
 
@@ -1800,7 +2174,8 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
         document.set_dir_names_from_fws_wf(wf)
 
-        with open(mrgddb_task.merged_ddb_path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(mrgddb_task.merged_ddb_path, "rb") as f:
             document.abinit_output.ddb.put(f)
 
         if ph_index > 0:
@@ -1849,7 +2224,8 @@ class DteFWWorkflow(AbstractFWWorkflow):
         with open(scf_task.gsr_path, "rb") as f:
             document.abinit_output.gs_gsr.put(f)
 
-        with open(scf_task.output_file.path, "rt") as f:
+        # read in binary for py3k compatibility with mongoengine
+        with open(scf_task.output_file.path, "rb") as f:
             document.abinit_output.gs_outfile.put(f)
 
         return document
@@ -1956,194 +2332,195 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
         raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
 
 
-class PiezoElasticFWWorkflowSRCOld(AbstractFWWorkflow):
-    workflow_class = 'PiezoElasticFWWorkflowSRC'
-    workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
-
-    STANDARD_HANDLERS = {'_all': [MemoryHandler(), WalltimeHandler()]}
-    STANDARD_VALIDATORS = {'_all': []}
-
-    def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec=None, initialization_info=None,
-                 handlers=None, validators=None, ddk_split=False, rf_split=False):
-        if spec is None:
-            spec = {}
-        if initialization_info is None:
-            initialization_info = {}
-        if handlers is None:
-            handlers = self.STANDARD_HANDLERS
-        if validators is None:
-            validators = self.STANDARD_VALIDATORS
-
-        fws = []
-        links_dict = {}
-
-        if 'queue_adapter_update' in initialization_info:
-            queue_adapter_update = initialization_info['queue_adapter_update']
-        else:
-            queue_adapter_update = None
-
-        # If handlers are passed as a list, they should be applied on all task_types
-        if isinstance(handlers, (list, tuple)):
-            handlers = {'_all': handlers}
-        # If validators are passed as a list, they should be applied on all task_types
-        if isinstance(validators, (list, tuple)):
-            validators = {'_all': validators}
-
-        #1. First SCF run in the irreducible Brillouin Zone
-        SRC_scf_ibz_fws = createSRCFireworksOld(task_class=ScfFWTask, task_input=scf_inp_ibz, SRC_spec=spec,
-                                                initialization_info=initialization_info,
-                                                wf_task_index_prefix='scfibz', task_type='scfibz',
-                                                handlers=handlers['_all'], validators=validators['_all'],
-                                                queue_adapter_update=queue_adapter_update)
-        fws.extend(SRC_scf_ibz_fws['fws'])
-        links_dict_update(links_dict=links_dict, links_update=SRC_scf_ibz_fws['links_dict'])
-
-        #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
-        #2nd derivative DDB's from the DFPT RF run
-        scf_inp_fbz = scf_inp_ibz.deepcopy()
-        scf_inp_fbz['kptopt'] = 2
-        SRC_scf_fbz_fws = createSRCFireworksOld(task_class=ScfFWTask, task_input=scf_inp_fbz, SRC_spec=spec,
-                                                initialization_info=initialization_info,
-                                                wf_task_index_prefix='scffbz', task_type='scffbz',
-                                                handlers=handlers['_all'], validators=validators['_all'],
-                                                deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']},
-                                                queue_adapter_update=queue_adapter_update)
-        fws.extend(SRC_scf_fbz_fws['fws'])
-        links_dict_update(links_dict=links_dict, links_update=SRC_scf_fbz_fws['links_dict'])
-        #Link with previous SCF
-        links_dict_update(links_dict=links_dict,
-                          links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_scf_fbz_fws['setup_fw'].fw_id})
-
-        #3. DDK calculation
-        if ddk_split:
-            raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
-        else:
-            SRC_ddk_fws = createSRCFireworksOld(task_class=DdkTask, task_input=ddk_inp, SRC_spec=spec,
-                                                initialization_info=initialization_info,
-                                                wf_task_index_prefix='ddk',
-                                                handlers=handlers['_all'], validators=validators['_all'],
-                                                deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'},
-                                                queue_adapter_update=queue_adapter_update)
-            fws.extend(SRC_ddk_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=SRC_ddk_fws['links_dict'])
-            #Link with the IBZ SCF run
-            links_dict_update(links_dict=links_dict,
-                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_ddk_fws['setup_fw'].fw_id})
-
-        #4. Response-Function calculation(s) of the elastic constants
-        if rf_split:
-            rf_ddb_source_task_type = 'mrgddb-strains'
-            scf_task_type = SRC_scf_ibz_fws['run_fw'].tasks[0].task_type
-            ddk_task_type = SRC_ddk_fws['run_fw'].tasks[0].task_type
-            gen_task = GeneratePiezoElasticFlowFWAbinitTask(previous_scf_task_type=scf_task_type,
-                                                            previous_ddk_task_type=ddk_task_type,
-                                                            handlers=handlers, validators=validators,
-                                                            mrgddb_task_type=rf_ddb_source_task_type)
-            genrfstrains_spec = set_short_single_core_to_spec(spec)
-            gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
-            fws.append(gen_fw)
-            links_dict_update(links_dict=links_dict,
-                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: gen_fw.fw_id,
-                                            SRC_ddk_fws['check_fw'].fw_id: gen_fw.fw_id})
-            rf_ddb_src_fw = gen_fw
-        else:
-            SRC_rf_fws = createSRCFireworksOld(task_class=StrainPertTask, task_input=rf_inp, SRC_spec=spec,
-                                               initialization_info=initialization_info,
-                                               wf_task_index_prefix='rf',
-                                               handlers=handlers['_all'], validators=validators['_all'],
-                                               deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
-                                                     SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
-                                               queue_adapter_update=queue_adapter_update)
-            fws.extend(SRC_rf_fws['fws'])
-            links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
-            #Link with the IBZ SCF run and the DDK run
-            links_dict_update(links_dict=links_dict,
-                              links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id,
-                                            SRC_ddk_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id})
-            rf_ddb_source_task_type = SRC_rf_fws['run_fw'].tasks[0].task_type
-            rf_ddb_src_fw = SRC_rf_fws['check_fw']
-
-        #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
-        # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
-        # stress-corrected elastic constants)
-        mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
-                                                                SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
-                                         delete_source_ddbs=False, num_ddbs=2)
-        mrgddb_spec = set_short_single_core_to_spec(spec)
-        mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
-        fws.append(mrgddb_fw)
-        links_dict_update(links_dict=links_dict,
-                          links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
-                                        SRC_scf_fbz_fws['check_fw'].fw_id: mrgddb_fw.fw_id})
-
-        #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
-        anaddb_tag = 'anaddb-piezo-elast'
-        spec = set_short_single_core_to_spec(spec)
-        anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                                 stress_correction=False),
-                                       deps={rf_ddb_source_task_type: ['DDB']},
-                                       task_type=anaddb_tag)
-        anaddb_fw = Firework([anaddb_task],
-                             spec=spec,
-                             name=anaddb_tag)
-        fws.append(anaddb_fw)
-        links_dict_update(links_dict=links_dict,
-                          links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
-
-        #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
-        anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
-        spec = set_short_single_core_to_spec(spec)
-        anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
-                                                                        stress_correction=True),
-                                              deps={mrgddb_task.task_type: ['DDB']},
-                                              task_type=anaddb_tag)
-        anaddb_stress_fw = Firework([anaddb_stress_task],
-                                    spec=spec,
-                                    name=anaddb_tag)
-        fws.append(anaddb_stress_fw)
-        links_dict_update(links_dict=links_dict,
-                          links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
-
-        self.wf = Workflow(fireworks=fws,
-                           links_dict=links_dict,
-                           metadata={'workflow_class': self.workflow_class,
-                                     'workflow_module': self.workflow_module})
-
-    @classmethod
-    def get_all_elastic_tensors(cls, wf):
-        assert wf.metadata['workflow_class'] == cls.workflow_class
-        assert wf.metadata['workflow_module'] == cls.workflow_module
-
-        anaddb_no_stress_id = None
-        anaddb_stress_id = None
-        for fw_id, fw in wf.id_fw.items():
-            if fw.name == 'anaddb-piezo-elast':
-                anaddb_no_stress_id = fw_id
-            if fw.name == 'anaddb-piezo-elast-stress-corrected':
-                anaddb_stress_id = fw_id
-        if anaddb_no_stress_id is None or anaddb_stress_id is None:
-            raise RuntimeError('Final anaddb tasks not found ...')
-        myfw_nostress = wf.id_fw[anaddb_no_stress_id]
-        last_launch_nostress = (myfw_nostress.archived_launches + myfw_nostress.launches)[-1]
-        myfw_nostress.tasks[-1].set_workdir(workdir=last_launch_nostress.launch_dir)
-
-        myfw_stress = wf.id_fw[anaddb_stress_id]
-        last_launch_stress = (myfw_stress.archived_launches + myfw_stress.launches)[-1]
-        myfw_stress.tasks[-1].set_workdir(workdir=last_launch_stress.launch_dir)
-
-        ec_nostress_clamped = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='clamped_ion')
-        ec_nostress_relaxed = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion')
-        ec_stress_relaxed = myfw_stress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion_stress_corrected')
-
-        ec_dicts = {'clamped_ion': ec_nostress_clamped.extended_dict(),
-                    'relaxed_ion': ec_nostress_relaxed.extended_dict(),
-                    'relaxed_ion_stress_corrected': ec_stress_relaxed.extended_dict()}
-
-        return {'elastic_properties': ec_dicts}
-
-    @classmethod
-    def from_factory(cls):
-        raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
+# TODO old version based on GeneratePiezoElasticFlowFWAbinitTask with SRC. Should be removed after adapting.
+# class PiezoElasticFWWorkflowSRCOld(AbstractFWWorkflow):
+#     workflow_class = 'PiezoElasticFWWorkflowSRC'
+#     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
+#
+#     STANDARD_HANDLERS = {'_all': [MemoryHandler(), WalltimeHandler()]}
+#     STANDARD_VALIDATORS = {'_all': []}
+#
+#     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec=None, initialization_info=None,
+#                  handlers=None, validators=None, ddk_split=False, rf_split=False):
+#         if spec is None:
+#             spec = {}
+#         if initialization_info is None:
+#             initialization_info = {}
+#         if handlers is None:
+#             handlers = self.STANDARD_HANDLERS
+#         if validators is None:
+#             validators = self.STANDARD_VALIDATORS
+#
+#         fws = []
+#         links_dict = {}
+#
+#         if 'queue_adapter_update' in initialization_info:
+#             queue_adapter_update = initialization_info['queue_adapter_update']
+#         else:
+#             queue_adapter_update = None
+#
+#         # If handlers are passed as a list, they should be applied on all task_types
+#         if isinstance(handlers, (list, tuple)):
+#             handlers = {'_all': handlers}
+#         # If validators are passed as a list, they should be applied on all task_types
+#         if isinstance(validators, (list, tuple)):
+#             validators = {'_all': validators}
+#
+#         #1. First SCF run in the irreducible Brillouin Zone
+#         SRC_scf_ibz_fws = createSRCFireworksOld(task_class=ScfFWTask, task_input=scf_inp_ibz, SRC_spec=spec,
+#                                                 initialization_info=initialization_info,
+#                                                 wf_task_index_prefix='scfibz', task_type='scfibz',
+#                                                 handlers=handlers['_all'], validators=validators['_all'],
+#                                                 queue_adapter_update=queue_adapter_update)
+#         fws.extend(SRC_scf_ibz_fws['fws'])
+#         links_dict_update(links_dict=links_dict, links_update=SRC_scf_ibz_fws['links_dict'])
+#
+#         #2. Second SCF run in the full Brillouin Zone with kptopt 3 in order to allow merging 1st derivative DDB's with
+#         #2nd derivative DDB's from the DFPT RF run
+#         scf_inp_fbz = scf_inp_ibz.deepcopy()
+#         scf_inp_fbz['kptopt'] = 2
+#         SRC_scf_fbz_fws = createSRCFireworksOld(task_class=ScfFWTask, task_input=scf_inp_fbz, SRC_spec=spec,
+#                                                 initialization_info=initialization_info,
+#                                                 wf_task_index_prefix='scffbz', task_type='scffbz',
+#                                                 handlers=handlers['_all'], validators=validators['_all'],
+#                                                 deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: ['DEN', 'WFK']},
+#                                                 queue_adapter_update=queue_adapter_update)
+#         fws.extend(SRC_scf_fbz_fws['fws'])
+#         links_dict_update(links_dict=links_dict, links_update=SRC_scf_fbz_fws['links_dict'])
+#         #Link with previous SCF
+#         links_dict_update(links_dict=links_dict,
+#                           links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_scf_fbz_fws['setup_fw'].fw_id})
+#
+#         #3. DDK calculation
+#         if ddk_split:
+#             raise NotImplementedError('Split Ddk to be implemented in PiezoElasticWorkflow ...')
+#         else:
+#             SRC_ddk_fws = createSRCFireworksOld(task_class=DdkTask, task_input=ddk_inp, SRC_spec=spec,
+#                                                 initialization_info=initialization_info,
+#                                                 wf_task_index_prefix='ddk',
+#                                                 handlers=handlers['_all'], validators=validators['_all'],
+#                                                 deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK'},
+#                                                 queue_adapter_update=queue_adapter_update)
+#             fws.extend(SRC_ddk_fws['fws'])
+#             links_dict_update(links_dict=links_dict, links_update=SRC_ddk_fws['links_dict'])
+#             #Link with the IBZ SCF run
+#             links_dict_update(links_dict=links_dict,
+#                               links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_ddk_fws['setup_fw'].fw_id})
+#
+#         #4. Response-Function calculation(s) of the elastic constants
+#         if rf_split:
+#             rf_ddb_source_task_type = 'mrgddb-strains'
+#             scf_task_type = SRC_scf_ibz_fws['run_fw'].tasks[0].task_type
+#             ddk_task_type = SRC_ddk_fws['run_fw'].tasks[0].task_type
+#             gen_task = GeneratePiezoElasticFlowFWAbinitTask(previous_scf_task_type=scf_task_type,
+#                                                             previous_ddk_task_type=ddk_task_type,
+#                                                             handlers=handlers, validators=validators,
+#                                                             mrgddb_task_type=rf_ddb_source_task_type)
+#             genrfstrains_spec = set_short_single_core_to_spec(spec)
+#             gen_fw = Firework([gen_task], spec=genrfstrains_spec, name='gen-piezo-elast')
+#             fws.append(gen_fw)
+#             links_dict_update(links_dict=links_dict,
+#                               links_update={SRC_scf_ibz_fws['check_fw'].fw_id: gen_fw.fw_id,
+#                                             SRC_ddk_fws['check_fw'].fw_id: gen_fw.fw_id})
+#             rf_ddb_src_fw = gen_fw
+#         else:
+#             SRC_rf_fws = createSRCFireworksOld(task_class=StrainPertTask, task_input=rf_inp, SRC_spec=spec,
+#                                                initialization_info=initialization_info,
+#                                                wf_task_index_prefix='rf',
+#                                                handlers=handlers['_all'], validators=validators['_all'],
+#                                                deps={SRC_scf_ibz_fws['run_fw'].tasks[0].task_type: 'WFK',
+#                                                      SRC_ddk_fws['run_fw'].tasks[0].task_type: 'DDK'},
+#                                                queue_adapter_update=queue_adapter_update)
+#             fws.extend(SRC_rf_fws['fws'])
+#             links_dict_update(links_dict=links_dict, links_update=SRC_rf_fws['links_dict'])
+#             #Link with the IBZ SCF run and the DDK run
+#             links_dict_update(links_dict=links_dict,
+#                               links_update={SRC_scf_ibz_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id,
+#                                             SRC_ddk_fws['check_fw'].fw_id: SRC_rf_fws['setup_fw'].fw_id})
+#             rf_ddb_source_task_type = SRC_rf_fws['run_fw'].tasks[0].task_type
+#             rf_ddb_src_fw = SRC_rf_fws['check_fw']
+#
+#         #5. Merge DDB files from response function (second derivatives for the elastic constants) and from the
+#         # SCF run on the full Brillouin zone (first derivatives for the stress tensor, to be used for the
+#         # stress-corrected elastic constants)
+#         mrgddb_task = MergeDdbAbinitTask(ddb_source_task_types=[rf_ddb_source_task_type,
+#                                                                 SRC_scf_fbz_fws['run_fw'].tasks[0].task_type],
+#                                          delete_source_ddbs=False, num_ddbs=2)
+#         mrgddb_spec = set_short_single_core_to_spec(spec)
+#         mrgddb_fw = Firework(tasks=[mrgddb_task], spec=mrgddb_spec, name='mrgddb')
+#         fws.append(mrgddb_fw)
+#         links_dict_update(links_dict=links_dict,
+#                           links_update={rf_ddb_src_fw.fw_id: mrgddb_fw.fw_id,
+#                                         SRC_scf_fbz_fws['check_fw'].fw_id: mrgddb_fw.fw_id})
+#
+#         #6. Anaddb task to get elastic constants based on the RF run (no stress correction)
+#         anaddb_tag = 'anaddb-piezo-elast'
+#         spec = set_short_single_core_to_spec(spec)
+#         anaddb_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+#                                                                  stress_correction=False),
+#                                        deps={rf_ddb_source_task_type: ['DDB']},
+#                                        task_type=anaddb_tag)
+#         anaddb_fw = Firework([anaddb_task],
+#                              spec=spec,
+#                              name=anaddb_tag)
+#         fws.append(anaddb_fw)
+#         links_dict_update(links_dict=links_dict,
+#                           links_update={rf_ddb_src_fw.fw_id: anaddb_fw.fw_id})
+#
+#         #7. Anaddb task to get elastic constants based on the RF run and the SCF run (with stress correction)
+#         anaddb_tag = 'anaddb-piezo-elast-stress-corrected'
+#         spec = set_short_single_core_to_spec(spec)
+#         anaddb_stress_task = AnaDdbAbinitTask(AnaddbInput.piezo_elastic(structure=scf_inp_ibz.structure,
+#                                                                         stress_correction=True),
+#                                               deps={mrgddb_task.task_type: ['DDB']},
+#                                               task_type=anaddb_tag)
+#         anaddb_stress_fw = Firework([anaddb_stress_task],
+#                                     spec=spec,
+#                                     name=anaddb_tag)
+#         fws.append(anaddb_stress_fw)
+#         links_dict_update(links_dict=links_dict,
+#                           links_update={mrgddb_fw.fw_id: anaddb_stress_fw.fw_id})
+#
+#         self.wf = Workflow(fireworks=fws,
+#                            links_dict=links_dict,
+#                            metadata={'workflow_class': self.workflow_class,
+#                                      'workflow_module': self.workflow_module})
+#
+#     @classmethod
+#     def get_all_elastic_tensors(cls, wf):
+#         assert wf.metadata['workflow_class'] == cls.workflow_class
+#         assert wf.metadata['workflow_module'] == cls.workflow_module
+#
+#         anaddb_no_stress_id = None
+#         anaddb_stress_id = None
+#         for fw_id, fw in wf.id_fw.items():
+#             if fw.name == 'anaddb-piezo-elast':
+#                 anaddb_no_stress_id = fw_id
+#             if fw.name == 'anaddb-piezo-elast-stress-corrected':
+#                 anaddb_stress_id = fw_id
+#         if anaddb_no_stress_id is None or anaddb_stress_id is None:
+#             raise RuntimeError('Final anaddb tasks not found ...')
+#         myfw_nostress = wf.id_fw[anaddb_no_stress_id]
+#         last_launch_nostress = (myfw_nostress.archived_launches + myfw_nostress.launches)[-1]
+#         myfw_nostress.tasks[-1].set_workdir(workdir=last_launch_nostress.launch_dir)
+#
+#         myfw_stress = wf.id_fw[anaddb_stress_id]
+#         last_launch_stress = (myfw_stress.archived_launches + myfw_stress.launches)[-1]
+#         myfw_stress.tasks[-1].set_workdir(workdir=last_launch_stress.launch_dir)
+#
+#         ec_nostress_clamped = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='clamped_ion')
+#         ec_nostress_relaxed = myfw_nostress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion')
+#         ec_stress_relaxed = myfw_stress.tasks[-1].get_elastic_tensor(tensor_type='relaxed_ion_stress_corrected')
+#
+#         ec_dicts = {'clamped_ion': ec_nostress_clamped.extended_dict(),
+#                     'relaxed_ion': ec_nostress_relaxed.extended_dict(),
+#                     'relaxed_ion_stress_corrected': ec_stress_relaxed.extended_dict()}
+#
+#         return {'elastic_properties': ec_dicts}
+#
+#     @classmethod
+#     def from_factory(cls):
+#         raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
 
 
 class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):

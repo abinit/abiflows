@@ -1,10 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals, division, print_function
 
-from abipy.core.testing import AbipyTest
+from abiflows.core.testing import AbiflowsTest
 from abiflows.utils.factors import lowest_nn_gte_mm
 
-class TestFactors(AbipyTest):
+class TestFactors(AbiflowsTest):
     def test_lowest_nn_gte_mm(self):
         ll, exponents = lowest_nn_gte_mm(101, [2, 3, 5])
         self.assertEqual(ll, 108)

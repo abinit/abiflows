@@ -10,7 +10,7 @@ import abiflows.fireworks.tasks.abinit_common
 from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
-from pymatgen.io.abinit.utils import Directory
+from abipy.flowtk.utils import Directory
 from fireworks.core.rocket_launcher import rapidfire
 
 
