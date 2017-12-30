@@ -77,10 +77,7 @@ def find_scripts():
 
 def get_long_desc():
     with open("README.md") as f:
-        long_desc = f.read()
-        #ind = long_desc.find("\n")
-        #long_desc = long_desc[ind + 1:]
-        return long_desc
+        return f.read()
 
 
 #-----------------------------------------------------------------------------
@@ -101,21 +98,8 @@ def cleanup():
 
 # List of external packages we rely on.
 # Note setup install will download them from Pypi if they are not available.
-install_requires = [
-    "six",
-    "prettytable",
-    "numpy",
-    #"python-daemon",
-    "jinja2",
-    "pymongo",
-    "mongoengine",
-    "flask",
-    "flask-mongoengine",
-    "paramiko",
-    "abipy>=0.2.0",
-    "custodian",
-    "fireworks",
-]
+with open("requirements.txt", "rt") as fh:
+    install_requires = [s.strip() for s in fh]
 
 #---------------------------------------------------------------------------
 # Find all the packages, package data, and data_files

@@ -1,5 +1,4 @@
 .. htmlonly::
-
     :Release: |version|
     :Date: |today|
 
@@ -24,7 +23,8 @@ Getting Started
 
    features
    installation
-   whats_new
+   changelog
+   zzbiblio
 
 
 API

@@ -1,0 +1,13 @@
+six
+prettytable
+numpy
+#python-daemon
+jinja2
+pymongo
+mongoengine
+flask
+flask-mongoengine
+paramiko
+abipy>=0.2.0
+custodian
+fireworks

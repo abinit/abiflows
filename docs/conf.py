@@ -8,6 +8,7 @@ from __future__ import print_function, absolute_import, unicode_literals, divisi
 
 import sys
 import os
+import shutil
 #import matplotlib as mpl
 #mpl.use("Agg")
 
@@ -15,11 +16,23 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-sys.path.insert(0, os.path.abspath('sphinxext'))
+ABIFLOWS = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+print("ABIFLOWS", ABIFLOWS)
+
+sys.path.insert(0, ABIFLOWS)
 
 import imp
-mod_name = "../abiflows/core/release.py"
+mod_name = os.path.join(ABIFLOWS, "abiflows", "core", "release.py")
 relmod = imp.load_source(mod_name, mod_name)
+
+on_rtd = os.environ.get('READTHEDOCS') == 'True' and os.environ.get("READTHEDOCS_PROJECT")
+#if on_rtd:
+#    print("Preparing execution on READTHEDOCS server...")
+#    os.makedirs(os.path.expanduser("~/.abinit/abipy"))
+#    shutil.copy(os.path.join(ABIFLOWS, "data", "managers", "travis_scheduler.yml"),
+#                os.path.expanduser("~/.abinit/abipy/scheduler.yml"))
+#    shutil.copy(os.path.join(ABIFLOWS, "data", "managers", "travis_manager.yml"),
+#                os.path.expanduser("~/.abinit/abipy/manager.yml"))
 
 # -- General configuration -----------------------------------------------------
 
@@ -31,7 +44,6 @@ relmod = imp.load_source(mod_name, mod_name)
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
-    #'sphinx.ext.coverage',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -46,13 +58,15 @@ extensions = [
     #'sphinx_gallery.gen_gallery',
     #"sphinxarg.ext",         # CLI doc
     #'nbsphinx',
+    'sphinxcontrib.bibtex',
+    "releases",
 ]
 
 # Add any Sphinx extension module names here, as strings. They can
 # be extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 import matplotlib
 extensions += [
-    'matplotlib.sphinxext.mathmpl',
+    #'matplotlib.sphinxext.mathmpl',
     'matplotlib.sphinxext.only_directives',
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_directive',
@@ -114,7 +128,7 @@ release = relmod.__version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', '**.ipynb_checkpoints', "links.rst"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -363,9 +377,51 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
     'pandas': ("http://pandas-docs.github.io/pandas-docs-travis/", None),
     'matplotlib': ('http://matplotlib.org/', None),
+    "monty": ("http://pythonhosted.org/monty/", None),
     "pymatgen": ("http://pymatgen.org/", None),
+    "fireworks": ("https://materialsproject.github.io/fireworks/", None),
+    "abipy": ("http://pythonhosted.org/abipy/", None),
 }
 
 # If true, Sphinx will warn about all references where the target cannot be found.
 # Default is False. You can activate this mode temporarily using the -n command-line switch.
 #nitpicky = True
+
+# A string of reStructuredText that will be included at the end of every source file that is read.
+# This is the right place to add substitutions that should be available in every file.
+with open("links.rst", "rt") as fh:
+    rst_epilog = fh.read()
+
+# http://www.sphinx-doc.org/en/stable/ext/extlinks.html#confval-extlinks
+# :abivar:`ecut`
+#ABINIT_DOCS_URL =
+#extlinks = {'
+#    "abivar" : (ABINIT_DOC_ULRS + '/abinit/%s', "")
+#    api_url' : (settings.BASE_URL + '%s', settings.BASE_URL)
+#}
+
+autodoc_member_order = "bysource"
+
+#'members', 'undoc-members', 'private-members', 'special-members', 'inherited-members' and 'show-inheritance'.
+#autodoc_default_flags = ["show-inheritance", "inherited-members", "special-members"]
+
+# From https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html#custom-formatting-sorting-and-labelling
+# pybtex provides a very powerful way to create and register new styles, using setuptools entry points,
+# as documented here: http://docs.pybtex.org/api/plugins.html
+
+#from pybtex.style.formatting.unsrt import Style as UnsrtStyle
+#from pybtex.style.template import toplevel # ... and anything else needed
+#from pybtex.plugin import register_plugin
+#
+#class MyStyle(UnsrtStyle):
+#
+#    def format_XXX(self, e):
+#        template = toplevel [
+#            # etc.
+#        ]
+#        return template.format_data(e)
+#
+#register_plugin('pybtex.style.formatting', 'mystyle', MyStyle)
+
+# This is for releases http://releases.readthedocs.io/en/latest/usage.html
+releases_github_path = "abinit/abipy"

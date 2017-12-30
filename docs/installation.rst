@@ -2,6 +2,9 @@
 Getting AbiFlows
 ================
 
+.. contents::
+   :backlinks: top
+
 --------------
 Stable version
 --------------
