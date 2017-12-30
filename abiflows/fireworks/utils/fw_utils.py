@@ -10,12 +10,11 @@ import copy
 import os
 import traceback
 import logging
+import warnings
 
 from monty.serialization import loadfn
-from pymatgen.io.abinit import TaskManager
-from pymatgen.io.abinit.tasks import ParalHints
-from fireworks import Workflow
-from fireworks.core.firework import Firework
+from abipy.flowtk.tasks import TaskManager, ParalHints
+from fireworks.core.firework import Firework, Workflow
 from fireworks.core.launchpad import LaunchPad
 from abiflows.fireworks.utils.time_utils import TimeReport
 
@@ -132,10 +131,13 @@ class FWTaskManager(object):
     Object containing the configuration parameters and policies to run abipy.
     The policies needed for the abinit FW will always be available through default values. These can be overridden
     also setting the parameters in the spec.
-    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal.
+    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal or
+    factories if needed.
     The rationale behind this choice, instead of subclassing, is to not force the user to fill the qadapter part
     of the task manager, which is needed only for the autoparal, but is required in the TaskManager initialization.
-    Wherever the TaskManager is needed just pass the ftm.task_manager
+    Wherever the TaskManager is needed just pass the ftm.task_manager.
+    The TaskManager part can be loaded from an external manager.yml file using the "abipy_manager" key in fw_policy.
+    This is now the preferred choice. If this value is not defined, it will be loaded with TaskManager.from_user_config
     """
 
     YAML_FILE = "fw_manager.yaml"
@@ -154,7 +156,8 @@ class FWTaskManager(object):
                               continue_unconverged_on_rerun=True,
                               allow_local_restart=False,
                               timelimit_buffer=120,
-                              short_job_timelimit=600)
+                              short_job_timelimit=600,
+                              abipy_manager=None)
     FWPolicy = namedtuple("FWPolicy", fw_policy_defaults.keys())
 
     def __init__(self, **kwargs):
@@ -175,8 +178,19 @@ class FWTaskManager(object):
         # create the task manager only if possibile
         if 'qadapters' in kwargs:
             self.task_manager = TaskManager.from_dict(kwargs)
+            msg = "Loading the abipy TaskManager from inside the fw_manager.yaml file is deprecated. " \
+                  "Use a separate file"
+            logger.warning(msg)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
         else:
-            self.task_manager = None
+            if self.fw_policy.abipy_manager:
+                self.task_manager = TaskManager.from_file(self.fw_policy.abipy_manager)
+            else:
+                try:
+                    self.task_manager = TaskManager.from_user_config()
+                except:
+                    logger.warning("Couldn't load the abipy task manager.")
+                    self.task_manager = None
 
     @classmethod
     def from_user_config(cls, fw_policy=None):
@@ -402,7 +416,7 @@ def get_lp_and_fw_id_from_task(task, fw_spec):
         try:
             fw = lp.get_fw_by_id(fw_id)
         except ValueError as e:
-            traceback.print_exc(e)
+            traceback.print_exc()
             raise RuntimeError("The firework with id {} is not present in the LaunchPad {}. The LaunchPad is "
                                "probably incorrect.". format(fw_id, lp))
 

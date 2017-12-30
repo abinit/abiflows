@@ -29,7 +29,7 @@ def lp(request):
     def fin():
         lp.connection.drop_database(TESTDB_NAME)
 
-    request.addfinalizer(fin)
+    # request.addfinalizer(fin)
     return lp
 
 

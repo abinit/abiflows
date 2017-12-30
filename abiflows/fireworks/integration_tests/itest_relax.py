@@ -15,11 +15,8 @@ from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index,load_abitask,
 from abiflows.core.testing import AbiflowsIntegrationTest
 from fireworks.core.rocket_launcher import rapidfire
 from abipy.dynamics.hist import HistFile
-from pymatgen.io.abinit.utils import Directory
-from pymatgen.io.abinit.events import DilatmxError
-from pymatgen.core.structure import Structure
-import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
-from abiflows.core.testing import AbiflowsTest
+from abipy.flowtk.events import DilatmxError
+
 
 ABINIT_VERSION = "8.6.1"
 

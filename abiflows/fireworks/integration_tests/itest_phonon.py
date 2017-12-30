@@ -9,14 +9,12 @@ import filecmp
 import numpy.testing.utils as nptu
 
 from abiflows.fireworks.workflows.abinit_workflows import PhononFullFWWorkflow, PhononFWWorkflow
-from abiflows.fireworks.tasks.abinit_tasks import RelaxFWTask
 from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
 from abiflows.core.testing import AbiflowsIntegrationTest
 from fireworks.core.rocket_launcher import rapidfire
-from abipy.dynamics.hist import HistFile
-from pymatgen.io.abinit.utils import Directory
-import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
 from abipy.abio.factories import phonons_from_gsinput, PhononsFromGsFactory
+from abipy.flowtk.tasks import TaskManager
+import abipy.data as abidata
 
 
 ABINIT_VERSION = "8.6.1"
@@ -25,7 +23,7 @@ ABINIT_VERSION = "8.6.1"
 #               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
 
-pytestmark = pytest.mark.usefixtures("cleandb")
+# pytestmark = pytest.mark.usefixtures("cleandb")
 
 class ItestPhonon(AbiflowsIntegrationTest):
 
@@ -34,9 +32,11 @@ class ItestPhonon(AbiflowsIntegrationTest):
         Tests the complete running of PhononFullFWWorkflow and PhononFWWorkflow
         """
 
-        # test at gamma
+        # test at gamma. Pass a custom manager, to check proper serialization
+        manager_path = os.path.join(abidata.dirpath, 'managers', "travis_manager.yml")
         ph_fac = PhononsFromGsFactory(qpoints=[[0,0,0]], ph_tol = {"tolvrs": 1.0e-7}, ddk_tol = {"tolwfr": 1.0e-16},
-                                      dde_tol = {"tolvrs": 1.0e-7}, wfq_tol = {"tolwfr": 1.0e-16})
+                                      dde_tol = {"tolvrs": 1.0e-7}, wfq_tol = {"tolwfr": 1.0e-16},
+                                      manager=TaskManager.from_file(manager_path))
 
         # first run the phonon workflow with generation task
         wf_gen = PhononFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=use_autoparal,

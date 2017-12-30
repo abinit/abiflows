@@ -54,11 +54,19 @@ class DatabaseData(MSONable):
         return dict(database=self.database, host=self.host, port=self.port, collection=self.collection)
 
     def connect_mongoengine(self, alias=DEFAULT_CONNECTION_NAME):
+        """
+        Open the connection to the selected database
+        """
+
         return connect(db=self.database, host=self.host, port=self.port, username=self.username,
                        password=self.password, alias=alias)
 
     @contextlib.contextmanager
     def switch_collection(self, cls):
+        """
+        Switches to the chosen collection using Mongoengine's switch_collection.
+        """
+
         if self.collection:
             with switch_collection(cls, self.collection) as new_cls:
                 yield new_cls

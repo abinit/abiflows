@@ -85,6 +85,16 @@ class MaterialMixin(object):
     chemsys = StringField(help_text="A string chemical system associated with the material")
 
     def set_material_data_from_structure(self, structure, space_group=True, symprec=1e-3, angle_tolerance=5):
+        """
+        Sets the fields of the Document using a Structure and Spglib to determine the space group properties
+
+        Args:
+            structure: A pymatgen Structure
+            space_group: if True sets the spacegroup fields using spglib
+            symprec (float): Tolerance for symmetry finding.
+            angle_tolerance (float): Angle tolerance for symmetry finding.
+        """
+
         comp = structure.composition
         el_amt = structure.composition.get_el_amt_dict()
         self.unit_cell_formula = comp.as_dict()
@@ -116,8 +126,9 @@ class CalculationTypeMixin(object):
 
 class GroundStateOutputMixin(object):
     """
-    Mixin providing generic fiels for ground state calculation
+    Mixin providing generic fields for ground state calculation
     """
+
     #TODO would it be convenient to make these FloatWithUnitField?
     final_energy = FloatField(help_text="Final energy obtained computed in eV")
     efermi = FloatField(help_text="Computed Fermi energy in eV")
@@ -130,6 +141,7 @@ class HubbardsField(DictField):
     """
     Dictfield to validate the passed values
     """
+
     def validate(self, value):
         if not all(Element.is_valid_symbol(k) for k in value.keys()):
             self.error('Keys should be element symbols')
@@ -139,16 +151,26 @@ class HubbardsField(DictField):
 
 
 class HubbardMixin(object):
+    """
+    Mixin providing hubbard fields
+    """
     hubbards = HubbardsField(help_text="Dict containing the values of the Hubbard U values for each element")
 
 
 class DateMixin(object):
+    """
+    Mixin providing timestamp fields
+    """
 
     created_on = DateTimeField()
     modified_on = DateTimeField()
 
 
 class DirectoryMixin(object):
+    """
+    Mixin providing the field to store the directories used during the workflow
+    """
+
     dir_names = DictField(help_text="Keys are the folder containing the various steps of the calculation, with a "
                                     "description of the step as value. Task name as value is the best option. "
                                     "None is accettable")

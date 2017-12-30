@@ -8,6 +8,11 @@ from monty.json import MontyDecoder, jsanitize, MSONable
 from pymatgen.util.serialization import pmg_serialize
 import collections
 import traceback
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class TaskHistory(collections.deque, MSONable):
     """
@@ -104,8 +109,10 @@ class TaskHistory(collections.deque, MSONable):
         return total_run_time
 
 
-
 class TaskEvent(MSONable):
+    """
+    Object used to categorize the events in the TaskHistory.
+    """
 
     INITIALIZED = 'initialized'
     CORRECTIONS = 'corrections'

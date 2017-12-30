@@ -5,6 +5,8 @@ from monty.json import MSONable
 
 def seconds_to_hms(seconds):
     """
+    Converts second to the format "h:mm:ss"
+
     Args:
         seconds: number of seconds
 
@@ -20,6 +22,11 @@ def seconds_to_hms(seconds):
 
 
 class TimeReport(MSONable):
+    """
+    Report of the time consumed for the whole workflow and for each single step.
+    Includes both the time required for the calculations as well as the cpu time consumed.
+    """
+
     def __init__(self, total_run_time, n_fws, total_cpu_time=None, contributed_cpu_time=0, total_run_time_per_tag=None,
                  total_cpu_time_per_tag=None, contributed_cpu_time_per_tag=None, worker=None):
         self.total_run_time = total_run_time

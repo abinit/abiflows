@@ -21,7 +21,6 @@ from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, IND
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager, get_lp_and_fw_id_from_task
 from abiflows.database.mongoengine.utils import DatabaseData
-from abipy.abio.inputs import AbinitInput
 from monty.serialization import loadfn
 from monty.json import jsanitize
 from monty.json import MontyDecoder
@@ -203,6 +202,11 @@ class DatabaseInsertTask(FireTaskBase):
 
 @explicit_serialize
 class MongoEngineDBInsertionTask(FireTaskBase):
+    """
+    Task that insert the results of a workflow in a database. The method calls the "get_mongoengine_results"
+    of the workflow generator.
+    The database is defined according to a DatabaseData.
+    """
 
     def __init__(self, db_data, object_id=None):
         self.db_data = db_data

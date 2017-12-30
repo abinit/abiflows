@@ -113,10 +113,10 @@ class TestFromPreviousInput(AbiflowsTest):
                                 spin_mode="unpolarized")
 
     def test_phonon_workflow(self):
-        PhononFWWorkflow.from_gs_input(pseudos=self.gan_pseudos, gs_input=self.scf_inp, spec={"test": 1},
+        PhononFWWorkflow.from_gs_input(gs_input=self.scf_inp, spec={"test": 1},
                                       initialization_info={"test": 1}, ph_ngqpt=[2,2,2])
 
     def test_dte_workflow(self):
         self.scf_inp['ixc'] = 7
-        DteFWWorkflow.from_gs_input(pseudos=self.gan_pseudos, gs_input=self.scf_inp, spec={"test": 1},
+        DteFWWorkflow.from_gs_input(gs_input=self.scf_inp, spec={"test": 1},
                                    initialization_info={"test": 1})

@@ -62,7 +62,12 @@ class AbiFileField(FileField):
             proxy = super(AbiFileField, self).to_python(value)
             return self._monkey_patch_proxy(proxy)
 
+
 class GzipGridFSProxy(GridFSProxy):
+    """
+    Proxy object to handle writing and reading of files to and from GridFS.
+    Files are compressed with gzip before being saved in the GridFS. To decompress the object exposes an unzip method.
+    """
 
     def put(self, file_obj, **kwargs):
         try:
@@ -103,6 +108,10 @@ class GzipGridFSProxy(GridFSProxy):
 
 
 class GzipFileField(FileField):
+    """
+    A GridFS storage field with automatic compression of the file with gzip.
+    """
+
     proxy_class = GzipGridFSProxy
 
     def __init__(self, compresslevel=9, **kwargs):
@@ -111,6 +120,10 @@ class GzipFileField(FileField):
 
 
 class AbiGzipFSProxy(GzipGridFSProxy):
+    """
+    Proxy object to handle writing and reading of abinit related files to and from GridFS.
+    Files are compressed with gzip before being saved in the GridFS. To decompress the object exposes an unzip method.
+    """
 
     def abiopen(self):
         """Dump the unzipped gridfs data to a temporary file and use `abiopen` to open the file."""
@@ -128,6 +141,10 @@ class AbiGzipFSProxy(GzipGridFSProxy):
 
 
 class AbiGzipFileField(GzipFileField):
+    """
+    A GridFS storage field for abinit related files with automatic compression of the file with gzip.
+    """
+
     proxy_class = AbiGzipFSProxy
 
     def __init__(self, abiext, abiform, compresslevel=9, **kwargs):

@@ -9,7 +9,7 @@ import os
 from mongoengine import *
 from abiflows.core.models import AbiFileField, MSONField
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.io.abinit.pseudos import Pseudo
+from abipy.flowtk.pseudos import Pseudo
 from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
 from monty.json import jsanitize
 from monty.dev import deprecated
@@ -41,6 +41,13 @@ class AbinitPseudoData(EmbeddedDocument):
         self.pseudos_path = pseudos_path
 
     def set_pseudos_from_files_file(self, files_file_path, num_pseudo):
+        """
+        Sets the fields of the Document reading from the ".files" file.
+
+        Args:
+            files_file_path: path to the .files file
+            num_pseudo: number of pseudos that should be read
+        """
         pseudos_path = []
         with open(files_file_path) as f:
             lines = f.readlines()
@@ -56,6 +63,12 @@ class AbinitPseudoData(EmbeddedDocument):
         self.set_pseudos_from_paths(pseudos_path)
 
     def set_pseudos_from_abinit_input(self, abinit_input):
+        """
+        Sets the fields of the document using an AbinitInput object.
+
+        Args:
+            abinit_input: An AbinitInput object
+        """
         pseudos_path = [i.path for i in abinit_input.pseudos]
         self.set_pseudos_from_paths(pseudos_path)
 
@@ -79,8 +92,9 @@ class AbinitBasicInputMixin(object):
 
     def set_abinit_basic_from_abinit_input(self, abinit_input):
         """
-        create the object from an AbinitInput object
+        sets the fields of the object from an AbinitInput object
         """
+
         self.structure = abinit_input.structure.as_dict()
         self.ecut = abinit_input['ecut']
         # kpoints may be defined in different ways
