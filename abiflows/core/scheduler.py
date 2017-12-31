@@ -15,14 +15,15 @@ from monty.collections import AttrDict
 from monty.io import FileLock
 from mongoengine import *
 from mongoengine import connect #, get_db
+from pymatgen.io.abinit.launcher import sendmail
 from abipy import abilab
 from .models import MongoFlow
 
 
 class FlowUploader(object):
     """
-    This object establishes a connection with the MongoDB database and 
-    allows the user to upload a :class:`Flow` instance to the database.
+    This object establishes a connection with the MongoDB database and
+    allows the user to upload an AbiPy |Flow| instance to the database.
     """
     db_name = "abiflows"
 
@@ -35,7 +36,7 @@ class FlowUploader(object):
         Upload a :class:`Flow` to the database.
 
         Args:
-            flow: :class:`Flow` instance.
+            flow: AbiPy |Flow| instance.
             priority: priority level. Possible values in ["low", "normal", "high"]
             flow_info: JSON dictionary with info on the flow. mainly used for queries.
         """
@@ -56,7 +57,7 @@ class FlowUploader(object):
 
 class FlowEntry(Document):
     """
-    MongoDB document with information on the `Flow`.
+    MongoDB document with information on the AbiPy |Flow|.
     """
     node_id = LongField(required=True)
     workdir = StringField(required=True)
@@ -77,17 +78,17 @@ class FlowEntry(Document):
     @classmethod
     def from_flow(cls, flow, priority="normal", flow_info=None):
         """
-        Initialize the object from a :class:`Flow` object.
+        Initialize the object from an AbiPy |Flow| object.
 
         Args:
-            flow: :class:`Flow` instance.
+            flow: AbiPy |Flow| instance.
             priority: priority level. Possible values in ["low", "normal", "high"]
             flow_info: JSON dictionary with info on the flow. mainly used for queries.
         """
         info = flow.get_mongo_info()
         if flow_info is not None:
             info.update(flow_info)
-        
+
         new = cls(
             node_id=flow.node_id,
             workdir=flow.workdir,
@@ -103,7 +104,7 @@ class FlowEntry(Document):
         return new
 
     def pickle_load(self):
-        """Reconstruct the :class:`Flow` from the pickle file."""
+        """Reconstruct the AbiPy |Flow| from the pickle file."""
         return abilab.Flow.pickle_load(self.workdir)
 
 
@@ -128,15 +129,15 @@ class MongoLogger(object):
     def info(self, msg, *args):
         """Log 'msg % args' with the info severity level"""
         self._log("INFO", msg, args)
-                                                                
+
     def warning(self, msg, *args):
         """Log 'msg % args' with the warning severity level"""
         self._log("WARNING", msg, args)
-                                                                
+
     def critical(self, msg, *args):
         """Log 'msg % args' with the critical severity level"""
         self._log("CRITICAL", msg, args)
-                                                                 
+
     def _log(self, level, msg, args):
         if args:
             try:
@@ -226,7 +227,7 @@ class MongoFlowScheduler(object):
                return cls(**yaml.load(fh))
 
         except Exception as exc:
-            raise ValueError("Error while reading MongoFlowLauncher parameters from file %s\nException: %s" % 
+            raise ValueError("Error while reading MongoFlowLauncher parameters from file %s\nException: %s" %
                 (filepath, exc))
 
     def check_and_write_pid_file(self):
@@ -234,7 +235,7 @@ class MongoFlowScheduler(object):
         This function checks if we already have a running instance of :class:`MongoFlowScheduler`.
         Raises: RuntimeError if the pid file of the scheduler exists.
         """
-        if os.path.exists(self.pid_path): 
+        if os.path.exists(self.pid_path):
             raise RuntimeError("""\n\
                 pid_path
                 %s
@@ -290,13 +291,13 @@ class MongoFlowScheduler(object):
         """
         if flow is None:
             flow = entry.pickle_load()
-                                                       
+
         flow.check_status()
         entry.status = str(flow.status)
-                                                       
+
         if flow.status == flow.S_OK:
             return self.move_to_completed(entry, flow)
-                                                       
+
         entry.save(validate=self.validate)
 
     def update_entries(self):
@@ -328,7 +329,7 @@ class MongoFlowScheduler(object):
         entry.switch_collection("completed_flows")
         entry.save(validate=self.validate)
 
-        # TODO: Handle possible errors 
+        # TODO: Handle possible errors
         doc = MongoFlow.from_flow(flow)
         doc.save(validate=self.validate)
 
@@ -370,7 +371,7 @@ class MongoFlowScheduler(object):
 
             flow.check_status()
             entry.status = str(flow.status)
-                                                                   
+
             if flow.status == flow.S_OK:
                 self.move_to_completed(entry, flow)
             else:
@@ -380,13 +381,13 @@ class MongoFlowScheduler(object):
     def rollback_entry(self, entry):
         if os.path.exists(entry.workdir):
             shutil.rmtree(entry.workdir, ignore_errors=False, onerror=None)
-        
+
         _, filepath = mkstemp(suffix='.pickle', text=False)
         with open(filepath , "wb") as fh:
             fh.write(entry.bkp_pickle.read())
-                                                                                
+
         flow = abilab.Flow.pickle_load(filepath)
-                                                                                
+
         new_entry = FlowEntry.from_flow(flow, priority=entry.priority, flow_info=entry.info)
         entry.delete()
 
@@ -423,22 +424,22 @@ class MongoFlowScheduler(object):
 
     def _send_email(self, msg, tag):
         if self.mailto is None: return -1
-                                                                                                 
+
         header = msg.splitlines()
         app = header.append
-                                                                                                 
+
         app("Submitted on %s" % time.ctime(self.start_time))
         app("Completed on %s" % time.asctime())
         app("Elapsed time %s" % str(self.get_delta_etime()))
         app("Number of errored tasks: %d" % self.flow.num_errored_tasks)
         app("Number of unconverged tasks: %d" % self.flow.num_unconverged_tasks)
-                                                                                                 
+
         strio = cStringIO()
         strio.writelines("\n".join(header) + 4 * "\n")
-                                                                                                 
+
         # Add the status of the flow.
         self.flow.show_status(stream=strio)
-                                                                                                 
+
         if self.exceptions:
             # Report the list of exceptions.
             strio.writelines(self.exceptions)
@@ -447,6 +448,5 @@ class MongoFlowScheduler(object):
             tag = " [ALL OK]" if self.flow.all_ok else " [WARNING]"
 
         # TODO: Move to monty
-        from pymatgen.io.abinit.launcher import sendmail
-        return sendmail(subject=self.flow.name + tag, text=strio.getvalue(), mailto=self.mailto)
 
+        return sendmail(subject=self.flow.name + tag, text=strio.getvalue(), mailto=self.mailto)

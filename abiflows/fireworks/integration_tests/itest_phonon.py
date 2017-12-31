@@ -7,14 +7,14 @@ import unittest
 import tempfile
 import filecmp
 import numpy.testing.utils as nptu
+import abipy.data as abidata
 
+from abipy.abio.factories import phonons_from_gsinput, PhononsFromGsFactory
+from abipy.flowtk.tasks import TaskManager
+from fireworks.core.rocket_launcher import rapidfire
 from abiflows.fireworks.workflows.abinit_workflows import PhononFullFWWorkflow, PhononFWWorkflow
 from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
 from abiflows.core.testing import AbiflowsIntegrationTest
-from fireworks.core.rocket_launcher import rapidfire
-from abipy.abio.factories import phonons_from_gsinput, PhononsFromGsFactory
-from abipy.flowtk.tasks import TaskManager
-import abipy.data as abidata
 
 
 ABINIT_VERSION = "8.6.1"

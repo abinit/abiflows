@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Task classes for Fireworks.
+Abinit Task classes for Fireworks.
 """
 from __future__ import print_function, division, unicode_literals
 
@@ -16,28 +16,28 @@ import glob
 import os
 import errno
 import numpy as np
-from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
-from fireworks.utilities.fw_utilities import explicit_serialize
-from fireworks.utilities.fw_serializers import serialize_fw
+
 from collections import namedtuple, defaultdict
-from abiflows.fireworks.utils.task_history import TaskHistory
-from abiflows.fireworks.utils.fw_utils import links_dict_update
-from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
+from monty.json import MontyEncoder, MontyDecoder, MSONable
+from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
 from abipy.flowtk.utils import Directory, File
 from abipy.flowtk import events, tasks
 from abipy.flowtk.utils import irdvars_for_ext
 from abipy.flowtk.wrappers import Mrgddb
 from abipy.flowtk.qutils import time2slurm
-from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
-from monty.json import MontyEncoder, MontyDecoder, MSONable
 from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
 from abipy.core.mixins import AbinitOutNcFile
-
 from abipy.core import Structure
 
+from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
+from fireworks.utilities.fw_utilities import explicit_serialize
+from fireworks.utilities.fw_serializers import serialize_fw
+from abiflows.fireworks.utils.task_history import TaskHistory
+from abiflows.fireworks.utils.fw_utils import links_dict_update
+from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
@@ -92,7 +92,7 @@ class BasicAbinitTaskMixin(object):
         """
         Runs the autoparal using AbinitInput abiget_autoparal_pconfs method.
         The information are retrieved from the FWTaskManager that should be present and contain the standard
-        abipy TaskManager, that provides information about the queue adapters.
+        AbiPy |TaskManager|, that provides information about the queue adapters.
         No check is performed on the autoparal_dir. If there is a possibility of overwriting output data due to
         reuse of the same folder, it should be handled by the caller.
         """
@@ -345,7 +345,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         for inspection.
 
         Args:
-            abiinput: an AbinitInput or an InputFactory. Defines the input used in the run
+            abiinput: an |AbinitInput| or an InputFactory. Defines the input used in the run
             restart_info: an instance of RestartInfo. This should be present in case the current task is a restart.
                 Contains information useful to proceed with the restart.
             handlers: list of ErrorHandlers that should be used in case of error. If None all the error handlers
@@ -475,10 +475,11 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
     def config_run(self, fw_spec):
         """
         Configure the job for the run:
-        - set up logging system
-        - sets and creates the directories and the input files needed to run the task.
-        - sets dependencies and data from previous run (both the case of a restart in the same folder as the previous
-          FW and the case of a creation of a new folder).
+
+            - set up logging system
+            - sets and creates the directories and the input files needed to run the task.
+            - sets dependencies and data from previous run (both the case of a restart in the same folder as the previous
+              FW and the case of a creation of a new folder).
         """
 
         # rename outputs if rerunning in the same dir
@@ -508,7 +509,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         of the FWTaskManager, that can be overridden by the values in the spec.
         Note that in case of missing definition of these parameters, the values fall back to the default
         values of  mpirun_cmd and abinit_cmd: 'mpirun' and 'abinit', assuming that these are properly retrieved
-        from the PATH.
+        from the $PATH.
         """
 
         def abinit_process():
@@ -714,9 +715,10 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
 
         Returns:
             (tuple): tuple containing:
-                unconverged_params(dict): The uncoverged input variables that should be updated as keys and their
+
+                - unconverged_params(dict): The uncoverged input variables that should be updated as keys and their
                     corresponding new values as values.
-                reset (boolean): True if a reset is required in self.prepare_restart.
+                - reset (boolean): True if a reset is required in self.prepare_restart.
         """
 
         return {}, False
@@ -752,9 +754,10 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
 
         Returns:
             (tuple): tuple containing:
-                local_restart (boolean): True if the restart should be in the same folder
-                new_fw (Firework): The new firework that should be used for detour
-                stored_data (dict): Dict to be saved in the "stored_data"
+
+                - local_restart (boolean): True if the restart should be in the same folder
+                - new_fw (Firework): The new firework that should be used for detour
+                - stored_data (dict): Dict to be saved in the "stored_data"
         """
 
         if self.restart_info:
@@ -1244,8 +1247,8 @@ class GsFWTask(AbiFireTask):
 
     def open_gsr(self):
         """
-        Open the GSR file located in the in self.outdir.
-        Returns :class:`GsrFile` object, raise a PostProcessError exception if file could not be found or file is not readable.
+        Open the GSR.nc_ file located in the in self.outdir.
+        Returns |GsrFile| object, raise a PostProcessError exception if file could not be found or file is not readable.
         """
         gsr_path = self.gsr_path
         if not gsr_path:
@@ -1409,7 +1412,7 @@ class RelaxFWTask(GsFWTask):
     ]
 
     def get_final_structure(self):
-        """Read the final structure from the GSR file."""
+        """Read the final structure from the GSR.nc_ file."""
         try:
             with self.open_gsr() as gsr:
                 return gsr.structure
@@ -1505,7 +1508,7 @@ class RelaxFWTask(GsFWTask):
 
     @property
     def hist_nc_path(self):
-        """Absolute path of the HIST.nc file. Empty string if file is not present."""
+        """Absolute path of the HIST.nc_ file. Empty string if file is not present."""
         # Lazy property to avoid multiple calls to has_abiext.
         try:
             return self._hist_nc_path
@@ -1558,7 +1561,7 @@ class HybridFWTask(GsFWTask):
 
     @property
     def sigres_path(self):
-        """Absolute path of the SIGRES file. Empty string if file is not present."""
+        """Absolute path of the SIGRES.nc file. Empty string if file is not present."""
         # Lazy property to avoid multiple calls to has_abiext.
         try:
             return self._sigres_path
@@ -1569,8 +1572,8 @@ class HybridFWTask(GsFWTask):
 
     def open_sigres(self):
         """
-        Open the SIGRES file located in the in self.outdir.
-        Returns SigresFile object, None if file could not be found or file is not readable.
+        Open the SIGRES.nc_ file located in the in self.outdir.
+        Returns |SigresFile| object, None if file could not be found or file is not readable.
         """
         sigres_path = self.sigres_path
 
@@ -1794,6 +1797,7 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         """
         Given a task_type that can produce DDB files and whole list of previous fireworks available here,
         gets the list of DDB files that should be merged.
+
         Args:
             previous_fws: list of previous fireworks
             task_type: string describing the task type
@@ -2009,7 +2013,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
                  task_type=None):
         """
         Args:
-            anaddb_input: an AnaddbInput. Defines the input used in the run
+            anaddb_input: |AnaddbInput| object. Defines the input used in the run
             restart_info: an instance of RestartInfo. This should be present in case the current task is a restart.
                 Contains information useful to proceed with the restart.
             handlers: list of ErrorHandlers that should be used in case of error. If None all the error handlers
@@ -2054,7 +2058,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
     @property
     def ec_path(self):
-        """Absolute path of the GSR file. Empty string if file is not present."""
+        """Absolute path of the GSR.nc_ file. Empty string if file is not present."""
         path = self.rundir.has_abiext("EC")
         if path: self._ec_path = path
         return path
@@ -2147,7 +2151,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         of the FWTaskManager, that can be overridden by the values in the spec.
         Note that in case of missing definition of this parameter, the values fall back to the default
         value of  mpirun_cmd: 'mpirun', assuming that it is properly retrived
-        from the PATH. By default, anaddb is retrieved from the PATH.
+        from the $PATH. By default, anaddb is retrieved from the PATH.
         """
 
         def anaddb_process():
@@ -2338,7 +2342,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
     def open_phbst(self):
         """
-        Open PHBST file produced by Anaddb and returns :class:`PhbstFile` object.
+        Open PHBST file produced by Anaddb and returns |PhbstFile| object.
         Raise a PostProcessError exception if file could not be found or file is not readable.
         """
         from abipy.dfpt.phonons import PhbstFile
@@ -2356,7 +2360,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
     def open_phdos(self):
         """
-        Open PHDOS file produced by Anaddb and returns :class:`PhdosFile` object.
+        Open PHDOS file produced by Anaddb and returns |PhdosFile| object.
         Raise a PostProcessError exception if file could not be found or file is not readable.
         """
         from abipy.dfpt.phonons import PhdosFile
@@ -2374,7 +2378,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
     def open_anaddbnc(self):
         """
-        Open anaddb.nc file produced by Anaddb and returns :class:`AnaddbNcFile` object.
+        Open anaddb.nc file produced by Anaddb and returns |AnaddbNcFile| object.
         Raise a PostProcessError exception if file could not be found or file is not readable.
         """
         from abipy.dfpt.anaddbnc import AnaddbNcFile
@@ -2470,18 +2474,19 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         Prepares the fireworks for a specific type of calculation
 
         Args:
-            multi_inp: MultiDataset with the inputs that should be run
+            multi_inp: |MultiDataset| with the inputs that should be run
             task_class: class of the tasks that should be generated
             deps: dict with the dependencies already set for this type of task
             new_spec: spec for the new Fireworks that will be created
             ftm: a FWTaskManager
-            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present. Will be linked
-                if needed.
+            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present.
+                Will be linked if needed.
 
         Returns:
             (tuple): tuple containing:
-                fws (list): The list of new Fireworks.
-                fw_deps (dict): The dependencies related to these fireworks. Should be used when generating
+
+                - fws (list): The list of new Fireworks.
+                - fw_deps (dict): The dependencies related to these fireworks. Should be used when generating
                     the workflow.
         """
 

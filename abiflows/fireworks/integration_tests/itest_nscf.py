@@ -5,12 +5,11 @@ import os
 import glob
 import numpy as np
 
+from fireworks.core.rocket_launcher import rapidfire
 from abiflows.fireworks.workflows.abinit_workflows import NscfFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import NscfFWTask
 from abiflows.fireworks.utils.fw_utils import load_abitask, get_fw_by_task_index
 from abiflows.core.testing import AbiflowsIntegrationTest
-from fireworks.core.rocket_launcher import rapidfire
-
 
 ABINIT_VERSION = "8.6.1"
 

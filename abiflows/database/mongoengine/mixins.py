@@ -5,11 +5,11 @@ Most of them should still be considered as examples.
 """
 from __future__ import print_function, division, unicode_literals
 
+from monty.dev import deprecated
 from mongoengine import *
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
 from abiflows.core.models import AbiFileField, MSONField
-from monty.dev import deprecated
 
 
 class CalculationMetadataMixin(object):
@@ -89,8 +89,8 @@ class MaterialMixin(object):
         Sets the fields of the Document using a Structure and Spglib to determine the space group properties
 
         Args:
-            structure: A pymatgen Structure
-            space_group: if True sets the spacegroup fields using spglib
+            structure: A |Structure|
+            space_group: if True sets the spacegroup fields using spglib_.
             symprec (float): Tolerance for symmetry finding.
             angle_tolerance (float): Angle tolerance for symmetry finding.
         """

@@ -4,7 +4,8 @@
 from __future__ import print_function, division, unicode_literals
 
 from flask import Flask
-from flask.ext.mongoengine import MongoEngine
+#from flask.ext.mongoengine import MongoEngine
+from flask_mongoengine import MongoEngine
 
 from abiflows.core.models import *
 
@@ -27,6 +28,7 @@ def view_todos(page=1):
 
     return "\n".join(lines)
 
+
 @app.route("/")
 def hello():
     lines = []
@@ -41,4 +43,3 @@ def hello():
 
 if __name__ == "__main__":
     app.run(debug=True)
-

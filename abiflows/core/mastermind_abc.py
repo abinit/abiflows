@@ -266,8 +266,8 @@ class Controller(MSONable):
         """
         Main function used to make the actual control/check of a list of inputs/outputs.
         The function should return a ControllerNote object containing the main conclusion of the controller, i.e.
-         whether something important has been detected, as well as the possible actions/corrections to be done
-         in order to carry on/continue/restart a task.
+        whether something important has been detected, as well as the possible actions/corrections to be done
+        in order to carry on/continue/restart a task.
         """
         pass
 

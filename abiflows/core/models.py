@@ -7,14 +7,14 @@ import six
 import collections
 import shutil
 import gzip
-from tempfile import mkstemp, TemporaryFile, NamedTemporaryFile
 
-from abipy import abilab
+from tempfile import mkstemp, TemporaryFile, NamedTemporaryFile
 from monty.json import MontyDecoder
 from monty.functools import lazy_property
 from mongoengine import *
 from mongoengine.fields import GridFSProxy
 from mongoengine.base.datastructures import BaseDict
+from abipy import abilab
 
 import logging
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class AbiGridFSProxy(GridFSProxy):
 
     def abiopen(self):
-        """Dump the gridfs data to a temporary file and use `abiopen` to open the file."""
+        """Dump the gridfs data to a temporary file and use ``abiopen`` to open the file."""
         _, filepath = mkstemp(suffix='.' + self.abiext, text=self.abiform == "t")
 
         with open(filepath , "w" + self.abiform) as fh:
@@ -35,7 +35,7 @@ class AbiGridFSProxy(GridFSProxy):
 class AbiFileField(FileField):
     """
     Extend `FileField`. Use customized version of proxy_class so that
-    we can use `abiopen` to construct the AbiPy object from the gridfs content.
+    we can use ``abiopen`` to construct the AbiPy object from the gridfs content.
     """
     proxy_class = AbiGridFSProxy
 
@@ -47,8 +47,8 @@ class AbiFileField(FileField):
 
     def _monkey_patch_proxy(self, proxy):
         """
-        Monkey patch the proxy adding `abiext` and `abiform`.
-        so that we know how to open the file in `abiopen`.
+        Monkey patch the proxy adding ``abiext`` and ``abiform``.
+        so that we know how to open the file with ``abiopen``.
         """
         proxy.abiext, proxy.abiform = self.abiext, self.abiform
         return proxy
@@ -66,11 +66,13 @@ class AbiFileField(FileField):
 class GzipGridFSProxy(GridFSProxy):
     """
     Proxy object to handle writing and reading of files to and from GridFS.
-    Files are compressed with gzip before being saved in the GridFS. To decompress the object exposes an unzip method.
+    Files are compressed with gzip before being saved in the GridFS.
+    To decompress the object exposes an unzip method.
     """
 
     def put(self, file_obj, **kwargs):
         try:
+            # FIXME: magic is not in requirements
             import magic
             if magic.from_buffer(file_obj.read(3), mime=True) == "application/gzip":
                 file_obj.seek(0)
@@ -122,7 +124,8 @@ class GzipFileField(FileField):
 class AbiGzipFSProxy(GzipGridFSProxy):
     """
     Proxy object to handle writing and reading of abinit related files to and from GridFS.
-    Files are compressed with gzip before being saved in the GridFS. To decompress the object exposes an unzip method.
+    Files are compressed with gzip before being saved in the GridFS.
+    To decompress the object exposes an unzip method.
     """
 
     def abiopen(self):
@@ -155,7 +158,7 @@ class AbiGzipFileField(GzipFileField):
 
 class MongoFiles(EmbeddedDocument):
     """
-    Document with the output files produced by the :class:`Task` 
+    Document with the output files produced by the AbiPy |Task|
     (references to GridFs files)
     """
     gsr = AbiFileField(abiext="GSR.nc", abiform="b")
@@ -170,7 +173,7 @@ class MongoFiles(EmbeddedDocument):
 
     @classmethod
     def from_node(cls, node):
-        """Add to GridFs the files produced in the `outdir` of the node."""
+        """Add to GridFs the files produced in the ``outdir`` of the node."""
         new = cls()
 
         for key, field in cls._fields.items():
@@ -184,8 +187,8 @@ class MongoFiles(EmbeddedDocument):
                     fname = ext.replace(".nc", "").lower()
                     proxy = getattr(new, fname)
                     proxy.put(f)
-        
-        # Special treatment of the main output 
+
+        # Special treatment of the main output
         # (the file is not located in node.outdir)
         if hasattr(node, "output_file"):
             #print("in out")
@@ -216,7 +219,7 @@ class MSONField(DictField):
         value = super(MSONField, self).__get__(instance, owner)
         if isinstance(value, BaseDict):
             value.__class__ = MSONDict
-        
+
         # print("value:", type(value))
         return value
 
@@ -236,7 +239,7 @@ class MSONField(DictField):
 
 
 class MongoTaskResults(EmbeddedDocument):
-    """Document with the most important results produced by the :class:`Task`"""
+    """Document with the most important results produced by the AbiPy |Task|"""
 
     #meta = {'allow_inheritance': True}
 
@@ -244,7 +247,7 @@ class MongoTaskResults(EmbeddedDocument):
     #initial_structure = DictField(required=True)
     initial_structure = MSONField(required=True)
 
-    #: The final relaxed structure in a dict format. 
+    #: The final relaxed structure in a dict format.
     final_structure = DictField(required=True)
 
     @classmethod
@@ -317,7 +320,7 @@ class MongoEmbeddedNode(EmbeddedDocument):
 
 
 class MongoTask(MongoEmbeddedNode):
-    """Document associated to a :class:`Task`"""
+    """Document associated to an AbiPy |Task|"""
 
     input = DictField(required=True)
     input_str = StringField(required=True)
@@ -359,7 +362,7 @@ class MongoTask(MongoEmbeddedNode):
 
     @classmethod
     def from_task(cls, task):
-        """Build the document from a :class:`Task` instance."""
+        """Build the document from an AbiPy |Task| object."""
         new = cls.from_node(task)
 
         new.input = task.input.as_dict()
@@ -378,8 +381,8 @@ class MongoTask(MongoEmbeddedNode):
 
 
 class MongoWork(MongoEmbeddedNode):
-    """Document associated to a :class:`Work`"""
-    
+    """Document associated to an AbiPy |Work|"""
+
     #: List of tasks.
     tasks = ListField(EmbeddedDocumentField(MongoTask), required=True)
 
@@ -388,7 +391,7 @@ class MongoWork(MongoEmbeddedNode):
 
     @classmethod
     def from_work(cls, work):
-        """Build and return the document from a :class:`Work` instance."""
+        """Build and return the document from a AbiPy |Work| instance."""
         new = cls.from_node(work)
         new.tasks = [MongoTask.from_task(task) for task in work]
         new.outfiles = MongoFiles.from_node(work)
@@ -408,10 +411,10 @@ class MongoWork(MongoEmbeddedNode):
 
 class MongoFlow(MongoNode):
     """
-    Document associated to a :class:`Flow`
+    Document associated to an AbiPy |Flow|
 
     Assumptions:
-        All the tasks must have the same list of pseudos, 
+        All the tasks must have the same list of pseudos,
         same chemical formula.
     """
 
@@ -428,7 +431,7 @@ class MongoFlow(MongoNode):
 
     @classmethod
     def from_flow(cls, flow):
-        """Build and return the document from a :class:`Flow` instance."""
+        """Build and return the document from a AbiPy |Flow| instance."""
         new = cls.from_node(flow)
         new.works = [MongoWork.from_work(work) for work in flow]
         new.outfiles = MongoFiles.from_node(flow)
@@ -450,12 +453,11 @@ class MongoFlow(MongoNode):
         """
         Load the pickle file from the working directory of the flow.
 
-        Return:
-            :class:`Flow` instance.
+        Return: AbiPy |Flow| object.
         """
         flow = abilab.Flow.pickle_load(self.workdir)
         #flow.set_mongo_id(self.id)
-        return flow 
+        return flow
 
     def delete(self):
         # Remove GridFs files.
@@ -483,4 +485,3 @@ class MongoFlow(MongoNode):
     #@queryset_manager
     #def nc_flows(doc_cls, queryset):
     #    return queryset.filter(is_nc=True)
-

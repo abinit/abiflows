@@ -3,16 +3,15 @@ from __future__ import print_function, division, unicode_literals
 import os
 
 import pytest
-
 import abipy.abilab as abilab
-from abipy.electrons.gsr import GsrFile
 import abiflows.fireworks.tasks.abinit_common
-from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow
-from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
+
+from abipy.electrons.gsr import GsrFile
 from abipy.flowtk.utils import Directory
 from fireworks.core.rocket_launcher import rapidfire
-
+from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow
+from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask
 
 ABINIT_VERSION = "7.11.5"
 

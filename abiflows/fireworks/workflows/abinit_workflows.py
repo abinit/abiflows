@@ -7,13 +7,14 @@ from __future__ import print_function, division, unicode_literals
 
 import logging
 import sys
-
 import abc
 import os
 import six
 import datetime
 import numpy as np
+
 from collections import defaultdict
+from monty.serialization import loadfn
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory
 from abipy.abio.factories import PhononsFromGsFactory, ScfForPhononsFactory, InputFactory
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input, dte_from_gsinput, scf_for_phonons
@@ -22,9 +23,9 @@ from abipy.abio.abivars_db import get_abinit_variables
 from abipy.abio.input_tags import *
 from abipy.core.structure import Structure
 from abipy.dfpt.anaddbnc import AnaddbNcFile
+from abipy.flowtk.abiobjects import KSampling
 from fireworks.core.firework import Firework, Workflow, FWorker
 from fireworks.core.launchpad import LaunchPad
-from monty.serialization import loadfn
 
 from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
@@ -48,7 +49,7 @@ from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get
 from abiflows.fireworks.utils.fw_utils import get_time_report_for_wf, FWTaskManager
 from abiflows.database.mongoengine.abinit_results import RelaxResult, PhononResult, DteResult
 from abiflows.fireworks.utils.task_history import TaskEvent
-from abipy.flowtk.abiobjects import KSampling
+
 
 # logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -96,6 +97,7 @@ class AbstractFWWorkflow(Workflow):
     def set_short_single_core_to_spec(spec=None, master_mem_overhead=0):
         """
         Sets the _queueadapter parameter in the spec for a single process job with a short run time.
+
         Args:
             spec: A spec. If None a new dictionary will be created.
             master_mem_overhead:
@@ -127,6 +129,7 @@ class AbstractFWWorkflow(Workflow):
         """
         Adds a Firework with a FinalCleanUpTask.
         _queueadapter parameter in the spec are set for a single process job with a short run time
+
         Args:
             out_exts: list of extensions that should be cleaned
             additional_spec: dict with additional keys to be added to the spec
@@ -151,6 +154,7 @@ class AbstractFWWorkflow(Workflow):
         """
         Appends a Firework with a DatabaseInsertTask and a FinalCleanUpTask. N.B. this does not add a
         MongoEngineDBInsertionTask.
+
         Args:
             mongo_database: a MongoDatabase object describing the connection to the database.
             out_exts: list of extensions that should be cleaned.
@@ -290,6 +294,7 @@ class AbstractFWWorkflow(Workflow):
     def get_reduced_formula(self, input):
         """
         Gets the reduced formula of the structure used in the workflow.
+
         Args:
             input: An AbinitInput object or a Structure
         """
@@ -1728,14 +1733,15 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
             task_type: task_type of the class for the current type of calculation
             deps: dict with the dependencies already set for this type of task
             spec: spec for the new Fireworks that will be created
-            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present. Will be linked
-                if needed.
+            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present.
+                Will be linked if needed.
 
         Returns:
             (tuple): tuple containing:
-                fws (list): The new Firework.
-                fw_deps (dict): The dependencies between related to this firework. Should be used when generating
-                    the workflow.
+
+                - fws (list): The new Firework.
+                - fw_deps (dict): The dependencies between related to this firework.
+                    Should be used when generating the workflow.
         """
 
         formula = inp.structure.composition.reduced_formula

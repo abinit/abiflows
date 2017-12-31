@@ -1,8 +1,9 @@
 __author__ = 'waroquiers'
 
 import json
-from math import ceil
 import os
+
+from math import ceil
 from monty.dev import deprecated
 import abipy.abio.inputs as abinit_inputs
 

@@ -11,7 +11,6 @@ from monty.collections import AttrDict
 from monty.io import FileLock
 #from abipy import abilab
 
-
 # See also
 #http://stackoverflow.com/questions/20695241/how-to-add-logging-to-a-file-with-timestamps-to-a-python-tcp-server-for-raspberr?lq=1
 
@@ -21,10 +20,8 @@ logger = logging.getLogger(__name__)
 
 def daemonize_server(remove_pid=False):
     """
-
     Args:
-        remove_pid: True if the server pid file should be removed before 
-            starting new server.
+        remove_pid: True if the server pid file should be removed before starting new server.
     """
     import daemon
     if remove_pid:
@@ -83,7 +80,7 @@ class AbiFlowsServer(ThreadingMixIn, TCPServer):
 
     @classmethod
     def read_pid_file(cls):
-        if not os.path.exists(cls.pid_path): 
+        if not os.path.exists(cls.pid_path):
             return None
 
         with open(cls.pid_path, "rt") as fh:
@@ -94,10 +91,10 @@ class AbiFlowsServer(ThreadingMixIn, TCPServer):
 
     def write_pid_file(self):
         """
-        This function checks if we are already running the :class:`Flow` with a :class:`PyFlowScheduler`.
-        Raises: Flow.Error if the pif file of the scheduler exists.
+        This function checks if we are already running the AbiPy |Flow| with a :class:`PyFlowScheduler`.
+        Raises: Flow.Error if the pid file of the scheduler exists.
         """
-        if os.path.exists(self.pid_path): 
+        if os.path.exists(self.pid_path):
             raise self.Error("""\n\
                 pid_path
                 %s
@@ -136,8 +133,8 @@ class AbiFlowsServer(ThreadingMixIn, TCPServer):
 
     def serve_forever(self):
         """
-        Handle requests until an explicit shutdown() request. 
-        Poll for shutdown every poll_interval seconds. Ignores self.timeout. 
+        Handle requests until an explicit shutdown() request.
+        Poll for shutdown every poll_interval seconds. Ignores self.timeout.
         """
         TCPServer.serve_forever(self, poll_interval=self.poll_interval)
 
@@ -152,7 +149,7 @@ class AbiFlowsServer(ThreadingMixIn, TCPServer):
 
     def mongo_connect(self):
         """
-        Establish a connection with the MongoDb database. 
+        Establish a connection with the MongoDb database.
         """
         from pymongo import MongoClient
 
@@ -204,7 +201,7 @@ class MyTCPHandler(BaseRequestHandler):
 
         # just send back the same data, but upper-cased
         self.request.sendall(data.upper())
-        
+
         # Reconstruct the `Flow` from pickle.
         #flow = abilab.Flow.pickle_loads(data)
         #flow.allocate(workdir=)

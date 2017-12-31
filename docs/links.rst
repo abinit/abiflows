@@ -102,6 +102,7 @@
 .. |GsrRobot| replace:: :class:`abipy.electrons.gsr.GsrRobot`
 .. |DdbFile| replace:: :class:`abipy.dfpt.ddb.DdbFile`
 .. |DdbRobot| replace:: :class:`abipy.dfpt.ddb.DdbRobot`
+.. |AnaddbNcFile| replace:: :class:`abipy.dfpt.anaddb.AnaddbNcFile`
 .. |PhbstFile| replace:: :class:`abipy.dfpt.phonons.PhbstFile`
 .. |PhdosFile| replace:: :class:`abipy.dfpt.phonons.PhdosFile`
 .. |PhononDos| replace:: :class:`abipy.dfpt.phonons.PhononDos`
@@ -110,6 +111,7 @@
 .. |Pseudo| replace:: :class:`pymatgen.io.abinit.pseudos.Pseudo`
 .. |PseudoTable| replace:: :class:`pymatgen.io.abinit.pseudos.PseudoTable`
 .. |Visualizer| replace:: :class:`abipy.iotools.visualizer.Visualizer`
+.. |SigresFile| replace:: :class:`abipy.electrons.gw.SigresFile`
 
 .. Important objects provided by libraries.
 .. |matplotlib-Figure| replace:: :class:`matplotlib.figure.Figure`

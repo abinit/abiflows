@@ -9,9 +9,25 @@ import errno
 import threading
 import subprocess
 import time
+
 from monty.json import MSONable
 from monty.json import MontyDecoder
 from monty.os.path import which
+from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
+from pymatgen.io.abinit.utils import Directory, File
+from pymatgen.io.abinit.utils import irdvars_for_ext
+from pymatgen.io.abinit import events
+from pymatgen.io.abinit.qutils import time2slurm
+from abipy.abio.factories import InputFactory
+from abipy.abio.factories import PiezoElasticFromGsFactory
+from abipy.abio.inputs import AbinitInput, Cut3DInput
+from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
+from abipy.electrons.gsr import GsrFile
+from abipy.core.mixins import AbinitOutNcFile
+from abipy.electrons.charges import HirshfeldCharges
+from fireworks import explicit_serialize
+from fireworks.utilities.fw_serializers import serialize_fw
+from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask, SetupError, createSRCFireworks
 from abiflows.core.mastermind_abc import ControllerNote, ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
@@ -21,22 +37,7 @@ from abiflows.fireworks.tasks.abinit_tasks import MergeDdbAbinitTask
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
-from fireworks import explicit_serialize
-from fireworks.utilities.fw_serializers import serialize_fw
-from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
-from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
-from pymatgen.io.abinit.utils import Directory, File
-from pymatgen.io.abinit.utils import irdvars_for_ext
-from pymatgen.io.abinit import events
-from pymatgen.io.abinit.qutils import time2slurm
-from abipy.abio.factories import InputFactory
 
-from abipy.abio.factories import PiezoElasticFromGsFactory
-from abipy.abio.inputs import AbinitInput, Cut3DInput
-from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
-from abipy.electrons.gsr import GsrFile
-from abipy.core.mixins import AbinitOutNcFile
-from abipy.electrons.charges import HirshfeldCharges
 
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART

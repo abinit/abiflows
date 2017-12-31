@@ -17,14 +17,12 @@ import shutil
 import glob
 import unittest
 import numpy.testing.utils as nptu
+
 from mongoengine import connect, Document
 from mongoengine.connection import get_db, get_connection
-
 from monty.os.path import which
 from monty.string import is_string
-
 from abipy.core.testing import AbipyTest
-
 from fireworks.core.launchpad import LaunchPad
 from fireworks.core.fworker import FWorker
 

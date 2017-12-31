@@ -6,13 +6,14 @@ Most of them should still be considered as examples.
 from __future__ import print_function, division, unicode_literals
 
 import os
-from mongoengine import *
-from abiflows.core.models import AbiFileField, MSONField
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from abipy.flowtk.pseudos import Pseudo
-from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
+
 from monty.json import jsanitize
 from monty.dev import deprecated
+from mongoengine import *
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from abipy.flowtk.pseudos import Pseudo
+from abiflows.core.models import AbiFileField, MSONField
+from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
 
 class AbinitPseudoData(EmbeddedDocument):
     """
@@ -64,10 +65,10 @@ class AbinitPseudoData(EmbeddedDocument):
 
     def set_pseudos_from_abinit_input(self, abinit_input):
         """
-        Sets the fields of the document using an AbinitInput object.
+        Sets the fields of the document using an |AbinitInput| object.
 
         Args:
-            abinit_input: An AbinitInput object
+            abinit_input: An |AbinitInput| object
         """
         pseudos_path = [i.path for i in abinit_input.pseudos]
         self.set_pseudos_from_paths(pseudos_path)
@@ -92,7 +93,7 @@ class AbinitBasicInputMixin(object):
 
     def set_abinit_basic_from_abinit_input(self, abinit_input):
         """
-        sets the fields of the object from an AbinitInput object
+        sets the fields of the object from an |AbinitInput| object
         """
 
         self.structure = abinit_input.structure.as_dict()

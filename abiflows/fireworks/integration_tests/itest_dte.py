@@ -7,13 +7,12 @@ import tempfile
 import filecmp
 import numpy.testing.utils as nptu
 
-from abiflows.fireworks.workflows.abinit_workflows import DteFWWorkflow
-from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
-from abiflows.core.testing import AbiflowsIntegrationTest
 from abipy.abio.input_tags import *
 from abipy.abio.factories import dte_from_gsinput
 from fireworks.core.rocket_launcher import rapidfire
-
+from abiflows.fireworks.workflows.abinit_workflows import DteFWWorkflow
+from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
+from abiflows.core.testing import AbiflowsIntegrationTest
 
 ABINIT_VERSION = "8.6.1"
 
