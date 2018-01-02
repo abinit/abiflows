@@ -15,7 +15,7 @@ from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxEr
 from fireworks import FWAction
 import abiflows.fireworks.utils.fw_utils
 
-mock = AbipyTest.get_mock_module()
+mock = AbiflowsTest.get_mock_module()
 
 
 test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
