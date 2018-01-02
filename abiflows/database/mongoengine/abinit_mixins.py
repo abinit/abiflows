@@ -18,6 +18,9 @@ from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
 class AbinitPseudoData(EmbeddedDocument):
     """
     Embedded document providing some fields and function to save abinit pseudopotential data
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: AbinitPseudoData
     """
 
     pseudos_name = ListField(StringField())
@@ -115,6 +118,9 @@ class AbinitBasicInputMixin(object):
 class AbinitGSOutputMixin(GroundStateOutputMixin):
     """
     Mixin providing generic fiels for abinit ground state calculation
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: AbinitGSOutputMixin
     """
     gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
                        db_field='gsr_id', collection_name='gs_gsr_fs')
@@ -133,6 +139,9 @@ class AbinitDftpOutputMixin(object):
 class AbinitPhononOutputMixin(AbinitDftpOutputMixin):
     """
     Mixin providing generic fiels for phonon calculation
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: AbinitPhononOutputMixin
     """
 
     phonon_bs = AbiFileField(abiext="PHBST.nc", abiform="b", db_field='phonon_bs_id', collection_name='phonon_bs_fs')

@@ -1232,6 +1232,9 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
 class GsFWTask(AbiFireTask):
     """
     Base Task to handle Ground state calculation.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: GsFWTask
     """
 
     @property
@@ -1270,6 +1273,9 @@ class GsFWTask(AbiFireTask):
 class ScfFWTask(GsFWTask):
     """
     Task to handle SCF calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: ScfFWTask
     """
 
     task_type = "scf"
@@ -1305,6 +1311,9 @@ class ScfFWTask(GsFWTask):
 class NscfFWTask(GsFWTask):
     """
     Task to handle non SCF calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: NscfFWTask
     """
 
     task_type = "nscf"
@@ -1338,7 +1347,10 @@ class NscfFWTask(GsFWTask):
 class NscfWfqFWTask(NscfFWTask):
     """
     Task to handle non SCF calculations for the calculations of the WFQ.
-    Differs from NscfFWTask for the different restart requirements.
+    Differs from :class:`NscfFWTask` for the different restart requirements.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: NscfWfqFWTask
     """
 
     task_type = "nscf_wfq"
@@ -1403,6 +1415,9 @@ class NscfWfqFWTask(NscfFWTask):
 class RelaxFWTask(GsFWTask):
     """
     Task to handle relax calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: RelaxFWTask
     """
 
     task_type = "relax"
@@ -1552,6 +1567,9 @@ class RelaxFWTask(GsFWTask):
 class HybridFWTask(GsFWTask):
     """
     Task to handle hybrid functional calculations based on GW.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: HybridFWTask
     """
 
     task_type = "hybrid"
@@ -1596,6 +1614,9 @@ class HybridFWTask(GsFWTask):
 class DfptTask(AbiFireTask):
     """
     Base Task to handle DFPT calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DfptTask
     """
 
     CRITICAL_EVENTS = [
@@ -1651,6 +1672,9 @@ class DfptTask(AbiFireTask):
 class DdkTask(DfptTask):
     """
     Task to handle DDK calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DdkTask
     """
 
     task_type = "ddk"
@@ -1674,6 +1698,9 @@ class DdkTask(DfptTask):
 class DdeTask(DfptTask):
     """
     Task to handle DDE calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DdeTask
     """
 
     task_type = "dde"
@@ -1683,6 +1710,9 @@ class DdeTask(DfptTask):
 class PhononTask(DfptTask):
     """
     Task to handle phonon calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: PhononTask
     """
 
     task_type = "phonon"
@@ -1692,6 +1722,9 @@ class PhononTask(DfptTask):
 class BecTask(DfptTask):
     """
     Task to handle BEC calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: BecTask
     """
 
     task_type = "bec"
@@ -1701,6 +1734,9 @@ class BecTask(DfptTask):
 class StrainPertTask(DfptTask):
     """
     Task to handle strain calculations
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: StrainPertTask
     """
 
     task_type = "strain_pert"
@@ -1710,6 +1746,9 @@ class StrainPertTask(DfptTask):
 class DteTask(DfptTask):
     """
     Task to handle the third derivatives with respect to the electric field.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DteTask
     """
 
     CRITICAL_EVENTS = []
@@ -1732,6 +1771,9 @@ class DteTask(DfptTask):
 class RelaxDilatmxFWTask(RelaxFWTask):
     """
     Task to handle relax calculations with iterative convergence of the dilatmx
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DteTask
     """
 
     def __init__(self, abiinput, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None,
@@ -1768,6 +1810,9 @@ class RelaxDilatmxFWTask(RelaxFWTask):
 class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     """
     Task to handle the merge of multiple DDB files with mrgddb
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: MergeDdbAbinitTask
     """
 
     task_type = "mrgddb"
@@ -2005,6 +2050,9 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     """
     Task that handles the run of anaddb based on a custom input
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: AnaDdbAbinitTask
     """
 
     task_type = "anaddb"
@@ -2399,6 +2447,9 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 class AutoparalTask(AbiFireTask):
     """
     Task to run the autoparal for many tasks of the same type already defined as children
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: AutoparalTask
     """
 
     task_type = "autoparal"
@@ -2458,6 +2509,9 @@ class AutoparalTask(AbiFireTask):
 class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     """
     Task that generates all the phonon perturbation based on the input of the previous ground state step
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: GeneratePhononFlowFWAbinitTask
     """
 
     def __init__(self, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=None, with_autoparal=None, ddb_file=None):
@@ -2643,8 +2697,11 @@ class PhononWFGenerator(BasicAbinitTaskMixin, FireTaskBase):
     Since the workflow generated for the phonons may by composed by thousands of FWs, the amount of information
     to be storead in the FWAction will be large in this cases. Like all the documents in mongodb the launch cannot
     exceed the 16MB size, which is often reached when the number of FWs generated is around 1000.
-    To avoid this problem it is mandatory to generate the whole workflow immediately. This mimics the behaviour
-    of the GeneratePhononFlowFWAbinitTask.
+    To avoid this problem it is mandatory to generate the whole workflow immediately.
+    This mimics the behaviour of :class:`GeneratePhononFlowFWAbinitTask`.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: PhononWFGenerator
     """
     def __init__(self, scf_input, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[],
                  with_autoparal=True, ddb_file=None, fw_task_manager=None, initialization_info={}):

@@ -296,7 +296,7 @@ class AbstractFWWorkflow(Workflow):
         Gets the reduced formula of the structure used in the workflow.
 
         Args:
-            input: An AbinitInput object or a Structure
+            input: An |AbinitInput| object or a |Structure|
         """
         structure = None
         try:
@@ -340,13 +340,13 @@ class AbstractFWWorkflow(Workflow):
 
 class InputFWWorkflow(AbstractFWWorkflow):
     """
-    Generator of a fireworks workflow with a single abinit task based on a generic AbinitInput
+    Generator of a fireworks workflow with a single abinit task based on a generic |AbinitInput|.
     """
 
     def __init__(self, abiinput, task_type=AbiFireTask, autoparal=False, spec=None, initialization_info=None):
         """
         Args:
-            abiinput: an AbinitInput
+            abiinput: an |AbinitInput| object
             task_type: the class of the task created
             autoparal: if True autoparal will be used at runtime to optimize the number of processes.
             spec: a dict with additional spec for the Firework.
@@ -377,7 +377,7 @@ class ScfFWWorkflow(AbstractFWWorkflow):
     def __init__(self, abiinput, autoparal=False, spec=None, initialization_info=None):
         """
         Args:
-            abiinput: an AbinitInput for a SCF calculation.
+            abiinput: an |AbinitInput| object for a SCF calculation.
             autoparal: if True autoparal will be used at runtime to optimize the number of processes.
             spec: a dict with additional spec for the Firework.
             initialization_info: a dict defining additional information about the initialization of the workflow.
@@ -1213,7 +1213,7 @@ class PhononFWWorkflow(AbstractFWWorkflow):
     def __init__(self, scf_inp, phonon_factory, autoparal=False, spec=None, initialization_info=None):
         """
         Args:
-            scf_inp: an AbinitInput for the SCF calculation.
+            scf_inp: an |AbinitInput| object for the SCF calculation.
             phonon_factory: an PhononsFromGsFactory for the generation of the inputs for phonon perturbations.
             autoparal: if True autoparal will be used at runtime to optimize the number of processes.
             spec: a dict with additional spec for the Firework.
@@ -1313,7 +1313,7 @@ class PhononFWWorkflow(AbstractFWWorkflow):
                       qpoints_to_skip=None, extra_abivars=None, decorators=None, autoparal=False, spec=None,
                       initialization_info=None, manager=None):
         """
-        Creates an instance of PhononFWWorkflow using a custom AbinitInput for a ground state calculation and the
+        Creates an instance of PhononFWWorkflow using a custom |AbinitInput| for a ground state calculation and the
         phonons_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
         default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
         See the description of the phonons_from_gsinput factory for the definition of the arguments.
@@ -1544,7 +1544,7 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
     def __init__(self, scf_inp, phonon_factory, autoparal=False, spec=None, initialization_info=None):
         """
         Args:
-            scf_inp: an AbinitInput for the SCF calculation.
+            scf_inp: an |AbinitInput| for the SCF calculation.
             phonon_factory: an PhononsFromGsFactory for the generation of the inputs for phonon perturbations.
             autoparal: if True autoparal will be used at runtime to optimize the number of processes.
             spec: a dict with additional spec for the Firework.
@@ -1680,18 +1680,19 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
         Prepares the fireworks for a specific type of calculation
 
         Args:
-            multi_inp: MultiDataset with the inputs that should be run
+            multi_inp: |MultiDataset| with the inputs that should be run
             task_class: class of the tasks that should be generated
             deps: dict with the dependencies already set for this type of task
             spec: spec for the new Fireworks that will be created
-            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present. Will be linked
-                if needed.
+            nscf_fws: list of NSCF fws for the calculation of WFQ files, in case they are present.
+                Will be linked if needed.
 
         Returns:
             (tuple): tuple containing:
-                fws (list): The list of new Fireworks.
-                fw_deps (dict): The dependencies related to these fireworks. Should be used when generating
-                    the workflow.
+
+                - fws (list): The list of new Fireworks.
+                - fw_deps (dict): The dependencies related to these fireworks.
+                    Should be used when generating the workflow.
         """
 
         formula = multi_inp[0].structure.composition.reduced_formula
@@ -1784,11 +1785,11 @@ class DteFWWorkflow(AbstractFWWorkflow):
                  initialization_info=None):
         """
         Args:
-            scf_inp: an AbinitInput for the SCF calculation.
-            ddk_inp: a MultiDataset with the inputs for the DDK perturbations.
-            dde_inp: a MultiDataset with the inputs for the DDE perturbations.
-            dte_inp: a MultiDataset with the inputs for the DTE perturbations.
-            ph_inp: a MultiDataset with the inputs for the phonon perturbations. If None phonon perturbations
+            scf_inp: an |AbinitInput| for the SCF calculation.
+            ddk_inp: a |MultiDataset| with the inputs for the DDK perturbations.
+            dde_inp: a |MultiDataset| with the inputs for the DDE perturbations.
+            dte_inp: a |MultiDataset| with the inputs for the DTE perturbations.
+            ph_inp: a |MultiDataset| with the inputs for the phonon perturbations. If None phonon perturbations
                 will not be considered.
             autoparal: if True autoparal will be used at runtime to optimize the number of processes.
             spec: a dict with additional spec for the Firework.
@@ -1885,7 +1886,7 @@ class DteFWWorkflow(AbstractFWWorkflow):
         Prepares the fireworks for a specific type of calculation
 
         Args:
-            multi_inp: MultiDataset with the inputs that should be run
+            multi_inp: |MultiDataset| with the inputs that should be run
             task_class: class of the tasks that should be generated
             deps: dict with the dependencies already set for this type of task
             spec: spec for the new Fireworks that will be created
@@ -2763,4 +2764,4 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
 
     @classmethod
     def from_factory(cls):
-        raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
+        raise NotImplementedError('from factory method not yet implemented for piezoelasticworkflow')

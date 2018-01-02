@@ -60,6 +60,14 @@ abiflows\.core\.server module
     :undoc-members:
     :show-inheritance:
 
+abiflows\.core\.testing module
+------------------------------
+
+.. automodule:: abiflows.core.testing
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

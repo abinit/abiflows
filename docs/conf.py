@@ -17,7 +17,7 @@ import shutil
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 ABIFLOWS = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-print("ABIFLOWS", ABIFLOWS)
+#print("ABIFLOWS", ABIFLOWS)
 
 sys.path.insert(0, ABIFLOWS)
 

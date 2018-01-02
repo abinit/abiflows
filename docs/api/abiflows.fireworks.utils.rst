@@ -1,6 +1,13 @@
 abiflows\.fireworks\.utils package
 ==================================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    abiflows.fireworks.utils.tests
+
 Submodules
 ----------
 

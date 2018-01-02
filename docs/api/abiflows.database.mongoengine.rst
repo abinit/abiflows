@@ -1,6 +1,13 @@
 abiflows\.database\.mongoengine package
 =======================================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    abiflows.database.mongoengine.tests
+
 Submodules
 ----------
 

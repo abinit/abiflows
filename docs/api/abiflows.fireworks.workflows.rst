@@ -1,6 +1,13 @@
 abiflows\.fireworks\.workflows package
 ======================================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    abiflows.fireworks.workflows.tests
+
 Submodules
 ----------
 

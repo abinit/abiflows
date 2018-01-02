@@ -1,5 +1,6 @@
 language: python
 services: mongodb
+#cache: true
 
 # We don't actually use the Travis Python but conda
 matrix:
@@ -10,10 +11,6 @@ matrix:
     - os: linux
       python: 3.6
       env: PYTHON_VERSION=3.6
-#    - os: osx
-#      python: 2.7
-#      language: generic
-#      env: PYTHON_VERSION=2.7
 
 #dist: precise
 sudo: false
@@ -28,21 +25,21 @@ install:
 
   # Install conda https://conda.io/docs/travis.html
   - source dev_scripts/conda_installer.sh
-  - conda config --add channels conda-forge
+  - source dev_scripts/conda_develop.sh
+  - conda uninstall -y pymatgen
 
   # See https://github.com/BVLC/caffe/issues/3884 and https://docs.continuum.io/mkl-optimizations/
-  - conda install nomkl
-  - pip install pytest scripttest nose nose-exclude
+  #- conda install nomkl
+  #- pip install pytest scripttest nose nose-exclude
   - if [[ "${PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
-  - conda install pandas
-  - conda install netcdf4
-  - pip install pep8 python-coveralls
+  - pip install nose nose-exclude
+  #- conda install pandas
+  #- conda install netcdf4
+  #- pip install pep8 python-coveralls
 
   # Install abinit from abinit conda channel.
   #- conda install -c abinit abinit=8.2.2
-  - conda install -c gmatteo abinit=8.6.1
-  - abinit --version
-  - abinit --build
+  #- conda install -c gmatteo abinit=8.6.1
 
   # Get pymatgen from matsci
   #- conda config --add channels matsci
@@ -59,12 +56,12 @@ install:
   #- pip install abipy=0.2
 
   # phonopy is not a requirement but we test scripts in data/runs that use it
-  - conda install -c conda-forge phonopy
+  #- conda install -c conda-forge phonopy
 
   # Install Fireworks and mongodb
-  - conda install pymongo 
-  - pip install mongoengine
-  - pip install fireworks flask flask-mongoengine
+  #- conda install pymongo 
+  #- pip install mongoengine
+  #- pip install fireworks flask flask-mongoengine
 
   - python setup.py install
   - mkdir -p ${HOME}/.abinit/abipy 
@@ -93,7 +90,7 @@ branches:
     - develop
 
 after_success:
-- if [[ "${PYTHON_VERSION}" == "2.7" && "${TRAVIS_OS_NAME}" == "linux" ]]; then coveralls; fi
+- if [[ "${PYTHON_VERSION}" == "3.6" && "${TRAVIS_OS_NAME}" == "linux" ]]; then coveralls; fi
 
 notifications:
   email:

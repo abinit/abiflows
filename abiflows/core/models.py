@@ -34,7 +34,7 @@ class AbiGridFSProxy(GridFSProxy):
 
 class AbiFileField(FileField):
     """
-    Extend `FileField`. Use customized version of proxy_class so that
+    Extend ``FileField``. Use customized version of proxy_class so that
     we can use ``abiopen`` to construct the AbiPy object from the gridfs content.
     """
     proxy_class = AbiGridFSProxy
