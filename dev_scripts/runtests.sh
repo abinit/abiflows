@@ -5,17 +5,11 @@ abinit --version
 abinit --build
 abicheck.py --with-flow
 
-nosetests -v --with-coverage --cover-package=abiflows --logging-level=INFO --dictest-tests
-#nosetests -v --with-coverage --cover-package=abiflows --logging-level=INFO
-#nosetests abipy -v --with-coverage --cover-package=abipy --logging-level=INFO
-#pytest --cov-config .coveragerc --doctest-modules --cov=abipy abipy 
-
-# This is to run the integration tests (slow)
-# pytest -v --cov=abipy --doctest-modules --durations=10 --ignore=./docs/ abipy/integration_tests
-# pytest abipy/integration_tests --ignore=./docs/
+nosetests -v --with-coverage --cover-package=abiflows --logging-level=INFO --doctest-tests
+#pytest -n 2 --cov-config=.coveragerc --cov=abiflows -v
 
 # Generate documentation
 if [[ "${PYTHON_VERSION}" == "2.7" && "${TRAVIS_OS_NAME}" == "linux" ]]; then
-    pip install -q -r ./docs/requirements.txt
+    pip install -r ./docs/requirements.txt
     cd ./docs && make && cd ..;
 fi
