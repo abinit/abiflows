@@ -2,14 +2,7 @@
 """
 Utility tasks for Fireworks.
 """
-
-from __future__ import print_function, division, unicode_literals
-
-from custodian.ansible.interpreter import Modder
-from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
-from fireworks.core.launchpad import LaunchPad
-from fireworks.utilities.fw_utilities import explicit_serialize
-from fireworks.utilities.fw_serializers import serialize_fw
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import copy
 import os
@@ -17,13 +10,20 @@ import shutil
 import logging
 import traceback
 import importlib
+
+from monty.serialization import loadfn
+from monty.json import jsanitize
+from monty.json import MontyDecoder
+from custodian.ansible.interpreter import Modder
+from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
+from fireworks.core.launchpad import LaunchPad
+from fireworks.utilities.fw_utilities import explicit_serialize
+from fireworks.utilities.fw_serializers import serialize_fw
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, FWTaskManager, get_lp_and_fw_id_from_task
 from abiflows.database.mongoengine.utils import DatabaseData
-from monty.serialization import loadfn
-from monty.json import jsanitize
-from monty.json import MontyDecoder
+
 
 logger = logging.getLogger(__name__)
 

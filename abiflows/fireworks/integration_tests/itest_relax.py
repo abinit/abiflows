@@ -1,4 +1,4 @@
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import pytest
 import os
@@ -9,13 +9,13 @@ import filecmp
 import numpy.testing.utils as nptu
 import numpy as np
 
+from fireworks.core.rocket_launcher import rapidfire
+from abipy.dynamics.hist import HistFile
+from abipy.flowtk.events import DilatmxError
 from abiflows.fireworks.workflows.abinit_workflows import RelaxFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import RelaxFWTask
 from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index,load_abitask,get_last_completed_launch
 from abiflows.core.testing import AbiflowsIntegrationTest
-from fireworks.core.rocket_launcher import rapidfire
-from abipy.dynamics.hist import HistFile
-from abipy.flowtk.events import DilatmxError
 
 
 ABINIT_VERSION = "8.6.1"

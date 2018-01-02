@@ -1,11 +1,10 @@
 # coding: utf-8
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
 import shutil
 
 from abiflows.core.mastermind_abc import Cleaner
-
 from abiflows.core.testing import AbiflowsTest
 
 

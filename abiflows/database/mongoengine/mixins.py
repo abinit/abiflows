@@ -3,7 +3,7 @@
 List of mixins to provide standard interfaces with the result databases.
 Most of them should still be considered as examples.
 """
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 from monty.dev import deprecated
 from mongoengine import *

@@ -2,7 +2,7 @@
 """
 Abinit Task classes for Fireworks.
 """
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import inspect
 import subprocess
@@ -31,7 +31,6 @@ from abipy.dfpt.ddb import ElasticComplianceTensor
 from abipy.abio.input_tags import *
 from abipy.core.mixins import AbinitOutNcFile
 from abipy.core import Structure
-
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw

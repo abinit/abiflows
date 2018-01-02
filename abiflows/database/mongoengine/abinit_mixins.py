@@ -3,7 +3,7 @@
 List of mixins to provide standard interfaces with the result databases for abinit calculations.
 Most of them should still be considered as examples.
 """
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
 
@@ -14,6 +14,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from abipy.flowtk.pseudos import Pseudo
 from abiflows.core.models import AbiFileField, MSONField
 from abiflows.database.mongoengine.mixins import GroundStateOutputMixin
+
 
 class AbinitPseudoData(EmbeddedDocument):
     """

@@ -1,10 +1,11 @@
 # coding: utf-8
 """AbiFlows client."""
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import socket
 
 from .server import AbiFlowsServer
+
 
 class AbiFlowsClientError(Exception):
     """Exceptions raised by :class:`AbiFlowsClient`"""
@@ -60,4 +61,3 @@ class AbiFlowsClient(object):
         print("Received: {}".format(received))
 
         return received
-

@@ -1,10 +1,14 @@
+from __future__ import print_function, division, unicode_literals, absolute_import
+
+import numpy as np
+import os
+
+
 from pymatgen.io.vasp.sets import MPRelaxSet
 from pymatgen.io.vasp.outputs import Poscar
 from pymatgen.core.structure import Structure
 from pymatgen.core.sites import PeriodicSite
 from itertools import chain
-import numpy as np
-import os
 
 
 class MPNEBSet(MPRelaxSet):

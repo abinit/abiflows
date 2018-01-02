@@ -2,13 +2,14 @@
 """
 Task history related objects
 """
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
-from monty.json import MontyDecoder, jsanitize, MSONable
-from pymatgen.util.serialization import pmg_serialize
 import collections
 import traceback
 import logging
+
+from monty.json import MontyDecoder, jsanitize, MSONable
+from pymatgen.util.serialization import pmg_serialize
 
 
 logger = logging.getLogger(__name__)

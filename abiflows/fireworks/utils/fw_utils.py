@@ -2,16 +2,15 @@
 """
 Utilities for fireworks
 """
+from __future__ import print_function, division, unicode_literals, absolute_import
 
-from __future__ import print_function, division, unicode_literals
-
-from collections import namedtuple
 import copy
 import os
 import traceback
 import logging
 import warnings
 
+from collections import namedtuple
 from monty.serialization import loadfn
 from abipy.flowtk.tasks import TaskManager, ParalHints
 from fireworks.core.firework import Firework, Workflow

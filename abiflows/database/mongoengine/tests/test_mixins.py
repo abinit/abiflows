@@ -1,13 +1,13 @@
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
 import unittest
 import filecmp
 import tempfile
-from datetime import datetime
-
 import abipy.data as abidata
 import abipy.abilab as abilab
+
+from datetime import datetime
 from abipy.abio.factories import scf_input
 from abiflows.core.testing import AbiflowsTest, has_mongodb, TESTDB_NAME
 from abiflows.database.mongoengine.mixins import *

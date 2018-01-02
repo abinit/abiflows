@@ -2,8 +2,6 @@
 """
 Utilities for database insertion
 """
-
-from monty.json import MSONable
 import gridfs
 import json
 import pymongo
@@ -11,6 +9,8 @@ import paramiko
 import os
 import stat
 import shutil
+
+from monty.json import MSONable
 
 
 class MongoDatabase(MSONable):

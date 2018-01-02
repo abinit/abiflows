@@ -1,16 +1,18 @@
 # coding: utf-8
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
 import shutil
 import unittest
-from abiflows.core.testing import AbiflowsTest, has_mongodb, TESTDB_NAME
-from abiflows.fireworks.utils.fw_utils import *
-from abiflows.fireworks.utils.tests.tasks import LpTask
+
 from monty.tempfile import ScratchDir
 from fireworks import Firework, LaunchPad
 from fireworks.core.rocket_launcher import rapidfire
 from fireworks.user_objects.firetasks.script_task import PyTask
+from abiflows.core.testing import AbiflowsTest, has_mongodb, TESTDB_NAME
+from abiflows.fireworks.utils.fw_utils import *
+from abiflows.fireworks.utils.tests.tasks import LpTask
+
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 

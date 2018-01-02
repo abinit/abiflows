@@ -1,6 +1,7 @@
 six
 numpy
 pymongo
+prettytable
 mongoengine
 #jinja2
 #flask

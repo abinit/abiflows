@@ -1,10 +1,11 @@
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import copy
 import logging
 import os
 import threading
 import subprocess
+
 from monty.json import MSONable
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask
 from abiflows.core.mastermind_abc import ControllerNote

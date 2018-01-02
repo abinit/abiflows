@@ -1,13 +1,14 @@
 # coding: utf-8
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import json
 import os
+
+from pymatgen.io.abinit.qadapters import QueueAdapter
+from fireworks.core.firework import Firework
 from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.handlers import WalltimeHandler
 from abiflows.fireworks.tasks.utility_tasks import CheckTask
-from pymatgen.io.abinit.qadapters import QueueAdapter
-from fireworks.core.firework import Firework
 
 
 test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",

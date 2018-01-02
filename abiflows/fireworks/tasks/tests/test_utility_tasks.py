@@ -1,19 +1,20 @@
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
 import tempfile
 import unittest
 import json
 
+
+from monty.tempfile import ScratchDir
+from fireworks import Workflow, Firework
+from fireworks.core.rocket_launcher import rapidfire
 from abiflows.core.testing import AbiflowsTest, has_mongodb
 from abiflows.fireworks.tasks.tests import mock_objects
 from abiflows.fireworks.tasks.utility_tasks import MongoEngineDBInsertionTask, FinalCleanUpTask, get_fw_task_manager
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.tests.mock_objects import SaveDataWorkflow
 from abiflows.database.mongoengine.utils import DatabaseData
-from monty.tempfile import ScratchDir
-from fireworks import Workflow, Firework
-from fireworks.core.rocket_launcher import rapidfire
 
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))

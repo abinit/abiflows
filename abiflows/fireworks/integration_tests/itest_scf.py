@@ -1,15 +1,15 @@
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import pytest
 import os
 import glob
 
+from fireworks.core.rocket_launcher import rapidfire
 from abipy.electrons.gsr import GsrFile
 from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow, ScfFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask, OUTDIR_NAME, INDIR_NAME, TMPDIR_NAME
 from abiflows.fireworks.utils.fw_utils import load_abitask, get_fw_by_task_index
 from abiflows.core.testing import AbiflowsIntegrationTest
-from fireworks.core.rocket_launcher import rapidfire
 
 
 ABINIT_VERSION = "8.6.1"

@@ -2,13 +2,15 @@
 """
 Utilities to handle mongoengine classes and connections.
 """
+from __future__ import print_function, division, unicode_literals, absolute_import
+
+import contextlib
 
 from pymatgen.util.serialization import pmg_serialize
 from monty.json import MSONable
 from mongoengine import connect
 from mongoengine.context_managers import switch_collection
 from mongoengine.connection import DEFAULT_CONNECTION_NAME
-import contextlib
 
 
 class DatabaseData(MSONable):

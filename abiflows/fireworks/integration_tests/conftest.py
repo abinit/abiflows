@@ -1,18 +1,17 @@
 """Configuration file for pytest."""
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
 import pytest
-from pymongo import MongoClient
 import abipy.abilab as abilab
 import abipy.data as abidata
+
+from pymongo import MongoClient
 from abipy.abio.factories import ebands_input, ion_ioncell_relax_input, scf_for_phonons, phonons_from_gsinput
 from abipy.data.benchmark_structures import simple_semiconductors, simple_metals
 from abiflows.database.mongoengine.utils import DatabaseData
-
 from fireworks import LaunchPad, FWorker
-
-from pymatgen.matproj.rest import MPRester
+from pymatgen.matproj.rest import MPRester     # TODO: Replace with MPRester from pymatgen
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 

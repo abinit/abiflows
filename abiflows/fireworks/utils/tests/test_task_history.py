@@ -1,9 +1,10 @@
 # coding: utf-8
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
 import abipy.data as abidata
 import abipy.abilab as abilab
+
 from abiflows.fireworks.tasks.abinit_tasks import RestartInfo
 from abiflows.fireworks.utils.task_history import TaskHistory, TaskEvent
 from abiflows.core.testing import AbiflowsTest

@@ -2,15 +2,15 @@
 """
 Firework workflows
 """
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import logging
 import sys
-
 import abc
 import os
 import re
 import six
+
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.launchpad import LaunchPad
 

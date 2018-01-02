@@ -1,4 +1,4 @@
-__author__ = 'waroquiers'
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import json
 import os
@@ -6,6 +6,8 @@ import os
 from math import ceil
 from monty.dev import deprecated
 import abipy.abio.inputs as abinit_inputs
+
+__author__ = 'waroquiers'
 
 TMPDIR_NAME = "tmpdata"
 OUTDIR_NAME = "outdata"

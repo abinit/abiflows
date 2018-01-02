@@ -1,8 +1,7 @@
 # coding: utf-8
-from __future__ import print_function, division, unicode_literals
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 from fireworks import FireTaskBase, FWAction, Firework, explicit_serialize
-
 from abipy.abilab import Flow
 
 @explicit_serialize

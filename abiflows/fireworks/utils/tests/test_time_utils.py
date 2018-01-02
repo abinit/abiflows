@@ -1,7 +1,8 @@
 # coding: utf-8
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
+
 from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.utils.time_utils import TimeReport, seconds_to_hms
 

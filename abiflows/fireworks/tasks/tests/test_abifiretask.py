@@ -1,11 +1,12 @@
 # coding: utf-8
-from __future__ import unicode_literals, division, print_function
+from __future__ import print_function, division, unicode_literals, absolute_import
 
 import os
-
 import abipy.data as abidata
 import abipy.abilab as abilab
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
+import abiflows.fireworks.utils.fw_utils
+
 from abipy.abio.factories import *
 from abipy.abio.factories import ScfForPhononsFactory
 from abipy.abio.inputs import AnaddbInput
@@ -13,7 +14,7 @@ from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.tests import mock_objects
 from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 from fireworks import FWAction
-import abiflows.fireworks.utils.fw_utils
+
 
 mock = AbiflowsTest.get_mock_module()
 
