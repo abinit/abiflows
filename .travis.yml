@@ -24,8 +24,8 @@ install:
 
   # Install conda https://conda.io/docs/travis.html
   - source dev_scripts/conda_installer.sh
-  - pip install mongoengine
   - source dev_scripts/conda_develop.sh
+  - pip install mongoengine -U
   - conda uninstall -y pymatgen
   #- conda uninstall -y abipy
 
