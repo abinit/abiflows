@@ -1,13 +1,11 @@
 six
-prettytable
 numpy
-#python-daemon
-jinja2
 pymongo
 mongoengine
-flask
-flask-mongoengine
-paramiko
+#jinja2
+#flask
+#flask-mongoengine
+#paramiko
 fireworks
 abipy>=0.2.0
 custodian

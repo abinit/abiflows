@@ -4,7 +4,6 @@
 from __future__ import print_function, division, unicode_literals
 
 from flask import Flask
-#from flask.ext.mongoengine import MongoEngine
 from flask_mongoengine import MongoEngine
 
 from abiflows.core.models import *

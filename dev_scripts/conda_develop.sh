@@ -10,7 +10,7 @@ conda config --add channels abinit
 
 # https://github.com/ContinuumIO/anaconda-issues/issues/542
 conda install -y -c anaconda setuptools
-conda install -c blaze flask-mongoengine
+#conda install -c blaze flask-mongoengine
 conda install -y --file ./requirements.txt
 conda install -y --file ./requirements-optional.txt
 # Install bader (http://theory.cm.utexas.edu/henkelman/code/bader/) from matsci
@@ -20,5 +20,8 @@ conda install -y -c matsci bader
 conda install -y -c gmatteo abinit=8.6.1
 abinit --version
 abinit --build
+
+which pip
+pip --version
 
 echo Installation complete. Use: conda install abinit to install Fortran executable
