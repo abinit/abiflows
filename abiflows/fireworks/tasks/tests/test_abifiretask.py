@@ -3,13 +3,6 @@ from __future__ import unicode_literals, division, print_function
 
 import os
 
-try:
-    # import in python 3
-    import unittest.mock as mock
-except:
-    # import in python 2
-    import mock
-
 import abipy.data as abidata
 import abipy.abilab as abilab
 import abiflows.fireworks.tasks.abinit_tasks as abinit_tasks
@@ -21,6 +14,8 @@ from abiflows.fireworks.tasks.tests import mock_objects
 from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 from fireworks import FWAction
 import abiflows.fireworks.utils.fw_utils
+
+mock = AbipyTest.get_mock_module()
 
 
 test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",

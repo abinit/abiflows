@@ -27,6 +27,7 @@ install:
   - source dev_scripts/conda_installer.sh
   - source dev_scripts/conda_develop.sh
   - conda uninstall -y pymatgen
+  - conda uninstall -y abipy
 
   # See https://github.com/BVLC/caffe/issues/3884 and https://docs.continuum.io/mkl-optimizations/
   #- conda install nomkl
