@@ -15,7 +15,15 @@ job: &job
     pre_run: |
         ulimit unlimited
 
-fw_policy:
-    rerun_same_dir: True,
-    max_restarts: 20
-    autoparal: True
+# queues
+qadapters:
+  - priority: 1
+    queue:
+       qname: defq
+       qtype: slurm
+    limits:
+       timelimit: 3-0:0:0
+       min_cores: 1
+       max_cores: 12
+    hardware: *hardware
+    job: *job

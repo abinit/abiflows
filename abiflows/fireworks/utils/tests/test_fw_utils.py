@@ -23,6 +23,20 @@ test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
 
 class TestFWTaskManager(AbiflowsTest):
 
+    def test_abipy_manager_from_file(self):
+        conf = loadfn(os.path.join(test_dir, "fw_manager_ok.yaml"))
+        conf['fw_policy']['abipy_manager'] = os.path.join(test_dir, "manager_ok.yml")
+        ftm = FWTaskManager(**conf)
+
+        self.assertEqual(ftm.fw_policy.max_restarts, 20)
+
+        ftm.update_fw_policy({'max_restarts': 30})
+
+        self.assertTrue(ftm.has_task_manager())
+        self.assertTrue(ftm.fw_policy.rerun_same_dir)
+        self.assertEqual(ftm.fw_policy.max_restarts, 30)
+        self.assertTrue(ftm.fw_policy.autoparal)
+
     def test_ok(self):
 
         ftm = FWTaskManager.from_file(os.path.join(test_dir, "fw_manager_ok.yaml"))
@@ -32,12 +46,14 @@ class TestFWTaskManager(AbiflowsTest):
         self.assertEqual(ftm.fw_policy.max_restarts, 30)
         self.assertTrue(ftm.fw_policy.autoparal)
 
-    def test_no_qadapter(self):
+    def test_local_qadapter(self):
 
-        raise self.SkipTest("test_no_qadapter is buggy")
-        ftm = FWTaskManager.from_file(os.path.join(test_dir, "fw_manager_no_qadapters.yaml"))
+        ftm = FWTaskManager.from_file(os.path.join(test_dir, "fw_manager_local_qadapter.yaml"))
+        ftm.update_fw_policy({'max_restarts': 30})
 
-        self.assertIsNone(ftm.task_manager)
+        self.assertTrue(ftm.fw_policy.rerun_same_dir)
+        self.assertEqual(ftm.fw_policy.max_restarts, 30)
+        self.assertTrue(ftm.fw_policy.autoparal)
 
     def test_unknown_keys(self):
 
@@ -63,6 +79,10 @@ class TestFunctions(AbiflowsTest):
     @classmethod
     def setUpClass(cls):
         cls.setup_fireworks()
+        ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
+        conf = loadfn(ftm_path)
+        conf['fw_policy']['abipy_manager'] = os.path.join(test_dir, "manager_ok.yml")
+        cls.ftm = FWTaskManager(**conf)
 
     @classmethod
     def tearDownClass(cls):
@@ -73,19 +93,14 @@ class TestFunctions(AbiflowsTest):
             self.lp.reset(password=None,require_password=False)
 
     def test_get_short_single_core_spec(self):
-        ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
-        ftm = FWTaskManager.from_file(ftm_path)
-        spec = get_short_single_core_spec(ftm)
-        assert spec['ntasks'] == 1
+        spec = get_short_single_core_spec(self.ftm, timelimit=610)
 
-        spec = get_short_single_core_spec(ftm_path, timelimit=610)
         assert spec['ntasks'] == 1
         assert spec['time'] == '0-0:10:10'
 
     def test_set_short_single_core_to_spec(self):
-        ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
         spec = {}
-        spec = set_short_single_core_to_spec(spec, fw_manager=ftm_path)
+        spec = set_short_single_core_to_spec(spec, fw_manager=self.ftm)
 
         assert spec['_queueadapter']['ntasks'] == 1
         assert spec['mpi_ncpus'] == 1
