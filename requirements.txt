@@ -6,7 +6,7 @@ mongoengine
 #jinja2
 #flask
 #flask-mongoengine
-#paramiko
+paramiko
 fireworks
 abipy>=0.2.0
 custodian
