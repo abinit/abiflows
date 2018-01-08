@@ -8,15 +8,18 @@ matrix:
     - os: linux
       python: 2.7
       env: PYTHON_VERSION=2.7
+      env: ABINIT_VERSION=8.6.1
     - os: linux
       python: 3.6
       env: PYTHON_VERSION=3.6
+      env: ABINIT_VERSION=8.6.1
 
 #dist: precise
 sudo: false
 install:
   #- sudo apt-get update
   - env
+  #- set -ev  # exit on first error, print each command
 
   # pip-based installation.
   #- travis_wait pip install -q -r requirements.txt
@@ -52,7 +55,7 @@ install:
   - cp ./dev_scripts/travis_manager.yml ${HOME}/.abinit/abipy/manager.yml
   - ./dev_scripts/pyclean.py .
 
-before_script:
+#before_script:
     # This to run tests requiring a graphical user e.g. mayavi
     # https://docs.travis-ci.com/user/gui-and-headless-browsers/#Using-xvfb-to-Run-Tests-That-Require-a-GUI
     #- "export DISPLAY=:99.0"

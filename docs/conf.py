@@ -231,6 +231,16 @@ html_theme_options = {
     'bootstrap_version': "3",
 }
 
+def setup(app):
+    """
+    Sphinx automatically calls your setup function defined in "conf.py" during the build process for you.
+    There is no need to, nor should you, call this function directly in your code.
+    http://www.sphinx-doc.org/en/stable/extdev/appapi.html
+    """
+    # Add custom css in _static
+    app.add_stylesheet("my_style.css")
+
+
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 #html_title = None
