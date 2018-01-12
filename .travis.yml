@@ -7,11 +7,9 @@ matrix:
   include:
     - os: linux
       python: 2.7
-      env: PYTHON_VERSION=2.7
       env: ABINIT_VERSION=8.6.1
     - os: linux
       python: 3.6
-      env: PYTHON_VERSION=3.6
       env: ABINIT_VERSION=8.6.1
 
 #dist: precise
@@ -22,12 +20,12 @@ install:
   #- set -ev  # exit on first error, print each command
 
   # pip-based installation.
-  #- travis_wait pip install -q -r requirements.txt
-  #- travis_wait pip install -q -r requirements-optional.txt
+  #- travis_wait pip install -r requirements.txt
+  #- travis_wait pip install -r requirements-optional.txt
 
   # Install conda https://conda.io/docs/travis.html
-  - source dev_scripts/conda_installer.sh
-  - source dev_scripts/conda_develop.sh
+  - source dev_scripts/conda_get.sh
+  - source dev_scripts/conda_install.sh
   - conda uninstall -y mongoengine 
   - pip install mongoengine -U
   - conda uninstall -y pymatgen
@@ -36,7 +34,7 @@ install:
   # See https://github.com/BVLC/caffe/issues/3884 and https://docs.continuum.io/mkl-optimizations/
   #- conda install nomkl
   #- pip install pytest scripttest nose nose-exclude
-  - if [[ "${PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
+  - if [[ "${TRAVIS_PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
   - pip install nose nose-exclude
 
   # Use gmatteo's pymatgen fork
@@ -73,7 +71,7 @@ branches:
     - develop
 
 after_success:
-- if [[ "${PYTHON_VERSION}" == "3.6" && "${TRAVIS_OS_NAME}" == "linux" ]]; then coveralls; fi
+- if [[ "${TRAVIS_PYTHON_VERSION}" == "3.6" && "${TRAVIS_OS_NAME}" == "linux" ]]; then coveralls; fi
 
 notifications:
   email:
