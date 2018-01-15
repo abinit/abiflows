@@ -428,7 +428,7 @@ def get_lp_and_fw_id_from_task(task, fw_spec):
                                "from the current.".format(fw_id, lp))
 
         for db_t, dict_t in zip(fw.tasks, fw_dict['spec']['_tasks']):
-            if db_t.fw_name != dict_t['fw_name']:
+            if db_t.fw_name != dict_t['_fw_name']:
                 raise RuntimeError("The firework with id {} from LaunchPad {} has task that don't  match: "
                                    "{} and {}.".format(fw_id, lp, db_t.fw_name, dict_t['fw_name']))
 
