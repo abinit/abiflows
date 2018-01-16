@@ -423,7 +423,7 @@ class CheckTask(FireTaskBase):
             except IOError:
                 try:
                     with open('FW.yaml', "rt") as fh:
-                        fw_dict = json.load(fh, cls=MontyDecoder)
+                        fw_dict = yaml.load(fh)
                 except IOError:
                     raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
                                        "impossible to determine fw_id")
