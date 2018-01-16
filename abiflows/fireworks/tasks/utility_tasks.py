@@ -10,8 +10,8 @@ import shutil
 import logging
 import traceback
 import importlib
+import json
 
-from monty.serialization import loadfn
 from monty.json import jsanitize
 from monty.json import MontyDecoder
 from custodian.ansible.interpreter import Modder
@@ -418,10 +418,12 @@ class CheckTask(FireTaskBase):
             fw_id = self.fw_id
         else:
             try:
-                fw_dict = loadfn('FW.json')
+                with open('FW.json', "rt") as fh:
+                    fw_dict = json.load(fh, cls=MontyDecoder)
             except IOError:
                 try:
-                    fw_dict = loadfn('FW.yaml')
+                    with open('FW.yaml', "rt") as fh:
+                        fw_dict = yaml.load(fh)
                 except IOError:
                     raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
                                        "impossible to determine fw_id")

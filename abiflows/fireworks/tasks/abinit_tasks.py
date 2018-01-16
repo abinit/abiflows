@@ -833,7 +833,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         for event in self.report:
             for i, handler in enumerate(self.handlers):
                 if handler.can_handle(event) and not done[i]:
-                    logger.info("handler", handler, "will try to fix", event)
+                    logger.info("handler {} will try to fix {}".format(handler, event))
                     try:
                         c = handler.handle_input_event(self.abiinput, self.outdir, event)
                         if c:

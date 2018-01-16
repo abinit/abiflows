@@ -12,3 +12,4 @@ pytest-xdist
 pytest-sugar
 scripttest
 python-coveralls
+python-magic

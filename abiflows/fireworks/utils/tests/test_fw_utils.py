@@ -4,6 +4,7 @@ from __future__ import print_function, division, unicode_literals, absolute_impo
 import os
 import shutil
 import unittest
+import yaml
 
 from monty.tempfile import ScratchDir
 from fireworks import Firework, LaunchPad
@@ -24,7 +25,8 @@ test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
 class TestFWTaskManager(AbiflowsTest):
 
     def test_abipy_manager_from_file(self):
-        conf = loadfn(os.path.join(test_dir, "fw_manager_ok.yaml"))
+        with open(os.path.join(test_dir, "fw_manager_ok.yaml"), "rt") as fh:
+            conf = yaml.load(fh)
         conf['fw_policy']['abipy_manager'] = os.path.join(test_dir, "manager_ok.yml")
         ftm = FWTaskManager(**conf)
 
@@ -80,7 +82,8 @@ class TestFunctions(AbiflowsTest):
     def setUpClass(cls):
         cls.setup_fireworks()
         ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
-        conf = loadfn(ftm_path)
+        with open(ftm_path, "rt") as fh:
+            conf = yaml.load(fh)
         conf['fw_policy']['abipy_manager'] = os.path.join(test_dir, "manager_ok.yml")
         cls.ftm = FWTaskManager(**conf)
 

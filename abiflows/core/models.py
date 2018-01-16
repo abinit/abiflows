@@ -71,12 +71,19 @@ class GzipGridFSProxy(GridFSProxy):
     """
 
     def put(self, file_obj, **kwargs):
+        # try to check if the file is already zipped.
+        # in that case just handle as a normal file
         try:
-            # FIXME: magic is not in requirements
             import magic
-            if magic.from_buffer(file_obj.read(3), mime=True) == "application/gzip":
-                file_obj.seek(0)
-                return super(GzipGridFSProxy, self).put(file_obj, **kwargs)
+            # check that the module is actually python-magic and not libmagic
+            f = getattr(magic, "from_buffer", None)
+            if f and callable(f):
+                if magic.from_buffer(file_obj.read(3), mime=True) == "application/gzip":
+                    file_obj.seek(0)
+                    return super(GzipGridFSProxy, self).put(file_obj, **kwargs)
+                        
+            file_obj.seek(0)
+
         except ImportError:
             logger.info("No python-magic library available. Skipping check...")
 
