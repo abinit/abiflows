@@ -2346,7 +2346,7 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 
     @classmethod
     def from_factory(cls):
-        raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
+        raise NotImplementedError('from factory method not yet implemented for piezoelasticworkflow')
 
 
 # TODO old version based on GeneratePiezoElasticFlowFWAbinitTask with SRC. Should be removed after adapting.
@@ -2537,7 +2537,7 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
 #
 #     @classmethod
 #     def from_factory(cls):
-#         raise NotImplemented('from factory method not yet implemented for piezoelasticworkflow')
+#         raise NotImplementedError('from factory method not yet implemented for piezoelasticworkflow')
 
 
 class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
