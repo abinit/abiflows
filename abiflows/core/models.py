@@ -81,6 +81,8 @@ class GzipGridFSProxy(GridFSProxy):
                 if magic.from_buffer(file_obj.read(3), mime=True) == "application/gzip":
                     file_obj.seek(0)
                     return super(GzipGridFSProxy, self).put(file_obj, **kwargs)
+                        
+            file_obj.seek(0)
 
         except ImportError:
             logger.info("No python-magic library available. Skipping check...")
