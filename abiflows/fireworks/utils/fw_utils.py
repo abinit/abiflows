@@ -9,9 +9,11 @@ import os
 import traceback
 import logging
 import warnings
+import json
+import yaml
 
 from collections import namedtuple
-from monty.serialization import loadfn
+from monty.json import MontyDecoder
 from abipy.flowtk.tasks import TaskManager, ParalHints
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.launchpad import LaunchPad
@@ -165,7 +167,7 @@ class FWTaskManager(object):
         fw_policy = kwargs.pop('fw_policy', {})
         unknown_keys = set(fw_policy.keys()) - set(self.fw_policy_defaults.keys())
         if unknown_keys:
-            msg = "Unknown key(s) present in fw_policy: ".format(", ".join(unknown_keys))
+            msg = "Unknown key(s) present in fw_policy: {}".format(", ".join(unknown_keys))
             logger.error(msg)
             raise RuntimeError(msg)
         fw_policy = dict(self.fw_policy_defaults, **fw_policy)
@@ -211,7 +213,8 @@ class FWTaskManager(object):
         config = {}
         for path in paths:
             if path and os.path.exists(path):
-                config = loadfn(path)
+                with open(path, "rt") as fh:
+                    config = yaml.load(fh)
                 logger.info("Reading manager from {}.".format(path))
                 break
 
@@ -220,7 +223,9 @@ class FWTaskManager(object):
     @classmethod
     def from_file(cls, path):
         """Read the configuration parameters from the Yaml file filename."""
-        return cls(**(loadfn(path)))
+        with open(path, "rt") as fh:
+            d = yaml.load(fh)
+        return cls(**d)
 
     def has_task_manager(self):
         return self.task_manager is not None
@@ -398,10 +403,12 @@ def get_lp_and_fw_id_from_task(task, fw_spec):
             raise RuntimeError("The LaunchPad in spec is None.")
     else:
         try:
-            fw_dict = loadfn('FW.json')
+            with open('FW.json', "rt") as fh:
+                fw_dict = json.load(fh, cls=MontyDecoder)
         except IOError:
             try:
-                fw_dict = loadfn('FW.yaml')
+                with open('FW.yaml', "rt") as fh:
+                    fw_dict = json.load(fh, cls=MontyDecoder)
             except IOError:
                 raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
                                    "impossible to determine fw_id")

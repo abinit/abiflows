@@ -10,10 +10,10 @@ import abc
 import os
 import six
 import datetime
+import json
 import numpy as np
 
 from collections import defaultdict
-from monty.serialization import loadfn
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory
 from abipy.abio.factories import PhononsFromGsFactory, ScfForPhononsFactory, InputFactory
 from abipy.abio.factories import ion_ioncell_relax_input, scf_input, dte_from_gsinput, scf_for_phonons
@@ -25,6 +25,7 @@ from abipy.dfpt.anaddbnc import AnaddbNcFile
 from abipy.flowtk.abiobjects import KSampling
 from fireworks.core.firework import Firework, Workflow, FWorker
 from fireworks.core.launchpad import LaunchPad
+from monty.json import MontyDecoder
 
 from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.core.controllers import AbinitController, WalltimeController, MemoryController
@@ -563,7 +564,8 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         #TODO add a cycle to find the instance of AbiFireTask?
         myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
         structure = myfw.tasks[-1].get_final_structure()
-        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+        with open(os.path.join(last_launch.launch_dir, 'history.json'), "rt") as fh:
+            history = json.load(fh, cls=MontyDecoder)
 
         return {'structure': structure.as_dict(), 'history': history}
 
@@ -614,7 +616,8 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         relax_task = last_ioncell_fw.tasks[-1]
         relax_task.set_workdir(workdir=last_ioncell_launch.launch_dir)
         structure = relax_task.get_final_structure()
-        history_ioncell = loadfn(os.path.join(last_ioncell_launch.launch_dir, 'history.json'))
+        with open(os.path.join(last_ioncell_launch.launch_dir, 'history.json'), "rt") as fh:
+            history_ioncell = json.load(fh, cls=MontyDecoder)
 
         document = RelaxResult()
 
@@ -774,7 +777,8 @@ class RelaxFWWorkflowSRCOld(AbstractFWWorkflow):
         #TODO add a cycle to find the instance of AbiFireTask?
         myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
         structure = myfw.tasks[-1].get_final_structure()
-        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+        with open(os.path.join(last_launch.launch_dir, 'history.json'), "rt") as fh:
+            history = json.load(fh, cls=MontyDecoder)
 
         return {'structure': structure.as_dict(), 'history': history}
 
@@ -900,7 +904,9 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
         # helper.set_task(mytask)
 
         structure = helper.get_final_structure()
-        # history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+
+        # with open(os.path.join(last_launch.launch_dir, 'history.json'), "rt") as fh:
+        #     history = json.load(fh, cls=MontyDecoder)
 
         return {'structure': structure.as_dict()}
 
@@ -934,7 +940,8 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
         # helper.set_task(mytask)
 
         computed_entry = helper.get_computed_entry()
-        # history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+        # with open(os.path.join(last_launch.launch_dir, 'history.json'), "rt") as fh:
+        #     history = json.load(fh, cls=MontyDecoder)
 
         return {'computed_entry': computed_entry.as_dict()}
 
@@ -1454,7 +1461,8 @@ class PhononFWWorkflow(AbstractFWWorkflow):
                     wfq_fw = fw
 
         scf_launch = get_last_completed_launch(scf_fw)
-        scf_history = loadfn(os.path.join(scf_launch.launch_dir, 'history.json'))
+        with open(os.path.join(scf_launch.launch_dir, 'history.json'), "rt") as fh:
+            scf_history = json.load(fh, cls=MontyDecoder)
         scf_task = scf_fw.tasks[-1]
         scf_task.set_workdir(workdir=scf_launch.launch_dir)
 
@@ -2147,7 +2155,8 @@ class DteFWWorkflow(AbstractFWWorkflow):
                     dte_fw = fw
 
         scf_launch = get_last_completed_launch(scf_fw)
-        scf_history = loadfn(os.path.join(scf_launch.launch_dir, 'history.json'))
+        with open(os.path.join(scf_launch.launch_dir, 'history.json'), "rt") as fh:
+            scf_history = json.load(fh, cls=MontyDecoder)
         scf_task = scf_fw.tasks[-1]
         scf_task.set_workdir(workdir=scf_launch.launch_dir)
 
@@ -2308,7 +2317,8 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
         #TODO add a cycle to find the instance of AbiFireTask?
         myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
         elastic_tensor = myfw.tasks[-1].get_elastic_tensor()
-        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+        with open(os.path.join(last_launch.launch_dir, 'history.json'), "rt") as fh:
+            history = json.load(fh, cls=MontyDecoder)
 
         return {'elastic_properties': elastic_tensor.extended_dict(), 'history': history}
 
@@ -2329,7 +2339,8 @@ class PiezoElasticFWWorkflow(AbstractFWWorkflow):
         #TODO add a cycle to find the instance of AbiFireTask?
         myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)
         elastic_tensor = myfw.tasks[-1].get_elastic_tensor()
-        history = loadfn(os.path.join(last_launch.launch_dir, 'history.json'))
+        with open(os.path.join(last_launch.launch_dir, 'history.json'), "rt") as fh:
+            history = json.load(fh, cls=MontyDecoder)
 
         return {'elastic_properties': elastic_tensor.extended_dict(), 'history': history}
 
