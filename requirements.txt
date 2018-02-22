@@ -8,5 +8,5 @@ mongoengine
 #flask-mongoengine
 paramiko
 fireworks
-abipy>=0.2.0
+abipy==0.3.0
 custodian

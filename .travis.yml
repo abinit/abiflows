@@ -31,8 +31,6 @@ install:
   - conda uninstall -y pymatgen
   #- conda uninstall -y abipy
 
-  # See https://github.com/BVLC/caffe/issues/3884 and https://docs.continuum.io/mkl-optimizations/
-  #- conda install nomkl
   #- pip install pytest scripttest nose nose-exclude
   - if [[ "${TRAVIS_PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
   - pip install nose nose-exclude
