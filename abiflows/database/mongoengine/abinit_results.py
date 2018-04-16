@@ -33,7 +33,7 @@ class RelaxAbinitOutput(AbinitGSOutputMixin, EmbeddedDocument):
                                        collection_name='relax_outfile_fs')
 
 
-class RelaxResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
+class RelaxResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
     """
     Document containing the results for a relaxation workflow consisting of an ion followed by ioncell relaxations.
 
@@ -82,7 +82,7 @@ class PhononAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
                                  collection_name='phonon_gs_outfile_fs')
 
 
-class PhononResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
+class PhononResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
     """
     Document containing the results for a phonon workflow.
     Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, anaddb)
@@ -139,7 +139,7 @@ class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
                       help_text="First-order change in the linear dielectric susceptibility")
 
 
-class DteResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
+class DteResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
     """
     Document containing the results for a dte workflow.
     Includes information from the various steps of the workflow (scf, ddk, dde, ph, dte, anaddb)
