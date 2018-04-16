@@ -698,8 +698,9 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
             #TODO length should always be enough, but maybe it's worth cutting the message if it's too long
             err_msg = self.stderr_file.read()
             # It happened that the text file contained non utf-8 characters.
-            # sanitize the text to avoid problems during database inserption
-            err_msg.decode("utf-8", "ignore")
+            # sanitize the text to avoid problems during database insertion
+            # remove decode as incompatible with python 3
+            # err_msg.decode("utf-8", "ignore")
         logger.error("return code {}".format(self.returncode))
         raise AbinitRuntimeError(self, err_msg)
 
@@ -910,7 +911,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                               'required by factory {}.'.format(self.deps, self.abiinput.__class__)
                         logger.error(msg)
                         raise InitializationError(msg)
-                    task_type_source = previous_fws.keys()[0]
+                    task_type_source = list(previous_fws.keys())[0]
                 # the task_type_source should contain just one task and contain the 'input' key
                 if len(previous_fws[task_type_source]) != 1 or not previous_fws[task_type_source][0].get('input', None):
                     msg = 'The factory {} requires the input from previous run in the spec'.format(self.abiinput.__class__)
@@ -2459,7 +2460,8 @@ class AutoparalTask(AbiFireTask):
         Note that the method still takes is_autoparal as input even if this is switched to True irrespectively of the
         provided value, as the point of the task is to run autoparal. This is done to preserve the API in cases where
         automatic generation of tasks is involved.
-        skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: default ['wf_task_index']
+        skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: 'wf_task_index' will
+        be always skipped. All the reserved keys starting with _ will always be skipped as well.
         If abiinput is None, autoparal will not run and the preferred configuration will be chosen based on
         the options set in the manager.
         #FIXME find a better solution if this model is preserved
@@ -2471,7 +2473,10 @@ class AutoparalTask(AbiFireTask):
         super(AutoparalTask, self).__init__(abiinput, restart_info=restart_info, handlers=handlers, is_autoparal=True,
                                             deps=deps, history=history, task_type=task_type)
         self.forward_spec = forward_spec
-        self.skip_spec_keys = skip_spec_keys or ['wf_task_index']
+        if not skip_spec_keys:
+            skip_spec_keys = []
+        skip_spec_keys.append('wf_task_index')
+        self.skip_spec_keys = skip_spec_keys
 
     def autoparal(self, fw_spec):
         """
@@ -2491,7 +2496,7 @@ class AutoparalTask(AbiFireTask):
 
         if self.forward_spec:
             # forward all the specs of the task
-            new_spec = {k: v for k, v in fw_spec.items() if k != '_tasks' and k not in self.skip_spec_keys}
+            new_spec = {k: v for k, v in fw_spec.items() if k.startswith('_') and k not in self.skip_spec_keys}
         else:
             new_spec = {}
         # set quadapter specification. Note that mpi_ncpus may be different from ntasks
