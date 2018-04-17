@@ -1,6 +1,6 @@
 from __future__ import print_function, division, unicode_literals, absolute_import
 
-from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin
+from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin
 from abiflows.database.mongoengine.abinit_mixins import AbinitPhononOutputMixin, AbinitBasicInputMixin, \
     AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin
 from mongoengine import *
