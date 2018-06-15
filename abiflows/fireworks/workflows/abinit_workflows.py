@@ -1362,10 +1362,10 @@ class PhononFWWorkflow(AbstractFWWorkflow):
             scf_inp['nband'] = scf_inp['nband'] + 4
         abi_vars = get_abinit_variables()
         # remove relaxation variables in case gs_input is a relaxation
-        for v in abi_vars.vars_with_section('varrlx'):
+        for v in abi_vars.vars_with_varset('rlx'):
             scf_inp.pop(v.name, None)
         # remove parallelization variables in case gs_input is coming from a previous run with parallelization
-        for v in abi_vars.vars_with_section('varpar'):
+        for v in abi_vars.vars_with_varset('paral'):
             scf_inp.pop(v.name, None)
 
         phonon_fact = PhononsFromGsFactory(ph_ngqpt=ph_ngqpt, with_ddk=with_ddk, with_dde=with_dde, with_bec=with_bec,
