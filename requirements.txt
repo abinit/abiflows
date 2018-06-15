@@ -3,10 +3,7 @@ numpy
 pymongo
 prettytable
 mongoengine
-#jinja2
-#flask
-#flask-mongoengine
 paramiko
 fireworks
-abipy==0.3.0
+abipy==0.5.0
 custodian
