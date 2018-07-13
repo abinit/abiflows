@@ -12,9 +12,9 @@ from abipy.data.benchmark_structures import simple_semiconductors, simple_metals
 from abiflows.database.mongoengine.utils import DatabaseData
 from fireworks import LaunchPad, FWorker
 try:
-    from pymatgen.ext.matproj import MPRester, MPRestError
+    from pymatgen.ext.matproj import MPRester
 except ImportError:
-    from pymatgen.matproj.rest import MPRester, MPRestError
+    from pymatgen.matproj.rest import MPRester
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
