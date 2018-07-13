@@ -11,7 +11,10 @@ from abipy.abio.factories import ebands_input, ion_ioncell_relax_input, scf_for_
 from abipy.data.benchmark_structures import simple_semiconductors, simple_metals
 from abiflows.database.mongoengine.utils import DatabaseData
 from fireworks import LaunchPad, FWorker
-from pymatgen.matproj.rest import MPRester     # TODO: Replace with MPRester from pymatgen
+try:
+    from pymatgen.ext.matproj import MPRester, MPRestError
+except ImportError:
+    from pymatgen.matproj.rest import MPRester, MPRestError
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 

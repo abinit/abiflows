@@ -15,8 +15,8 @@ conda install -y -c anaconda setuptools
 conda install -y --file ./requirements.txt
 conda install -y --file ./requirements-optional.txt
 
-echo "Installing bader executable (http://theory.cm.utexas.edu/henkelman/code/bader/) from matsci ..."
-conda install -y -c matsci bader
+#echo "Installing bader executable (http://theory.cm.utexas.edu/henkelman/code/bader/) from matsci ..."
+#conda install -y -c matsci bader
 
 # Install abinit from abinit conda channel.
 conda install -y -c gmatteo abinit=${ABINIT_VERSION}

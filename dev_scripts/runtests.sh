@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e  # exit on first error, print each command
-#set -ev  # exit on first error, print each command
 
 abinit --version
 abinit --build
