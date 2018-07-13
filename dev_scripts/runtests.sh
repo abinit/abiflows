@@ -6,8 +6,8 @@ abinit --version
 abinit --build
 abicheck.py --with-flow
 
-nosetests -v --with-coverage --cover-package=abiflows --logging-level=INFO --doctest-tests
-#pytest -n 2 --cov-config=.coveragerc --cov=abiflows -v
+#nosetests -v --with-coverage --cover-package=abiflows --logging-level=INFO --doctest-tests
+pytest -n 2 --cov-config=.coveragerc --cov=abiflows -v
 
 # Generate documentation
 if [[ "${ABIPY_SPHINX}" == "yes" ]]; then
