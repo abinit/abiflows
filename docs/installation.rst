@@ -12,7 +12,7 @@ Stable version
 The version at the `Python Package Index <https://pypi.python.org/pypi/abiflows>`_  (PyPI) is always 
 the latest **stable** release that can be installed with::
 
-    $ pip install abiflows
+    pip install abiflows
 
 Note that you may need to install pymatgen_ and other critical dependencies manually.
 In this case, please consult the detailed installation instructions provided in the
@@ -81,7 +81,6 @@ For further information on the syntax of the configuration file, please consult 
 A pre-compiled sequential version of Abinit for Linux and OSx can be installed directly from the abinit-channel_ with::
 
     conda install abinit -c abinit
-
 
 Examples of configuration files to configure and compile Abinit on clusters can be found 
 in the abiconfig_ package.
