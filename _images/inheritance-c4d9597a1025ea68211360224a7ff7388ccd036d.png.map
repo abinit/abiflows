@@ -1,0 +1,7 @@
+<map id="inheritance3ab5b00a83" name="inheritance3ab5b00a83">
+<area shape="rect" id="node1" href="#abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask" target="_top" title="Task that handles the run of anaddb based on a custom input" alt="" coords="574,16,765,29"/>
+<area shape="rect" id="node2" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" alt="" coords="348,3,548,16"/>
+<area shape="rect" id="node4" title="defaultdict(default_factory[, ...]) &#45;&#45;&gt; dict with default factory" alt="" coords="44,16,125,29"/>
+<area shape="rect" id="node5" title="FiretaskBase is used like an abstract class that defines a computing task" alt="" coords="192,29,322,42"/>
+<area shape="rect" id="node6" title="To create a serializable object within FireWorks, you should subclass this" alt="" coords="3,42,166,56"/>
+</map>

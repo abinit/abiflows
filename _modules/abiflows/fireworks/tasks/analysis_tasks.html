@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.tasks.analysis_tasks &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.fireworks.tasks.analysis_tasks</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">FireTaskBase</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.chemenv.coordination_environments.coordination_geometry_finder</span> <span class="k">import</span> <span class="n">LocalGeometryFinder</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.chemenv.coordination_environments.structure_environments</span> <span class="k">import</span> <span class="n">LightStructureEnvironments</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.chemenv.coordination_environments.structure_environments</span> <span class="k">import</span> <span class="n">StructureEnvironments</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.bond_valence</span> <span class="k">import</span> <span class="n">BVAnalyzer</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">pymatgen.ext.matproj</span> <span class="k">import</span> <span class="n">MPRester</span><span class="p">,</span> <span class="n">MPRestError</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">pymatgen.matproj.rest</span> <span class="k">import</span> <span class="n">MPRester</span><span class="p">,</span> <span class="n">MPRestError</span>
+
+
+<div class="viewcode-block" id="ChemEnvStructureEnvironmentsTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.analysis_tasks.ChemEnvStructureEnvironmentsTask">[docs]</a><span class="k">class</span> <span class="nc">ChemEnvStructureEnvironmentsTask</span><span class="p">(</span><span class="n">FireTaskBase</span><span class="p">):</span>
+    <span class="n">_fw_name</span> <span class="o">=</span> <span class="s2">&quot;ChemEnvStructureEnvironmentsTask&quot;</span>
+
+<div class="viewcode-block" id="ChemEnvStructureEnvironmentsTask.run_task"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.analysis_tasks.ChemEnvStructureEnvironmentsTask.run_task">[docs]</a>    <span class="k">def</span> <span class="nf">run_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;chemenv_structure_environments.log&#39;</span><span class="p">,</span>
+                            <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">:</span><span class="si">%(module)s</span><span class="s1">:</span><span class="si">%(funcName)s</span><span class="s1">:</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                            <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+        <span class="n">lgf</span> <span class="o">=</span> <span class="n">LocalGeometryFinder</span><span class="p">()</span>
+        <span class="n">lgf</span><span class="o">.</span><span class="n">setup_parameters</span><span class="p">(</span><span class="n">centering_type</span><span class="o">=</span><span class="s1">&#39;centroid&#39;</span><span class="p">,</span> <span class="n">include_central_site_in_centroid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                             <span class="n">structure_refinement</span><span class="o">=</span><span class="n">lgf</span><span class="o">.</span><span class="n">STRUCTURE_REFINEMENT_NONE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;chemenv_parameters&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;chemenv_parameters&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">lgf</span><span class="o">.</span><span class="n">setup_parameter</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;identifier&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;structure&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">structure</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;structure&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">identifier</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;MaterialsProject&#39;</span> <span class="ow">and</span> <span class="s1">&#39;material_id&#39;</span> <span class="ow">in</span> <span class="n">identifier</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;mapi_key&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The mapi_key should be provided to get the structure from the Materials Project&#39;</span><span class="p">)</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">MPRester</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;mapi_key&#39;</span><span class="p">])</span>
+                <span class="n">structure</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get_structure_by_material_id</span><span class="p">(</span><span class="n">identifier</span><span class="p">[</span><span class="s1">&#39;material_id&#39;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Either structure or identifier with source = MaterialsProject and material_id &#39;</span>
+                                 <span class="s1">&#39;should be provided&#39;</span><span class="p">)</span>
+
+        <span class="n">info</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Compute the structure environments</span>
+        <span class="n">lgf</span><span class="o">.</span><span class="n">setup_structure</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;valences&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">valences</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;valences&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">bva</span> <span class="o">=</span> <span class="n">BVAnalyzer</span><span class="p">()</span>
+                <span class="n">valences</span> <span class="o">=</span> <span class="n">bva</span><span class="o">.</span><span class="n">get_valences</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">)</span>
+                <span class="n">info</span><span class="p">[</span><span class="s1">&#39;valences&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;origin&#39;</span><span class="p">:</span> <span class="s1">&#39;BVAnalyzer&#39;</span><span class="p">}</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">valences</span> <span class="o">=</span> <span class="s1">&#39;undefined&#39;</span>
+                <span class="n">info</span><span class="p">[</span><span class="s1">&#39;valences&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;origin&#39;</span><span class="p">:</span> <span class="s1">&#39;None&#39;</span><span class="p">}</span>
+        <span class="n">excluded_atoms</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;excluded_atoms&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">excluded_atoms</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;excluded_atoms&#39;</span><span class="p">]</span>
+
+        <span class="n">se</span> <span class="o">=</span> <span class="n">lgf</span><span class="o">.</span><span class="n">compute_structure_environments</span><span class="p">(</span><span class="n">only_cations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">valences</span><span class="o">=</span><span class="n">valences</span><span class="p">,</span> <span class="n">excluded_atoms</span><span class="o">=</span><span class="n">excluded_atoms</span><span class="p">)</span>
+
+        <span class="c1"># Write to json file</span>
+        <span class="k">if</span> <span class="s1">&#39;json_file&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">json_file</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;json_file&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">json_file</span> <span class="o">=</span> <span class="s1">&#39;structure_environments.json&#39;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">se</span><span class="o">.</span><span class="n">as_dict</span><span class="p">(),</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1"># Save to database</span>
+        <span class="k">if</span> <span class="s1">&#39;mongo_database&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">database</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;mongo_database&#39;</span><span class="p">]</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                     <span class="s1">&#39;elements&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">elmt</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">elmt</span> <span class="ow">in</span> <span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">elements</span><span class="p">],</span>
+                     <span class="s1">&#39;nelements&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">elements</span><span class="p">),</span>
+                     <span class="s1">&#39;pretty_formula&#39;</span><span class="p">:</span> <span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="p">,</span>
+                     <span class="s1">&#39;nsites&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+                     <span class="p">}</span>
+
+            <span class="n">saving_option</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;saving_option&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">saving_option</span> <span class="o">==</span> <span class="s1">&#39;gridfs&#39;</span><span class="p">:</span>
+                <span class="n">gridfs_msonables</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="n">structure</span><span class="p">,</span>
+                                    <span class="s1">&#39;structure_environments&#39;</span><span class="p">:</span> <span class="n">se</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="n">saving_option</span> <span class="o">==</span> <span class="s1">&#39;storefile&#39;</span><span class="p">:</span>
+                <span class="n">gridfs_msonables</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="s1">&#39;se_prefix&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+                    <span class="n">se_prefix</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;se_prefix&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">se_prefix</span><span class="o">.</span><span class="n">isalpha</span><span class="p">():</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Prefix for structure_environments file is &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+                                         <span class="s1">&#39;while it should be alphabetic&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">se_prefix</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">se_prefix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                <span class="k">if</span> <span class="n">se_prefix</span><span class="p">:</span>
+                    <span class="n">se_rfilename</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">.json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">se_prefix</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storefile_basename&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">se_rfilename</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storefile_basename&#39;</span><span class="p">])</span>
+                <span class="n">se_rfilepath</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storefile_dirpath&#39;</span><span class="p">],</span> <span class="n">se_rfilename</span><span class="p">)</span>
+                <span class="n">storage_server</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storage_server&#39;</span><span class="p">]</span>
+                <span class="n">storage_server</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">localpath</span><span class="o">=</span><span class="n">json_file</span><span class="p">,</span> <span class="n">remotepath</span><span class="o">=</span><span class="n">se_rfilepath</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">makedirs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;structure_environments_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">se_rfilepath</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Saving option is &quot;</span><span class="si">{}</span><span class="s1">&quot; while it should be &#39;</span>
+                                 <span class="s1">&#39;&quot;gridfs&quot; or &quot;storefile&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">saving_option</span><span class="p">))</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">database</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">database</span><span class="o">.</span><span class="n">update_entry</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span> <span class="n">entry_update</span><span class="o">=</span><span class="n">entry</span><span class="p">,</span>
+                                      <span class="n">gridfs_msonables</span><span class="o">=</span><span class="n">gridfs_msonables</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">database</span><span class="o">.</span><span class="n">insert_entry</span><span class="p">(</span><span class="n">entry</span><span class="o">=</span><span class="n">entry</span><span class="p">,</span> <span class="n">gridfs_msonables</span><span class="o">=</span><span class="n">gridfs_msonables</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="ChemEnvLightStructureEnvironmentsTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.analysis_tasks.ChemEnvLightStructureEnvironmentsTask">[docs]</a><span class="k">class</span> <span class="nc">ChemEnvLightStructureEnvironmentsTask</span><span class="p">(</span><span class="n">FireTaskBase</span><span class="p">):</span>
+    <span class="n">_fw_name</span> <span class="o">=</span> <span class="s2">&quot;ChemEnvLightStructureEnvironmentsTask&quot;</span>
+
+<div class="viewcode-block" id="ChemEnvLightStructureEnvironmentsTask.run_task"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.analysis_tasks.ChemEnvLightStructureEnvironmentsTask.run_task">[docs]</a>    <span class="k">def</span> <span class="nf">run_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;chemenv_light_structure_environments.log&#39;</span><span class="p">,</span>
+                            <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">:</span><span class="si">%(module)s</span><span class="s1">:</span><span class="si">%(funcName)s</span><span class="s1">:</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                            <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;identifier&#39;</span><span class="p">]</span>
+        <span class="n">criteria</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">}</span>
+        <span class="c1"># Where to get the full structure environments object</span>
+        <span class="n">se_database</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;structure_environments_database&#39;</span><span class="p">]</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">se_database</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;structure_environments_setup&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;from_gridfs&#39;</span><span class="p">:</span>
+            <span class="n">gfs_fileobject</span> <span class="o">=</span> <span class="n">se_database</span><span class="o">.</span><span class="n">gridfs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s1">&#39;structure_environments&#39;</span><span class="p">])</span>
+            <span class="n">dd</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">gfs_fileobject</span><span class="p">)</span>
+            <span class="n">se</span> <span class="o">=</span> <span class="n">StructureEnvironments</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;structure_environments_setup&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;from_storedfile&#39;</span><span class="p">:</span>
+            <span class="n">se_storage_server</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;se_storage_server&#39;</span><span class="p">]</span>
+            <span class="n">se_filepath</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;structure_environments_file&#39;</span><span class="p">]</span>
+            <span class="n">se_storage_server</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">se_filepath</span><span class="p">,</span> <span class="s1">&#39;se.json&#39;</span><span class="p">)</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;se.json&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+            <span class="n">dd</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">se</span> <span class="o">=</span> <span class="n">StructureEnvironments</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Wrong structure_environments_setup : &#39;</span>
+                               <span class="s1">&#39;&quot;</span><span class="si">{}</span><span class="s1">&quot; is not allowed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;structure_environments_setup&#39;</span><span class="p">]))</span>
+
+        <span class="c1"># Compute the light structure environments</span>
+        <span class="n">chemenv_strategy</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;chemenv_strategy&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s1">&#39;valences&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">valences</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;valences&#39;</span><span class="p">]</span>
+            <span class="n">valences_origin</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;valences_origin&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">valences</span> <span class="o">=</span> <span class="s1">&#39;undefined&#39;</span>
+            <span class="n">valences_origin</span> <span class="o">=</span> <span class="s1">&#39;None&#39;</span>
+        <span class="n">lse</span> <span class="o">=</span> <span class="n">LightStructureEnvironments</span><span class="o">.</span><span class="n">from_structure_environments</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="n">chemenv_strategy</span><span class="p">,</span>
+                                                                     <span class="n">structure_environments</span><span class="o">=</span><span class="n">se</span><span class="p">,</span>
+                                                                     <span class="n">valences</span><span class="o">=</span><span class="n">valences</span><span class="p">,</span>
+                                                                     <span class="n">valences_origin</span><span class="o">=</span><span class="n">valences_origin</span><span class="p">)</span>
+
+        <span class="c1"># Write to json file</span>
+        <span class="k">if</span> <span class="s1">&#39;json_file&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">json_file</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;json_file&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">json_file</span> <span class="o">=</span> <span class="s1">&#39;light_structure_environments.json&#39;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">lse</span><span class="o">.</span><span class="n">as_dict</span><span class="p">(),</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1"># Save to database</span>
+        <span class="k">if</span> <span class="s1">&#39;mongo_database&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+            <span class="n">database</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;mongo_database&#39;</span><span class="p">]</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">,</span>
+                     <span class="s1">&#39;elements&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">elmt</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">elmt</span> <span class="ow">in</span> <span class="n">lse</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">elements</span><span class="p">],</span>
+                     <span class="s1">&#39;nelements&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">lse</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">elements</span><span class="p">),</span>
+                     <span class="s1">&#39;pretty_formula&#39;</span><span class="p">:</span> <span class="n">lse</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="p">,</span>
+                     <span class="s1">&#39;nsites&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">lse</span><span class="o">.</span><span class="n">structure</span><span class="p">),</span>
+                     <span class="s1">&#39;chemenv_statistics&#39;</span><span class="p">:</span> <span class="n">lse</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">(</span><span class="n">statistics_fields</span><span class="o">=</span><span class="s1">&#39;ALL&#39;</span><span class="p">,</span> <span class="n">bson_compatible</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                     <span class="p">}</span>
+            <span class="n">saving_option</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;saving_option&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">saving_option</span> <span class="o">==</span> <span class="s1">&#39;gridfs&#39;</span><span class="p">:</span>
+                <span class="n">gridfs_msonables</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="n">lse</span><span class="o">.</span><span class="n">structure</span><span class="p">,</span>
+                                    <span class="s1">&#39;light_structure_environments&#39;</span><span class="p">:</span> <span class="n">lse</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="n">saving_option</span> <span class="o">==</span> <span class="s1">&#39;storefile&#39;</span><span class="p">:</span>
+                <span class="n">gridfs_msonables</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="s1">&#39;lse_prefix&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+                    <span class="n">lse_prefix</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;lse_prefix&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">lse_prefix</span><span class="o">.</span><span class="n">isalpha</span><span class="p">():</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Prefix for light_structure_environments file is &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+                                         <span class="s1">&#39;while it should be alphabetic&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lse_prefix</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lse_prefix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                <span class="k">if</span> <span class="n">lse_prefix</span><span class="p">:</span>
+                    <span class="n">lse_rfilename</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">.json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lse_prefix</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storefile_basename&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lse_rfilename</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storefile_basename&#39;</span><span class="p">])</span>
+                <span class="n">lse_rfilepath</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storefile_dirpath&#39;</span><span class="p">],</span> <span class="n">lse_rfilename</span><span class="p">)</span>
+                <span class="n">storage_server</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;storage_server&#39;</span><span class="p">]</span>
+                <span class="n">storage_server</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">localpath</span><span class="o">=</span><span class="n">json_file</span><span class="p">,</span> <span class="n">remotepath</span><span class="o">=</span><span class="n">lse_rfilepath</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">makedirs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;light_structure_environments_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lse_rfilepath</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Saving option is &quot;</span><span class="si">{}</span><span class="s1">&quot; while it should be &#39;</span>
+                                 <span class="s1">&#39;&quot;gridfs&quot; or &quot;storefile&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">saving_option</span><span class="p">))</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">identifier</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">database</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">database</span><span class="o">.</span><span class="n">update_entry</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span> <span class="n">entry_update</span><span class="o">=</span><span class="n">entry</span><span class="p">,</span>
+                                      <span class="n">gridfs_msonables</span><span class="o">=</span><span class="n">gridfs_msonables</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">database</span><span class="o">.</span><span class="n">insert_entry</span><span class="p">(</span><span class="n">entry</span><span class="o">=</span><span class="n">entry</span><span class="p">,</span> <span class="n">gridfs_msonables</span><span class="o">=</span><span class="n">gridfs_msonables</span><span class="p">)</span></div></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

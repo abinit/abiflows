@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.core.controllers &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.core.controllers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Controllers</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit</span> <span class="k">import</span> <span class="n">events</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">MemoryCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">MasterProcessMemoryCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">SlaveProcessMemoryCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">TimeCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.utils</span> <span class="k">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.vasp.outputs</span> <span class="k">import</span> <span class="n">Vasprun</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.transition_state</span> <span class="k">import</span> <span class="n">NEBAnalysis</span>
+<span class="kn">from</span> <span class="nn">pymatgen.core.structure</span> <span class="k">import</span> <span class="n">Structure</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span>
+
+
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">Action</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControllerNote</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControlledItemType</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">PRIORITY_HIGH</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">PRIORITY_VERY_LOW</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">PRIORITY_LOWEST</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AbinitController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitController">[docs]</a><span class="k">class</span> <span class="nc">AbinitController</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    General handler for abinit&#39;s events.</span>
+<span class="sd">    Determines whether the calculation ended correctly or not and fixes errors (including unconverged) if Abinit</span>
+<span class="sd">    error handlers are available.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_handler</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">is_validator</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1">#_controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">critical_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the controller with the critical events that trigger the restart and a list of ErrorHandlers</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            critical_events: List of events that trigger a restart due to unconverged calculation</span>
+<span class="sd">            handlers: List of ErrorHandlers (pymatgen.io.abinit.events) used to handle specific events</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AbinitController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="n">critical_events</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">critical_events</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">critical_events</span>
+        <span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">handlers</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">handlers</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">critical_events</span> <span class="o">=</span> <span class="n">critical_events</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">critical_events</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[</span><span class="n">critical_events</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="n">handlers</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">handlers</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[</span><span class="n">handlers</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_priority</span><span class="p">(</span><span class="n">PRIORITY_HIGH</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AbinitController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the ControllerNote</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;abinit_input&#39;</span><span class="p">,</span> <span class="s1">&#39;abinit_output_filepath&#39;</span><span class="p">,</span> <span class="s1">&#39;abinit_log_filepath&#39;</span><span class="p">,</span> <span class="s1">&#39;abinit_mpi_abort_filepath&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;abinit_outdir_path&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">kw</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;kwarg </span><span class="si">{}</span><span class="s2"> is required to process abinit results&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kw</span><span class="p">))</span>
+        <span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">abinit_input</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;abinit_input&#39;</span><span class="p">))</span>
+        <span class="n">abinit_output_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;abinit_output_filepath&#39;</span><span class="p">))</span>
+        <span class="n">abinit_log_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;abinit_log_filepath&#39;</span><span class="p">))</span>
+        <span class="n">abinit_mpi_abort_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;abinit_mpi_abort_filepath&#39;</span><span class="p">))</span>
+        <span class="n">abinit_outdir_path</span> <span class="o">=</span> <span class="n">Directory</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;abinit_outdir_path&#39;</span><span class="p">))</span>
+        <span class="n">structure</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;structure&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c1"># Initialize the actions for everything that is passed to kwargs</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">report</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">report</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_event_report</span><span class="p">(</span><span class="n">abinit_log_file</span><span class="p">,</span> <span class="n">abinit_mpi_abort_file</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> exception while parsing event_report:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># If the calculation is ok, parse the outputs</span>
+        <span class="k">if</span> <span class="n">report</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># the calculation finished without errors</span>
+            <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">run_completed</span><span class="p">:</span>
+                <span class="c1"># Check if the calculation converged.</span>
+                <span class="n">critical_events_found</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">filter_types</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">critical_events</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">critical_events_found</span><span class="p">:</span>
+                    <span class="c1"># self.history.log_unconverged()</span>
+                    <span class="c1"># hook</span>
+                    <span class="c1"># local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec)</span>
+                    <span class="c1"># num_restarts = self.restart_info.num_restarts if self.restart_info else 0</span>
+                    <span class="c1"># if num_restarts &lt; self.ftm.fw_policy.max_restarts:</span>
+                    <span class="c1">#     if local_restart:</span>
+                    <span class="c1">#         return None</span>
+                    <span class="c1">#     else:</span>
+                    <span class="c1">#         stored_data[&#39;final_state&#39;] = &#39;Unconverged&#39;</span>
+                    <span class="c1">#         return FWAction(detours=restart_fw, stored_data=stored_data)</span>
+                    <span class="c1"># else:</span>
+                    <span class="c1">#     raise UnconvergedError(self, msg=&quot;Unconverged after {} restarts&quot;.format(num_restarts),</span>
+                    <span class="c1">#                            abiinput=self.abiinput, restart_info=self.restart_info,</span>
+                    <span class="c1">#                            history=self.history)</span>
+                    <span class="c1"># Calculation did not converge. A simple restart is enough</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_RECOVERABLE</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">simple_restart</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="s1">&#39;RelaxConvergenceWarning&#39;</span> <span class="ow">in</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">critical_events_found</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">structure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Structure should be present in the initial objects for restarting &#39;</span>
+                                             <span class="s1">&#39;relaxation runs&#39;</span><span class="p">)</span>
+                        <span class="c1"># Fake action ... TODO: make something better for the actions ...</span>
+                        <span class="n">actions</span><span class="p">[</span><span class="s1">&#39;structure&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">Structure</span><span class="o">.</span><span class="fm">__len__</span><span class="p">)</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Unconverged: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">critical_events_found</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># calculation converged</span>
+                    <span class="c1">#TODO move to a different controler</span>
+                    <span class="c1"># check if there are custom parameters that should be converged</span>
+                    <span class="c1"># unconverged_params, reset_restart = self.check_parameters_convergence(fw_spec)</span>
+                    <span class="c1"># if unconverged_params:</span>
+                    <span class="c1">#     self.history.log_converge_params(unconverged_params, self.abiinput)</span>
+                    <span class="c1">#     self.abiinput.set_vars(**unconverged_params)</span>
+                    <span class="c1">#     local_restart, restart_fw, stored_data = self.prepare_restart(fw_spec, reset=reset_restart)</span>
+                    <span class="c1">#     num_restarts = self.restart_info.num_restarts if self.restart_info else 0</span>
+                    <span class="c1">#     if num_restarts &lt; self.ftm.fw_policy.max_restarts:</span>
+                    <span class="c1">#         if local_restart:</span>
+                    <span class="c1">#             return None</span>
+                    <span class="c1">#         else:</span>
+                    <span class="c1">#             stored_data[&#39;final_state&#39;] = &#39;Unconverged_parameters&#39;</span>
+                    <span class="c1">#             return FWAction(detours=restart_fw, stored_data=stored_data)</span>
+                    <span class="c1">#     else:</span>
+                    <span class="c1">#         raise UnconvergedParametersError(self, abiinput=self.abiinput,</span>
+                    <span class="c1">#                                          restart_info=self.restart_info, history=self.history)</span>
+                    <span class="c1"># else:</span>
+                    <span class="c1">#     # everything is ok. conclude the task</span>
+                    <span class="c1">#     # hook</span>
+                    <span class="c1">#     update_spec, mod_spec, stored_data = self.conclude_task(fw_spec)</span>
+                    <span class="c1">#     return FWAction(stored_data=stored_data, update_spec=update_spec, mod_spec=mod_spec)</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">EVERYTHING_OK</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">report</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
+            <span class="c1"># Abinit reported problems</span>
+            <span class="c1"># Check if the errors could be handled</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Found errors in report&#39;</span><span class="p">)</span>
+                <span class="c1"># for error in report.errors:</span>
+                <span class="c1">#     logger.debug(str(error))</span>
+                <span class="c1">#     try:</span>
+                <span class="c1">#         self.abi_errors.append(error)</span>
+                <span class="c1">#     except AttributeError:</span>
+                <span class="c1">#         self.abi_errors = [error]</span>
+
+                <span class="c1"># ABINIT errors, try to handle them</span>
+                <span class="n">fixed</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="n">abiinput_actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fix_abicritical</span><span class="p">(</span><span class="n">report</span><span class="o">=</span><span class="n">report</span><span class="p">,</span> <span class="n">abiinput</span><span class="o">=</span><span class="n">abinit_input</span><span class="p">,</span>
+                                                                      <span class="n">queue_adapter</span><span class="o">=</span><span class="n">queue_adapter</span><span class="p">,</span>
+                                                                      <span class="n">outdir</span><span class="o">=</span><span class="n">abinit_outdir_path</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">fixed</span><span class="p">:</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_RECOVERABLE</span>
+                    <span class="k">if</span> <span class="n">reset</span><span class="p">:</span>
+                        <span class="n">note</span><span class="o">.</span><span class="n">reset_restart</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">note</span><span class="o">.</span><span class="n">simple_restart</span><span class="p">()</span>
+
+                    <span class="n">actions</span><span class="p">[</span><span class="s1">&#39;abinit_input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">abiinput_actions</span>
+
+                    <span class="c1">#TODO if the queue_adapter can be modified by the handlers return it</span>
+                    <span class="c1"># actions[&#39;queue_adapter&#39;] = queue_adapter_actions</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Critical events couldn&#39;t be fixed by handlers.&quot;</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span>
+
+                <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
+                    <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Calculation not completed but no errors. No fix could be applied in this controller</span>
+                <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span>
+                <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Abinit calculation not completed but no errors in report.&#39;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># report does not exist. No fix could be applied in this controller</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">NOTHING_FOUND</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;No Abinit report&#39;</span><span class="p">)</span>
+
+        <span class="c1"># No errors from abinit. No fix could be applied at this stage.</span>
+        <span class="c1"># The FW will be fizzled.</span>
+        <span class="c1"># Try to save the stderr file for Fortran runtime errors.</span>
+        <span class="c1">#TODO check if some cases could be handled here</span>
+        <span class="c1"># err_msg = None</span>
+        <span class="c1"># if self.stderr_file.exists:</span>
+        <span class="c1">#     #TODO length should always be enough, but maybe it&#39;s worth cutting the message if it&#39;s too long</span>
+        <span class="c1">#     err_msg = self.stderr_file.read()</span>
+        <span class="c1">#     # It happened that the text file contained non utf-8 characters.</span>
+        <span class="c1">#     # sanitize the text to avoid problems during database inserption</span>
+        <span class="c1">#     err_msg.decode(&quot;utf-8&quot;, &quot;ignore&quot;)</span>
+        <span class="c1"># logger.error(&quot;return code {}&quot;.format(self.returncode))</span>
+        <span class="c1"># raise AbinitRuntimeError(self, err_msg)</span>
+
+        <span class="n">note</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="n">actions</span>
+        <span class="k">return</span> <span class="n">note</span></div>
+
+<div class="viewcode-block" id="AbinitController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">dec</span> <span class="o">=</span> <span class="n">MontyDecoder</span><span class="p">()</span>
+        <span class="kn">import</span> <span class="nn">importlib</span>
+        <span class="n">critical_events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ced</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;critical_events&#39;</span><span class="p">]:</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">ced</span><span class="p">[</span><span class="s1">&#39;module&#39;</span><span class="p">])</span>
+            <span class="n">ce</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">ced</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+            <span class="n">critical_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ce</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">critical_events</span><span class="o">=</span><span class="n">critical_events</span><span class="p">,</span>
+                   <span class="c1"># critical_events=dec.process_decoded(d[&#39;critical_events&#39;]),</span>
+                   <span class="n">handlers</span><span class="o">=</span><span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;handlers&#39;</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="AbinitController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">critical_events</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;module&#39;</span><span class="p">:</span> <span class="n">ce</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">ce</span><span class="o">.</span><span class="vm">__name__</span><span class="p">}</span> <span class="k">for</span> <span class="n">ce</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">critical_events</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="c1"># &#39;critical_events&#39;: [ce.as_dict() for ce in self.critical_events],</span>
+                <span class="s1">&#39;critical_events&#39;</span><span class="p">:</span> <span class="n">critical_events</span><span class="p">,</span>
+                <span class="s1">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">er</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">er</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span><span class="p">]</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="AbinitController.get_event_report"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitController.get_event_report">[docs]</a>    <span class="k">def</span> <span class="nf">get_event_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ofile</span><span class="p">,</span> <span class="n">mpiabort_file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyzes the main output file for possible Errors or Warnings.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            :class:`EventReport` instance or None if the main output file does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">events</span><span class="o">.</span><span class="n">EventsParser</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ofile</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">mpiabort_file</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># ABINIT abort file without log!</span>
+                <span class="n">abort_report</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">mpiabort_file</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">abort_report</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">report</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">ofile</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+            <span class="c1"># Add events found in the ABI_MPIABORTFILE.</span>
+            <span class="k">if</span> <span class="n">mpiabort_file</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;Found ABI_MPIABORTFILE!&quot;</span><span class="p">)</span>
+                <span class="n">abort_report</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">mpiabort_file</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">abort_report</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;ABI_MPIABORTFILE but empty&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">abort_report</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;Found more than one event in ABI_MPIABORTFILE&quot;</span><span class="p">)</span>
+
+                    <span class="c1"># Add it to the initial report only if it differs</span>
+                    <span class="c1"># from the last one found in the main log file.</span>
+                    <span class="n">last_abort_event</span> <span class="o">=</span> <span class="n">abort_report</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">report</span> <span class="ow">and</span> <span class="n">last_abort_event</span> <span class="o">!=</span> <span class="n">report</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                        <span class="n">report</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last_abort_event</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">report</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last_abort_event</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">report</span>
+
+        <span class="c1">#except parser.Error as exc:</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="c1"># Return a report with an error entry with info on the exception.</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: Exception while parsing ABINIT events:</span><span class="se">\n</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ofile</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">report_exception</span><span class="p">(</span><span class="n">ofile</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbinitController.fix_abicritical"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitController.fix_abicritical">[docs]</a>    <span class="k">def</span> <span class="nf">fix_abicritical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">report</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        method to fix crashes/error caused by abinit</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            retcode: 1 if task has been fixed else 0.</span>
+<span class="sd">            reset: True if at least one of the corrections applied requires a reset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Empty list of event handlers. Cannot fix abi_critical errors&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[]</span>
+
+        <span class="n">done</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handlers</span><span class="p">)</span> <span class="o">*</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">corrections</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">report</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">handler</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handlers</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">handler</span><span class="o">.</span><span class="n">can_handle</span><span class="p">(</span><span class="n">event</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">done</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;handler&quot;</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="s2">&quot;will try to fix&quot;</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="c1">#TODO pass the queueadapter to the handlers? the output should be modified in that case</span>
+                        <span class="n">c</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">handle_input_event</span><span class="p">(</span><span class="n">abiinput</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+                            <span class="n">done</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">corrections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">corrections</span><span class="p">:</span>
+            <span class="n">reset</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">reset</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">corrections</span><span class="p">)</span>
+            <span class="c1"># self.history.log_corrections(corrections)</span>
+            <span class="c1"># convert the actions applied on the input to Actions</span>
+            <span class="n">actions</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">corrections</span><span class="p">:</span>
+                <span class="c1"># remove vars as a first action, in case incopatible variables have been set.</span>
+                <span class="k">if</span> <span class="s1">&#39;_pop&#39;</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+                    <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Action</span><span class="p">(</span><span class="n">AbinitInput</span><span class="o">.</span><span class="n">remove_vars</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="s1">&#39;_pop&#39;</span><span class="p">])))</span>
+                <span class="k">if</span> <span class="s1">&#39;_set&#39;</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+                    <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Action</span><span class="p">(</span><span class="n">AbinitInput</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="s1">&#39;_set&#39;</span><span class="p">])))</span>
+                <span class="k">if</span> <span class="s1">&#39;_update&#39;</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+                    <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Action</span><span class="p">(</span><span class="n">AbinitInput</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="s1">&#39;_update&#39;</span><span class="p">])))</span>
+                <span class="k">if</span> <span class="s1">&#39;_change_structure&#39;</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+                    <span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Action</span><span class="p">(</span><span class="n">AbinitInput</span><span class="o">.</span><span class="n">set_structure</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="s1">&#39;_change_structure&#39;</span><span class="p">])))</span>
+
+            <span class="k">return</span> <span class="mi">1</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="n">actions</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;We encountered AbiCritical events that could not be fixed&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="AbinitController.from_helper"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitController.from_helper">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_helper</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">helper</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">critical_events</span><span class="o">=</span><span class="n">helper</span><span class="o">.</span><span class="n">CRITICAL_EVENTS</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="QueueControllerMixin"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.QueueControllerMixin">[docs]</a><span class="k">class</span> <span class="nc">QueueControllerMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="QueueControllerMixin.get_queue_errors"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.QueueControllerMixin.get_queue_errors">[docs]</a>    <span class="k">def</span> <span class="nf">get_queue_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Get the file paths for the stderr and stdout of the resource manager system, as well as the queue_adapter</span>
+        <span class="n">qerr_filepath</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;qerr_filepath&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">qout_filepath</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;qout_filepath&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">memory_policy</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;memory_policy&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1">#TODO: deal with the memory policy in the scheduler parser (whether it is vmem or mem in PBS for example ...)</span>
+        <span class="k">if</span> <span class="s1">&#39;queue_adapter&#39;</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;WalltimeController should have access to the queue_adapter&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;qerr_filepath&#39;</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;WalltimeController should have access to the qerr_filepath&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;qout_filepath&#39;</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;WalltimeController should have access to the qout_filepath&#39;</span><span class="p">)</span>
+        <span class="c1"># Analyze the stderr and stdout files of the resource manager system.</span>
+        <span class="n">qerr_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">qout_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">qerr_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">qerr_filepath</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">qerr_filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">qerr_info</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">qout_filepath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">qout_filepath</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">qout_filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">qout_info</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">qerr_info</span> <span class="ow">or</span> <span class="n">qout_info</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">get_parser</span>
+            <span class="n">qtype</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">QTYPE</span>
+            <span class="n">scheduler_parser</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">(</span><span class="n">qtype</span><span class="p">,</span> <span class="n">err_file</span><span class="o">=</span><span class="n">qerr_filepath</span><span class="p">,</span>
+                                          <span class="n">out_file</span><span class="o">=</span><span class="n">qout_filepath</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">scheduler_parser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot find scheduler_parser for qtype </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">qtype</span><span class="p">))</span>
+
+            <span class="n">scheduler_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+            <span class="n">queue_errors</span> <span class="o">=</span> <span class="n">scheduler_parser</span><span class="o">.</span><span class="n">errors</span>
+            <span class="k">return</span> <span class="n">queue_errors</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div></div>
+
+
+<div class="viewcode-block" id="WalltimeController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.WalltimeController">[docs]</a><span class="k">class</span> <span class="nc">WalltimeController</span><span class="p">(</span><span class="n">Controller</span><span class="p">,</span> <span class="n">QueueControllerMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Controller for walltime infringements of the resource manager.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_handler</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_failed</span><span class="p">()]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_timelimit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timelimit_increase</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="sd">        of the queue manager and the queue adapter used.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_timelimit: Maximum timelimit (in seconds).</span>
+<span class="sd">            timelimit_increase: Amount of time (in seconds) to increase the timelimit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WalltimeController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span> <span class="o">=</span> <span class="n">max_timelimit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span> <span class="o">=</span> <span class="n">timelimit_increase</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_VERY_LOW</span>
+
+<div class="viewcode-block" id="WalltimeController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.WalltimeController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;max_timelimit&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span><span class="p">,</span>
+                <span class="s1">&#39;timelimit_increase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="WalltimeController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.WalltimeController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">max_timelimit</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_timelimit&#39;</span><span class="p">],</span>
+                   <span class="n">timelimit_increase</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;timelimit_increase&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="WalltimeController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.WalltimeController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Get the Queue Adapter and the queue errors</span>
+        <span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">queue_adapter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No queue adapter passed to the WalltimeController&#39;</span><span class="p">)</span>
+        <span class="n">queue_errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_queue_errors</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Create the Controller Note and the actions</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># No errors found</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">queue_errors</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">NOTHING_FOUND</span>
+            <span class="k">return</span> <span class="n">note</span>
+
+        <span class="c1"># Get the timelimit error if there is one</span>
+        <span class="n">timelimit_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">queue_errors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">TimeCancelError</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found timelimit error.&#39;</span><span class="p">)</span>
+                <span class="n">timelimit_error</span> <span class="o">=</span> <span class="n">error</span>
+
+        <span class="c1"># No timelimit error found</span>
+        <span class="k">if</span> <span class="n">timelimit_error</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">NOTHING_FOUND</span>
+            <span class="k">return</span> <span class="n">note</span>
+
+        <span class="c1"># Setup the new timelimit</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Task has been stopped due to timelimit&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_timelimit</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">timelimit_hard</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">max_timelimit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span>
+        <span class="c1"># When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">timelimit_increase</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">timelimit_hard</span> <span class="o">/</span> <span class="mi">10</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">timelimit_increase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span>
+        <span class="n">old_timelimit</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">timelimit</span>
+        <span class="k">if</span> <span class="n">old_timelimit</span> <span class="o">==</span> <span class="n">max_timelimit</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Maximum timelimit has been reached, cannot increase further&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">note</span>
+        <span class="n">new_timelimit</span> <span class="o">=</span> <span class="n">old_timelimit</span> <span class="o">+</span> <span class="n">timelimit_increase</span>
+        <span class="c1"># If the new timelimit exceeds the max timelimit, just put it to the max timelimit</span>
+        <span class="k">if</span> <span class="n">new_timelimit</span> <span class="o">&gt;</span> <span class="n">max_timelimit</span><span class="p">:</span>
+            <span class="n">new_timelimit</span> <span class="o">=</span> <span class="n">max_timelimit</span>
+
+        <span class="c1"># Set the actions to be performed, the state and the type of restart</span>
+        <span class="n">actions</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">queue_adapter</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">set_timelimit</span><span class="p">,</span>
+                                          <span class="n">timelimit</span><span class="o">=</span><span class="n">new_timelimit</span><span class="p">)</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_RECOVERABLE</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="n">actions</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">reset_restart</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">note</span></div></div>
+
+
+<div class="viewcode-block" id="MemoryController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.MemoryController">[docs]</a><span class="k">class</span> <span class="nc">MemoryController</span><span class="p">(</span><span class="n">Controller</span><span class="p">,</span> <span class="n">QueueControllerMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Controller for memory infringements of the resource manager. The handler should be able to handle the possible</span>
+<span class="sd">    overhead of the master process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_handler</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1">#_controlled_item_types = [ControlledItemType.task_failed()]</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">(),</span> <span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_failed</span><span class="p">()]</span>
+
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, job_rundir=&#39;.&#39;, qout_file=&#39;queue.qout&#39;, qerr_file=&#39;queue.qerr&#39;, queue_adapter=None,</span>
+<span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
+<span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                       <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                       <span class="n">memory_policy</span><span class="o">=</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="sd">        of the queue manager and the queue adapter used.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_mem_per_proc_mb: Maximum memory per process in megabytes.</span>
+<span class="sd">            mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.</span>
+<span class="sd">            max_master_mem_overhead_mb: Maximum overhead memory for the master process in megabytes.</span>
+<span class="sd">            master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process</span>
+<span class="sd">                                             in megabytes.</span>
+<span class="sd">            memory_policy: Policy for the memory (some weird clusters sometimes use the virtual memory to stop jobs</span>
+<span class="sd">                           that overcome some virtual memory limit)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MemoryController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span> <span class="o">=</span> <span class="n">max_mem_per_proc_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span> <span class="o">=</span> <span class="n">mem_per_proc_increase_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span> <span class="o">=</span> <span class="n">max_master_mem_overhead_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span> <span class="o">=</span> <span class="n">master_mem_overhead_increase_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span> <span class="o">=</span> <span class="n">memory_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_VERY_LOW</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">memory_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_memory_policy</span>
+
+    <span class="nd">@memory_policy</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">memory_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_policy</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">memory_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">,</span> <span class="s1">&#39;virtual_memory&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Memory policy is &quot;</span><span class="si">{}</span><span class="s1">&quot; in MemoryController while itshould be either &quot;physical_memory&quot;&#39;</span>
+                             <span class="s1">&#39;or &quot;virtual_memory&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">memory_policy</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_memory_policy</span> <span class="o">=</span> <span class="n">memory_policy</span>
+
+<div class="viewcode-block" id="MemoryController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.MemoryController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">,</span>
+                <span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span><span class="p">,</span>
+                <span class="s1">&#39;max_master_mem_overhead_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span><span class="p">,</span>
+                <span class="s1">&#39;master_mem_overhead_increase_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span><span class="p">,</span>
+                <span class="s1">&#39;memory_policy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="MemoryController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.MemoryController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">],</span>
+                   <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">],</span>
+                   <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_master_mem_overhead_mb&#39;</span><span class="p">],</span>
+                   <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;master_mem_overhead_increase_mb&#39;</span><span class="p">],</span>
+                   <span class="n">memory_policy</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;memory_policy&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="MemoryController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.MemoryController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Get the Queue Adapter and the queue errors</span>
+        <span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">queue_adapter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No queue adapter passed to the MemoryController&#39;</span><span class="p">)</span>
+        <span class="n">queue_errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_queue_errors</span><span class="p">(</span><span class="n">memory_policy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Create the Controller Note and the actions</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># No errors found</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">queue_errors</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">NOTHING_FOUND</span>
+            <span class="k">return</span> <span class="n">note</span>
+
+        <span class="c1"># Get the memory error if there is one</span>
+        <span class="n">memory_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">master_memory_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">slave_memory_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">queue_errors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">MemoryCancelError</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found memory error.&#39;</span><span class="p">)</span>
+                <span class="n">memory_error</span> <span class="o">=</span> <span class="n">error</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">MasterProcessMemoryCancelError</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found master memory error.&#39;</span><span class="p">)</span>
+                <span class="n">master_memory_error</span> <span class="o">=</span> <span class="n">error</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">SlaveProcessMemoryCancelError</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found slave memory error.&#39;</span><span class="p">)</span>
+                <span class="n">slave_memory_error</span> <span class="o">=</span> <span class="n">error</span>
+
+        <span class="c1"># No memory error found</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">err</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="p">[</span><span class="n">memory_error</span><span class="p">,</span> <span class="n">master_memory_error</span><span class="p">,</span> <span class="n">slave_memory_error</span><span class="p">]):</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">NOTHING_FOUND</span>
+            <span class="k">return</span> <span class="n">note</span>
+
+        <span class="c1"># TODO: allow the possibility to have multiple actions here ? If both the master and the slave gets the error ?</span>
+        <span class="k">if</span> <span class="n">memory_error</span> <span class="ow">or</span> <span class="n">slave_memory_error</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Task has been stopped due to memory infringement&#39;</span>
+                             <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">memory_error</span> <span class="k">else</span> <span class="s1">&#39; by a slave process&#39;</span><span class="p">))</span>
+            <span class="n">old_mem_per_proc</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">mem_per_proc</span>
+            <span class="k">if</span> <span class="n">old_mem_per_proc</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">:</span>
+                <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span>
+                <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Maximum mem_per_proc has been reached, cannot increase further&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">note</span>
+            <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="n">old_mem_per_proc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span>
+            <span class="k">if</span> <span class="n">new_mem_per_proc</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">:</span>
+                <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span>
+            <span class="n">actions</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">queue_adapter</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">set_mem_per_proc</span><span class="p">,</span>
+                                              <span class="n">mem_mb</span><span class="o">=</span><span class="n">new_mem_per_proc</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">master_memory_error</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Task has been stopped due to memory infringement by the master process&#39;</span><span class="p">)</span>
+            <span class="n">old_mem_overhead</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">master_mem_overhead</span>
+            <span class="k">if</span> <span class="n">old_mem_overhead</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span><span class="p">:</span>
+                <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span>
+                <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Maximum master_mem_overhead has been reached, cannot increase further&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">note</span>
+            <span class="n">new_mem_overhead</span> <span class="o">=</span> <span class="n">old_mem_overhead</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span>
+            <span class="k">if</span> <span class="n">new_mem_overhead</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span><span class="p">:</span>
+                <span class="n">new_mem_overhead</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span>
+            <span class="n">actions</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">queue_adapter</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">set_master_mem_overhead</span><span class="p">,</span>
+                                              <span class="n">mem_mb</span><span class="o">=</span><span class="n">new_mem_overhead</span><span class="p">)</span>
+
+        <span class="c1"># Set the actions to be performed, the state and the type of restart</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_RECOVERABLE</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="n">actions</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">reset_restart</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">note</span></div></div>
+
+
+<div class="viewcode-block" id="AbinitZenobeSlaveMemoryController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitZenobeSlaveMemoryController">[docs]</a><span class="k">class</span> <span class="nc">AbinitZenobeSlaveMemoryController</span><span class="p">(</span><span class="n">Controller</span><span class="p">,</span> <span class="n">QueueControllerMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Controller for memory infringements of the resource manager. The handler should be able to handle the possible</span>
+<span class="sd">    overhead of the master process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_handler</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1">#_controlled_item_types = [ControlledItemType.task_failed()]</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">(),</span> <span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_failed</span><span class="p">()]</span>
+
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, job_rundir=&#39;.&#39;, qout_file=&#39;queue.qout&#39;, qerr_file=&#39;queue.qerr&#39;, queue_adapter=None,</span>
+<span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
+<span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                       <span class="n">memory_policy</span><span class="o">=</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="sd">        of the queue manager and the queue adapter used.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_mem_per_proc_mb: Maximum memory per process in megabytes.</span>
+<span class="sd">            mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.</span>
+<span class="sd">            memory_policy: Policy for the memory (some weird clusters sometimes use the virtual memory to stop jobs</span>
+<span class="sd">                           that overcome some virtual memory limit)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AbinitZenobeSlaveMemoryController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span> <span class="o">=</span> <span class="n">max_mem_per_proc_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span> <span class="o">=</span> <span class="n">mem_per_proc_increase_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span> <span class="o">=</span> <span class="n">memory_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_VERY_LOW</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">memory_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_memory_policy</span>
+
+    <span class="nd">@memory_policy</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">memory_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_policy</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">memory_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">,</span> <span class="s1">&#39;virtual_memory&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Memory policy is &quot;</span><span class="si">{}</span><span class="s1">&quot; in MemoryController while it should be either &quot;physical_memory&quot;&#39;</span>
+                             <span class="s1">&#39;or &quot;virtual_memory&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">memory_policy</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_memory_policy</span> <span class="o">=</span> <span class="n">memory_policy</span>
+
+<div class="viewcode-block" id="AbinitZenobeSlaveMemoryController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitZenobeSlaveMemoryController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">,</span>
+                <span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span><span class="p">,</span>
+                <span class="s1">&#39;memory_policy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="AbinitZenobeSlaveMemoryController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitZenobeSlaveMemoryController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">],</span>
+                   <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">],</span>
+                   <span class="n">memory_policy</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;memory_policy&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="AbinitZenobeSlaveMemoryController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.AbinitZenobeSlaveMemoryController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Get the Queue Adapter and the queue errors</span>
+        <span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">queue_adapter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No queue adapter passed to the MemoryController&#39;</span><span class="p">)</span>
+        <span class="n">run_err_filepath</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;abinit_err_filepath&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">qerr_filepath</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;qerr_filepath&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">qout_filepath</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;qout_filepath&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># Try to find &quot;dapl_conn_rc&quot; in run.err</span>
+        <span class="k">if</span> <span class="n">run_err_filepath</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">run_err_filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+            <span class="n">run_err</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">run_err</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;dapl_conn_rc&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+
+        <span class="c1"># Try to find &quot;dapl_conn_rc&quot; in queue.qerr</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">run_err_filepath</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">qerr_filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+                <span class="n">qerr</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">qerr</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;dapl_conn_rc&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+        <span class="c1"># Try to find &quot;dapl_conn_rc&quot; in queue.qout</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">run_err_filepath</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">qout_filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+                <span class="n">qout</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">qout</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;dapl_conn_rc&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+        <span class="c1"># Create the Controller Note and the actions</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">NOTHING_FOUND</span>
+            <span class="k">return</span> <span class="n">note</span>
+
+        <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Task has been stopped due to memory infringement by a slave process &#39;</span>
+                         <span class="s1">&#39;(dapl_conn_rc error on Zenobe ...)&#39;</span><span class="p">)</span>
+        <span class="n">old_mem_per_proc</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">mem_per_proc</span>
+        <span class="k">if</span> <span class="n">old_mem_per_proc</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Maximum mem_per_proc has been reached, cannot increase further&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">note</span>
+        <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="n">old_mem_per_proc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span>
+        <span class="k">if</span> <span class="n">new_mem_per_proc</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">:</span>
+            <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span>
+        <span class="n">actions</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">queue_adapter</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">set_mem_per_proc</span><span class="p">,</span>
+                                          <span class="n">mem_mb</span><span class="o">=</span><span class="n">new_mem_per_proc</span><span class="p">)</span>
+
+        <span class="c1"># Set the actions to be performed, the state and the type of restart</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_RECOVERABLE</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="n">actions</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">reset_restart</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">note</span></div></div>
+
+
+    <span class="c1"># def process(self, **kwargs):</span>
+    <span class="c1">#     # Create the Controller Note</span>
+    <span class="c1">#     note = ControllerNote(controller=self)</span>
+    <span class="c1">#     # Get the file paths for the stderr and stdout of the resource manager system, as well as the queue_adapter</span>
+    <span class="c1">#     qerr_filepath = kwargs.get(&#39;qerr_filepath&#39;, None)</span>
+    <span class="c1">#     qout_filepath = kwargs.get(&#39;qout_filepath&#39;, None)</span>
+    <span class="c1">#     queue_adapter = kwargs.get(&#39;queue_adapter&#39;, None)</span>
+    <span class="c1">#     if &#39;queue_adapter&#39; is None:</span>
+    <span class="c1">#         raise ValueError(&#39;WalltimeController should have access to the queue_adapter&#39;)</span>
+    <span class="c1">#     if &#39;qerr_filepath&#39; is None:</span>
+    <span class="c1">#         raise ValueError(&#39;WalltimeController should have access to the qerr_filepath&#39;)</span>
+    <span class="c1">#     if &#39;qout_filepath&#39; is None:</span>
+    <span class="c1">#         raise ValueError(&#39;WalltimeController should have access to the qout_filepath&#39;)</span>
+    <span class="c1">#     # Initialize the actions for everything that is passed to kwargs</span>
+    <span class="c1">#     actions = {}</span>
+    <span class="c1">#     # Analyze the stderr and stdout files of the resource manager system.</span>
+    <span class="c1">#     qerr_info = None</span>
+    <span class="c1">#     qout_info = None</span>
+    <span class="c1">#     if qerr_filepath is not None and os.path.exists(qerr_filepath):</span>
+    <span class="c1">#         with open(qerr_filepath, &quot;r&quot;) as f:</span>
+    <span class="c1">#             qerr_info = f.read()</span>
+    <span class="c1">#     if qout_filepath is not None and os.path.exists(qout_filepath):</span>
+    <span class="c1">#         with open(qout_filepath, &quot;r&quot;) as f:</span>
+    <span class="c1">#             qout_info = f.read()</span>
+    <span class="c1">#     if qerr_info or qout_info:</span>
+    <span class="c1">#         from pymatgen.io.abinit.scheduler_error_parsers import get_parser</span>
+    <span class="c1">#         qtype = queue_adapter.QTYPE</span>
+    <span class="c1">#         scheduler_parser = get_parser(qtype, err_file=qerr_filepath,</span>
+    <span class="c1">#                                       out_file=qout_filepath)</span>
+    <span class="c1">#</span>
+    <span class="c1">#         if scheduler_parser is None:</span>
+    <span class="c1">#             raise ValueError(&#39;Cannot find scheduler_parser for qtype {}&#39;.format(qtype))</span>
+    <span class="c1">#</span>
+    <span class="c1">#         scheduler_parser.parse()</span>
+    <span class="c1">#         queue_errors = scheduler_parser.errors</span>
+    <span class="c1">#</span>
+    <span class="c1">#         # Get the timelimit error if there is one</span>
+    <span class="c1">#         timelimit_error = None</span>
+    <span class="c1">#         for error in queue_errors:</span>
+    <span class="c1">#             if isinstance(error, TimeCancelError):</span>
+    <span class="c1">#                 logger.debug(&#39;found timelimit error.&#39;)</span>
+    <span class="c1">#                 timelimit_error = error</span>
+    <span class="c1">#         if timelimit_error is None:</span>
+    <span class="c1">#             note.state = ControllerNote.NOTHING_FOUND</span>
+    <span class="c1">#             return note</span>
+    <span class="c1">#</span>
+    <span class="c1">#         if self.max_timelimit is None:</span>
+    <span class="c1">#             max_timelimit = queue_adapter.timelimit_hard</span>
+    <span class="c1">#         else:</span>
+    <span class="c1">#             max_timelimit = self.max_timelimit</span>
+    <span class="c1">#         # When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue</span>
+    <span class="c1">#         if self.timelimit_increase is None:</span>
+    <span class="c1">#             timelimit_increase = queue_adapter.timelimit_hard / 10</span>
+    <span class="c1">#         else:</span>
+    <span class="c1">#             timelimit_increase = self.timelimit_increase</span>
+    <span class="c1">#         old_timelimit = queue_adapter.timelimit</span>
+    <span class="c1">#         if old_timelimit == max_timelimit:</span>
+    <span class="c1">#                 # raise ValueError(&#39;Cannot increase beyond maximum timelimit ({:d} seconds) set in &#39;</span>
+    <span class="c1">#                 #                  &#39;WalltimeController. Hard time limit of &#39;</span>
+    <span class="c1">#                 #                  &#39;the queue is {:d} seconds&#39;.format(max_timelimit,</span>
+    <span class="c1">#                 #                                                     queue_adapter.timelimit_hard))</span>
+    <span class="c1">#             note.state = ControllerNote.ERROR_UNRECOVERABLE</span>
+    <span class="c1">#             return note</span>
+    <span class="c1">#         new_timelimit = old_timelimit + timelimit_increase</span>
+    <span class="c1">#         # If the new timelimit exceeds the max timelimit, just put it to the max timelimit</span>
+    <span class="c1">#         if new_timelimit &gt; max_timelimit:</span>
+    <span class="c1">#             new_timelimit = max_timelimit</span>
+    <span class="c1">#         actions[&#39;queue_adapter&#39;] = Action(callable=queue_adapter.__class__.set_timelimit,</span>
+    <span class="c1">#                                           timelimit=new_timelimit)</span>
+    <span class="c1">#         note.state = ControllerNote.ERROR_RECOVERABLE</span>
+    <span class="c1">#     else:</span>
+    <span class="c1">#         note.state = ControllerNote.NOTHING_FOUND</span>
+    <span class="c1">#     note.actions = actions</span>
+    <span class="c1">#     note.simple_restart()</span>
+    <span class="c1">#     return note</span>
+
+
+<div class="viewcode-block" id="UltimateMemoryController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.UltimateMemoryController">[docs]</a><span class="k">class</span> <span class="nc">UltimateMemoryController</span><span class="p">(</span><span class="n">Controller</span><span class="p">,</span> <span class="n">QueueControllerMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Controller for memory infringements of the resource manager. The handler should be able to handle the possible</span>
+<span class="sd">    overhead of the master process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_handler</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1">#_controlled_item_types = [ControlledItemType.task_failed()]</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">(),</span> <span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_failed</span><span class="p">()]</span>
+    <span class="n">_only_unfinalized</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, job_rundir=&#39;.&#39;, qout_file=&#39;queue.qout&#39;, qerr_file=&#39;queue.qerr&#39;, queue_adapter=None,</span>
+<span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
+<span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                       <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                       <span class="n">memory_policy</span><span class="o">=</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="sd">        of the queue manager and the queue adapter used.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_mem_per_proc_mb: Maximum memory per process in megabytes.</span>
+<span class="sd">            mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.</span>
+<span class="sd">            max_master_mem_overhead_mb: Maximum overhead memory for the master process in megabytes.</span>
+<span class="sd">            master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process</span>
+<span class="sd">                                             in megabytes.</span>
+<span class="sd">            memory_policy: Policy for the memory (some weird clusters sometimes use the virtual memory to stop jobs</span>
+<span class="sd">                           that overcome some virtual memory limit)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">UltimateMemoryController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span> <span class="o">=</span> <span class="n">max_mem_per_proc_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span> <span class="o">=</span> <span class="n">mem_per_proc_increase_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span> <span class="o">=</span> <span class="n">max_master_mem_overhead_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span> <span class="o">=</span> <span class="n">master_mem_overhead_increase_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span> <span class="o">=</span> <span class="n">memory_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_LOWEST</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">memory_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_memory_policy</span>
+
+    <span class="nd">@memory_policy</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">memory_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_policy</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">memory_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">,</span> <span class="s1">&#39;virtual_memory&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Memory policy is &quot;</span><span class="si">{}</span><span class="s1">&quot; in UltimateMemoryController while it should be either &#39;</span>
+                             <span class="s1">&#39;&quot;physical_memory&quot; or &quot;virtual_memory&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">memory_policy</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_memory_policy</span> <span class="o">=</span> <span class="n">memory_policy</span>
+
+<div class="viewcode-block" id="UltimateMemoryController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.UltimateMemoryController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">,</span>
+                <span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span><span class="p">,</span>
+                <span class="s1">&#39;max_master_mem_overhead_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span><span class="p">,</span>
+                <span class="s1">&#39;master_mem_overhead_increase_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span><span class="p">,</span>
+                <span class="s1">&#39;memory_policy&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="UltimateMemoryController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.UltimateMemoryController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">],</span>
+                   <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">],</span>
+                   <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_master_mem_overhead_mb&#39;</span><span class="p">],</span>
+                   <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;master_mem_overhead_increase_mb&#39;</span><span class="p">],</span>
+                   <span class="n">memory_policy</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;memory_policy&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="UltimateMemoryController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.UltimateMemoryController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Get the Queue Adapter and the queue errors</span>
+        <span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">queue_adapter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No queue adapter passed to the UltimateMemoryController&#39;</span><span class="p">)</span>
+        <span class="n">queue_errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_queue_errors</span><span class="p">(</span><span class="n">memory_policy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">memory_policy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Create the Controller Note and the actions</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># No errors found</span>
+        <span class="k">if</span> <span class="n">queue_errors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Error should have been caught by another controller ...&#39;</span><span class="p">)</span>
+
+        <span class="c1"># No memory error found</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Task has been stopped and we assume it is because of memory infringement by a slave process&#39;</span><span class="p">)</span>
+        <span class="n">old_mem_per_proc</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">mem_per_proc</span>
+        <span class="k">if</span> <span class="n">old_mem_per_proc</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">add_problem</span><span class="p">(</span><span class="s1">&#39;Maximum mem_per_proc has been reached, cannot increase further&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">note</span>
+        <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="n">old_mem_per_proc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span>
+        <span class="k">if</span> <span class="n">new_mem_per_proc</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">:</span>
+            <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span>
+        <span class="n">actions</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Action</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">queue_adapter</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">set_mem_per_proc</span><span class="p">,</span>
+                                          <span class="n">mem_mb</span><span class="o">=</span><span class="n">new_mem_per_proc</span><span class="p">)</span>
+
+        <span class="c1"># Set the actions to be performed, the state and the type of restart</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_RECOVERABLE</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="n">actions</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">reset_restart</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">note</span></div></div>
+
+
+<div class="viewcode-block" id="SimpleValidatorController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.SimpleValidatorController">[docs]</a><span class="k">class</span> <span class="nc">SimpleValidatorController</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple validator controller to be applied after all other controllers (PRIORITY_LOWEST).</span>
+<span class="sd">    This validator controller can be used when no &quot;real&quot; validator exists, but just handlers/monitors</span>
+<span class="sd">    and that we suppose that if nothing is found by the handlers/monitors, then it means that it is ok.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleValidatorController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_LOWEST</span>
+
+<div class="viewcode-block" id="SimpleValidatorController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.SimpleValidatorController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="SimpleValidatorController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.SimpleValidatorController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="SimpleValidatorController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.SimpleValidatorController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Create the Controller Note</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">EVERYTHING_OK</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">note</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">validated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="VaspXMLValidatorController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspXMLValidatorController">[docs]</a><span class="k">class</span> <span class="nc">VaspXMLValidatorController</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks that a valid vasprun.xml was generated</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VaspXMLValidatorController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_LOWEST</span>
+
+<div class="viewcode-block" id="VaspXMLValidatorController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspXMLValidatorController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="VaspXMLValidatorController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspXMLValidatorController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="VaspXMLValidatorController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspXMLValidatorController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Create the Controller Note</span>
+        <span class="k">if</span> <span class="s1">&#39;vasprun_xml_file&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;kwarg &quot;vasprun_xml_file&quot; is required to validate vasprun.xml file&#39;</span><span class="p">)</span>
+        <span class="n">vasprun_xml_file</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;vasprun_xml_file&#39;</span><span class="p">]</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">EVERYTHING_OK</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Vasprun</span><span class="p">(</span><span class="n">vasprun_xml_file</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_NOFIX</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">note</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">validated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="VaspNEBValidatorController"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspNEBValidatorController">[docs]</a><span class="k">class</span> <span class="nc">VaspNEBValidatorController</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks that a valid vasprun.xml was generated</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VaspNEBValidatorController</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_LOWEST</span>
+
+<div class="viewcode-block" id="VaspNEBValidatorController.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspNEBValidatorController.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="VaspNEBValidatorController.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspNEBValidatorController.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="VaspNEBValidatorController.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.controllers.VaspNEBValidatorController.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Create the Controller Note</span>
+        <span class="k">if</span> <span class="s1">&#39;run_dir&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;kwarg &quot;run_dir&quot; is required to validate NEB vasp calculations&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;additional_vasp_wf_info&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;kwarg &quot;additional_vasp_wf_info&quot; is required to validate NEB vasp calculations&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;terminal_start_run_dir&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;additional_vasp_wf_info&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;terminal_start_run_dir&quot; has to be in additional_vasp_wf_info is required &#39;</span>
+                             <span class="s1">&#39;to validate NEB vasp calculations&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;terminal_end_run_dir&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;additional_vasp_wf_info&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;terminal_end_run_dir&quot; has to be in additional_vasp_wf_info is required &#39;</span>
+                             <span class="s1">&#39;to validate NEB vasp calculations&#39;</span><span class="p">)</span>
+        <span class="n">run_dir</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;run_dir&#39;</span><span class="p">]</span>
+        <span class="n">note</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">EVERYTHING_OK</span>
+        <span class="n">note</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">terminal_dirs</span> <span class="o">=</span> <span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;additional_vasp_wf_info&#39;</span><span class="p">][</span><span class="s1">&#39;terminal_start_run_dir&#39;</span><span class="p">],</span>
+                         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;additional_vasp_wf_info&#39;</span><span class="p">][</span><span class="s1">&#39;terminal_end_run_dir&#39;</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">NEBAnalysis</span><span class="o">.</span><span class="n">from_dir</span><span class="p">(</span><span class="n">run_dir</span><span class="p">,</span> <span class="n">relaxation_dirs</span><span class="o">=</span><span class="n">terminal_dirs</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_NOFIX</span>
+            <span class="n">note</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">note</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">validated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<span class="c1"># logger = logging.getLogger(__name__)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class AbinitHandler(SRCErrorHandler):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     General handler for abinit&#39;s critical events handlers.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, job_rundir=&#39;.&#39;, critical_events=None, queue_adapter=None):</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         Initializes the handler with the directory where the job was run.</span>
+<span class="c1">#</span>
+<span class="c1">#         Args:</span>
+<span class="c1">#             job_rundir: Directory where the job was run.</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         super(AbinitHandler, self).__init__()</span>
+<span class="c1">#         self.job_rundir = job_rundir</span>
+<span class="c1">#         self.critical_events = critical_events</span>
+<span class="c1">#</span>
+<span class="c1">#         self.src_fw = False</span>
+<span class="c1">#</span>
+<span class="c1">#     def as_dict(self):</span>
+<span class="c1">#         return {&#39;@class&#39;: self.__class__.__name__,</span>
+<span class="c1">#                 &#39;@module&#39;: self.__class__.__module__,</span>
+<span class="c1">#                 &#39;job_rundir&#39;: self.job_rundir</span>
+<span class="c1">#                 }</span>
+<span class="c1">#</span>
+<span class="c1">#     @classmethod</span>
+<span class="c1">#     def from_dict(cls, d):</span>
+<span class="c1">#         return cls(job_rundir=d[&#39;job_rundir&#39;])</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def allow_fizzled(self):</span>
+<span class="c1">#         return False</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def allow_completed(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def handler_priority(self):</span>
+<span class="c1">#         return self.PRIORITY_MEDIUM</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def skip_remaining_handlers(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     def setup(self):</span>
+<span class="c1">#         if &#39;SRCScheme&#39; in self.fw_to_check.spec and self.fw_to_check.spec[&#39;SRCScheme&#39;]:</span>
+<span class="c1">#             self.src_fw = True</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             self.src_fw = False</span>
+<span class="c1">#         self.job_rundir = self.fw_to_check.launches[-1].launch_dir</span>
+<span class="c1">#</span>
+<span class="c1">#     def check(self):</span>
+<span class="c1">#         abinit_task = self.fw_to_check.tasks[0]</span>
+<span class="c1">#         self.report = None</span>
+<span class="c1">#         try:</span>
+<span class="c1">#             self.report = abinit_task.get_event_report()</span>
+<span class="c1">#         except Exception as exc:</span>
+<span class="c1">#             msg = &quot;%s exception while parsing event_report:\n%s&quot; % (self, exc)</span>
+<span class="c1">#             logger.critical(msg)</span>
+<span class="c1">#</span>
+<span class="c1">#         if self.report is not None:</span>
+<span class="c1">#             # Run has completed, check for critical events (convergence, ...)</span>
+<span class="c1">#             if self.report.run_completed:</span>
+<span class="c1">#                 self.events = self.report.filter_types(abinit_task.CRITICAL_EVENTS)</span>
+<span class="c1">#                 if self.events:</span>
+<span class="c1">#                     return True</span>
+<span class="c1">#                 else:</span>
+<span class="c1">#                     # Calculation has converged</span>
+<span class="c1">#                     # Check if there are custom parameters that should be converged</span>
+<span class="c1">#                     unconverged_params, reset_restart = abinit_task.check_parameters_convergence(self.fw_to_check.spec)</span>
+<span class="c1">#                     if unconverged_params:</span>
+<span class="c1">#                         return True</span>
+<span class="c1">#                     else:</span>
+<span class="c1">#                         return False</span>
+<span class="c1">#             # Abinit run failed to complete</span>
+<span class="c1">#             # Check if the errors can be handled</span>
+<span class="c1">#             if self.report.errors:</span>
+<span class="c1">#                 return True</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     def has_corrections(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     def correct(self):</span>
+<span class="c1">#         if self.src_fw:</span>
+<span class="c1">#             if len(self.fw_to_check.tasks) &gt; 1:</span>
+<span class="c1">#                 raise ValueError(&#39;More than 1 task found in fizzled firework, not yet supported&#39;)</span>
+<span class="c1">#             abinit_input_update = {&#39;iscf&#39;: 2}</span>
+<span class="c1">#             return {&#39;errors&#39;: [self.__class__.__name__],</span>
+<span class="c1">#                     &#39;actions&#39;: [{&#39;action_type&#39;: &#39;modify_object&#39;,</span>
+<span class="c1">#                                  &#39;object&#39;: {&#39;source&#39;: &#39;fw_spec&#39;, &#39;key&#39;: &#39;abinit_input&#39;},</span>
+<span class="c1">#                                  &#39;action&#39;: {&#39;_set&#39;: abinit_input_update}}]}</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             raise NotImplementedError(&#39;This handler cannot be used without the SRC scheme&#39;)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class WalltimeHandler(SRCErrorHandler):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     Handler for walltime infringements of the resource manager.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, job_rundir=&#39;.&#39;, qout_file=&#39;queue.qout&#39;, qerr_file=&#39;queue.qerr&#39;, queue_adapter=None,</span>
+<span class="c1">#                  max_timelimit=None, timelimit_increase=None):</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="c1">#         of the queue manager and the queue adapter used.</span>
+<span class="c1">#</span>
+<span class="c1">#         Args:</span>
+<span class="c1">#             job_rundir: Directory where the job was run.</span>
+<span class="c1">#             qout_file: Standard output file of the queue manager.</span>
+<span class="c1">#             qerr_file: Standard error file of the queue manager.</span>
+<span class="c1">#             queue_adapter: Queue adapter used to submit the job.</span>
+<span class="c1">#             max_timelimit: Maximum timelimit (in seconds) allowed by the resource manager for the queue.</span>
+<span class="c1">#             timelimit_increase: Amount of time (in seconds) to increase the timelimit.</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         super(WalltimeHandler, self).__init__()</span>
+<span class="c1">#         self.job_rundir = job_rundir</span>
+<span class="c1">#         self.qout_file = qout_file</span>
+<span class="c1">#         self.qerr_file = qerr_file</span>
+<span class="c1">#         self.queue_adapter = queue_adapter</span>
+<span class="c1">#         self.setup_filepaths()</span>
+<span class="c1">#         self.max_timelimit = max_timelimit</span>
+<span class="c1">#         self.timelimit_increase = timelimit_increase</span>
+<span class="c1">#</span>
+<span class="c1">#         self.src_fw = False</span>
+<span class="c1">#</span>
+<span class="c1">#     def setup_filepaths(self):</span>
+<span class="c1">#         self.qout_filepath = os.path.join(self.job_rundir, self.qout_file)</span>
+<span class="c1">#         self.qerr_filepath = os.path.join(self.job_rundir, self.qerr_file)</span>
+<span class="c1">#</span>
+<span class="c1">#     def as_dict(self):</span>
+<span class="c1">#         return {&#39;@class&#39;: self.__class__.__name__,</span>
+<span class="c1">#                 &#39;@module&#39;: self.__class__.__module__,</span>
+<span class="c1">#                 &#39;job_rundir&#39;: self.job_rundir,</span>
+<span class="c1">#                 &#39;qout_file&#39;: self.qout_file,</span>
+<span class="c1">#                 &#39;qerr_file&#39;: self.qerr_file,</span>
+<span class="c1">#                 &#39;queue_adapter&#39;: self.queue_adapter.as_dict() if self.queue_adapter is not None else None,</span>
+<span class="c1">#                 &#39;max_timelimit&#39;: self.max_timelimit,</span>
+<span class="c1">#                 &#39;timelimit_increase&#39;: self.timelimit_increase</span>
+<span class="c1">#                 }</span>
+<span class="c1">#</span>
+<span class="c1">#     @classmethod</span>
+<span class="c1">#     def from_dict(cls, d):</span>
+<span class="c1">#         qa = QueueAdapter.from_dict(d[&#39;queue_adapter&#39;]) if d[&#39;queue_adapter&#39;] is not None else None</span>
+<span class="c1">#         return cls(job_rundir=d[&#39;job_rundir&#39;], qout_file=d[&#39;qout_file&#39;], qerr_file=d[&#39;qerr_file&#39;], queue_adapter=qa,</span>
+<span class="c1">#                    max_timelimit=d[&#39;max_timelimit&#39;],</span>
+<span class="c1">#                    timelimit_increase=d[&#39;timelimit_increase&#39;])</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def allow_fizzled(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def allow_completed(self):</span>
+<span class="c1">#         return False</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def handler_priority(self):</span>
+<span class="c1">#         return self.PRIORITY_VERY_LOW</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def skip_remaining_handlers(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     def setup(self):</span>
+<span class="c1">#         if &#39;SRCScheme&#39; in self.fw_to_check.spec and self.fw_to_check.spec[&#39;SRCScheme&#39;]:</span>
+<span class="c1">#             self.src_fw = True</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             self.src_fw = False</span>
+<span class="c1">#         self.job_rundir = self.fw_to_check.launches[-1].launch_dir</span>
+<span class="c1">#         self.setup_filepaths()</span>
+<span class="c1">#         self.queue_adapter = self.fw_to_check.spec[&#39;qtk_queueadapter&#39;]</span>
+<span class="c1">#</span>
+<span class="c1">#     def check(self):</span>
+<span class="c1">#</span>
+<span class="c1">#         # Analyze the stderr and stdout files of the resource manager system.</span>
+<span class="c1">#         qerr_info = None</span>
+<span class="c1">#         qout_info = None</span>
+<span class="c1">#         if os.path.exists(self.qerr_filepath):</span>
+<span class="c1">#             with open(self.qerr_filepath, &quot;r&quot;) as f:</span>
+<span class="c1">#                 qerr_info = f.read()</span>
+<span class="c1">#         if os.path.exists(self.qout_filepath):</span>
+<span class="c1">#             with open(self.qout_filepath, &quot;r&quot;) as f:</span>
+<span class="c1">#                 qout_info = f.read()</span>
+<span class="c1">#</span>
+<span class="c1">#         self.timelimit_error = None</span>
+<span class="c1">#         self.queue_errors = None</span>
+<span class="c1">#         if qerr_info or qout_info:</span>
+<span class="c1">#             from pymatgen.io.abinit.scheduler_error_parsers import get_parser</span>
+<span class="c1">#             qtype = self.queue_adapter.QTYPE</span>
+<span class="c1">#             scheduler_parser = get_parser(qtype, err_file=self.qerr_filepath,</span>
+<span class="c1">#                                           out_file=self.qout_filepath)</span>
+<span class="c1">#</span>
+<span class="c1">#             if scheduler_parser is None:</span>
+<span class="c1">#                 raise ValueError(&#39;Cannot find scheduler_parser for qtype {}&#39;.format(qtype))</span>
+<span class="c1">#</span>
+<span class="c1">#             scheduler_parser.parse()</span>
+<span class="c1">#             self.queue_errors = scheduler_parser.errors</span>
+<span class="c1">#</span>
+<span class="c1">#             for error in self.queue_errors:</span>
+<span class="c1">#                 if isinstance(error, TimeCancelError):</span>
+<span class="c1">#                     logger.debug(&#39;found timelimit error.&#39;)</span>
+<span class="c1">#                     self.timelimit_error = error</span>
+<span class="c1">#                     return True</span>
+<span class="c1">#         return False</span>
+<span class="c1">#</span>
+<span class="c1">#     def correct(self):</span>
+<span class="c1">#         if self.src_fw:</span>
+<span class="c1">#             if len(self.fw_to_check.tasks) &gt; 1:</span>
+<span class="c1">#                 raise ValueError(&#39;More than 1 task found in &quot;memory-fizzled&quot; firework, not yet supported&#39;)</span>
+<span class="c1">#             logger.debug(&#39;adding SRC detour&#39;)</span>
+<span class="c1">#             # Information about the update of the memory (master overhead or base mem per proc) in the queue adapter</span>
+<span class="c1">#             queue_adapter_update = {}</span>
+<span class="c1">#             # When max_timelimit is not set, automatically take the hard timelimit of the queue</span>
+<span class="c1">#             if self.max_timelimit is None:</span>
+<span class="c1">#                 max_timelimit = self.queue_adapter.timelimit_hard</span>
+<span class="c1">#             else:</span>
+<span class="c1">#                 max_timelimit = self.max_timelimit</span>
+<span class="c1">#             # When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue</span>
+<span class="c1">#             if self.timelimit_increase is None:</span>
+<span class="c1">#                 timelimit_increase = self.queue_adapter.timelimit_hard / 10</span>
+<span class="c1">#             else:</span>
+<span class="c1">#                 timelimit_increase = self.timelimit_increase</span>
+<span class="c1">#             if isinstance(self.timelimit_error, TimeCancelError):</span>
+<span class="c1">#                 old_timelimit = self.queue_adapter.timelimit</span>
+<span class="c1">#                 if old_timelimit == max_timelimit:</span>
+<span class="c1">#                     raise ValueError(&#39;Cannot increase beyond maximum timelimit ({:d} seconds) set in WalltimeHandler.&#39;</span>
+<span class="c1">#                                      &#39;Hard time limit of &#39;</span>
+<span class="c1">#                                      &#39;the queue is {:d} seconds&#39;.format(max_timelimit,</span>
+<span class="c1">#                                                                         self.queue_adapter.timelimit_hard))</span>
+<span class="c1">#                 new_timelimit = old_timelimit + timelimit_increase</span>
+<span class="c1">#                 # If the new timelimit exceeds the max timelimit, just put it to the max timelimit</span>
+<span class="c1">#                 if new_timelimit &gt; max_timelimit:</span>
+<span class="c1">#                     new_timelimit = max_timelimit</span>
+<span class="c1">#                 queue_adapter_update[&#39;timelimit&#39;] = new_timelimit</span>
+<span class="c1">#             else:</span>
+<span class="c1">#                 raise ValueError(&#39;Should not be here ...&#39;)</span>
+<span class="c1">#             return {&#39;errors&#39;: [self.__class__.__name__],</span>
+<span class="c1">#                     &#39;actions&#39;: [{&#39;action_type&#39;: &#39;modify_object&#39;,</span>
+<span class="c1">#                                  &#39;object&#39;: {&#39;source&#39;: &#39;fw_spec&#39;, &#39;key&#39;: &#39;qtk_queueadapter&#39;},</span>
+<span class="c1">#                                  &#39;action&#39;: {&#39;_set&#39;: queue_adapter_update}}]}</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             raise NotImplementedError(&#39;This handler cannot be used without the SRC scheme&#39;)</span>
+<span class="c1">#</span>
+<span class="c1">#     def has_corrections(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class MemoryHandler(SRCErrorHandler):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     Handler for memory infringements of the resource manager. The handler should be able to handle the possible</span>
+<span class="c1">#     overhead of the master process.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, job_rundir=&#39;.&#39;, qout_file=&#39;queue.qout&#39;, qerr_file=&#39;queue.qerr&#39;, queue_adapter=None,</span>
+<span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
+<span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="c1">#         of the queue manager and the queue adapter used.</span>
+<span class="c1">#</span>
+<span class="c1">#         Args:</span>
+<span class="c1">#             job_rundir: Directory where the job was run.</span>
+<span class="c1">#             qout_file: Standard output file of the queue manager.</span>
+<span class="c1">#             qerr_file: Standard error file of the queue manager.</span>
+<span class="c1">#             queue_adapter: Queue adapter used to submit the job.</span>
+<span class="c1">#             max_mem_per_proc_mb: Maximum memory per process in megabytes.</span>
+<span class="c1">#             mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.</span>
+<span class="c1">#             max_master_mem_overhead_mb: Maximum overhead memory for the master process in megabytes.</span>
+<span class="c1">#             master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process</span>
+<span class="c1">#                                              in megabytes.</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         super(MemoryHandler, self).__init__()</span>
+<span class="c1">#         self.job_rundir = job_rundir</span>
+<span class="c1">#         self.qout_file = qout_file</span>
+<span class="c1">#         self.qerr_file = qerr_file</span>
+<span class="c1">#         self.queue_adapter = queue_adapter</span>
+<span class="c1">#         self.setup_filepaths()</span>
+<span class="c1">#         self.max_mem_per_proc_mb = max_mem_per_proc_mb</span>
+<span class="c1">#         self.mem_per_proc_increase_mb = mem_per_proc_increase_mb</span>
+<span class="c1">#         self.max_master_mem_overhead_mb = max_master_mem_overhead_mb</span>
+<span class="c1">#         self.master_mem_overhead_increase_mb = master_mem_overhead_increase_mb</span>
+<span class="c1">#</span>
+<span class="c1">#         self.src_fw = False</span>
+<span class="c1">#</span>
+<span class="c1">#     def setup_filepaths(self):</span>
+<span class="c1">#         self.qout_filepath = os.path.join(self.job_rundir, self.qout_file)</span>
+<span class="c1">#         self.qerr_filepath = os.path.join(self.job_rundir, self.qerr_file)</span>
+<span class="c1">#</span>
+<span class="c1">#     def as_dict(self):</span>
+<span class="c1">#         return {&#39;@class&#39;: self.__class__.__name__,</span>
+<span class="c1">#                 &#39;@module&#39;: self.__class__.__module__,</span>
+<span class="c1">#                 &#39;job_rundir&#39;: self.job_rundir,</span>
+<span class="c1">#                 &#39;qout_file&#39;: self.qout_file,</span>
+<span class="c1">#                 &#39;qerr_file&#39;: self.qerr_file,</span>
+<span class="c1">#                 &#39;queue_adapter&#39;: self.queue_adapter.as_dict() if self.queue_adapter is not None else None,</span>
+<span class="c1">#                 &#39;max_mem_per_proc_mb&#39;: self.max_mem_per_proc_mb,</span>
+<span class="c1">#                 &#39;mem_per_proc_increase_mb&#39;: self.mem_per_proc_increase_mb,</span>
+<span class="c1">#                 &#39;max_master_mem_overhead_mb&#39;: self.max_master_mem_overhead_mb,</span>
+<span class="c1">#                 &#39;master_mem_overhead_increase_mb&#39;: self.master_mem_overhead_increase_mb</span>
+<span class="c1">#                 }</span>
+<span class="c1">#</span>
+<span class="c1">#     @classmethod</span>
+<span class="c1">#     def from_dict(cls, d):</span>
+<span class="c1">#         qa = QueueAdapter.from_dict(d[&#39;queue_adapter&#39;]) if d[&#39;queue_adapter&#39;] is not None else None</span>
+<span class="c1">#         return cls(job_rundir=d[&#39;job_rundir&#39;], qout_file=d[&#39;qout_file&#39;], qerr_file=d[&#39;qerr_file&#39;], queue_adapter=qa,</span>
+<span class="c1">#                    max_mem_per_proc_mb=d[&#39;max_mem_per_proc_mb&#39;],</span>
+<span class="c1">#                    mem_per_proc_increase_mb=d[&#39;mem_per_proc_increase_mb&#39;],</span>
+<span class="c1">#                    max_master_mem_overhead_mb=d[&#39;max_master_mem_overhead_mb&#39;],</span>
+<span class="c1">#                    master_mem_overhead_increase_mb=d[&#39;master_mem_overhead_increase_mb&#39;])</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def allow_fizzled(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def allow_completed(self):</span>
+<span class="c1">#         return False</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def handler_priority(self):</span>
+<span class="c1">#         return self.PRIORITY_VERY_LOW</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def skip_remaining_handlers(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     def setup(self):</span>
+<span class="c1">#         if &#39;SRCScheme&#39; in self.fw_to_check.spec and self.fw_to_check.spec[&#39;SRCScheme&#39;]:</span>
+<span class="c1">#             self.src_fw = True</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             self.src_fw = False</span>
+<span class="c1">#         self.job_rundir = self.fw_to_check.launches[-1].launch_dir</span>
+<span class="c1">#         self.setup_filepaths()</span>
+<span class="c1">#         self.queue_adapter = self.fw_to_check.spec[&#39;qtk_queueadapter&#39;]</span>
+<span class="c1">#</span>
+<span class="c1">#     def check(self):</span>
+<span class="c1">#</span>
+<span class="c1">#         # Analyze the stderr and stdout files of the resource manager system.</span>
+<span class="c1">#         qerr_info = None</span>
+<span class="c1">#         qout_info = None</span>
+<span class="c1">#         if os.path.exists(self.qerr_filepath):</span>
+<span class="c1">#             with open(self.qerr_filepath, &quot;r&quot;) as f:</span>
+<span class="c1">#                 qerr_info = f.read()</span>
+<span class="c1">#         if os.path.exists(self.qout_filepath):</span>
+<span class="c1">#             with open(self.qout_filepath, &quot;r&quot;) as f:</span>
+<span class="c1">#                 qout_info = f.read()</span>
+<span class="c1">#</span>
+<span class="c1">#         self.memory_error = None</span>
+<span class="c1">#         self.queue_errors = None</span>
+<span class="c1">#         if qerr_info or qout_info:</span>
+<span class="c1">#             from pymatgen.io.abinit.scheduler_error_parsers import get_parser</span>
+<span class="c1">#             qtype = self.queue_adapter.QTYPE</span>
+<span class="c1">#             scheduler_parser = get_parser(qtype, err_file=self.qerr_filepath,</span>
+<span class="c1">#                                           out_file=self.qout_filepath)</span>
+<span class="c1">#</span>
+<span class="c1">#             if scheduler_parser is None:</span>
+<span class="c1">#                 raise ValueError(&#39;Cannot find scheduler_parser for qtype {}&#39;.format(qtype))</span>
+<span class="c1">#</span>
+<span class="c1">#             scheduler_parser.parse()</span>
+<span class="c1">#             self.queue_errors = scheduler_parser.errors</span>
+<span class="c1">#</span>
+<span class="c1">#             #TODO: handle the cases where it is Master or Slave here ... ?</span>
+<span class="c1">#             for error in self.queue_errors:</span>
+<span class="c1">#                 if isinstance(error, MemoryCancelError):</span>
+<span class="c1">#                     logger.debug(&#39;found memory error.&#39;)</span>
+<span class="c1">#                     self.memory_error = error</span>
+<span class="c1">#                     return True</span>
+<span class="c1">#                 if isinstance(error, MasterProcessMemoryCancelError):</span>
+<span class="c1">#                     logger.debug(&#39;found master memory error.&#39;)</span>
+<span class="c1">#                     self.memory_error = error</span>
+<span class="c1">#                     return True</span>
+<span class="c1">#                 if isinstance(error, SlaveProcessMemoryCancelError):</span>
+<span class="c1">#                     logger.debug(&#39;found slave memory error.&#39;)</span>
+<span class="c1">#                     self.memory_error = error</span>
+<span class="c1">#                     return True</span>
+<span class="c1">#         return False</span>
+<span class="c1">#</span>
+<span class="c1">#     def correct(self):</span>
+<span class="c1">#         if self.src_fw:</span>
+<span class="c1">#             if len(self.fw_to_check.tasks) &gt; 1:</span>
+<span class="c1">#                 raise ValueError(&#39;More than 1 task found in &quot;memory-fizzled&quot; firework, not yet supported&#39;)</span>
+<span class="c1">#             logger.debug(&#39;adding SRC detour&#39;)</span>
+<span class="c1">#             # Information about the update of the memory (master overhead or base mem per proc) in the queue adapter</span>
+<span class="c1">#             queue_adapter_update = {}</span>
+<span class="c1">#             if isinstance(self.memory_error, (MemoryCancelError, SlaveProcessMemoryCancelError)):</span>
+<span class="c1">#                 old_mem_per_proc = self.queue_adapter.mem_per_proc</span>
+<span class="c1">#                 new_mem_per_proc = old_mem_per_proc + self.mem_per_proc_increase_mb</span>
+<span class="c1">#                 queue_adapter_update[&#39;mem_per_proc&#39;] = new_mem_per_proc</span>
+<span class="c1">#             elif isinstance(self.memory_error, MasterProcessMemoryCancelError):</span>
+<span class="c1">#                 old_mem_overhead = self.queue_adapter.master_mem_overhead</span>
+<span class="c1">#                 new_mem_overhead = old_mem_overhead + self.master_mem_overhead_increase_mb</span>
+<span class="c1">#                 if new_mem_overhead &gt; self.max_master_mem_overhead_mb:</span>
+<span class="c1">#                     raise ValueError(&#39;New master memory overhead {:d} is larger than &#39;</span>
+<span class="c1">#                                      &#39;max master memory overhead {:d}&#39;.format(new_mem_overhead,</span>
+<span class="c1">#                                                                               self.max_master_mem_overhead_mb))</span>
+<span class="c1">#                 queue_adapter_update[&#39;master_mem_overhead&#39;] = new_mem_overhead</span>
+<span class="c1">#             else:</span>
+<span class="c1">#                 raise ValueError(&#39;Should not be here ...&#39;)</span>
+<span class="c1">#             return {&#39;errors&#39;: [self.__class__.__name__],</span>
+<span class="c1">#                     &#39;actions&#39;: [{&#39;action_type&#39;: &#39;modify_object&#39;,</span>
+<span class="c1">#                                  &#39;object&#39;: {&#39;source&#39;: &#39;fw_spec&#39;, &#39;key&#39;: &#39;qtk_queueadapter&#39;},</span>
+<span class="c1">#                                  &#39;action&#39;: {&#39;_set&#39;: queue_adapter_update}}]}</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             raise NotImplementedError(&#39;This handler cannot be used without the SRC scheme&#39;)</span>
+<span class="c1">#</span>
+<span class="c1">#     def has_corrections(self):</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class UltimateMemoryHandler(MemoryHandler):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     Handler for infringements of the resource manager. If no memory error is found,</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, job_rundir=&#39;.&#39;, qout_file=&#39;queue.qout&#39;, qerr_file=&#39;queue.qerr&#39;, queue_adapter=None,</span>
+<span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
+<span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="c1">#         of the queue manager and the queue adapter used.</span>
+<span class="c1">#</span>
+<span class="c1">#         Args:</span>
+<span class="c1">#             job_rundir: Directory where the job was run.</span>
+<span class="c1">#             qout_file: Standard output file of the queue manager.</span>
+<span class="c1">#             qerr_file: Standard error file of the queue manager.</span>
+<span class="c1">#             queue_adapter: Queue adapter used to submit the job.</span>
+<span class="c1">#             max_mem_per_proc_mb: Maximum memory per process in megabytes.</span>
+<span class="c1">#             mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.</span>
+<span class="c1">#             max_master_mem_overhead_mb: Maximum overhead memory for the master process in megabytes.</span>
+<span class="c1">#             master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process</span>
+<span class="c1">#                                              in megabytes.</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         super(UltimateMemoryHandler, self).__init__()</span>
+<span class="c1">#</span>
+<span class="c1">#     @property</span>
+<span class="c1">#     def handler_priority(self):</span>
+<span class="c1">#         return self.PRIORITY_LAST</span>
+<span class="c1">#</span>
+<span class="c1">#     def check(self):</span>
+<span class="c1">#         mem_check = super(UltimateMemoryHandler, self).check()</span>
+<span class="c1">#         if mem_check:</span>
+<span class="c1">#             raise ValueError(&#39;This error should have been caught by a standard MemoryHandler ...&#39;)</span>
+<span class="c1">#         #TODO: Do we have some check that we can do here ?</span>
+<span class="c1">#         return True</span>
+<span class="c1">#</span>
+<span class="c1">#     def correct(self):</span>
+<span class="c1">#         if self.src_fw:</span>
+<span class="c1">#             if len(self.fw_to_check.tasks) &gt; 1:</span>
+<span class="c1">#                 raise ValueError(&#39;More than 1 task found in &quot;memory-fizzled&quot; firework, not yet supported&#39;)</span>
+<span class="c1">#             if self.memory_error is not None:</span>
+<span class="c1">#                 raise ValueError(&#39;This error should have been caught by a standard MemoryHandler ...&#39;)</span>
+<span class="c1">#             if self.queue_errors is not None and len(self.queue_errors) &gt; 0:</span>
+<span class="c1">#                 raise ValueError(&#39;Queue errors were found ... these should be handled properly by another handler&#39;)</span>
+<span class="c1">#             # Information about the update of the memory (base mem per proc) in the queue adapter</span>
+<span class="c1">#             queue_adapter_update = {}</span>
+<span class="c1">#             old_mem_per_proc = self.queue_adapter.mem_per_proc</span>
+<span class="c1">#             new_mem_per_proc = old_mem_per_proc + self.mem_per_proc_increase_mb</span>
+<span class="c1">#             queue_adapter_update[&#39;mem_per_proc&#39;] = new_mem_per_proc</span>
+<span class="c1">#             return {&#39;errors&#39;: [self.__class__.__name__],</span>
+<span class="c1">#                     &#39;actions&#39;: [{&#39;action_type&#39;: &#39;modify_object&#39;,</span>
+<span class="c1">#                                  &#39;object&#39;: {&#39;source&#39;: &#39;fw_spec&#39;, &#39;key&#39;: &#39;qtk_queueadapter&#39;},</span>
+<span class="c1">#                                  &#39;action&#39;: {&#39;_set&#39;: queue_adapter_update}}]}</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             raise NotImplementedError(&#39;This handler cannot be used without the SRC scheme&#39;)</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

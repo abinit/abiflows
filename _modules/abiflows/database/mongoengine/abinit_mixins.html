@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.database.mongoengine.abinit_mixins &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.database.mongoengine.abinit_mixins</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">List of mixins to provide standard interfaces with the result databases for abinit calculations.</span>
+<span class="sd">Most of them should still be considered as examples.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">jsanitize</span>
+<span class="kn">from</span> <span class="nn">monty.dev</span> <span class="k">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pymatgen.symmetry.analyzer</span> <span class="k">import</span> <span class="n">SpacegroupAnalyzer</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.pseudos</span> <span class="k">import</span> <span class="n">Pseudo</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.models</span> <span class="k">import</span> <span class="n">AbiFileField</span><span class="p">,</span> <span class="n">MSONField</span>
+<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.mixins</span> <span class="k">import</span> <span class="n">GroundStateOutputMixin</span>
+
+
+<div class="viewcode-block" id="AbinitPseudoData"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData">[docs]</a><span class="k">class</span> <span class="nc">AbinitPseudoData</span><span class="p">(</span><span class="n">EmbeddedDocument</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Embedded document providing some fields and function to save abinit pseudopotential data</span>
+
+<span class="sd">    .. rubric:: Inheritance Diagram</span>
+<span class="sd">    .. inheritance-diagram:: AbinitPseudoData</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pseudos_name</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">StringField</span><span class="p">())</span>
+    <span class="n">pseudos_md5</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">StringField</span><span class="p">())</span>
+    <span class="n">pseudos_path</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">StringField</span><span class="p">())</span>
+
+    <span class="nd">@deprecated</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;set_pseudos_vars has been renamed set_pseudos_from_paths.&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">set_pseudos_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pseudos_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_pseudos_from_paths</span><span class="p">(</span><span class="n">pseudos_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AbinitPseudoData.set_pseudos_from_paths"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData.set_pseudos_from_paths">[docs]</a>    <span class="k">def</span> <span class="nf">set_pseudos_from_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pseudos_path</span><span class="p">):</span>
+        <span class="c1"># this should be compatible with both version prior and after 0.3 of the pseudo dojo</span>
+        <span class="n">pseudos_name</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pseudos_md5</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">pseudos_path</span><span class="p">:</span>
+            <span class="n">pseudo</span> <span class="o">=</span> <span class="n">Pseudo</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">pseudos_name</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pseudo</span><span class="o">.</span><span class="n">basename</span><span class="p">)</span>
+            <span class="n">pseudos_md5</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pseudo</span><span class="o">.</span><span class="n">md5</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pseudos_name</span> <span class="o">=</span> <span class="n">pseudos_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pseudos_md5</span> <span class="o">=</span> <span class="n">pseudos_md5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pseudos_path</span> <span class="o">=</span> <span class="n">pseudos_path</span></div>
+
+<div class="viewcode-block" id="AbinitPseudoData.set_pseudos_from_files_file"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData.set_pseudos_from_files_file">[docs]</a>    <span class="k">def</span> <span class="nf">set_pseudos_from_files_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files_file_path</span><span class="p">,</span> <span class="n">num_pseudo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the fields of the Document reading from the &quot;.files&quot; file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            files_file_path: path to the .files file</span>
+<span class="sd">            num_pseudo: number of pseudos that should be read</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pseudos_path</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">files_file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="c1">#remove possible empty lines and white characters and newlines</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">l</span><span class="p">]</span>
+        <span class="n">run_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">files_file_path</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">pseudo_line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="n">num_pseudo</span><span class="p">:]:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">pseudo_line</span><span class="p">):</span>
+                <span class="n">pseudos_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pseudo_line</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pseudos_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">run_dir</span><span class="p">,</span> <span class="n">pseudo_line</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_pseudos_from_paths</span><span class="p">(</span><span class="n">pseudos_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbinitPseudoData.set_pseudos_from_abinit_input"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData.set_pseudos_from_abinit_input">[docs]</a>    <span class="k">def</span> <span class="nf">set_pseudos_from_abinit_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abinit_input</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the fields of the document using an |AbinitInput| object.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            abinit_input: An |AbinitInput| object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pseudos_path</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">abinit_input</span><span class="o">.</span><span class="n">pseudos</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_pseudos_from_paths</span><span class="p">(</span><span class="n">pseudos_path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="AbinitBasicInputMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin">[docs]</a><span class="k">class</span> <span class="nc">AbinitBasicInputMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing some basic fields that are required to run a calculation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#TODO add more variables</span>
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">()</span>
+    <span class="n">ecut</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">nshiftk</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span>
+    <span class="n">shiftk</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">FloatField</span><span class="p">()))</span>
+    <span class="n">ngkpt</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">IntField</span><span class="p">())</span>
+    <span class="n">kptrlatt</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">IntField</span><span class="p">()))</span>
+    <span class="n">dilatmx</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">occopt</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span>
+    <span class="n">tsmear</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">pseudopotentials</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">AbinitPseudoData</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">AbinitPseudoData</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AbinitBasicInputMixin.set_abinit_basic_from_abinit_input"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin.set_abinit_basic_from_abinit_input">[docs]</a>    <span class="k">def</span> <span class="nf">set_abinit_basic_from_abinit_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abinit_input</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        sets the fields of the object from an |AbinitInput| object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">abinit_input</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ecut</span> <span class="o">=</span> <span class="n">abinit_input</span><span class="p">[</span><span class="s1">&#39;ecut&#39;</span><span class="p">]</span>
+        <span class="c1"># kpoints may be defined in different ways</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nshiftk</span> <span class="o">=</span> <span class="n">jsanitize</span><span class="p">(</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nshiftk&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shiftk</span> <span class="o">=</span> <span class="n">jsanitize</span><span class="p">(</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;shiftk&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ngkpt</span> <span class="o">=</span> <span class="n">jsanitize</span><span class="p">(</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ngkpt&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kptrlatt</span> <span class="o">=</span> <span class="n">abinit_input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;kptrlatt&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dilatmx</span> <span class="o">=</span> <span class="n">abinit_input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dilatmx&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">occopt</span> <span class="o">=</span> <span class="n">abinit_input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;occopt&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tsmear</span> <span class="o">=</span> <span class="n">abinit_input</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tsmear&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">pseudo_data</span> <span class="o">=</span> <span class="n">AbinitPseudoData</span><span class="p">()</span>
+        <span class="n">pseudo_data</span><span class="o">.</span><span class="n">set_pseudos_from_abinit_input</span><span class="p">(</span><span class="n">abinit_input</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pseudopotentials</span> <span class="o">=</span> <span class="n">pseudo_data</span></div></div>
+
+
+<div class="viewcode-block" id="AbinitGSOutputMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitGSOutputMixin">[docs]</a><span class="k">class</span> <span class="nc">AbinitGSOutputMixin</span><span class="p">(</span><span class="n">GroundStateOutputMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing generic fiels for abinit ground state calculation</span>
+
+<span class="sd">    .. rubric:: Inheritance Diagram</span>
+<span class="sd">    .. inheritance-diagram:: AbinitGSOutputMixin</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gsr</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;GSR.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Gsr file produced by the Ground state calculation&quot;</span><span class="p">,</span>
+                       <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;gsr_id&#39;</span><span class="p">,</span> <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;gs_gsr_fs&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AbinitDftpOutputMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitDftpOutputMixin">[docs]</a><span class="k">class</span> <span class="nc">AbinitDftpOutputMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing generic fiels for dfpt calculation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ddb</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;DDB&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;DDB file produced by a dfpt falculation&quot;</span><span class="p">,</span>
+                       <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;ddb_id&#39;</span><span class="p">,</span> <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;ddb_fs&#39;</span><span class="p">)</span>
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The structure used for the calculation.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AbinitPhononOutputMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_mixins.AbinitPhononOutputMixin">[docs]</a><span class="k">class</span> <span class="nc">AbinitPhononOutputMixin</span><span class="p">(</span><span class="n">AbinitDftpOutputMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing generic fiels for phonon calculation</span>
+
+<span class="sd">    .. rubric:: Inheritance Diagram</span>
+<span class="sd">    .. inheritance-diagram:: AbinitPhononOutputMixin</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">phonon_bs</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;PHBST.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;phonon_bs_id&#39;</span><span class="p">,</span> <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;phonon_bs_fs&#39;</span><span class="p">)</span>
+    <span class="n">phonon_dos</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;PHDOS.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;phonon_dos_id&#39;</span><span class="p">,</span> <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;phonon_dos_fs&#39;</span><span class="p">)</span>
+    <span class="n">anaddb_nc</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;anaddb.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;anaddb_nc_id&#39;</span><span class="p">,</span> <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;anaddb_nc_fs&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.utils package &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="abiflows.fireworks.workflows package" href="abiflows.fireworks.workflows.html" />
+    <link rel="prev" title="abiflows.fireworks.tasks package" href="abiflows.fireworks.tasks.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">abiflows.fireworks.utils package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-abiflows.fireworks.utils.custodian_utils">abiflows.fireworks.utils.custodian_utils module</a></li>
+<li><a class="reference internal" href="#module-abiflows.fireworks.utils.databases">abiflows.fireworks.utils.databases module</a></li>
+<li><a class="reference internal" href="#module-abiflows.fireworks.utils.fw_utils">abiflows.fireworks.utils.fw_utils module</a></li>
+<li><a class="reference internal" href="#module-abiflows.fireworks.utils.math_utils">abiflows.fireworks.utils.math_utils module</a></li>
+<li><a class="reference internal" href="#module-abiflows.fireworks.utils.task_history">abiflows.fireworks.utils.task_history module</a></li>
+<li><a class="reference internal" href="#module-abiflows.fireworks.utils.time_utils">abiflows.fireworks.utils.time_utils module</a></li>
+<li><a class="reference internal" href="#module-abiflows.fireworks.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="abiflows.fireworks.tasks.html" title="Previous Chapter: abiflows.fireworks.tasks package"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; abiflows.fire...</span>
+    </a>
+  </li>
+  <li>
+    <a href="abiflows.fireworks.workflows.html" title="Next Chapter: abiflows.fireworks.workflows package"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">abiflows.fire... &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/abiflows.fireworks.utils.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="abiflows-fireworks-utils-package">
+<h1>abiflows.fireworks.utils package<a class="headerlink" href="#abiflows-fireworks-utils-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-abiflows.fireworks.utils.custodian_utils">
+<span id="abiflows-fireworks-utils-custodian-utils-module"></span><h2>abiflows.fireworks.utils.custodian_utils module<a class="headerlink" href="#module-abiflows.fireworks.utils.custodian_utils" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.custodian_utils.</code><code class="descname">SRCErrorHandler</code><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">custodian.custodian.ErrorHandler</span></code></p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.HANDLER_PRIORITIES">
+<code class="descname">HANDLER_PRIORITIES</code><em class="property"> = {'PRIORITY_FIRST': 0, 'PRIORITY_VERY_HIGH': 1, 'PRIORITY_HIGH': 2, 'PRIORITY_MEDIUM': 3, 'PRIORITY_LOW': 4, 'PRIORITY_VERY_LOW': 5, 'PRIORITY_LAST': 6}</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.HANDLER_PRIORITIES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_FIRST">
+<code class="descname">PRIORITY_FIRST</code><em class="property"> = 0</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_FIRST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_VERY_HIGH">
+<code class="descname">PRIORITY_VERY_HIGH</code><em class="property"> = 1</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_VERY_HIGH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_HIGH">
+<code class="descname">PRIORITY_HIGH</code><em class="property"> = 2</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_HIGH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_MEDIUM">
+<code class="descname">PRIORITY_MEDIUM</code><em class="property"> = 3</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_MEDIUM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_LOW">
+<code class="descname">PRIORITY_LOW</code><em class="property"> = 4</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_LOW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_VERY_LOW">
+<code class="descname">PRIORITY_VERY_LOW</code><em class="property"> = 5</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_VERY_LOW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_LAST">
+<code class="descname">PRIORITY_LAST</code><em class="property"> = 6</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.PRIORITY_LAST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.from_dict">
+<code class="descname">from_dict</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.set_fw_spec">
+<code class="descname">set_fw_spec</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler.set_fw_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.set_fw_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.set_fw_to_check">
+<code class="descname">set_fw_to_check</code><span class="sig-paren">(</span><em>fw_to_check</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler.set_fw_to_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.set_fw_to_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.src_setup">
+<code class="descname">src_setup</code><span class="sig-paren">(</span><em>fw_spec</em>, <em>fw_to_check</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler.src_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.src_setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.handler_priority">
+<code class="descname">handler_priority</code><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.handler_priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.skip_remaining_handlers">
+<code class="descname">skip_remaining_handlers</code><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.skip_remaining_handlers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.allow_fizzled">
+<code class="descname">allow_fizzled</code><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.allow_fizzled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.allow_completed">
+<code class="descname">allow_completed</code><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.allow_completed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.has_corrections">
+<code class="descname">has_corrections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCErrorHandler.has_corrections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCErrorHandler.has_corrections" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.custodian_utils.</code><code class="descname">MonitoringSRCErrorHandler</code><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#MonitoringSRCErrorHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">custodian.custodian.ErrorHandler</span></code></p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.HANDLER_PRIORITIES">
+<code class="descname">HANDLER_PRIORITIES</code><em class="property"> = {'PRIORITY_FIRST': 0, 'PRIORITY_VERY_HIGH': 1, 'PRIORITY_HIGH': 2, 'PRIORITY_MEDIUM': 3, 'PRIORITY_LOW': 4, 'PRIORITY_VERY_LOW': 5, 'PRIORITY_LAST': 6}</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.HANDLER_PRIORITIES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_FIRST">
+<code class="descname">PRIORITY_FIRST</code><em class="property"> = 0</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_FIRST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_VERY_HIGH">
+<code class="descname">PRIORITY_VERY_HIGH</code><em class="property"> = 1</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_VERY_HIGH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_HIGH">
+<code class="descname">PRIORITY_HIGH</code><em class="property"> = 2</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_HIGH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_MEDIUM">
+<code class="descname">PRIORITY_MEDIUM</code><em class="property"> = 3</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_MEDIUM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_LOW">
+<code class="descname">PRIORITY_LOW</code><em class="property"> = 4</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_LOW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_VERY_LOW">
+<code class="descname">PRIORITY_VERY_LOW</code><em class="property"> = 5</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_VERY_LOW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_LAST">
+<code class="descname">PRIORITY_LAST</code><em class="property"> = 6</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.PRIORITY_LAST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#MonitoringSRCErrorHandler.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.from_dict">
+<code class="descname">from_dict</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#MonitoringSRCErrorHandler.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.handler_priority">
+<code class="descname">handler_priority</code><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.handler_priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.skip_remaining_handlers">
+<code class="descname">skip_remaining_handlers</code><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.MonitoringSRCErrorHandler.skip_remaining_handlers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.custodian_utils.</code><code class="descname">SRCValidator</code><a class="reference internal" href="../_modules/abiflows/fireworks/utils/custodian_utils.html#SRCValidator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">custodian.custodian.Validator</span></code></p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.HANDLER_PRIORITIES">
+<code class="descname">HANDLER_PRIORITIES</code><em class="property"> = {'PRIORITY_FIRST': 0, 'PRIORITY_VERY_HIGH': 1, 'PRIORITY_HIGH': 2, 'PRIORITY_MEDIUM': 3, 'PRIORITY_LOW': 4, 'PRIORITY_VERY_LOW': 5, 'PRIORITY_LAST': 6}</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.HANDLER_PRIORITIES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_FIRST">
+<code class="descname">PRIORITY_FIRST</code><em class="property"> = 0</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_FIRST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_VERY_HIGH">
+<code class="descname">PRIORITY_VERY_HIGH</code><em class="property"> = 1</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_VERY_HIGH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_HIGH">
+<code class="descname">PRIORITY_HIGH</code><em class="property"> = 2</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_HIGH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_MEDIUM">
+<code class="descname">PRIORITY_MEDIUM</code><em class="property"> = 3</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_MEDIUM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_LOW">
+<code class="descname">PRIORITY_LOW</code><em class="property"> = 4</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_LOW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_VERY_LOW">
+<code class="descname">PRIORITY_VERY_LOW</code><em class="property"> = 5</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_VERY_LOW" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_LAST">
+<code class="descname">PRIORITY_LAST</code><em class="property"> = 6</em><a class="headerlink" href="#abiflows.fireworks.utils.custodian_utils.SRCValidator.PRIORITY_LAST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-abiflows.fireworks.utils.databases">
+<span id="abiflows-fireworks-utils-databases-module"></span><h2>abiflows.fireworks.utils.databases module<a class="headerlink" href="#module-abiflows.fireworks.utils.databases" title="Permalink to this headline">¶</a></h2>
+<p>Utilities for database insertion</p>
+<dl class="class">
+<dt id="abiflows.fireworks.utils.databases.MongoDatabase">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.databases.</code><code class="descname">MongoDatabase</code><span class="sig-paren">(</span><em>host</em>, <em>port</em>, <em>database</em>, <em>username</em>, <em>password</em>, <em>collection</em>, <em>gridfs_collection=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#MongoDatabase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.MongoDatabase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pythonhosted.org/monty/monty.html#monty.json.MSONable" title="(in monty v1.0.0)"><code class="xref py py-class docutils literal"><span class="pre">monty.json.MSONable</span></code></a></p>
+<p>MongoDB database class for access, insertion, update, … in a MongoDB database</p>
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.MongoDatabase.insert_entry">
+<code class="descname">insert_entry</code><span class="sig-paren">(</span><em>entry</em>, <em>gridfs_msonables=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#MongoDatabase.insert_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.MongoDatabase.insert_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.MongoDatabase.get_entry">
+<code class="descname">get_entry</code><span class="sig-paren">(</span><em>criteria</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#MongoDatabase.get_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.MongoDatabase.get_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.MongoDatabase.save_entry">
+<code class="descname">save_entry</code><span class="sig-paren">(</span><em>entry</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#MongoDatabase.save_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.MongoDatabase.save_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.MongoDatabase.update_entry">
+<code class="descname">update_entry</code><span class="sig-paren">(</span><em>query</em>, <em>entry_update</em>, <em>gridfs_msonables=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#MongoDatabase.update_entry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.MongoDatabase.update_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.MongoDatabase.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#MongoDatabase.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.MongoDatabase.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Json-serializable dict representation of a MongoDatabase</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.utils.databases.MongoDatabase.from_dict">
+<em class="property">classmethod </em><code class="descname">from_dict</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#MongoDatabase.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.MongoDatabase.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.utils.databases.StorageServer">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.databases.</code><code class="descname">StorageServer</code><span class="sig-paren">(</span><em>hostname</em>, <em>port=22</em>, <em>username=None</em>, <em>password=None</em>, <em>server_type='REMOTE_SERVER'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pythonhosted.org/monty/monty.html#monty.json.MSONable" title="(in monty v1.0.0)"><code class="xref py py-class docutils literal"><span class="pre">monty.json.MSONable</span></code></a></p>
+<p>Storage server class for moving files to/from a given server</p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.REMOTE_SERVER">
+<code class="descname">REMOTE_SERVER</code><em class="property"> = 'REMOTE_SERVER'</em><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.REMOTE_SERVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.LOCAL_SERVER">
+<code class="descname">LOCAL_SERVER</code><em class="property"> = 'LOCAL_SERVER'</em><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.LOCAL_SERVER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.disconnect">
+<code class="descname">disconnect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.disconnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.remotepath_exists">
+<code class="descname">remotepath_exists</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.remotepath_exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.remotepath_exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.remote_makedirs">
+<code class="descname">remote_makedirs</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.remote_makedirs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.remote_makedirs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.put">
+<code class="descname">put</code><span class="sig-paren">(</span><em>localpath</em>, <em>remotepath</em>, <em>overwrite=False</em>, <em>makedirs=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.put" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>remotepath</em>, <em>localpath=None</em>, <em>overwrite=False</em>, <em>makedirs=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Json-serializable dict representation of a StorageServer</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.utils.databases.StorageServer.from_dict">
+<em class="property">classmethod </em><code class="descname">from_dict</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/databases.html#StorageServer.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.databases.StorageServer.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-abiflows.fireworks.utils.fw_utils">
+<span id="abiflows-fireworks-utils-fw-utils-module"></span><h2>abiflows.fireworks.utils.fw_utils module<a class="headerlink" href="#module-abiflows.fireworks.utils.fw_utils" title="Permalink to this headline">¶</a></h2>
+<p>Utilities for fireworks</p>
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.parse_workflow">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">parse_workflow</code><span class="sig-paren">(</span><em>fws</em>, <em>links_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#parse_workflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.parse_workflow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.append_fw_to_wf">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">append_fw_to_wf</code><span class="sig-paren">(</span><em>new_fw</em>, <em>wf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#append_fw_to_wf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.append_fw_to_wf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.get_short_single_core_spec">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">get_short_single_core_spec</code><span class="sig-paren">(</span><em>fw_manager=None</em>, <em>master_mem_overhead=0</em>, <em>return_qtk=False</em>, <em>timelimit=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#get_short_single_core_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.get_short_single_core_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.set_short_single_core_to_spec">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">set_short_single_core_to_spec</code><span class="sig-paren">(</span><em>spec={}</em>, <em>master_mem_overhead=0</em>, <em>fw_manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#set_short_single_core_to_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.set_short_single_core_to_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">FWTaskManager</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#FWTaskManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Object containing the configuration parameters and policies to run abipy.
+The policies needed for the abinit FW will always be available through default values. These can be overridden
+also setting the parameters in the spec.
+The standard abipy task manager is contained as an object on its own that can be used to run the autoparal or
+factories if needed.
+The rationale behind this choice, instead of subclassing, is to not force the user to fill the qadapter part
+of the task manager, which is needed only for the autoparal, but is required in the TaskManager initialization.
+Wherever the TaskManager is needed just pass the ftm.task_manager.
+The TaskManager part can be loaded from an external manager.yml file using the “abipy_manager” key in fw_policy.
+This is now the preferred choice. If this value is not defined, it will be loaded with TaskManager.from_user_config</p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE">
+<code class="descname">YAML_FILE</code><em class="property"> = 'fw_manager.yaml'</em><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.YAML_FILE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.USER_CONFIG_DIR">
+<code class="descname">USER_CONFIG_DIR</code><em class="property"> = '/Users/gmatteo/.abinit/abipy'</em><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.USER_CONFIG_DIR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.fw_policy_defaults">
+<code class="descname">fw_policy_defaults</code><em class="property"> = {'rerun_same_dir': False, 'max_restarts': 10, 'autoparal': False, 'abinit_cmd': 'abinit', 'mrgddb_cmd': 'mrgddb', 'anaddb_cmd': 'anaddb', 'cut3d_cmd': 'cut3d', 'mpirun_cmd': 'mpirun', 'copy_deps': False, 'walltime_command': None, 'continue_unconverged_on_rerun': True, 'allow_local_restart': False, 'timelimit_buffer': 120, 'short_job_timelimit': 600, 'abipy_manager': None}</em><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.fw_policy_defaults" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy">
+<em class="property">class </em><code class="descname">FWPolicy</code><span class="sig-paren">(</span><em>rerun_same_dir</em>, <em>max_restarts</em>, <em>autoparal</em>, <em>abinit_cmd</em>, <em>mrgddb_cmd</em>, <em>anaddb_cmd</em>, <em>cut3d_cmd</em>, <em>mpirun_cmd</em>, <em>copy_deps</em>, <em>walltime_command</em>, <em>continue_unconverged_on_rerun</em>, <em>allow_local_restart</em>, <em>timelimit_buffer</em>, <em>short_job_timelimit</em>, <em>abipy_manager</em><span class="sig-paren">)</span><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></a></p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.abinit_cmd">
+<code class="descname">abinit_cmd</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.abinit_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.abipy_manager">
+<code class="descname">abipy_manager</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.abipy_manager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 14</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.allow_local_restart">
+<code class="descname">allow_local_restart</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.allow_local_restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 11</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.anaddb_cmd">
+<code class="descname">anaddb_cmd</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.anaddb_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 5</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.autoparal">
+<code class="descname">autoparal</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.autoparal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.continue_unconverged_on_rerun">
+<code class="descname">continue_unconverged_on_rerun</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.continue_unconverged_on_rerun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 10</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.copy_deps">
+<code class="descname">copy_deps</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.copy_deps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 8</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.cut3d_cmd">
+<code class="descname">cut3d_cmd</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.cut3d_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 6</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.max_restarts">
+<code class="descname">max_restarts</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.max_restarts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.mpirun_cmd">
+<code class="descname">mpirun_cmd</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.mpirun_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 7</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.mrgddb_cmd">
+<code class="descname">mrgddb_cmd</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.mrgddb_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 4</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.rerun_same_dir">
+<code class="descname">rerun_same_dir</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.rerun_same_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.short_job_timelimit">
+<code class="descname">short_job_timelimit</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.short_job_timelimit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 13</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.timelimit_buffer">
+<code class="descname">timelimit_buffer</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.timelimit_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 12</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.walltime_command">
+<code class="descname">walltime_command</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.walltime_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 9</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config">
+<em class="property">classmethod </em><code class="descname">from_user_config</code><span class="sig-paren">(</span><em>fw_policy=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#FWTaskManager.from_user_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the manager using the dict in the following order of preference:
+- the “fw_manager.yaml” file in the folder where the command is executed
+- a yaml file pointed by the “FW_TASK_MANAGER”
+- the “fw_manager.yaml” in the ~/.abinit/abipy folder
+- if no file available, fall back to default values</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.from_file">
+<em class="property">classmethod </em><code class="descname">from_file</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#FWTaskManager.from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the configuration parameters from the Yaml file filename.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.has_task_manager">
+<code class="descname">has_task_manager</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#FWTaskManager.has_task_manager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.has_task_manager" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.update_fw_policy">
+<code class="descname">update_fw_policy</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#FWTaskManager.update_fw_policy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.update_fw_policy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.get_time_report_for_wf">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">get_time_report_for_wf</code><span class="sig-paren">(</span><em>wf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#get_time_report_for_wf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.get_time_report_for_wf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.links_dict_update">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">links_dict_update</code><span class="sig-paren">(</span><em>links_dict</em>, <em>links_update</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#links_dict_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.links_dict_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.get_last_completed_launch">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">get_last_completed_launch</code><span class="sig-paren">(</span><em>fw</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#get_last_completed_launch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.get_last_completed_launch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a Firework object returns the last completed launch</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.load_abitask">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">load_abitask</code><span class="sig-paren">(</span><em>fw</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#load_abitask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.load_abitask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a Firework object returns the abinit related task contained. Sets the list of directories set from the
+last completed launch. If no abinit related firetasks are found or the task has no completed launch returns None.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.get_fw_by_task_index">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">get_fw_by_task_index</code><span class="sig-paren">(</span><em>wf</em>, <em>task_tag</em>, <em>index=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#get_fw_by_task_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.get_fw_by_task_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a workflow object (with connection to the db) returns the wf corresponding to the task_type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>wf</strong> – a fireworks Workflow object.</li>
+<li><strong>task_tag</strong> – the task tag associated with the task as defined in abinit_workflows. Should not include the index.</li>
+<li><strong>index</strong> – the numerical or text index of the task. If negative the the last fw corresponding to task_tag will
+be selected. If None, no index will be considered and the first match will be returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a fireworks Firework object. None if no match is found.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.fw_utils.get_lp_and_fw_id_from_task">
+<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">get_lp_and_fw_id_from_task</code><span class="sig-paren">(</span><em>task</em>, <em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#get_lp_and_fw_id_from_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.get_lp_and_fw_id_from_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an instance of a running task and its spec, tries to load the LaunchPad and the current fw_id.
+It will first check for “_add_launchpad_and_fw_id”, then try to load from FW.json/FW.yaml file.</p>
+<p>Should be used inside tasks that require to access to the LaunchPad and to the whole workflow.
+:param task: An instance of a running task
+:param fw_spec: The spec of the task</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an instance of LaunchPah and the fw_id of the current task</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-abiflows.fireworks.utils.math_utils">
+<span id="abiflows-fireworks-utils-math-utils-module"></span><h2>abiflows.fireworks.utils.math_utils module<a class="headerlink" href="#module-abiflows.fireworks.utils.math_utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="abiflows.fireworks.utils.math_utils.prime_factors">
+<code class="descclassname">abiflows.fireworks.utils.math_utils.</code><code class="descname">prime_factors</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/math_utils.html#prime_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.math_utils.prime_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists prime factors of a given natural integer, from greatest to smallest
+:param n: Natural integer
+:rtype : list of all prime factors of the given natural n</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="abiflows.fireworks.utils.math_utils.divisors">
+<code class="descclassname">abiflows.fireworks.utils.math_utils.</code><code class="descname">divisors</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/math_utils.html#divisors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.math_utils.divisors" title="Permalink to this definition">¶</a></dt>
+<dd><p>From a given natural integer, returns the list of divisors in ascending order
+:param n: Natural integer
+:return: List of divisors of n in ascending order</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-abiflows.fireworks.utils.task_history">
+<span id="abiflows-fireworks-utils-task-history-module"></span><h2>abiflows.fireworks.utils.task_history module<a class="headerlink" href="#module-abiflows.fireworks.utils.task_history" title="Permalink to this headline">¶</a></h2>
+<p>Task history related objects</p>
+<dl class="class">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.task_history.</code><code class="descname">TaskHistory</code><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.deque" title="(in Python v3.7)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a>, <a class="reference external" href="https://pythonhosted.org/monty/monty.html#monty.json.MSONable" title="(in monty v1.0.0)"><code class="xref py py-class docutils literal"><span class="pre">monty.json.MSONable</span></code></a></p>
+<p>History class for tracking the creation and actions performed during a task.
+The objects provided should be PGMSONable, thus dicts, lists or PGMSONable objects.
+The expected items are dictionaries, transformations, corrections, autoparal, restart/reset
+and initializations (when factories will be handled).
+Possibly, the first item should contain information about the starting point of the task.
+This object will be forwarded during task restarts and resets, in order to keep track of the full history of the
+task.</p>
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.from_dict">
+<em class="property">classmethod </em><code class="descname">from_dict</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_initialization">
+<code class="descname">log_initialization</code><span class="sig-paren">(</span><em>task</em>, <em>initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_initialization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_initialization" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_corrections">
+<code class="descname">log_corrections</code><span class="sig-paren">(</span><em>corrections</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_corrections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_corrections" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_restart">
+<code class="descname">log_restart</code><span class="sig-paren">(</span><em>restart_info</em>, <em>local_restart=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_restart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_restart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_autoparal">
+<code class="descname">log_autoparal</code><span class="sig-paren">(</span><em>optconf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_autoparal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_autoparal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_unconverged">
+<code class="descname">log_unconverged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_unconverged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_unconverged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_finalized">
+<code class="descname">log_finalized</code><span class="sig-paren">(</span><em>final_input=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_finalized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_finalized" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_converge_params">
+<code class="descname">log_converge_params</code><span class="sig-paren">(</span><em>unconverged_params</em>, <em>abiinput</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_converge_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_converge_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_error">
+<code class="descname">log_error</code><span class="sig-paren">(</span><em>exc</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.log_abinit_stop">
+<code class="descname">log_abinit_stop</code><span class="sig-paren">(</span><em>run_time=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.log_abinit_stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.log_abinit_stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.get_events_by_types">
+<code class="descname">get_events_by_types</code><span class="sig-paren">(</span><em>types</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.get_events_by_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.get_events_by_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the events in history of the selected types. types can be a single type or a list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskHistory.get_total_run_time">
+<code class="descname">get_total_run_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskHistory.get_total_run_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskHistory.get_total_run_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates total run time based summing the run times saved in the abinit stop event.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.task_history.</code><code class="descname">TaskEvent</code><span class="sig-paren">(</span><em>event_type</em>, <em>details=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pythonhosted.org/monty/monty.html#monty.json.MSONable" title="(in monty v1.0.0)"><code class="xref py py-class docutils literal"><span class="pre">monty.json.MSONable</span></code></a></p>
+<p>Object used to categorize the events in the TaskHistory.</p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.INITIALIZED">
+<code class="descname">INITIALIZED</code><em class="property"> = 'initialized'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.INITIALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.CORRECTIONS">
+<code class="descname">CORRECTIONS</code><em class="property"> = 'corrections'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.CORRECTIONS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.RESTART">
+<code class="descname">RESTART</code><em class="property"> = 'restart'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.RESTART" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.AUTOPARAL">
+<code class="descname">AUTOPARAL</code><em class="property"> = 'autoparal'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.AUTOPARAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.UNCONVERGED">
+<code class="descname">UNCONVERGED</code><em class="property"> = 'unconverged'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.UNCONVERGED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.FINALIZED">
+<code class="descname">FINALIZED</code><em class="property"> = 'finalized'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.FINALIZED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.UNCONVERGED_PARAMS">
+<code class="descname">UNCONVERGED_PARAMS</code><em class="property"> = 'unconverged parameters'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.UNCONVERGED_PARAMS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.ERROR">
+<code class="descname">ERROR</code><em class="property"> = 'error'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.ERROR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.ABINIT_STOP">
+<code class="descname">ABINIT_STOP</code><em class="property"> = 'abinit stop'</em><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.ABINIT_STOP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskEvent.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.utils.task_history.TaskEvent.from_dict">
+<em class="property">classmethod </em><code class="descname">from_dict</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/task_history.html#TaskEvent.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.task_history.TaskEvent.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-abiflows.fireworks.utils.time_utils">
+<span id="abiflows-fireworks-utils-time-utils-module"></span><h2>abiflows.fireworks.utils.time_utils module<a class="headerlink" href="#module-abiflows.fireworks.utils.time_utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="abiflows.fireworks.utils.time_utils.seconds_to_hms">
+<code class="descclassname">abiflows.fireworks.utils.time_utils.</code><code class="descname">seconds_to_hms</code><span class="sig-paren">(</span><em>seconds</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/time_utils.html#seconds_to_hms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.time_utils.seconds_to_hms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts second to the format “h:mm:ss”</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>seconds</strong> – number of seconds</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">mm:ss”. An empty string if seconds is None.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">A string representing the seconds with the format “h</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.utils.time_utils.TimeReport">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.utils.time_utils.</code><code class="descname">TimeReport</code><span class="sig-paren">(</span><em>total_run_time</em>, <em>n_fws</em>, <em>total_cpu_time=None</em>, <em>contributed_cpu_time=0</em>, <em>total_run_time_per_tag=None</em>, <em>total_cpu_time_per_tag=None</em>, <em>contributed_cpu_time_per_tag=None</em>, <em>worker=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/time_utils.html#TimeReport"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.time_utils.TimeReport" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pythonhosted.org/monty/monty.html#monty.json.MSONable" title="(in monty v1.0.0)"><code class="xref py py-class docutils literal"><span class="pre">monty.json.MSONable</span></code></a></p>
+<p>Report of the time consumed for the whole workflow and for each single step.
+Includes both the time required for the calculations as well as the cpu time consumed.</p>
+<dl class="method">
+<dt id="abiflows.fireworks.utils.time_utils.TimeReport.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/time_utils.html#TimeReport.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.time_utils.TimeReport.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.utils.time_utils.TimeReport.from_dict">
+<em class="property">classmethod </em><code class="descname">from_dict</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/time_utils.html#TimeReport.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.time_utils.TimeReport.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-abiflows.fireworks.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-abiflows.fireworks.utils" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

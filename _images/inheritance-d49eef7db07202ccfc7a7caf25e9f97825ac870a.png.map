@@ -1,0 +1,7 @@
+<map id="inheritance2d2359adba" name="inheritance2d2359adba">
+<area shape="rect" id="node1" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" alt="" coords="345,3,542,16"/>
+<area shape="rect" id="node2" href="#abiflows.fireworks.tasks.abinit_tasks.MergeDdbAbinitTask" target="_top" title="Task to handle the merge of multiple DDB files with mrgddb" alt="" coords="568,16,765,29"/>
+<area shape="rect" id="node4" title="defaultdict(default_factory[, ...]) &#45;&#45;&gt; dict with default factory" alt="" coords="43,16,124,29"/>
+<area shape="rect" id="node5" title="FiretaskBase is used like an abstract class that defines a computing task" alt="" coords="190,29,319,42"/>
+<area shape="rect" id="node6" title="To create a serializable object within FireWorks, you should subclass this" alt="" coords="3,42,164,55"/>
+</map>

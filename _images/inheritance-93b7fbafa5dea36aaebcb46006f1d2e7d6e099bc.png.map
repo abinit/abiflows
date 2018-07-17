@@ -1,0 +1,5 @@
+<map id="inheritance86580d94c1" name="inheritance86580d94c1">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin" target="_top" title="Mixin providing some basic fields that are required to run a calculation." alt="" coords="216,3,480,18"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.abinit_results.PhononAbinitInput" target="_top" title="EmbeddedDocument containing the typical inputs for a phonon workflow." alt="" coords="510,18,765,33"/>
+<area shape="rect" id="node3" title="A :class:`~mongoengine.Document` that isn&#39;t stored in its own" alt="" coords="256,33,439,48"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="inheritance2bb6502199" name="inheritance2bb6502199">
+<area shape="rect" id="node1" href="#abiflows.fireworks.tasks.abinit_tasks.AbiFireTask" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.AbiFireTask" alt="" coords="327,9,423,17"/>
+<area shape="rect" id="node4" href="#abiflows.fireworks.tasks.abinit_tasks.GsFWTask" target="_top" title="Base Task to handle Ground state calculation." alt="" coords="438,9,533,17"/>
+<area shape="rect" id="node2" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" alt="" coords="198,2,312,9"/>
+<area shape="rect" id="node5" href="#abiflows.fireworks.tasks.abinit_tasks.NscfFWTask" target="_top" title="Task to handle non SCF calculations" alt="" coords="548,9,646,17"/>
+<area shape="rect" id="node6" href="#abiflows.fireworks.tasks.abinit_tasks.NscfWfqFWTask" target="_top" title="Task to handle non SCF calculations for the calculations of the WFQ." alt="" coords="661,9,766,17"/>
+<area shape="rect" id="node7" title="defaultdict(default_factory[, ...]) &#45;&#45;&gt; dict with default factory" alt="" coords="25,9,71,17"/>
+<area shape="rect" id="node8" title="FiretaskBase is used like an abstract class that defines a computing task" alt="" coords="109,17,183,24"/>
+<area shape="rect" id="node9" title="To create a serializable object within FireWorks, you should subclass this" alt="" coords="2,24,94,32"/>
+</map>

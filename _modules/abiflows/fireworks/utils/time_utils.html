@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.utils.time_utils &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.fireworks.utils.time_utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">prettytable</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">pmg_serialize</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
+
+
+<div class="viewcode-block" id="seconds_to_hms"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.time_utils.seconds_to_hms">[docs]</a><span class="k">def</span> <span class="nf">seconds_to_hms</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts second to the format &quot;h:mm:ss&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        seconds: number of seconds</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A string representing the seconds with the format &quot;h:mm:ss&quot;. An empty string if seconds is None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">seconds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">:</span><span class="si">%02d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TimeReport"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.time_utils.TimeReport">[docs]</a><span class="k">class</span> <span class="nc">TimeReport</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Report of the time consumed for the whole workflow and for each single step.</span>
+<span class="sd">    Includes both the time required for the calculations as well as the cpu time consumed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total_run_time</span><span class="p">,</span> <span class="n">n_fws</span><span class="p">,</span> <span class="n">total_cpu_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contributed_cpu_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_run_time_per_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">total_cpu_time_per_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contributed_cpu_time_per_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">worker</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_run_time</span> <span class="o">=</span> <span class="n">total_run_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_fws</span> <span class="o">=</span> <span class="n">n_fws</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_cpu_time</span> <span class="o">=</span> <span class="n">total_cpu_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contributed_cpu_time</span> <span class="o">=</span> <span class="n">contributed_cpu_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_run_time_per_tag</span> <span class="o">=</span> <span class="n">total_run_time_per_tag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_cpu_time_per_tag</span> <span class="o">=</span> <span class="n">total_cpu_time_per_tag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contributed_cpu_time_per_tag</span> <span class="o">=</span> <span class="n">contributed_cpu_time_per_tag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">worker</span> <span class="o">=</span> <span class="n">worker</span>
+
+<div class="viewcode-block" id="TimeReport.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.time_utils.TimeReport.as_dict">[docs]</a>    <span class="nd">@pmg_serialize</span>
+    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">total_run_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">total_run_time</span><span class="p">,</span> <span class="n">n_fws</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_fws</span><span class="p">,</span> <span class="n">total_cpu_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">total_cpu_time</span><span class="p">,</span>
+                 <span class="n">contributed_cpu_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">contributed_cpu_time</span><span class="p">,</span> <span class="n">total_run_time_per_tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">total_run_time_per_tag</span><span class="p">,</span>
+                 <span class="n">total_cpu_time_per_tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">total_cpu_time_per_tag</span><span class="p">,</span> <span class="n">contributed_cpu_time_per_tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">contributed_cpu_time_per_tag</span><span class="p">,</span>
+                 <span class="n">worker</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">worker</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="TimeReport.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.time_utils.TimeReport.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;@module&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;@class&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Worker: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">worker</span><span class="p">)</span>
+
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Total number of fireworks: </span><span class="si">{}</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_fws</span><span class="p">)</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">PrettyTable</span><span class="p">([</span><span class="s1">&#39;task tag&#39;</span><span class="p">,</span> <span class="s1">&#39;run time (h:m:s)&#39;</span><span class="p">,</span> <span class="s1">&#39;cpu time (h:m:s)&#39;</span><span class="p">,</span> <span class="s1">&#39;N cpu time&#39;</span><span class="p">],</span> <span class="n">float_format</span><span class="o">=</span><span class="s2">&quot;5.3&quot;</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">align</span><span class="p">[</span><span class="s1">&#39;task tag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;l&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_run_time_per_tag</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">task_tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_run_time_per_tag</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="c1"># t.add_row([task_tag, self.total_run_time_per_tag[task_tag]/3600, self.total_cpu_time_per_tag.get(task_tag, 0)/3600,</span>
+                <span class="c1">#           self.contributed_cpu_time_per_tag.get(task_tag, 0)])</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">add_row</span><span class="p">([</span><span class="n">task_tag</span><span class="p">,</span> <span class="n">seconds_to_hms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_run_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]),</span> <span class="n">seconds_to_hms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">contributed_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])</span>
+
+        <span class="c1"># t.add_row([&#39;Total&#39;, self.total_run_time/3600, self.total_cpu_time/3600, self.contributed_cpu_time])</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">add_row</span><span class="p">([</span><span class="s1">&#39;Total&#39;</span><span class="p">,</span> <span class="n">seconds_to_hms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_run_time</span><span class="p">),</span> <span class="n">seconds_to_hms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_cpu_time</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">contributed_cpu_time</span><span class="p">])</span>
+
+        <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">s</span></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+<map id="inheritance6b5723e234" name="inheritance6b5723e234">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.PhononResult" target="_top" title="Document containing the results for a phonon workflow." alt="" coords="503,53,764,69"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="238,4,468,20"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="245,36,461,53"/>
+<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="236,69,470,86"/>
+<area shape="rect" id="node5" title="The base class used for defining the structure and properties of" alt="" coords="275,102,431,119"/>
+</map>

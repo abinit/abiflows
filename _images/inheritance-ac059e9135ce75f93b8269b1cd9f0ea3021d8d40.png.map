@@ -1,0 +1,6 @@
+<map id="inheritance553d4f986f" name="inheritance553d4f986f">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitGSOutputMixin" target="_top" title="Mixin providing generic fiels for abinit ground state calculation" alt="" coords="263,31,504,44"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.abinit_results.RelaxAbinitOutput" target="_top" title="EmbeddedDocument containing the typical outputs for a relaxation workflow." alt="" coords="532,17,765,31"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.GroundStateOutputMixin" target="_top" title="Mixin providing generic fields for ground state calculation" alt="" coords="3,31,235,44"/>
+<area shape="rect" id="node4" title="A :class:`~mongoengine.Document` that isn&#39;t stored in its own" alt="" coords="299,3,468,17"/>
+</map>

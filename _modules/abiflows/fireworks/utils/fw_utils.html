@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.utils.fw_utils &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.fireworks.utils.fw_utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utilities for fireworks</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.tasks</span> <span class="k">import</span> <span class="n">TaskManager</span><span class="p">,</span> <span class="n">ParalHints</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.time_utils</span> <span class="k">import</span> <span class="n">TimeReport</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">SHORT_SINGLE_CORE_SPEC</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ntasks&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="s1">&#39;00:10:00&#39;</span><span class="p">},</span> <span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="parse_workflow"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.parse_workflow">[docs]</a><span class="k">def</span> <span class="nf">parse_workflow</span><span class="p">(</span><span class="n">fws</span><span class="p">,</span> <span class="n">links_dict</span><span class="p">):</span>
+    <span class="n">new_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">fws</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fw</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">):</span>
+            <span class="n">new_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">fw</span><span class="o">.</span><span class="n">fws</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fw</span><span class="p">)</span>
+
+    <span class="n">new_links_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">children</span> <span class="ow">in</span> <span class="n">links_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">):</span>
+            <span class="n">new_links_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">links</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">leaf_fw_id</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">leaf_fw_ids</span><span class="p">:</span>
+                <span class="n">new_links_dict</span><span class="p">[</span><span class="n">leaf_fw_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">children</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_links_dict</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span> <span class="o">=</span> <span class="n">children</span>
+
+    <span class="c1"># dict since the collection will be updated</span>
+    <span class="k">for</span> <span class="n">parent</span><span class="p">,</span> <span class="n">children</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new_links_dict</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">final_childrens</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">):</span>
+                <span class="n">new_links_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">links</span><span class="p">)</span>
+                <span class="n">final_childrens</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">root_fw_ids</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">final_childrens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+        <span class="n">new_links_dict</span><span class="p">[</span><span class="n">parent</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_childrens</span>
+
+    <span class="k">return</span> <span class="n">new_list</span><span class="p">,</span> <span class="n">new_links_dict</span></div>
+
+
+<div class="viewcode-block" id="append_fw_to_wf"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.append_fw_to_wf">[docs]</a><span class="k">def</span> <span class="nf">append_fw_to_wf</span><span class="p">(</span><span class="n">new_fw</span><span class="p">,</span> <span class="n">wf</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="n">new_fw</span><span class="o">.</span><span class="n">fw_id</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;FW ids must be unique!&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">leaf_id</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">leaf_fw_ids</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="n">leaf_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="n">new_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="p">[</span><span class="n">new_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_fw</span>
+
+    <span class="c1"># add depends on</span>
+    <span class="k">for</span> <span class="n">pfw</span> <span class="ow">in</span> <span class="n">new_fw</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">pfw</span><span class="o">.</span><span class="n">fw_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">links</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;FW_id: </span><span class="si">{}</span><span class="s2"> defines a dependent link to FW_id: </span><span class="si">{}</span><span class="s2">, but the latter was not added to the workflow!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">new_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">pfw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">))</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">links</span><span class="p">[</span><span class="n">pfw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">)</span>
+
+    <span class="c1"># sanity: make sure the set of nodes from the links_dict is equal to</span>
+    <span class="c1"># the set of nodes from id_fw</span>
+    <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">wf</span><span class="o">.</span><span class="n">links</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Specified links don&#39;t match given FW&quot;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">fw_states</span><span class="p">[</span><span class="n">new_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_fw</span><span class="o">.</span><span class="n">state</span></div>
+
+
+<div class="viewcode-block" id="get_short_single_core_spec"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.get_short_single_core_spec">[docs]</a><span class="k">def</span> <span class="nf">get_short_single_core_spec</span><span class="p">(</span><span class="n">fw_manager</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">master_mem_overhead</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">return_qtk</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">timelimit</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fw_manager</span><span class="p">,</span> <span class="n">FWTaskManager</span><span class="p">):</span>
+        <span class="n">ftm</span> <span class="o">=</span> <span class="n">fw_manager</span>
+    <span class="k">elif</span> <span class="n">fw_manager</span><span class="p">:</span>
+        <span class="n">ftm</span> <span class="o">=</span> <span class="n">FWTaskManager</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">fw_manager</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ftm</span> <span class="o">=</span> <span class="n">FWTaskManager</span><span class="o">.</span><span class="n">from_user_config</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">ftm</span><span class="o">.</span><span class="n">has_task_manager</span><span class="p">():</span>
+        <span class="c1">#TODO add mem_per_cpu?</span>
+        <span class="n">pconf</span> <span class="o">=</span> <span class="n">ParalHints</span><span class="p">({},</span> <span class="p">[{</span><span class="s1">&#39;tot_ncpus&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;efficiency&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tm</span> <span class="o">=</span> <span class="n">ftm</span><span class="o">.</span><span class="n">task_manager</span>
+            <span class="n">tm</span><span class="o">.</span><span class="n">select_qadapter</span><span class="p">(</span><span class="n">pconf</span><span class="p">)</span>
+            <span class="c1">#TODO make a FW_task_manager parameter</span>
+            <span class="k">if</span> <span class="n">timelimit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">tm</span><span class="o">.</span><span class="n">qadapter</span><span class="o">.</span><span class="n">set_timelimit</span><span class="p">(</span><span class="n">timelimit</span><span class="o">=</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">short_job_timelimit</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tm</span><span class="o">.</span><span class="n">qadapter</span><span class="o">.</span><span class="n">set_timelimit</span><span class="p">(</span><span class="n">timelimit</span><span class="o">=</span><span class="n">timelimit</span><span class="p">)</span>
+            <span class="n">tm</span><span class="o">.</span><span class="n">qadapter</span><span class="o">.</span><span class="n">set_master_mem_overhead</span><span class="p">(</span><span class="n">master_mem_overhead</span><span class="p">)</span>
+            <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">tm</span><span class="o">.</span><span class="n">qadapter</span><span class="o">.</span><span class="n">get_subs_dict</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">return_qtk</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">qadapter_spec</span><span class="p">,</span> <span class="n">tm</span><span class="o">.</span><span class="n">qadapter</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">qadapter_spec</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+
+    <span class="c1"># No taskmanger or no queue available</span>
+    <span class="c1">#FIXME return something else? exception?</span>
+    <span class="k">return</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="set_short_single_core_to_spec"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.set_short_single_core_to_spec">[docs]</a><span class="k">def</span> <span class="nf">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="p">{},</span> <span class="n">master_mem_overhead</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fw_manager</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+        <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">get_short_single_core_spec</span><span class="p">(</span><span class="n">master_mem_overhead</span><span class="o">=</span><span class="n">master_mem_overhead</span><span class="p">,</span> <span class="n">fw_manager</span><span class="o">=</span><span class="n">fw_manager</span><span class="p">)</span>
+        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qadapter_spec</span>
+        <span class="k">return</span> <span class="n">spec</span></div>
+
+
+<div class="viewcode-block" id="FWTaskManager"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.FWTaskManager">[docs]</a><span class="k">class</span> <span class="nc">FWTaskManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object containing the configuration parameters and policies to run abipy.</span>
+<span class="sd">    The policies needed for the abinit FW will always be available through default values. These can be overridden</span>
+<span class="sd">    also setting the parameters in the spec.</span>
+<span class="sd">    The standard abipy task manager is contained as an object on its own that can be used to run the autoparal or</span>
+<span class="sd">    factories if needed.</span>
+<span class="sd">    The rationale behind this choice, instead of subclassing, is to not force the user to fill the qadapter part</span>
+<span class="sd">    of the task manager, which is needed only for the autoparal, but is required in the TaskManager initialization.</span>
+<span class="sd">    Wherever the TaskManager is needed just pass the ftm.task_manager.</span>
+<span class="sd">    The TaskManager part can be loaded from an external manager.yml file using the &quot;abipy_manager&quot; key in fw_policy.</span>
+<span class="sd">    This is now the preferred choice. If this value is not defined, it will be loaded with TaskManager.from_user_config</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">YAML_FILE</span> <span class="o">=</span> <span class="s2">&quot;fw_manager.yaml&quot;</span>
+    <span class="n">USER_CONFIG_DIR</span> <span class="o">=</span> <span class="n">TaskManager</span><span class="o">.</span><span class="n">USER_CONFIG_DIR</span> <span class="c1"># keep the same as the standard TaskManager</span>
+
+    <span class="n">fw_policy_defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">rerun_same_dir</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                              <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                              <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                              <span class="n">abinit_cmd</span><span class="o">=</span><span class="s1">&#39;abinit&#39;</span><span class="p">,</span>
+                              <span class="n">mrgddb_cmd</span><span class="o">=</span><span class="s1">&#39;mrgddb&#39;</span><span class="p">,</span>
+                              <span class="n">anaddb_cmd</span><span class="o">=</span><span class="s1">&#39;anaddb&#39;</span><span class="p">,</span>
+                              <span class="n">cut3d_cmd</span><span class="o">=</span><span class="s1">&#39;cut3d&#39;</span><span class="p">,</span>
+                              <span class="n">mpirun_cmd</span><span class="o">=</span><span class="s1">&#39;mpirun&#39;</span><span class="p">,</span>
+                              <span class="n">copy_deps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                              <span class="n">walltime_command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                              <span class="n">continue_unconverged_on_rerun</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                              <span class="n">allow_local_restart</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                              <span class="n">timelimit_buffer</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+                              <span class="n">short_job_timelimit</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+                              <span class="n">abipy_manager</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">FWPolicy</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;FWPolicy&quot;</span><span class="p">,</span> <span class="n">fw_policy_defaults</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">fw_policy</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;fw_policy&#39;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">unknown_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_policy_defaults</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">unknown_keys</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Unknown key(s) present in fw_policy: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unknown_keys</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">fw_policy</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_policy_defaults</span><span class="p">,</span> <span class="o">**</span><span class="n">fw_policy</span><span class="p">)</span>
+
+        <span class="c1"># make a namedtuple for easier access to the attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fw_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FWPolicy</span><span class="p">(</span><span class="o">**</span><span class="n">fw_policy</span><span class="p">)</span>
+
+        <span class="c1">#TODO consider if raising an exception if it&#39;s requested when not available</span>
+        <span class="c1"># create the task manager only if possibile</span>
+        <span class="k">if</span> <span class="s1">&#39;qadapters&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_manager</span> <span class="o">=</span> <span class="n">TaskManager</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Loading the abipy TaskManager from inside the fw_manager.yaml file is deprecated. &quot;</span> \
+                  <span class="s2">&quot;Use a separate file&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">abipy_manager</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">task_manager</span> <span class="o">=</span> <span class="n">TaskManager</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">abipy_manager</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">task_manager</span> <span class="o">=</span> <span class="n">TaskManager</span><span class="o">.</span><span class="n">from_user_config</span><span class="p">()</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t load the abipy task manager.&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">task_manager</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="FWTaskManager.from_user_config"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.FWTaskManager.from_user_config">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_user_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fw_policy</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the manager using the dict in the following order of preference:</span>
+<span class="sd">        - the &quot;fw_manager.yaml&quot; file in the folder where the command is executed</span>
+<span class="sd">        - a yaml file pointed by the &quot;FW_TASK_MANAGER&quot;</span>
+<span class="sd">        - the &quot;fw_manager.yaml&quot; in the ~/.abinit/abipy folder</span>
+<span class="sd">        - if no file available, fall back to default values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">fw_policy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fw_policy</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Try in the current directory then in user configuration directory.</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="bp">cls</span><span class="o">.</span><span class="n">YAML_FILE</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;FW_TASK_MANAGER&quot;</span><span class="p">),</span>
+                 <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">USER_CONFIG_DIR</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">YAML_FILE</span><span class="p">)]</span>
+
+        <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading manager from </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+                <span class="k">break</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FWTaskManager.from_file"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.FWTaskManager.from_file">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read the configuration parameters from the Yaml file filename.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FWTaskManager.has_task_manager"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.FWTaskManager.has_task_manager">[docs]</a>    <span class="k">def</span> <span class="nf">has_task_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="FWTaskManager.update_fw_policy"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.FWTaskManager.update_fw_policy">[docs]</a>    <span class="k">def</span> <span class="nf">update_fw_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fw_policy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="get_time_report_for_wf"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.get_time_report_for_wf">[docs]</a><span class="k">def</span> <span class="nf">get_time_report_for_wf</span><span class="p">(</span><span class="n">wf</span><span class="p">):</span>
+
+        <span class="n">total_run_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_cpu_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">contributed_cpu_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_run_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">total_cpu_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">contributed_cpu_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">worker</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">:</span>
+            <span class="c1"># skip not completed fws</span>
+            <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">launches</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">fw</span><span class="o">.</span><span class="n">launches</span>
+            <span class="n">completed_launch</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="c1">#take the last completed launch</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
+                    <span class="n">completed_launch</span> <span class="o">=</span> <span class="n">l</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># assume all fw have runned on the same worker</span>
+            <span class="k">if</span> <span class="n">worker</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">worker</span> <span class="o">=</span> <span class="n">completed_launch</span><span class="o">.</span><span class="n">fworker</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="n">run_time</span> <span class="o">=</span> <span class="n">completed_launch</span><span class="o">.</span><span class="n">runtime_secs</span>
+            <span class="n">total_run_time</span> <span class="o">+=</span> <span class="n">run_time</span>
+
+            <span class="k">if</span> <span class="s1">&#39;qtk_queueadapter&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+                <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">num_cores</span>
+            <span class="k">elif</span> <span class="s1">&#39;mpi_ncpus&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+                <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="s1">&#39;ntasks&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+                <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;ntasks&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ncpus</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">ncpus</span><span class="p">:</span>
+                <span class="n">cpu_time</span> <span class="o">=</span> <span class="n">run_time</span><span class="o">*</span><span class="n">ncpus</span>
+                <span class="n">total_cpu_time</span> <span class="o">+=</span> <span class="n">cpu_time</span>
+                <span class="n">contributed_cpu_time</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cpu_time</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">wf_task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;Unclassified&#39;</span><span class="p">)</span>
+
+            <span class="n">task_tag</span> <span class="o">=</span> <span class="n">wf_task_index</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">total_run_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_run_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">run_time</span>
+            <span class="k">if</span> <span class="n">cpu_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">total_cpu_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">cpu_time</span>
+                <span class="n">contributed_cpu_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">contributed_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">TimeReport</span><span class="p">(</span><span class="n">total_run_time</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">),</span> <span class="n">total_cpu_time</span><span class="o">=</span><span class="n">total_cpu_time</span><span class="p">,</span> <span class="n">contributed_cpu_time</span><span class="o">=</span><span class="n">contributed_cpu_time</span><span class="p">,</span>
+                       <span class="n">total_run_time_per_tag</span><span class="o">=</span><span class="n">total_run_time_per_tag</span><span class="p">,</span> <span class="n">total_cpu_time_per_tag</span><span class="o">=</span><span class="n">total_cpu_time_per_tag</span><span class="p">,</span>
+                       <span class="n">contributed_cpu_time_per_tag</span><span class="o">=</span><span class="n">contributed_cpu_time_per_tag</span><span class="p">,</span> <span class="n">worker</span><span class="o">=</span><span class="n">worker</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tr</span></div>
+
+
+<div class="viewcode-block" id="links_dict_update"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.links_dict_update">[docs]</a><span class="k">def</span> <span class="nf">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="p">,</span> <span class="n">links_update</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">parent_id</span><span class="p">,</span> <span class="n">child_ids</span> <span class="ow">in</span> <span class="n">links_update</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_id</span><span class="p">,</span> <span class="n">Firework</span><span class="p">):</span>
+            <span class="n">parent_id</span> <span class="o">=</span> <span class="n">parent_id</span><span class="o">.</span><span class="n">fw_id</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child_ids</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">child_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">child_ids</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child_ids</span><span class="p">,</span> <span class="n">Firework</span><span class="p">):</span>
+            <span class="n">child_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">child_ids</span><span class="o">.</span><span class="n">fw_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">parent_id</span> <span class="ow">in</span> <span class="n">links_dict</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">child_id</span> <span class="ow">in</span> <span class="n">child_ids</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">child_id</span> <span class="ow">in</span> <span class="n">links_dict</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Child fireworks already defined for parent ...&#39;</span><span class="p">)</span>
+                <span class="n">links_dict</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">links_dict</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_ids</span></div>
+
+
+<div class="viewcode-block" id="get_last_completed_launch"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.get_last_completed_launch">[docs]</a><span class="k">def</span> <span class="nf">get_last_completed_launch</span><span class="p">(</span><span class="n">fw</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a Firework object returns the last completed launch</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">fw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">fw</span><span class="o">.</span><span class="n">launches</span><span class="p">)</span> <span class="k">if</span>
+                 <span class="n">l</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_abitask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.load_abitask">[docs]</a><span class="k">def</span> <span class="nf">load_abitask</span><span class="p">(</span><span class="n">fw</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a Firework object returns the abinit related task contained. Sets the list of directories set from the</span>
+<span class="sd">    last completed launch. If no abinit related firetasks are found or the task has no completed launch returns None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">AnaDdbAbinitTask</span><span class="p">,</span> <span class="n">MergeDdbAbinitTask</span>
+
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="p">(</span><span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">AnaDdbAbinitTask</span><span class="p">,</span> <span class="n">MergeDdbAbinitTask</span><span class="p">)):</span>
+            <span class="n">launch</span> <span class="o">=</span> <span class="n">get_last_completed_launch</span><span class="p">(</span><span class="n">fw</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">launch</span><span class="p">:</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">set_workdir</span><span class="p">(</span><span class="n">workdir</span><span class="o">=</span><span class="n">launch</span><span class="o">.</span><span class="n">launch_dir</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">t</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="get_fw_by_task_index"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.get_fw_by_task_index">[docs]</a><span class="k">def</span> <span class="nf">get_fw_by_task_index</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">task_tag</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a workflow object (with connection to the db) returns the wf corresponding to the task_type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        wf: a fireworks Workflow object.</span>
+<span class="sd">        task_tag: the task tag associated with the task as defined in abinit_workflows. Should not include the index.</span>
+<span class="sd">        index: the numerical or text index of the task. If negative the the last fw corresponding to task_tag will</span>
+<span class="sd">            be selected. If None, no index will be considered and the first match will be returned.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        a fireworks Firework object. None if no match is found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">task_index</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">task_index</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+    <span class="n">selected_fw</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">max_ind</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">:</span>
+        <span class="n">fw_task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">task_index</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fw_task_index</span> <span class="o">==</span> <span class="n">task_index</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">fw</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task_tag</span> <span class="ow">in</span> <span class="n">fw_task_index</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">fw</span>
+                <span class="c1"># the last part of the task_index can be text (i.e. &quot;autoparal&quot;) so the conversion to int may fail</span>
+                <span class="c1"># if no other indices has been found select that one</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">fw_ind</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fw_task_index</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="k">if</span>  <span class="n">fw_ind</span> <span class="o">&gt;</span> <span class="n">max_ind</span><span class="p">:</span>
+                        <span class="n">selected_fw</span> <span class="o">=</span> <span class="n">fw</span>
+                        <span class="n">max_ind</span> <span class="o">=</span> <span class="n">fw_ind</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">selected_fw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">selected_fw</span> <span class="o">=</span> <span class="n">fw</span>
+
+    <span class="k">return</span> <span class="n">selected_fw</span></div>
+
+
+<div class="viewcode-block" id="get_lp_and_fw_id_from_task"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.get_lp_and_fw_id_from_task">[docs]</a><span class="k">def</span> <span class="nf">get_lp_and_fw_id_from_task</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an instance of a running task and its spec, tries to load the LaunchPad and the current fw_id.</span>
+<span class="sd">    It will first check for &quot;_add_launchpad_and_fw_id&quot;, then try to load from FW.json/FW.yaml file.</span>
+
+<span class="sd">    Should be used inside tasks that require to access to the LaunchPad and to the whole workflow.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        task: An instance of a running task</span>
+<span class="sd">        fw_spec: The spec of the task</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        an instance of LaunchPah and the fw_id of the current task</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;_add_launchpad_and_fw_id&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">launchpad</span>
+        <span class="n">fw_id</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">fw_id</span>
+
+        <span class="c1"># lp may be None in offline mode</span>
+        <span class="k">if</span> <span class="n">lp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The LaunchPad in spec is None.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;FW.json&#39;</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="n">fw_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">MontyDecoder</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;FW.yaml&#39;</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                    <span class="n">fw_dict</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: &quot;</span>
+                                   <span class="s2">&quot;impossible to determine fw_id&quot;</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;LaunchPad not available from spec. Generated with auto_load.&quot;</span><span class="p">)</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">LaunchPad</span><span class="o">.</span><span class="n">auto_load</span><span class="p">()</span>
+        <span class="n">fw_id</span> <span class="o">=</span> <span class="n">fw_dict</span><span class="p">[</span><span class="s1">&#39;fw_id&#39;</span><span class="p">]</span>
+
+        <span class="c1"># since it is not given that the LaunchPad is the correct one, try to verify if the workflow</span>
+        <span class="c1"># and the fw_id are being accessed correctly</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fw</span> <span class="o">=</span> <span class="n">lp</span><span class="o">.</span><span class="n">get_fw_by_id</span><span class="p">(</span><span class="n">fw_id</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The firework with id </span><span class="si">{}</span><span class="s2"> is not present in the LaunchPad </span><span class="si">{}</span><span class="s2">. The LaunchPad is &quot;</span>
+                               <span class="s2">&quot;probably incorrect.&quot;</span><span class="o">.</span> <span class="nb">format</span><span class="p">(</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">lp</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">&quot;RUNNING&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The firework with id </span><span class="si">{}</span><span class="s2"> from LaunchPad </span><span class="si">{}</span><span class="s2"> is </span><span class="si">{}</span><span class="s2">. There might be an error in the &quot;</span>
+                               <span class="s2">&quot;selection of the LaunchPad&quot;</span><span class="o">.</span> <span class="nb">format</span><span class="p">(</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">lp</span><span class="p">,</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fw_dict</span><span class="p">[</span><span class="s1">&#39;spec&#39;</span><span class="p">][</span><span class="s1">&#39;_tasks&#39;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The firework with id </span><span class="si">{}</span><span class="s2"> from LaunchPad </span><span class="si">{}</span><span class="s2"> is has different number of tasks &quot;</span>
+                               <span class="s2">&quot;from the current.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">lp</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">db_t</span><span class="p">,</span> <span class="n">dict_t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">,</span> <span class="n">fw_dict</span><span class="p">[</span><span class="s1">&#39;spec&#39;</span><span class="p">][</span><span class="s1">&#39;_tasks&#39;</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">db_t</span><span class="o">.</span><span class="n">fw_name</span> <span class="o">!=</span> <span class="n">dict_t</span><span class="p">[</span><span class="s1">&#39;_fw_name&#39;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The firework with id </span><span class="si">{}</span><span class="s2"> from LaunchPad </span><span class="si">{}</span><span class="s2"> has task that don&#39;t  match: &quot;</span>
+                                   <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> and </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">lp</span><span class="p">,</span> <span class="n">db_t</span><span class="o">.</span><span class="n">fw_name</span><span class="p">,</span> <span class="n">dict_t</span><span class="p">[</span><span class="s1">&#39;fw_name&#39;</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">lp</span><span class="p">,</span> <span class="n">fw_id</span></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

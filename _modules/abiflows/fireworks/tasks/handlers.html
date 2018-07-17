@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.tasks.handlers &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.fireworks.tasks.handlers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Error handlers and validators</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.custodian_utils</span> <span class="k">import</span> <span class="n">SRCErrorHandler</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">MemoryCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">MasterProcessMemoryCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">SlaveProcessMemoryCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">TimeCancelError</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.qadapters</span> <span class="k">import</span> <span class="n">QueueAdapter</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AbinitHandler"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.AbinitHandler">[docs]</a><span class="k">class</span> <span class="nc">AbinitHandler</span><span class="p">(</span><span class="n">SRCErrorHandler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    General handler for abinit&#39;s critical events handlers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">critical_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_rundir: Directory where the job was run.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AbinitHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span> <span class="o">=</span> <span class="n">job_rundir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">critical_events</span> <span class="o">=</span> <span class="n">critical_events</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="AbinitHandler.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.AbinitHandler.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;job_rundir&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="AbinitHandler.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.AbinitHandler.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">job_rundir</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;job_rundir&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_fizzled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">handler_priority</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PRIORITY_MEDIUM</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="AbinitHandler.setup"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.AbinitHandler.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;SRCScheme&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;SRCScheme&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">launch_dir</span></div>
+
+<div class="viewcode-block" id="AbinitHandler.check"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.AbinitHandler.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">abinit_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">report</span> <span class="o">=</span> <span class="n">abinit_task</span><span class="o">.</span><span class="n">get_event_report</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> exception while parsing event_report:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Run has completed, check for critical events (convergence, ...)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="o">.</span><span class="n">run_completed</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="o">.</span><span class="n">filter_types</span><span class="p">(</span><span class="n">abinit_task</span><span class="o">.</span><span class="n">CRITICAL_EVENTS</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Calculation has converged</span>
+                    <span class="c1"># Check if there are custom parameters that should be converged</span>
+                    <span class="n">unconverged_params</span><span class="p">,</span> <span class="n">reset_restart</span> <span class="o">=</span> <span class="n">abinit_task</span><span class="o">.</span><span class="n">check_parameters_convergence</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">unconverged_params</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+            <span class="c1"># Abinit run failed to complete</span>
+            <span class="c1"># Check if the errors can be handled</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="AbinitHandler.has_corrections"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.AbinitHandler.has_corrections">[docs]</a>    <span class="k">def</span> <span class="nf">has_corrections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="AbinitHandler.correct"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.AbinitHandler.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;More than 1 task found in fizzled firework, not yet supported&#39;</span><span class="p">)</span>
+            <span class="n">abinit_input_update</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;iscf&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;errors&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">],</span>
+                    <span class="s1">&#39;actions&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;action_type&#39;</span><span class="p">:</span> <span class="s1">&#39;modify_object&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;fw_spec&#39;</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;abinit_input&#39;</span><span class="p">},</span>
+                                 <span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="n">abinit_input_update</span><span class="p">}}]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;This handler cannot be used without the SRC scheme&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="WalltimeHandler"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler">[docs]</a><span class="k">class</span> <span class="nc">WalltimeHandler</span><span class="p">(</span><span class="n">SRCErrorHandler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handler for walltime infringements of the resource manager.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">max_timelimit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timelimit_increase</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="sd">        of the queue manager and the queue adapter used.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_rundir: Directory where the job was run.</span>
+<span class="sd">            qout_file: Standard output file of the queue manager.</span>
+<span class="sd">            qerr_file: Standard error file of the queue manager.</span>
+<span class="sd">            queue_adapter: Queue adapter used to submit the job.</span>
+<span class="sd">            max_timelimit: Maximum timelimit (in seconds) allowed by the resource manager for the queue.</span>
+<span class="sd">            timelimit_increase: Amount of time (in seconds) to increase the timelimit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WalltimeHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span> <span class="o">=</span> <span class="n">job_rundir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qout_file</span> <span class="o">=</span> <span class="n">qout_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qerr_file</span> <span class="o">=</span> <span class="n">qerr_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">queue_adapter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_filepaths</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span> <span class="o">=</span> <span class="n">max_timelimit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span> <span class="o">=</span> <span class="n">timelimit_increase</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="WalltimeHandler.setup_filepaths"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler.setup_filepaths">[docs]</a>    <span class="k">def</span> <span class="nf">setup_filepaths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qout_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qerr_file</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WalltimeHandler.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;job_rundir&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span><span class="p">,</span>
+                <span class="s1">&#39;qout_file&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qout_file</span><span class="p">,</span>
+                <span class="s1">&#39;qerr_file&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qerr_file</span><span class="p">,</span>
+                <span class="s1">&#39;queue_adapter&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s1">&#39;max_timelimit&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span><span class="p">,</span>
+                <span class="s1">&#39;timelimit_increase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="WalltimeHandler.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">qa</span> <span class="o">=</span> <span class="n">QueueAdapter</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">job_rundir</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;job_rundir&#39;</span><span class="p">],</span> <span class="n">qout_file</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;qout_file&#39;</span><span class="p">],</span> <span class="n">qerr_file</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;qerr_file&#39;</span><span class="p">],</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="n">qa</span><span class="p">,</span>
+                   <span class="n">max_timelimit</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_timelimit&#39;</span><span class="p">],</span>
+                   <span class="n">timelimit_increase</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;timelimit_increase&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_fizzled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">handler_priority</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PRIORITY_VERY_LOW</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="WalltimeHandler.setup"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;SRCScheme&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;SRCScheme&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">launch_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_filepaths</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="WalltimeHandler.check"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Analyze the stderr and stdout files of the resource manager system.</span>
+        <span class="n">qerr_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">qout_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">qerr_info</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">qout_info</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">qerr_info</span> <span class="ow">or</span> <span class="n">qout_info</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">get_parser</span>
+            <span class="n">qtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">QTYPE</span>
+            <span class="n">scheduler_parser</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">(</span><span class="n">qtype</span><span class="p">,</span> <span class="n">err_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span><span class="p">,</span>
+                                          <span class="n">out_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">scheduler_parser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot find scheduler_parser for qtype </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">qtype</span><span class="p">))</span>
+
+            <span class="n">scheduler_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span> <span class="o">=</span> <span class="n">scheduler_parser</span><span class="o">.</span><span class="n">errors</span>
+
+            <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">TimeCancelError</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found timelimit error.&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_error</span> <span class="o">=</span> <span class="n">error</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="WalltimeHandler.correct"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;More than 1 task found in &quot;memory-fizzled&quot; firework, not yet supported&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;adding SRC detour&#39;</span><span class="p">)</span>
+            <span class="c1"># Information about the update of the memory (master overhead or base mem per proc) in the queue adapter</span>
+            <span class="n">queue_adapter_update</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># When max_timelimit is not set, automatically take the hard timelimit of the queue</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">max_timelimit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">timelimit_hard</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">max_timelimit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_timelimit</span>
+            <span class="c1"># When timelimit_increase is not set, automatically take a tenth of the hard timelimit of the queue</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">timelimit_increase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">timelimit_hard</span> <span class="o">/</span> <span class="mi">10</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">timelimit_increase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timelimit_increase</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timelimit_error</span><span class="p">,</span> <span class="n">TimeCancelError</span><span class="p">):</span>
+                <span class="n">old_timelimit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">timelimit</span>
+                <span class="k">if</span> <span class="n">old_timelimit</span> <span class="o">==</span> <span class="n">max_timelimit</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot increase beyond maximum timelimit (</span><span class="si">{:d}</span><span class="s1"> seconds) set in WalltimeHandler.&#39;</span>
+                                     <span class="s1">&#39;Hard time limit of &#39;</span>
+                                     <span class="s1">&#39;the queue is </span><span class="si">{:d}</span><span class="s1"> seconds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">max_timelimit</span><span class="p">,</span>
+                                                                        <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">timelimit_hard</span><span class="p">))</span>
+                <span class="n">new_timelimit</span> <span class="o">=</span> <span class="n">old_timelimit</span> <span class="o">+</span> <span class="n">timelimit_increase</span>
+                <span class="c1"># If the new timelimit exceeds the max timelimit, just put it to the max timelimit</span>
+                <span class="k">if</span> <span class="n">new_timelimit</span> <span class="o">&gt;</span> <span class="n">max_timelimit</span><span class="p">:</span>
+                    <span class="n">new_timelimit</span> <span class="o">=</span> <span class="n">max_timelimit</span>
+                <span class="n">queue_adapter_update</span><span class="p">[</span><span class="s1">&#39;timelimit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_timelimit</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Should not be here ...&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;errors&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">],</span>
+                    <span class="s1">&#39;actions&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;action_type&#39;</span><span class="p">:</span> <span class="s1">&#39;modify_object&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;fw_spec&#39;</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">},</span>
+                                 <span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="n">queue_adapter_update</span><span class="p">}}]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;This handler cannot be used without the SRC scheme&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WalltimeHandler.has_corrections"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.WalltimeHandler.has_corrections">[docs]</a>    <span class="k">def</span> <span class="nf">has_corrections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div></div>
+
+
+<div class="viewcode-block" id="MemoryHandler"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler">[docs]</a><span class="k">class</span> <span class="nc">MemoryHandler</span><span class="p">(</span><span class="n">SRCErrorHandler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handler for memory infringements of the resource manager. The handler should be able to handle the possible</span>
+<span class="sd">    overhead of the master process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                 <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="sd">        of the queue manager and the queue adapter used.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_rundir: Directory where the job was run.</span>
+<span class="sd">            qout_file: Standard output file of the queue manager.</span>
+<span class="sd">            qerr_file: Standard error file of the queue manager.</span>
+<span class="sd">            queue_adapter: Queue adapter used to submit the job.</span>
+<span class="sd">            max_mem_per_proc_mb: Maximum memory per process in megabytes.</span>
+<span class="sd">            mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.</span>
+<span class="sd">            max_master_mem_overhead_mb: Maximum overhead memory for the master process in megabytes.</span>
+<span class="sd">            master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process</span>
+<span class="sd">                                             in megabytes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MemoryHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span> <span class="o">=</span> <span class="n">job_rundir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qout_file</span> <span class="o">=</span> <span class="n">qout_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qerr_file</span> <span class="o">=</span> <span class="n">qerr_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span> <span class="o">=</span> <span class="n">queue_adapter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_filepaths</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span> <span class="o">=</span> <span class="n">max_mem_per_proc_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span> <span class="o">=</span> <span class="n">mem_per_proc_increase_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span> <span class="o">=</span> <span class="n">max_master_mem_overhead_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span> <span class="o">=</span> <span class="n">master_mem_overhead_increase_mb</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="MemoryHandler.setup_filepaths"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler.setup_filepaths">[docs]</a>    <span class="k">def</span> <span class="nf">setup_filepaths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qout_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qerr_file</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MemoryHandler.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;job_rundir&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span><span class="p">,</span>
+                <span class="s1">&#39;qout_file&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qout_file</span><span class="p">,</span>
+                <span class="s1">&#39;qerr_file&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qerr_file</span><span class="p">,</span>
+                <span class="s1">&#39;queue_adapter&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_mem_per_proc_mb</span><span class="p">,</span>
+                <span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span><span class="p">,</span>
+                <span class="s1">&#39;max_master_mem_overhead_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span><span class="p">,</span>
+                <span class="s1">&#39;master_mem_overhead_increase_mb&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="MemoryHandler.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">qa</span> <span class="o">=</span> <span class="n">QueueAdapter</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;queue_adapter&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">job_rundir</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;job_rundir&#39;</span><span class="p">],</span> <span class="n">qout_file</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;qout_file&#39;</span><span class="p">],</span> <span class="n">qerr_file</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;qerr_file&#39;</span><span class="p">],</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="n">qa</span><span class="p">,</span>
+                   <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_mem_per_proc_mb&#39;</span><span class="p">],</span>
+                   <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;mem_per_proc_increase_mb&#39;</span><span class="p">],</span>
+                   <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;max_master_mem_overhead_mb&#39;</span><span class="p">],</span>
+                   <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;master_mem_overhead_increase_mb&#39;</span><span class="p">])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_fizzled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">handler_priority</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PRIORITY_VERY_LOW</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_handlers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="MemoryHandler.setup"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;SRCScheme&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;SRCScheme&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_rundir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">launch_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_filepaths</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="MemoryHandler.check"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Analyze the stderr and stdout files of the resource manager system.</span>
+        <span class="n">qerr_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">qout_info</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">qerr_info</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">qout_info</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">qerr_info</span> <span class="ow">or</span> <span class="n">qout_info</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">get_parser</span>
+            <span class="n">qtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">QTYPE</span>
+            <span class="n">scheduler_parser</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">(</span><span class="n">qtype</span><span class="p">,</span> <span class="n">err_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qerr_filepath</span><span class="p">,</span>
+                                          <span class="n">out_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qout_filepath</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">scheduler_parser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot find scheduler_parser for qtype </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">qtype</span><span class="p">))</span>
+
+            <span class="n">scheduler_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span> <span class="o">=</span> <span class="n">scheduler_parser</span><span class="o">.</span><span class="n">errors</span>
+
+            <span class="c1">#TODO: handle the cases where it is Master or Slave here ... ?</span>
+            <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">MemoryCancelError</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found memory error.&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">memory_error</span> <span class="o">=</span> <span class="n">error</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">MasterProcessMemoryCancelError</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found master memory error.&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">memory_error</span> <span class="o">=</span> <span class="n">error</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">SlaveProcessMemoryCancelError</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;found slave memory error.&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">memory_error</span> <span class="o">=</span> <span class="n">error</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MemoryHandler.correct"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;More than 1 task found in &quot;memory-fizzled&quot; firework, not yet supported&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;adding SRC detour&#39;</span><span class="p">)</span>
+            <span class="c1"># Information about the update of the memory (master overhead or base mem per proc) in the queue adapter</span>
+            <span class="n">queue_adapter_update</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">memory_error</span><span class="p">,</span> <span class="p">(</span><span class="n">MemoryCancelError</span><span class="p">,</span> <span class="n">SlaveProcessMemoryCancelError</span><span class="p">)):</span>
+                <span class="n">old_mem_per_proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">mem_per_proc</span>
+                <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="n">old_mem_per_proc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span>
+                <span class="n">queue_adapter_update</span><span class="p">[</span><span class="s1">&#39;mem_per_proc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_mem_per_proc</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">memory_error</span><span class="p">,</span> <span class="n">MasterProcessMemoryCancelError</span><span class="p">):</span>
+                <span class="n">old_mem_overhead</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">master_mem_overhead</span>
+                <span class="n">new_mem_overhead</span> <span class="o">=</span> <span class="n">old_mem_overhead</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">master_mem_overhead_increase_mb</span>
+                <span class="k">if</span> <span class="n">new_mem_overhead</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;New master memory overhead </span><span class="si">{:d}</span><span class="s1"> is larger than &#39;</span>
+                                     <span class="s1">&#39;max master memory overhead </span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">new_mem_overhead</span><span class="p">,</span>
+                                                                              <span class="bp">self</span><span class="o">.</span><span class="n">max_master_mem_overhead_mb</span><span class="p">))</span>
+                <span class="n">queue_adapter_update</span><span class="p">[</span><span class="s1">&#39;master_mem_overhead&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_mem_overhead</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Should not be here ...&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;errors&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">],</span>
+                    <span class="s1">&#39;actions&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;action_type&#39;</span><span class="p">:</span> <span class="s1">&#39;modify_object&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;fw_spec&#39;</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">},</span>
+                                 <span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="n">queue_adapter_update</span><span class="p">}}]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;This handler cannot be used without the SRC scheme&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MemoryHandler.has_corrections"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.MemoryHandler.has_corrections">[docs]</a>    <span class="k">def</span> <span class="nf">has_corrections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div></div>
+
+
+<div class="viewcode-block" id="UltimateMemoryHandler"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.UltimateMemoryHandler">[docs]</a><span class="k">class</span> <span class="nc">UltimateMemoryHandler</span><span class="p">(</span><span class="n">MemoryHandler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handler for infringements of the resource manager. If no memory error is found,</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+                 <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
+<span class="sd">        of the queue manager and the queue adapter used.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_rundir: Directory where the job was run.</span>
+<span class="sd">            qout_file: Standard output file of the queue manager.</span>
+<span class="sd">            qerr_file: Standard error file of the queue manager.</span>
+<span class="sd">            queue_adapter: Queue adapter used to submit the job.</span>
+<span class="sd">            max_mem_per_proc_mb: Maximum memory per process in megabytes.</span>
+<span class="sd">            mem_per_proc_increase_mb: Amount of memory to increase the memory per process in megabytes.</span>
+<span class="sd">            max_master_mem_overhead_mb: Maximum overhead memory for the master process in megabytes.</span>
+<span class="sd">            master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process</span>
+<span class="sd">                                             in megabytes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">UltimateMemoryHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">handler_priority</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PRIORITY_LAST</span>
+
+<div class="viewcode-block" id="UltimateMemoryHandler.check"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.UltimateMemoryHandler.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mem_check</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">UltimateMemoryHandler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mem_check</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;This error should have been caught by a standard MemoryHandler ...&#39;</span><span class="p">)</span>
+        <span class="c1">#TODO: Do we have some check that we can do here ?</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="UltimateMemoryHandler.correct"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.handlers.UltimateMemoryHandler.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_fw</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fw_to_check</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;More than 1 task found in &quot;memory-fizzled&quot; firework, not yet supported&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;This error should have been caught by a standard MemoryHandler ...&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue_errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Queue errors were found ... these should be handled properly by another handler&#39;</span><span class="p">)</span>
+            <span class="c1"># Information about the update of the memory (base mem per proc) in the queue adapter</span>
+            <span class="n">queue_adapter_update</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">old_mem_per_proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue_adapter</span><span class="o">.</span><span class="n">mem_per_proc</span>
+            <span class="n">new_mem_per_proc</span> <span class="o">=</span> <span class="n">old_mem_per_proc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mem_per_proc_increase_mb</span>
+            <span class="n">queue_adapter_update</span><span class="p">[</span><span class="s1">&#39;mem_per_proc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_mem_per_proc</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;errors&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">],</span>
+                    <span class="s1">&#39;actions&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;action_type&#39;</span><span class="p">:</span> <span class="s1">&#39;modify_object&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;fw_spec&#39;</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">},</span>
+                                 <span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="n">queue_adapter_update</span><span class="p">}}]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;This handler cannot be used without the SRC scheme&#39;</span><span class="p">)</span></div></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

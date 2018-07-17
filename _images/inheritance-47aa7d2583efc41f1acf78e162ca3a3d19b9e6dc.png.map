@@ -1,0 +1,7 @@
+<map id="inheritancefff9cf6a43" name="inheritancefff9cf6a43">
+<area shape="rect" id="node1" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" alt="" coords="344,3,541,16"/>
+<area shape="rect" id="node2" href="#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator" target="_top" title="Since the workflow generated for the phonons may by composed by thousands of FWs, the amount of information" alt="" coords="567,16,765,29"/>
+<area shape="rect" id="node4" title="defaultdict(default_factory[, ...]) &#45;&#45;&gt; dict with default factory" alt="" coords="43,16,123,29"/>
+<area shape="rect" id="node5" title="FiretaskBase is used like an abstract class that defines a computing task" alt="" coords="190,29,318,42"/>
+<area shape="rect" id="node6" title="To create a serializable object within FireWorks, you should subclass this" alt="" coords="3,42,164,55"/>
+</map>

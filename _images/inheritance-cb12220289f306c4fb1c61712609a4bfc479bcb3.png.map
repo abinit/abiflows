@@ -1,0 +1,9 @@
+<map id="inheritance27db34a78a" name="inheritance27db34a78a">
+<area shape="rect" id="node1" href="#abiflows.fireworks.tasks.abinit_tasks.AbiFireTask" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.AbiFireTask" alt="" coords="390,11,505,20"/>
+<area shape="rect" id="node4" href="#abiflows.fireworks.tasks.abinit_tasks.DfptTask" target="_top" title="Base Task to handle DFPT calculations" alt="" coords="523,11,632,20"/>
+<area shape="rect" id="node2" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" alt="" coords="237,2,372,11"/>
+<area shape="rect" id="node5" href="#abiflows.fireworks.tasks.abinit_tasks.PhononTask" target="_top" title="Task to handle phonon calculations" alt="" coords="649,11,766,20"/>
+<area shape="rect" id="node6" title="defaultdict(default_factory[, ...]) &#45;&#45;&gt; dict with default factory" alt="" coords="30,11,85,20"/>
+<area shape="rect" id="node7" title="FiretaskBase is used like an abstract class that defines a computing task" alt="" coords="131,20,219,29"/>
+<area shape="rect" id="node8" title="To create a serializable object within FireWorks, you should subclass this" alt="" coords="2,29,113,38"/>
+</map>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>fireworks.utilities.fw_serializers &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for fireworks.utilities.fw_serializers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module aids in serializing and deserializing objects.</span>
+
+<span class="sd">To serialize a FW object, refer to the documentation for the FWSerializable class. To de-serialize</span>
+<span class="sd">an object, refer to the documentation for the FWSerializable class and load_object() method.</span>
+<span class="sd">    - you can de-serialize explicitly, e.g. FWObject.from_dict() to enforce a FWObject instance as the result</span>
+<span class="sd">    - you can de-serialize implicitly, e.g. load_object() to search for the correct Class dynamically</span>
+
+<span class="sd">The implicit method is especially useful if you don&#39;t know in advance which subclass of a base class</span>
+<span class="sd">your serialization might point to. e.g. if you require some type of Quadrilateral, a serialization</span>
+<span class="sd">from your collaborator might point to a Square, Rhombus, or Rectangle, and you might not know which</span>
+<span class="sd">one in advance...</span>
+
+<span class="sd">Some advantages:</span>
+<span class="sd">    - Robust with regard to code refactorings even in implicit loading given certain reasonable</span>
+<span class="sd">        guidelines on fw_name.</span>
+<span class="sd">    - Simple to allow a superclass to define all the serializations for its subclasses, removing</span>
+<span class="sd">        code repetition(in particular, note that from_dict is a class method rather than a static</span>
+<span class="sd">        method, allowing use of self)</span>
+<span class="sd">    - Decorators aid in some of the routine parts of the serialization, such as adding the _fw_name key</span>
+<span class="sd">    - Both JSON and YAML file import/export are naturally and concisely supported within the framework.</span>
+<span class="sd">    - Auto-detect and proper loading of JSON and YAML files</span>
+<span class="sd">    - Proper JSON handling of datetime (both encoding and decoding) and UTF-8 strings</span>
+<span class="sd">    - In some cases, objects can be serialized/deserialized extremely concisely, by use of only</span>
+<span class="sd">        their fw_name (if no parameters are needed to describe the object)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">json</span>  <span class="c1"># note that ujson is faster, but at this time does not support &quot;default&quot; in dumps()</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="c1"># Use CLoader for faster performance where possible.</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">yaml</span> <span class="k">import</span> <span class="n">CLoader</span> <span class="k">as</span> <span class="n">Loader</span><span class="p">,</span> <span class="n">CSafeDumper</span> <span class="k">as</span> <span class="n">Dumper</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">yaml</span> <span class="k">import</span> <span class="n">Loader</span> <span class="k">as</span> <span class="n">Loader</span><span class="p">,</span> <span class="n">SafeDumper</span> <span class="k">as</span> <span class="n">Dumper</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span><span class="p">,</span> <span class="n">MSONable</span>
+
+<span class="kn">from</span> <span class="nn">fireworks.fw_config</span> <span class="k">import</span> <span class="n">FW_NAME_UPDATES</span><span class="p">,</span> <span class="n">YAML_STYLE</span><span class="p">,</span> <span class="n">USER_PACKAGES</span><span class="p">,</span> <span class="n">DECODE_MONTY</span><span class="p">,</span> <span class="n">ENCODE_MONTY</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;Anubhav Jain&#39;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s1">&#39;Copyright 2012, The Materials Project&#39;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.1&#39;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s1">&#39;Anubhav Jain&#39;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s1">&#39;ajain@lbl.gov&#39;</span>
+<span class="n">__date__</span> <span class="o">=</span> <span class="s1">&#39;Dec 13, 2012&#39;</span>
+
+<span class="c1"># TODO: consider *somehow* switching FireWorks to monty serialization. e.g., numpy serialization is better handled.</span>
+
+<span class="n">SAVED_FW_MODULES</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">DATETIME_HANDLER</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">obj</span><span class="p">:</span> <span class="n">obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="n">ENCODING_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">}</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ENCODING_PARAMS</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="n">NUMPY_INSTALLED</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">NUMPY_INSTALLED</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="k">def</span> <span class="nf">recursive_dict</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">preserve_unicode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">ENCODE_MONTY</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;as_dict&#39;</span><span class="p">):</span>  <span class="c1"># compatible with new monty JSONEncoder (MontyEncoder)</span>
+        <span class="k">return</span> <span class="n">recursive_dict</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">as_dict</span><span class="p">(),</span> <span class="n">preserve_unicode</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;to_dict&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">recursive_dict</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">preserve_unicode</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">recursive_dict</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">preserve_unicode</span><span class="p">):</span> <span class="n">recursive_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">preserve_unicode</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">recursive_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">preserve_unicode</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">preserve_unicode</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span> <span class="o">!=</span> <span class="n">obj</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="k">if</span> <span class="n">NUMPY_INSTALLED</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">recursive_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">preserve_unicode</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+
+<span class="c1"># TODO: is reconstitute_dates really needed? Can this method just do everything?</span>
+<span class="k">def</span> <span class="nf">_recursive_load</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;_fw_name&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">MSONable</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;_fw_name&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">load_object</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">DECODE_MONTY</span> <span class="ow">and</span> <span class="s1">&#39;@module&#39;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span> <span class="s1">&#39;@class&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>  <span class="c1"># MontyDecoder compatibility</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="bp">cls</span><span class="o">=</span><span class="n">MontyDecoder</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_recursive_load</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_recursive_load</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># convert String to datetime if really datetime</span>
+            <span class="k">return</span> <span class="n">reconstitute_dates</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1"># convert unicode to ASCII if not really unicode</span>
+            <span class="k">if</span> <span class="n">obj</span> <span class="o">==</span> <span class="n">obj</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">,</span> <span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">obj</span>
+
+
+<span class="k">def</span> <span class="nf">recursive_serialize</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    a decorator to add FW serializations keys</span>
+<span class="sd">    see documentation of FWSerializable for more details</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_decorator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">m_dict</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">m_dict</span> <span class="o">=</span> <span class="n">recursive_dict</span><span class="p">(</span><span class="n">m_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m_dict</span>
+
+    <span class="k">return</span> <span class="n">_decorator</span>
+
+
+<span class="k">def</span> <span class="nf">recursive_deserialize</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    a decorator to add FW serializations keys</span>
+<span class="sd">    see documentation of FWSerializable for more details</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_decorator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">new_args</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">new_args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_recursive_load</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">m_dict</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">new_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m_dict</span>
+
+    <span class="k">return</span> <span class="n">_decorator</span>
+
+
+<span class="k">def</span> <span class="nf">serialize_fw</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    a decorator to add FW serializations keys</span>
+<span class="sd">    see documentation of FWSerializable for more details</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_decorator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">m_dict</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">m_dict</span><span class="p">[</span><span class="s1">&#39;_fw_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_name</span>
+        <span class="k">return</span> <span class="n">m_dict</span>
+
+    <span class="k">return</span> <span class="n">_decorator</span>
+
+
+<span class="nd">@six</span><span class="o">.</span><span class="n">add_metaclass</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">FWSerializable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    To create a serializable object within FireWorks, you should subclass this</span>
+<span class="sd">    class and implement the to_dict() and from_dict() methods.</span>
+
+<span class="sd">    If you want the load_object() implicit de-serialization to work, you must</span>
+<span class="sd">    also:</span>
+<span class="sd">        - Use the @serialize_fw decorator on to_dict()</span>
+<span class="sd">        - Override the _fw_name parameter with a unique key.</span>
+
+<span class="sd">    See documentation of load_object() for more details.</span>
+
+<span class="sd">    The use of @classmethod for from_dict allows you to define a superclass</span>
+<span class="sd">    that implements the to_dict() and from_dict() for all its subclasses.</span>
+
+<span class="sd">    For an example of serialization, see the class QueueAdapterBase.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fw_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fw_name</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">get_default_serialization</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;FWSerializable object did not implement to_dict()!&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_db_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># strictly for pseudo-compatibility with MSONable</span>
+        <span class="c1"># Note that FWSerializable is not MSONable, it uses _fw_name instead of __class__ and</span>
+        <span class="c1"># __module__</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">m_dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;FWSerializable object did not implement from_dict()!&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="n">DATETIME_HANDLER</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns a String representation in the given format</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            f_format (str): the format to output to (default json)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">f_format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="n">DATETIME_HANDLER</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">f_format</span> <span class="o">==</span> <span class="s1">&#39;yaml&#39;</span><span class="p">:</span>
+            <span class="c1"># start with the JSON format, and convert to YAML</span>
+            <span class="k">return</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">default_flow_style</span><span class="o">=</span><span class="n">YAML_STYLE</span><span class="p">,</span>
+                             <span class="n">allow_unicode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">Dumper</span><span class="o">=</span><span class="n">Dumper</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unsupported format </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f_format</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_format</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">f_str</span><span class="p">,</span> <span class="n">f_format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        convert from a String representation to its Object.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            f_str (str): the String representation</span>
+<span class="sd">            f_format (str): serialization format of the String (default json)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            FWSerializable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">f_format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">reconstitute_dates</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f_str</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="n">f_format</span> <span class="o">==</span> <span class="s1">&#39;yaml&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">reconstitute_dates</span><span class="p">(</span>
+                <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f_str</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">Loader</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unsupported format </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f_format</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">f_format</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write a serialization of this object to a file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filename(str): filename to write to</span>
+<span class="sd">            f_format (str): serialization format, default checks the filename extension</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">f_format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f_format</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">ENCODING_PARAMS</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_format</span><span class="p">(</span><span class="n">f_format</span><span class="o">=</span><span class="n">f_format</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">f_format</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load a serialization of this object from a file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filename (str): filename to read</span>
+<span class="sd">            f_format (str): serialization format, default checks the filename extension</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            FWSerializable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">f_format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f_format</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">ENCODING_PARAMS</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_format</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">f_format</span><span class="o">=</span><span class="n">f_format</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">fw_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fw_obj</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+
+<span class="c1"># TODO: make this quicker the first time around</span>
+<span class="k">def</span> <span class="nf">load_object</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates an instantiation of a class based on a dictionary representation. We implicitly</span>
+<span class="sd">    determine the Class through introspection along with information in the dictionary.</span>
+
+<span class="sd">    We search for a class with the _fw_name property equal to obj_dict[&#39;_fw_name&#39;]</span>
+<span class="sd">    If the @module key is set, that module is checked first for a matching class</span>
+<span class="sd">    to improve speed of lookup.</span>
+<span class="sd">    Afterwards, the modules in the USER_PACKAGES global parameter are checked.</span>
+
+<span class="sd">    Refactoring class names, module names, etc. will not break object loading</span>
+<span class="sd">    as long as:</span>
+
+<span class="sd">    i) the _fw_name property is maintained the same AND</span>
+<span class="sd">    ii) the refactored module is kept within USER_PACKAGES</span>
+
+<span class="sd">    You can get around these limitations if you really want:</span>
+<span class="sd">    i) If you want to change the fw_name of an object you can set the FW_NAME_UPDATES key</span>
+<span class="sd">    ii) If you want to put a refactored module in a new place add an entry to USER_PACKAGES</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj_dict (dict): the dict representation of the class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># override the name in the obj_dict if there&#39;s an entry in FW_NAME_UPDATES</span>
+    <span class="n">fw_name</span> <span class="o">=</span> <span class="n">FW_NAME_UPDATES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">[</span><span class="s1">&#39;_fw_name&#39;</span><span class="p">],</span> <span class="n">obj_dict</span><span class="p">[</span><span class="s1">&#39;_fw_name&#39;</span><span class="p">])</span>
+    <span class="n">obj_dict</span><span class="p">[</span><span class="s1">&#39;_fw_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fw_name</span>
+
+    <span class="c1"># check for explicit serialization, e.g. {{fireworks.tasks.MyTask}} - based on pymatgen method</span>
+    <span class="k">if</span> <span class="n">fw_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;{{&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fw_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;}}&#39;</span><span class="p">):</span>
+        <span class="n">modname</span><span class="p">,</span> <span class="n">classname</span> <span class="o">=</span> <span class="n">fw_name</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">modname</span><span class="p">,</span> <span class="nb">globals</span><span class="p">(),</span> <span class="nb">locals</span><span class="p">(),</span> <span class="p">[</span><span class="n">classname</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">classname</span><span class="p">):</span>
+            <span class="n">cls_</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">classname</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">cls_</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">)</span>
+
+    <span class="c1"># first try to load from known location</span>
+    <span class="k">if</span> <span class="n">fw_name</span> <span class="ow">in</span> <span class="n">SAVED_FW_MODULES</span><span class="p">:</span>
+        <span class="n">m_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">SAVED_FW_MODULES</span><span class="p">[</span><span class="n">fw_name</span><span class="p">])</span>
+        <span class="n">m_object</span> <span class="o">=</span> <span class="n">_search_module_for_obj</span><span class="p">(</span><span class="n">m_module</span><span class="p">,</span> <span class="n">obj_dict</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m_object</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">m_object</span>
+
+    <span class="c1"># failing that, look for the object within all of USER_PACKAGES</span>
+    <span class="c1"># this will be slow, but only needed the first time</span>
+
+    <span class="n">found_objects</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># used to make sure we don&#39;t find multiple hits</span>
+    <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">USER_PACKAGES</span><span class="p">:</span>
+        <span class="n">root_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">loader</span><span class="p">,</span> <span class="n">mod_name</span><span class="p">,</span> <span class="n">is_pkg</span> <span class="ow">in</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">walk_packages</span><span class="p">(</span>
+                <span class="n">root_module</span><span class="o">.</span><span class="n">__path__</span><span class="p">,</span> <span class="n">package</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">m_module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">mod_name</span><span class="p">)</span>
+                <span class="n">m_object</span> <span class="o">=</span> <span class="n">_search_module_for_obj</span><span class="p">(</span><span class="n">m_module</span><span class="p">,</span> <span class="n">obj_dict</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">m_object</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">found_objects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">m_object</span><span class="p">,</span> <span class="n">mod_name</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="kn">import</span> <span class="nn">warnings</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> in </span><span class="si">%s</span><span class="s2"> cannot be loaded because of </span><span class="si">%s</span><span class="s2">. Skipping..&quot;</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="n">m_object</span><span class="p">,</span> <span class="n">mod_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">)))</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found_objects</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">SAVED_FW_MODULES</span><span class="p">[</span><span class="n">fw_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">found_objects</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">found_objects</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">found_objects</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s1">&#39;load_object() found multiple objects with cls._fw_name </span><span class="si">{}</span><span class="s1"> -- </span><span class="si">{}</span><span class="s1">&#39;</span>
+            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_name</span><span class="p">,</span> <span class="n">found_objects</span><span class="p">))</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;load_object() could not find a class with cls._fw_name </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fw_name</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">load_object_from_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">f_format</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implicitly load an object from a file. just a friendly wrapper to</span>
+<span class="sd">    load_object()</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename (str): the filename to load an object from</span>
+<span class="sd">        f_format (str): the serialization format (default is auto-detect based on</span>
+<span class="sd">            filename extension)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">m_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">f_format</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">f_format</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">ENCODING_PARAMS</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">f_format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="n">m_dict</span> <span class="o">=</span> <span class="n">reconstitute_dates</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()))</span>
+        <span class="k">elif</span> <span class="n">f_format</span> <span class="o">==</span> <span class="s1">&#39;yaml&#39;</span><span class="p">:</span>
+            <span class="n">m_dict</span> <span class="o">=</span> <span class="n">reconstitute_dates</span><span class="p">(</span><span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">Loader</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unknown file format </span><span class="si">{}</span><span class="s1"> cannot be loaded!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f_format</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">load_object</span><span class="p">(</span><span class="n">m_dict</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_search_module_for_obj</span><span class="p">(</span><span class="n">m_module</span><span class="p">,</span> <span class="n">obj_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    internal method that looks in a module for a class with a given _fw_name</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">obj_name</span> <span class="o">=</span> <span class="n">obj_dict</span><span class="p">[</span><span class="s1">&#39;_fw_name&#39;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">m_module</span><span class="p">):</span>
+        <span class="c1"># check if the member is a Class matching our description</span>
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">m_module</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">and</span> \
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;_fw_name&#39;</span><span class="p">,</span> <span class="n">get_default_serialization</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span> <span class="o">==</span> <span class="n">obj_name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">reconstitute_dates</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">obj_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">reconstitute_dates</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">reconstitute_dates</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj_dict</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S&quot;</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">obj_dict</span>
+
+
+<span class="k">def</span> <span class="nf">get_default_serialization</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="n">root_mod</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">root_mod</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot get default serialization; try &quot;</span>
+                         <span class="s2">&quot;instantiating your object from a different module &quot;</span>
+                         <span class="s2">&quot;from which it is defined rather than defining your &quot;</span>
+                         <span class="s2">&quot;object in the __main__ (running) module.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">root_mod</span> <span class="o">+</span> <span class="s1">&#39;::&#39;</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>  <span class="c1"># e.g. fireworks.ABC</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

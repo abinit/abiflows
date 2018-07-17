@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.utils.task_history &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.fireworks.utils.task_history</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Task history related objects</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span><span class="p">,</span> <span class="n">jsanitize</span><span class="p">,</span> <span class="n">MSONable</span>
+<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">pmg_serialize</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TaskHistory"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory">[docs]</a><span class="k">class</span> <span class="nc">TaskHistory</span><span class="p">(</span><span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">,</span> <span class="n">MSONable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    History class for tracking the creation and actions performed during a task.</span>
+<span class="sd">    The objects provided should be PGMSONable, thus dicts, lists or PGMSONable objects.</span>
+<span class="sd">    The expected items are dictionaries, transformations, corrections, autoparal, restart/reset</span>
+<span class="sd">    and initializations (when factories will be handled).</span>
+<span class="sd">    Possibly, the first item should contain information about the starting point of the task.</span>
+<span class="sd">    This object will be forwarded during task restarts and resets, in order to keep track of the full history of the</span>
+<span class="sd">    task.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TaskHistory.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.as_dict">[docs]</a>    <span class="nd">@pmg_serialize</span>
+    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;as_dict&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TaskHistory.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">dec</span> <span class="o">=</span> <span class="n">MontyDecoder</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">([</span><span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">]])</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_initialization"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_initialization">[docs]</a>    <span class="k">def</span> <span class="nf">log_initialization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">details</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;task_class&#39;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">initialization_info</span><span class="p">:</span>
+            <span class="n">details</span><span class="p">[</span><span class="s1">&#39;initialization_info&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">initialization_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">INITIALIZED</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="n">details</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_corrections"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_corrections">[docs]</a>    <span class="k">def</span> <span class="nf">log_corrections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corrections</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">CORRECTIONS</span><span class="p">,</span> <span class="n">corrections</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_restart"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_restart">[docs]</a>    <span class="k">def</span> <span class="nf">log_restart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restart_info</span><span class="p">,</span> <span class="n">local_restart</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">RESTART</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">restart_info</span><span class="o">=</span><span class="n">restart_info</span><span class="p">,</span> <span class="n">local_restart</span><span class="o">=</span><span class="n">local_restart</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_autoparal"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_autoparal">[docs]</a>    <span class="k">def</span> <span class="nf">log_autoparal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optconf</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">AUTOPARAL</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;optconf&#39;</span><span class="p">:</span> <span class="n">optconf</span><span class="p">}))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_unconverged"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_unconverged">[docs]</a>    <span class="k">def</span> <span class="nf">log_unconverged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">UNCONVERGED</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_finalized"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_finalized">[docs]</a>    <span class="k">def</span> <span class="nf">log_finalized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">final_input</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">details</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">total_run_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_total_run_time</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">final_input</span><span class="p">:</span>
+            <span class="n">details</span><span class="p">[</span><span class="s1">&#39;final_input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">FINALIZED</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="n">details</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_converge_params"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_converge_params">[docs]</a>    <span class="k">def</span> <span class="nf">log_converge_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unconverged_params</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">):</span>
+        <span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">new_value</span> <span class="ow">in</span> <span class="n">unconverged_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">old_value</span><span class="o">=</span><span class="n">abiinput</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="s1">&#39;Default&#39;</span><span class="p">),</span> <span class="n">new_value</span><span class="o">=</span><span class="n">new_value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">UNCONVERGED_PARAMS</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">params</span><span class="p">}))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_error"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_error">[docs]</a>    <span class="k">def</span> <span class="nf">log_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
+        <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+        <span class="n">event_details</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">stacktrace</span><span class="o">=</span><span class="n">tb</span><span class="p">)</span>
+        <span class="c1"># If the exception is serializable, save its details</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">exception_details</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">exception_details</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Exception couldn&#39;t be serialized: </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="n">exception_details</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">exception_details</span><span class="p">:</span>
+            <span class="n">event_details</span><span class="p">[</span><span class="s1">&#39;exception_details&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">exception_details</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="n">event_details</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TaskHistory.log_abinit_stop"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.log_abinit_stop">[docs]</a>    <span class="k">def</span> <span class="nf">log_abinit_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TaskEvent</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">ABINIT_STOP</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;run_time&#39;</span><span class="p">:</span> <span class="n">run_time</span><span class="p">}))</span></div>
+
+
+<div class="viewcode-block" id="TaskHistory.get_events_by_types"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.get_events_by_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_events_by_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the events in history of the selected types. types can be a single type or a list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">types</span> <span class="o">=</span> <span class="n">types</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[</span><span class="n">types</span><span class="p">]</span>
+
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">event_type</span> <span class="ow">in</span> <span class="n">types</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">events</span></div>
+
+<div class="viewcode-block" id="TaskHistory.get_total_run_time"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskHistory.get_total_run_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_total_run_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates total run time based summing the run times saved in the abinit stop event.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">total_run_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">te</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_events_by_types</span><span class="p">(</span><span class="n">TaskEvent</span><span class="o">.</span><span class="n">ABINIT_STOP</span><span class="p">):</span>
+            <span class="n">run_time</span> <span class="o">=</span> <span class="n">te</span><span class="o">.</span><span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;run_time&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">run_time</span><span class="p">:</span>
+                <span class="n">total_run_time</span> <span class="o">+=</span> <span class="n">run_time</span>
+
+        <span class="k">return</span> <span class="n">total_run_time</span></div></div>
+
+
+<div class="viewcode-block" id="TaskEvent"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskEvent">[docs]</a><span class="k">class</span> <span class="nc">TaskEvent</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object used to categorize the events in the TaskHistory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">INITIALIZED</span> <span class="o">=</span> <span class="s1">&#39;initialized&#39;</span>
+    <span class="n">CORRECTIONS</span> <span class="o">=</span> <span class="s1">&#39;corrections&#39;</span>
+    <span class="n">RESTART</span> <span class="o">=</span> <span class="s1">&#39;restart&#39;</span>
+    <span class="n">AUTOPARAL</span> <span class="o">=</span> <span class="s1">&#39;autoparal&#39;</span>
+    <span class="n">UNCONVERGED</span> <span class="o">=</span> <span class="s1">&#39;unconverged&#39;</span>
+    <span class="n">FINALIZED</span> <span class="o">=</span> <span class="s1">&#39;finalized&#39;</span>
+    <span class="n">UNCONVERGED_PARAMS</span> <span class="o">=</span> <span class="s1">&#39;unconverged parameters&#39;</span>
+    <span class="n">ERROR</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span>
+    <span class="n">ABINIT_STOP</span> <span class="o">=</span> <span class="s1">&#39;abinit stop&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_type</span> <span class="o">=</span> <span class="n">event_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">details</span> <span class="o">=</span> <span class="n">details</span>
+
+<div class="viewcode-block" id="TaskEvent.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskEvent.as_dict">[docs]</a>    <span class="nd">@pmg_serialize</span>
+    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">event_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">details</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;details&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">jsanitize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">details</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="TaskEvent.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.task_history.TaskEvent.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">dec</span> <span class="o">=</span> <span class="n">MontyDecoder</span><span class="p">()</span>
+        <span class="n">details</span> <span class="o">=</span> <span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;details&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s1">&#39;details&#39;</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">event_type</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;event_type&#39;</span><span class="p">],</span> <span class="n">details</span><span class="o">=</span><span class="n">details</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

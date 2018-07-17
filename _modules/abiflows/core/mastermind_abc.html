@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.core.mastermind_abc &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.core.mastermind_abc</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Abstract base classes for controllers, monitors, and other possible tools/utils/objects used to manage, correct,</span>
+<span class="sd">monitor and check tasks, events, results, objects, ...</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">add_metaclass</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">PRIORITIES</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;PRIORITY_HIGHEST&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_VERY_HIGH&#39;</span><span class="p">:</span> <span class="mi">875</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_HIGH&#39;</span><span class="p">:</span> <span class="mi">750</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_MEDIUM_HIGH&#39;</span><span class="p">:</span> <span class="mi">625</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_MEDIUM&#39;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_MEDIUM_LOW&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_LOW&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_VERY_LOW&#39;</span><span class="p">:</span> <span class="mi">125</span><span class="p">,</span>
+              <span class="s1">&#39;PRIORITY_LOWEST&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+<span class="n">PRIORITY_HIGHEST</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_HIGHEST&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_VERY_HIGH</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_VERY_HIGH&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_HIGH</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_HIGH&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_MEDIUM_HIGH</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_MEDIUM_HIGH&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_MEDIUM</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_MEDIUM&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_MEDIUM_LOW</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_MEDIUM_LOW&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_LOW</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_LOW&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_VERY_LOW</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_VERY_LOW&#39;</span><span class="p">]</span>
+<span class="n">PRIORITY_LOWEST</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="s1">&#39;PRIORITY_LOWEST&#39;</span><span class="p">]</span>
+
+
+<span class="c1">#TODO: find a good name (is barrier ok ?). This is a container of controllers ...</span>
+<span class="c1"># class ControlStep(MSONable):</span>
+<span class="c1"># class ControlStage(MSONable):</span>
+<span class="c1"># class ControlStation(MSONable):</span>
+<span class="c1"># class ControlGate(MSONable):</span>
+<span class="c1"># class ControlProcess(MSONable):</span>
+<span class="c1"># class ControlBarrier(MSONable):</span>
+<div class="viewcode-block" id="ControlProcedure"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure">[docs]</a><span class="k">class</span> <span class="nc">ControlProcedure</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controllers</span><span class="p">,</span> <span class="n">monitors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sorting</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_controllers</span><span class="p">(</span><span class="n">controllers</span><span class="o">=</span><span class="n">controllers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlled_item_type</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ControlProcedure.set_controlled_item_type"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure.set_controlled_item_type">[docs]</a>    <span class="k">def</span> <span class="nf">set_controlled_item_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controlled_item_type</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controlled_item_type</span> <span class="o">=</span> <span class="n">controlled_item_type</span></div>
+
+<div class="viewcode-block" id="ControlProcedure.setup_controllers"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure.setup_controllers">[docs]</a>    <span class="k">def</span> <span class="nf">setup_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controlled_item_type</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grouped_controllers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">controllers</span> <span class="o">=</span> <span class="p">[</span><span class="n">controller</span> <span class="k">for</span> <span class="n">controller</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span>
+                       <span class="k">if</span> <span class="n">controlled_item_type</span> <span class="ow">in</span> <span class="n">controller</span><span class="o">.</span><span class="n">controlled_item_types</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">controller</span> <span class="ow">in</span> <span class="n">controllers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">controller</span><span class="o">.</span><span class="n">priority</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped_controllers</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">grouped_controllers</span><span class="p">[</span><span class="n">controller</span><span class="o">.</span><span class="n">priority</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">controller</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">grouped_controllers</span><span class="p">[</span><span class="n">controller</span><span class="o">.</span><span class="n">priority</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">controller</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priorities</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grouped_controllers</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ncontrollers</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped_controllers</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span></div>
+
+<div class="viewcode-block" id="ControlProcedure.add_controller"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure.add_controller">[docs]</a>    <span class="k">def</span> <span class="nf">add_controller</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_controllers</span><span class="p">(</span><span class="n">controllers</span><span class="o">=</span><span class="p">[</span><span class="n">controller</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ControlProcedure.add_controllers"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure.add_controllers">[docs]</a>    <span class="k">def</span> <span class="nf">add_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controllers</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">controllers</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">controller</span> <span class="ow">in</span> <span class="n">controllers</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">controller</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">Controller</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;One of the controllers is not a subclass of Controller&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">controllers</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">controllers</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">Controller</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">controllers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;controllers should be either a list of subclasses of Controller or a single &#39;</span>
+                             <span class="s1">&#39;subclass of Controller&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ControlProcedure.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_controllers</span><span class="p">(</span><span class="n">controlled_item_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">controlled_item_type</span><span class="p">)</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="n">ControlReport</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncontrollers</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ControlReport</span><span class="o">.</span><span class="n">UNRECOVERABLE</span>
+            <span class="k">return</span> <span class="n">report</span>
+        <span class="k">for</span> <span class="n">priority</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">priorities</span><span class="p">:</span>
+            <span class="n">skip_lower_priority</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="c1">#skip_other_controllers = False</span>
+            <span class="k">for</span> <span class="n">controller</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grouped_controllers</span><span class="p">[</span><span class="n">priority</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">controller</span><span class="o">.</span><span class="n">_only_unfinalized</span> <span class="ow">and</span> <span class="n">report</span><span class="o">.</span><span class="n">finalized</span><span class="p">:</span>
+                    <span class="c1">#TODO: clean up here ... otherwise the ultimate could always be applied .....</span>
+                    <span class="k">continue</span>
+                <span class="n">controller_note</span> <span class="o">=</span> <span class="n">controller</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="c1"># TODO: clean up this ...</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">add_controller_note</span><span class="p">(</span><span class="n">controller_note</span><span class="o">=</span><span class="n">controller_note</span><span class="p">)</span>
+            <span class="c1">#    if controller_note.state in ControllerNote.ERROR_STATES:</span>
+            <span class="c1">#        skip_other_controllers = True</span>
+            <span class="c1">#        break</span>
+                <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ControlReport</span><span class="o">.</span><span class="n">RECOVERABLE</span> <span class="ow">and</span> <span class="n">controller</span><span class="o">.</span><span class="n">skip_lower_priority_controllers</span><span class="p">:</span>
+                    <span class="n">skip_lower_priority</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">skip_lower_priority</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="c1">#if skip_other_controllers:</span>
+            <span class="c1">#    break</span>
+        <span class="c1"># if report.finalized and self.cleaner is not None:</span>
+        <span class="c1">#     self.cleaner.clean()</span>
+        <span class="k">return</span> <span class="n">report</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ncontrollers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ncontrollers</span>
+
+<div class="viewcode-block" id="ControlProcedure.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">dec</span> <span class="o">=</span> <span class="n">MontyDecoder</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">controllers</span><span class="o">=</span><span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;controllers&#39;</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="ControlProcedure.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlProcedure.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;controllers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">controller</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">controller</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span><span class="p">]}</span></div></div>
+
+
+<div class="viewcode-block" id="ControlledItemType"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType">[docs]</a><span class="k">class</span> <span class="nc">ControlledItemType</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="n">ALLOWED_CONTROL_ITEMS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;TASK&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;READY&#39;</span><span class="p">,</span> <span class="s1">&#39;NOT_READY&#39;</span><span class="p">,</span> <span class="s1">&#39;VALID&#39;</span><span class="p">],</span>
+                             <span class="s1">&#39;TASK_BEFORE_EXECUTION&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;READY&#39;</span><span class="p">,</span> <span class="s1">&#39;NOT_READY&#39;</span><span class="p">],</span>
+                             <span class="s1">&#39;TASK_RUNNING&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;VALID&#39;</span><span class="p">,</span> <span class="s1">&#39;RECOVERABLE&#39;</span><span class="p">],</span>
+                             <span class="s1">&#39;TASK_ABORTED&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;RECOVERABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;UNRECOVERABLE&#39;</span><span class="p">],</span>
+                             <span class="s1">&#39;TASK_FAILED&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;RECOVERABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;UNRECOVERABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;UNKNOWN_REASON&#39;</span><span class="p">],</span>
+                             <span class="s1">&#39;TASK_COMPLETED&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;VALID&#39;</span><span class="p">,</span> <span class="s1">&#39;RECOVERABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;UNRECOVERABLE&#39;</span><span class="p">],</span>
+                             <span class="s1">&#39;FILE&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;MISSING&#39;</span><span class="p">,</span> <span class="s1">&#39;EMPTY&#39;</span><span class="p">,</span> <span class="s1">&#39;CORRUPTED&#39;</span><span class="p">,</span> <span class="s1">&#39;ERRONEOUS&#39;</span><span class="p">,</span> <span class="s1">&#39;VALID&#39;</span><span class="p">],</span>
+                             <span class="s1">&#39;OBJECT&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CORRUPTED&#39;</span><span class="p">,</span> <span class="s1">&#39;ERRONEOUS&#39;</span><span class="p">,</span> <span class="s1">&#39;VALID&#39;</span><span class="p">]}</span>
+
+    <span class="c1">#     # Status of a controlled failed task</span>
+    <span class="c1"># TASK_FAILED_UNRECOVERABLE_STATUS = &#39;TASK_FAILED_UNRECOVERABLE&#39;</span>
+    <span class="c1"># TASK_FAILED_UNKNOWN_REASON_STATUS = &#39;TASK_FAILED_UNKNOWN_REASON&#39;</span>
+    <span class="c1"># TASK_FAILED_RECOVERABLE_STATUS = &#39;TASK_FAILED_RECOVERABLE&#39;</span>
+    <span class="c1">#</span>
+    <span class="c1"># # Status of a controlled stopped task</span>
+    <span class="c1"># TASK_STOPPED_UNRECOVERABLE_STATUS = &#39;TASK_STOPPED_UNRECOVERABLE&#39;</span>
+    <span class="c1"># TASK_STOPPED_RECOVERABLE_STATUS = &#39;TASK_STOPPED_RECOVERABLE&#39;</span>
+    <span class="c1">#</span>
+    <span class="c1"># # Status of a controlled completed task</span>
+    <span class="c1"># TASK_COMPLETED_UNRECOVERABLE_STATUS = &#39;TASK_COMPLETED_UNRECOVERABLE&#39;</span>
+    <span class="c1"># TASK_COMPLETED_RECOVERABLE_STATUS = &#39;TASK_COMPLETED_RECOVERABLE&#39;</span>
+    <span class="c1">#</span>
+    <span class="c1"># # Status of a controlled file</span>
+    <span class="c1"># FILE_MISSING_STATUS = &#39;FILE_MISSING&#39;</span>
+    <span class="c1"># FILE_EMPTY_STATUS = &#39;FILE_EMPTY&#39;</span>
+    <span class="c1"># FILE_CORRUPTED_STATUS = &#39;FILE_CORRUPTED&#39;</span>
+    <span class="c1"># FILE_ERRONEOUS_STATUS = &#39;FILE_ERRONEOUS&#39;</span>
+    <span class="c1"># FILE_CORRECT_STATUS = &#39;FILE_CORRECT&#39;</span>
+    <span class="c1">#</span>
+    <span class="c1"># # Status of a controlled object</span>
+    <span class="c1"># OBJECT_CORRUPTED_STATUS = &#39;OBJECT_CORRUPTED&#39;</span>
+    <span class="c1"># OBJECT_ERRONEOUS_STATUS = &#39;OBJECT_ERRONEOUS&#39;</span>
+    <span class="c1"># OBJECT_CORRECT_STATUS = &#39;OBJECT_CORRECT&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_type</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_item</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="n">item_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ALLOWED_CONTROL_ITEMS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;item_type&quot; should be one of the following :&#39;</span>
+                             <span class="s1">&#39; </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ALLOWED_CONTROL_ITEMS</span><span class="p">])))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_item_type</span> <span class="o">=</span> <span class="n">item_type</span>
+
+<div class="viewcode-block" id="ControlledItemType.task"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.task">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">task</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="s1">&#39;TASK&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ControlledItemType.task_running"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.task_running">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">task_running</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="s1">&#39;TASK_RUNNING&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ControlledItemType.task_aborted"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.task_aborted">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">task_aborted</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="s1">&#39;TASK_ABORTED&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ControlledItemType.task_failed"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.task_failed">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">task_failed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="s1">&#39;TASK_FAILED&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ControlledItemType.task_completed"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.task_completed">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">task_completed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="s1">&#39;TASK_COMPLETED&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ControlledItemType.file"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.file">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">file</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="s1">&#39;FILE&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ControlledItemType.object"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.object">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">object</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="s1">&#39;OBJECT&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item_type</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_item_type</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item_type</span>
+
+<div class="viewcode-block" id="ControlledItemType.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;item_type&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ControlledItemType.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlledItemType.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;item_type&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item_type</span><span class="p">}</span></div></div>
+
+
+
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Monitor">[docs]</a><span class="nd">@add_metaclass</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Monitor</span><span class="p">:</span>
+    <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Controller"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Controller">[docs]</a><span class="nd">@add_metaclass</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">)</span>
+<span class="c1">#class ControlStep(MSONable):</span>
+<span class="k">class</span> <span class="nc">Controller</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for controlling a task, an event, a result, an output, an object, ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_priority</span> <span class="o">=</span> <span class="n">PRIORITY_MEDIUM</span>
+    <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#TODO: try to make this cleaner ...</span>
+    <span class="n">_only_unfinalized</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># Types of controllers</span>
+    <span class="c1"># Combinations of the following are possible, e.g. some controller might be a monitor, a handler, a manager and a</span>
+    <span class="c1">#  validator at the same time</span>
+
+    <span class="c1"># 2. Handler : Whether this controller is supposed to handle errors</span>
+    <span class="c1">#              States that handlers can specify in their note : &quot;NOTHING_FOUND&quot;, &quot;ERROR_UNRECOVERABLE&quot;,</span>
+    <span class="c1">#                                                               &quot;ERROR_NOFIX&quot;, &quot;ERROR_FIXSTOP&quot;, &quot;ERROR_FIXCONTINUE&quot;</span>
+    <span class="c1"># is_handler = False</span>
+
+    <span class="c1"># 4. Validator : Whether this controller is used to validate the results/tasks/...</span>
+    <span class="c1">#                States that validators can specify in their note : &quot;OK&quot;, &quot;NOT_OK&quot;</span>
+    <span class="c1"># is_validator = False</span>
+    <span class="c1"># NB: - The distinction between handler and manager is thin and is actually more up to the user. At this moment,</span>
+    <span class="c1">#        they both are at the exact same level in the implementation ...</span>
+
+    <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Controller.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Controller.from_dict">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Controller.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Controller.as_dict">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Controller.process"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Controller.process">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Main function used to make the actual control/check of a list of inputs/outputs.</span>
+<span class="sd">        The function should return a ControllerNote object containing the main conclusion of the controller, i.e.</span>
+<span class="sd">        whether something important has been detected, as well as the possible actions/corrections to be done</span>
+<span class="sd">        in order to carry on/continue/restart a task.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Controller.set_priority"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Controller.set_priority">[docs]</a>    <span class="k">def</span> <span class="nf">set_priority</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">priority</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">priority</span> <span class="ow">in</span> <span class="n">PRIORITIES</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_priority</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="n">priority</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">priority</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">priority</span> <span class="o">&lt;=</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_priority</span> <span class="o">=</span> <span class="n">priority</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;priority&quot; in set_priority should be either an integer between 0 and 1000 or &#39;</span>
+                             <span class="s1">&#39;one of the following : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">PRIORITIES</span><span class="o">.</span><span class="n">keys</span><span class="p">()])))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">priority</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_priority</span>
+
+    <span class="nd">@priority</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">priority</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">priority</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">priority</span> <span class="ow">in</span> <span class="n">PRIORITIES</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_priority</span> <span class="o">=</span> <span class="n">PRIORITIES</span><span class="p">[</span><span class="n">priority</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">priority</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">priority</span> <span class="o">&lt;=</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_priority</span> <span class="o">=</span> <span class="n">priority</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;priority&quot; should be either an integer between 0 and 1000 or &#39;</span>
+                             <span class="s1">&#39;one of the following : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">PRIORITIES</span><span class="o">.</span><span class="n">keys</span><span class="p">()])))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">controlled_item_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controlled_item_types</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_remaining_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_lower_priority_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">validated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Cleaner"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Cleaner">[docs]</a><span class="k">class</span> <span class="nc">Cleaner</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dirs_and_patterns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes a Cleaner object used to delete files. The cleaner takes a simple list of dict described below</span>
+<span class="sd">        :param dirs_and_patterns: list of dicts with keys &quot;directory&quot; and &quot;patterns&quot;. for each item in the list, any</span>
+<span class="sd">                                  file or directory present in the &quot;directory&quot; and matching one of the &quot;patterns&quot; will</span>
+<span class="sd">                                  be deleted.</span>
+<span class="sd">        Example : dirs_and_patterns = [{&#39;directory&#39;: &#39;out&#39;,</span>
+<span class="sd">                                        &#39;patterns&#39;: [&#39;*.log&#39;, &#39;*.backup&#39;]},</span>
+<span class="sd">                                       {&#39;directory&#39;: &#39;tmp&#39;,</span>
+<span class="sd">                                        &#39;patterns&#39;: [&#39;*&#39;]}]</span>
+<span class="sd">                  will remove all files ending with &quot;.log&quot; or &quot;.backup&quot; in the &quot;out&quot; directory and all files in the</span>
+<span class="sd">                  &quot;tmp&quot; directory.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">dir_and_patterns</span> <span class="ow">in</span> <span class="n">dirs_and_patterns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">dir_and_patterns</span><span class="p">[</span><span class="s1">&#39;directory&#39;</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The definition of the directories to clean should be as relative paths and not &#39;</span>
+                                 <span class="s1">&#39;absolute paths&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirs_and_patterns</span> <span class="o">=</span> <span class="n">dirs_and_patterns</span>
+
+<div class="viewcode-block" id="Cleaner.clean"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Cleaner.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_directory</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">root_directory</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The root directory to clean should be defined with an absolute path&#39;</span><span class="p">)</span>
+        <span class="n">deleted_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dir_and_patterns</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirs_and_patterns</span><span class="p">:</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_directory</span><span class="p">,</span> <span class="n">dir_and_patterns</span><span class="p">[</span><span class="s1">&#39;directory&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">patt</span> <span class="ow">in</span> <span class="n">dir_and_patterns</span><span class="p">[</span><span class="s1">&#39;patterns&#39;</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">patt</span><span class="p">):</span>
+                            <span class="n">fp</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fp</span><span class="p">):</span>
+                                    <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+                                <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">fp</span><span class="p">):</span>
+                                    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+                                <span class="n">deleted_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+                                <span class="k">break</span>
+                            <span class="k">except</span><span class="p">:</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()))</span>
+        <span class="k">pass</span></div></div>
+
+    <span class="c1"># def delete_files(d, exts=None):</span>
+    <span class="c1">#     deleted_files = []</span>
+    <span class="c1">#     if os.path.isdir(d):</span>
+    <span class="c1">#         for f in os.listdir(d):</span>
+    <span class="c1">#             if exts is None or &quot;*&quot; in exts or any(ext in f for ext in exts):</span>
+    <span class="c1">#                 fp = os.path.join(d, f)</span>
+    <span class="c1">#                 try:</span>
+    <span class="c1">#                     if os.path.isfile(fp):</span>
+    <span class="c1">#                         os.unlink(fp)</span>
+    <span class="c1">#                     elif os.path.isdir(fp):</span>
+    <span class="c1">#                         shutil.rmtree(fp)</span>
+    <span class="c1">#                     deleted_files.append(fp)</span>
+    <span class="c1">#                 except:</span>
+    <span class="c1">#                     logger.warning(&quot;Couldn&#39;t delete {}: {}&quot;.format(fp, traceback.format_exc()))</span>
+    <span class="c1">#</span>
+    <span class="c1">#     return deleted_files</span>
+
+
+<div class="viewcode-block" id="Manager"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Manager">[docs]</a><span class="nd">@add_metaclass</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Manager</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Manager.manage"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Manager.manage">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">manage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+<span class="c1"># class ControllerStatement(MSONable):</span>
+<span class="c1"># class ControllerAccount(MSONable):</span>
+<span class="c1"># class ControllerRecord(MSONable):</span>
+<div class="viewcode-block" id="ControllerNote"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote">[docs]</a><span class="k">class</span> <span class="nc">ControllerNote</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+
+    <span class="c1"># Special state returned by a controller that is supposed to be &quot;more important&quot; than others and can say whether</span>
+    <span class="c1">#  a given task is completely finalized and does not need further restarts/changes/... In that case, it is very</span>
+    <span class="c1">#  clear that the task is completed.</span>
+    <span class="n">EVERYTHING_OK</span> <span class="o">=</span> <span class="s1">&#39;EVERYTHING_OK&#39;</span>
+    <span class="c1"># State of a controlled task specifying that nothing was detected by the controller</span>
+    <span class="n">NOTHING_FOUND</span> <span class="o">=</span> <span class="s1">&#39;NOTHING_FOUND&#39;</span>
+    <span class="c1"># State of a controlled task specifying that some error(s) was (were) detected by the controller and this (these)</span>
+    <span class="c1">#  error(s) is unrecoverable. In that case, it is very clear that nothing can be done.</span>
+    <span class="n">ERROR_UNRECOVERABLE</span> <span class="o">=</span> <span class="s1">&#39;ERROR_UNRECOVERABLE&#39;</span>
+    <span class="c1"># State of a controlled task specifying that some error(s) was (were) detected by the controller but the controller</span>
+    <span class="c1">#  could not fix that error. In that case, it is possible that some other controller could fix the situation</span>
+    <span class="n">ERROR_NOFIX</span> <span class="o">=</span> <span class="s1">&#39;ERROR_NOFIX&#39;</span>
+    <span class="c1"># State of a controlled task specifying that some error(s) was (were) detected by the controller and the controller</span>
+    <span class="c1">#  adviced some action to fix the error. No other controller should be applied.</span>
+    <span class="n">ERROR_RECOVERABLE</span> <span class="o">=</span> <span class="s1">&#39;ERROR_RECOVERABLE&#39;</span>
+    <span class="c1"># # State of a controlled task specifying that some error(s) was (were) detected by the controller and the controller</span>
+    <span class="c1"># #  adviced some action to fix the error. Other controllers (if any) might still be applied.</span>
+    <span class="c1"># ERROR_FIXCONTINUE = &#39;ERROR_FIXCONTINUE&#39;</span>
+
+    <span class="n">STATES</span> <span class="o">=</span> <span class="p">[</span><span class="n">EVERYTHING_OK</span><span class="p">,</span> <span class="n">NOTHING_FOUND</span><span class="p">,</span> <span class="n">ERROR_UNRECOVERABLE</span><span class="p">,</span> <span class="n">ERROR_NOFIX</span><span class="p">,</span> <span class="n">ERROR_RECOVERABLE</span><span class="p">]</span>
+    <span class="n">ERROR_STATES</span> <span class="o">=</span> <span class="p">[</span><span class="n">ERROR_UNRECOVERABLE</span><span class="p">,</span> <span class="n">ERROR_NOFIX</span><span class="p">,</span> <span class="n">ERROR_RECOVERABLE</span><span class="p">]</span>
+
+    <span class="c1">#TODO consider using increasing integers as values, so that we can take the lowest as a general value of the</span>
+    <span class="c1"># restart</span>
+    <span class="c1"># Restart from the very beginning of the calculation. Every intermediate result should be neglected</span>
+    <span class="n">RESTART_FROM_SCRATCH</span> <span class="o">=</span> <span class="s2">&quot;RESTART_FROM_SCRATCH&quot;</span>
+
+    <span class="c1"># Restart from the current step but don&#39;t make use previous informations</span>
+    <span class="n">RESET_RESTART</span> <span class="o">=</span> <span class="s2">&quot;RESET_RESTART&quot;</span>
+
+    <span class="c1"># Restart with the maximum amount of information available</span>
+    <span class="n">SIMPLE_RESTART</span> <span class="o">=</span> <span class="s2">&quot;SIMPLE_RESTART&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">problems</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">actions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restart</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_valid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller</span> <span class="o">=</span> <span class="n">controller</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problems</span> <span class="o">=</span> <span class="n">problems</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="n">actions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restart</span> <span class="o">=</span> <span class="n">restart</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span> <span class="o">=</span> <span class="n">is_valid</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_actions</span>
+
+    <span class="nd">@actions</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actions</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">actions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">actions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_actions</span> <span class="o">=</span> <span class="n">actions</span>
+
+<div class="viewcode-block" id="ControllerNote.add_problem"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote.add_problem">[docs]</a>    <span class="k">def</span> <span class="nf">add_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problems</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problems</span> <span class="o">=</span> <span class="p">[</span><span class="n">problem</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problems</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+
+    <span class="nd">@state</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATES</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;state&quot; in ControllerNote should be one of the following : &#39;</span>
+                             <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">STATES</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_errors_recoverable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_errors_unrecoverable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_recoverable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">can_validate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;This ControllerNote comes from a controller that cannot validate !&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid</span>
+
+    <span class="nd">@is_valid</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_valid</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid</span> <span class="o">=</span> <span class="n">is_valid</span>
+
+<div class="viewcode-block" id="ControllerNote.set_restart"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote.set_restart">[docs]</a>    <span class="k">def</span> <span class="nf">set_restart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restart</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restart</span> <span class="o">=</span> <span class="n">restart</span></div>
+
+<div class="viewcode-block" id="ControllerNote.simple_restart"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote.simple_restart">[docs]</a>    <span class="k">def</span> <span class="nf">simple_restart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SIMPLE_RESTART</span></div>
+
+<div class="viewcode-block" id="ControllerNote.reset_restart"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote.reset_restart">[docs]</a>    <span class="k">def</span> <span class="nf">reset_restart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RESET_RESTART</span></div>
+
+<div class="viewcode-block" id="ControllerNote.restart_from_scratch"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote.restart_from_scratch">[docs]</a>    <span class="k">def</span> <span class="nf">restart_from_scratch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RESTART_FROM_SCRATCH</span></div>
+
+<div class="viewcode-block" id="ControllerNote.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">dec</span> <span class="o">=</span> <span class="n">MontyDecoder</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;is_valid&#39;</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;controller&#39;</span><span class="p">]),</span>
+                       <span class="n">state</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">],</span> <span class="n">problems</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;problems&#39;</span><span class="p">],</span>
+                       <span class="n">actions</span><span class="o">=</span><span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;actions&#39;</span><span class="p">]),</span>
+                       <span class="n">restart</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;restart&#39;</span><span class="p">],</span> <span class="n">is_valid</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;is_valid&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">controller</span><span class="o">=</span><span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;controller&#39;</span><span class="p">]),</span>
+                       <span class="n">state</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">],</span> <span class="n">problems</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;problems&#39;</span><span class="p">],</span>
+                       <span class="n">actions</span><span class="o">=</span><span class="n">dec</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;actions&#39;</span><span class="p">]),</span>
+                       <span class="n">restart</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;restart&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ControllerNote.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControllerNote.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dd</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+              <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+              <span class="s1">&#39;controller&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">as_dict</span><span class="p">(),</span>
+              <span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+              <span class="s1">&#39;problems&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problems</span><span class="p">,</span>
+              <span class="s1">&#39;actions&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">action</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+              <span class="s1">&#39;restart&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">restart</span><span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">can_validate</span><span class="p">:</span>
+            <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;is_valid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span>
+        <span class="k">return</span> <span class="n">dd</span></div></div>
+
+
+<div class="viewcode-block" id="ControlReport"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlReport">[docs]</a><span class="k">class</span> <span class="nc">ControlReport</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+
+    <span class="c1"># Status of an SRC trio that is completely finalized</span>
+    <span class="n">FINALIZED</span> <span class="o">=</span> <span class="s1">&#39;FINALIZED&#39;</span>
+    <span class="c1"># Status of an SRC trio that has one or more errors that is (are) unrecoverable</span>
+    <span class="n">UNRECOVERABLE</span> <span class="o">=</span> <span class="s1">&#39;UNRECOVERABLE&#39;</span>
+    <span class="c1"># Status of an SRC trio that has one or more errors that is (are) recoverable</span>
+    <span class="n">RECOVERABLE</span> <span class="o">=</span> <span class="s1">&#39;RECOVERABLE&#39;</span>
+    <span class="c1"># Status of an SRC trio that is ongoing (for controllers taking care of non-error-related stuff, e.g. convergence,</span>
+    <span class="c1">#  accuracy goal achieved with multiple-steps such as relaxation with low ecut then high ecut, ...)</span>
+    <span class="n">ONGOING</span> <span class="o">=</span> <span class="s1">&#39;ONGOING&#39;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="s1">&#39;NONE&#39;</span>
+
+    <span class="n">STATES</span> <span class="o">=</span> <span class="p">[</span><span class="n">FINALIZED</span><span class="p">,</span> <span class="n">UNRECOVERABLE</span><span class="p">,</span> <span class="n">RECOVERABLE</span><span class="p">,</span> <span class="n">ONGOING</span><span class="p">,</span> <span class="n">NONE</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller_notes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">controller_notes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_controller_notes</span><span class="p">(</span><span class="n">controller_notes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_state_from_controller_notes</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ControlReport.add_controller_notes"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlReport.add_controller_notes">[docs]</a>    <span class="k">def</span> <span class="nf">add_controller_notes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller_notes</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">controller_notes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_state_from_controller_notes</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ControlReport.add_controller_note"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlReport.add_controller_note">[docs]</a>    <span class="k">def</span> <span class="nf">add_controller_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller_note</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">controller_note</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_state_from_controller_notes</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+
+    <span class="nd">@state</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">STATES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&quot;state&quot; in ControlReport is &quot;</span><span class="si">{}</span><span class="s1">&quot; should be one of the following : &#39;</span>
+                             <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">STATES</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span>
+
+<div class="viewcode-block" id="ControlReport.update_state_from_controller_notes"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlReport.update_state_from_controller_notes">[docs]</a>    <span class="k">def</span> <span class="nf">update_state_from_controller_notes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NONE</span>
+        <span class="k">elif</span> <span class="nb">any</span><span class="p">([</span><span class="n">cn</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_RECOVERABLE</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="p">]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RECOVERABLE</span>
+        <span class="k">elif</span> <span class="nb">any</span><span class="p">([</span><span class="n">cn</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">ERROR_UNRECOVERABLE</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="p">]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UNRECOVERABLE</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">([</span><span class="n">cn</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span> <span class="k">if</span> <span class="n">cn</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">can_validate</span><span class="p">])</span> <span class="ow">and</span>
+                  <span class="nb">all</span><span class="p">([</span><span class="n">cn</span><span class="o">.</span><span class="n">is_valid</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span> <span class="k">if</span> <span class="n">cn</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">can_validate</span><span class="p">])):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">FINALIZED</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If no controller says it is recoverable/unrecoverable/valid/... then we set it to unrecoverable ?</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UNRECOVERABLE</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">finalized</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FINALIZED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unrecoverable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">UNRECOVERABLE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO: should check whether actions are compatible here ... right now, two different controllers are not</span>
+        <span class="c1">#       allowed to modify the same object ...</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">cn</span><span class="o">.</span><span class="n">actions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">actions</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Two controllers give actions to the same object!&#39;</span><span class="p">)</span>
+                <span class="n">actions</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+        <span class="k">return</span> <span class="n">actions</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">restart_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">cn</span><span class="o">.</span><span class="n">restart</span> <span class="o">==</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESTART_FROM_SCRATCH</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESTART_FROM_SCRATCH</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">cn</span><span class="o">.</span><span class="n">restart</span> <span class="o">==</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESET_RESTART</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESET_RESTART</span>
+        <span class="k">return</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">SIMPLE_RESTART</span>
+
+<div class="viewcode-block" id="ControlReport.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlReport.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">controller_notes</span><span class="o">=</span><span class="p">[</span><span class="n">ControllerNote</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">cndict</span><span class="p">)</span> <span class="k">for</span> <span class="n">cndict</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;controller_notes&#39;</span><span class="p">]])</span></div>
+
+<div class="viewcode-block" id="ControlReport.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.ControlReport.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;controller_notes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">cn</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">controller_notes</span><span class="p">]}</span></div></div>
+
+
+<span class="c1">#TODO: should this be MSONable ? Is that even possible with a callable object in self ?</span>
+<span class="c1">#class Instruction(MSONable):</span>
+<span class="c1">#class Directive(MSONable):</span>
+<div class="viewcode-block" id="Action"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Action">[docs]</a><span class="k">class</span> <span class="nc">Action</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callable</span> <span class="o">=</span> <span class="n">callable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+<div class="viewcode-block" id="Action.apply"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Action.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">object</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Action.from_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Action.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">importlib</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;callable&#39;</span><span class="p">][</span><span class="s1">&#39;module&#39;</span><span class="p">])</span>
+        <span class="n">class_</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;callable&#39;</span><span class="p">][</span><span class="s1">&#39;class&#39;</span><span class="p">])</span>
+        <span class="n">callable</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;callable&#39;</span><span class="p">][</span><span class="s1">&#39;func_name&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">callable</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Action.as_dict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Action.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;@class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                <span class="s1">&#39;callable&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="o">.</span><span class="n">im_class</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+                             <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="o">.</span><span class="n">im_class</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                             <span class="s1">&#39;func_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="o">.</span><span class="n">im_func</span><span class="o">.</span><span class="n">func_name</span><span class="p">}</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="Action.from_string"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.mastermind_abc.Action.from_string">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">callable_string</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1">#TODO: do this ?</span>
+        <span class="kn">import</span> <span class="nn">importlib</span>
+        <span class="n">mod_name</span><span class="p">,</span> <span class="n">func_name</span> <span class="o">=</span> <span class="n">callable_string</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">mod_name</span><span class="p">)</span>
+        <span class="n">callable</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)</span>
+        <span class="bp">cls</span><span class="p">(</span><span class="n">callable</span><span class="o">=</span><span class="n">callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

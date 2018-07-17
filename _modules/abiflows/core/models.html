@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.core.models &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.core.models</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;Object-Document mapper&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+
+<span class="kn">from</span> <span class="nn">tempfile</span> <span class="k">import</span> <span class="n">mkstemp</span><span class="p">,</span> <span class="n">TemporaryFile</span><span class="p">,</span> <span class="n">NamedTemporaryFile</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">monty.functools</span> <span class="k">import</span> <span class="n">lazy_property</span>
+<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">mongoengine.fields</span> <span class="k">import</span> <span class="n">GridFSProxy</span>
+<span class="kn">from</span> <span class="nn">mongoengine.base.datastructures</span> <span class="k">import</span> <span class="n">BaseDict</span>
+<span class="kn">from</span> <span class="nn">abipy</span> <span class="k">import</span> <span class="n">abilab</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AbiGridFSProxy"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiGridFSProxy">[docs]</a><span class="k">class</span> <span class="nc">AbiGridFSProxy</span><span class="p">(</span><span class="n">GridFSProxy</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AbiGridFSProxy.abiopen"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiGridFSProxy.abiopen">[docs]</a>    <span class="k">def</span> <span class="nf">abiopen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dump the gridfs data to a temporary file and use ``abiopen`` to open the file.&quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">filepath</span> <span class="o">=</span> <span class="n">mkstemp</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">abiext</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">abiform</span> <span class="o">==</span> <span class="s2">&quot;t&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span> <span class="p">,</span> <span class="s2">&quot;w&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">abiform</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">abilab</span><span class="o">.</span><span class="n">abiopen</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="AbiFileField"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiFileField">[docs]</a><span class="k">class</span> <span class="nc">AbiFileField</span><span class="p">(</span><span class="n">FileField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extend ``FileField``. Use customized version of proxy_class so that</span>
+<span class="sd">    we can use ``abiopen`` to construct the AbiPy object from the gridfs content.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">proxy_class</span> <span class="o">=</span> <span class="n">AbiGridFSProxy</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abiext</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;abiext&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abiform</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;abiform&quot;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">AbiFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_monkey_patch_proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proxy</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Monkey patch the proxy adding ``abiext`` and ``abiform``.</span>
+<span class="sd">        so that we know how to open the file with ``abiopen``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">proxy</span><span class="o">.</span><span class="n">abiext</span><span class="p">,</span> <span class="n">proxy</span><span class="o">.</span><span class="n">abiform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abiext</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">abiform</span>
+        <span class="k">return</span> <span class="n">proxy</span>
+
+<div class="viewcode-block" id="AbiFileField.get_proxy_obj"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiFileField.get_proxy_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_proxy_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AbiFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_proxy_obj</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monkey_patch_proxy</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbiFileField.to_python"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiFileField.to_python">[docs]</a>    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AbiFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monkey_patch_proxy</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="GzipGridFSProxy"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipGridFSProxy">[docs]</a><span class="k">class</span> <span class="nc">GzipGridFSProxy</span><span class="p">(</span><span class="n">GridFSProxy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Proxy object to handle writing and reading of files to and from GridFS.</span>
+<span class="sd">    Files are compressed with gzip before being saved in the GridFS.</span>
+<span class="sd">    To decompress the object exposes an unzip method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GzipGridFSProxy.put"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipGridFSProxy.put">[docs]</a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># try to check if the file is already zipped.</span>
+        <span class="c1"># in that case just handle as a normal file</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">magic</span>
+            <span class="c1"># check that the module is actually python-magic and not libmagic</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">magic</span><span class="p">,</span> <span class="s2">&quot;from_buffer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">f</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">magic</span><span class="o">.</span><span class="n">from_buffer</span><span class="p">(</span><span class="n">file_obj</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">mime</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;application/gzip&quot;</span><span class="p">:</span>
+                    <span class="n">file_obj</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GzipGridFSProxy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">file_obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                        
+            <span class="n">file_obj</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No python-magic library available. Skipping check...&quot;</span><span class="p">)</span>
+
+        <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+        <span class="c1"># Handle nested fields</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s1">&#39;field&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">FileField</span><span class="p">):</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">field</span>
+
+        <span class="k">with</span> <span class="n">TemporaryFile</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp_file</span><span class="p">:</span>
+            <span class="n">tmp_gz</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">tmp_file</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="n">field</span><span class="o">.</span><span class="n">compresslevel</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w+b&#39;</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">file_obj</span><span class="p">,</span> <span class="n">tmp_gz</span><span class="p">)</span>
+            <span class="n">tmp_gz</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">tmp_file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GzipGridFSProxy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">tmp_file</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GzipGridFSProxy.write"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipGridFSProxy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Please use </span><span class="se">\&quot;</span><span class="s2">put</span><span class="se">\&quot;</span><span class="s2"> method instead&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GzipGridFSProxy.writelines"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipGridFSProxy.writelines">[docs]</a>    <span class="k">def</span> <span class="nf">writelines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Please use </span><span class="se">\&quot;</span><span class="s2">put</span><span class="se">\&quot;</span><span class="s2"> method instead&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GzipGridFSProxy.to_gzip"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipGridFSProxy.to_gzip">[docs]</a>    <span class="k">def</span> <span class="nf">to_gzip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="GzipGridFSProxy.unzip"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipGridFSProxy.unzip">[docs]</a>    <span class="k">def</span> <span class="nf">unzip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w+b&#39;</span><span class="p">):</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_gzip</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+            <span class="k">return</span> <span class="n">f</span></div></div>
+
+
+<div class="viewcode-block" id="GzipFileField"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipFileField">[docs]</a><span class="k">class</span> <span class="nc">GzipFileField</span><span class="p">(</span><span class="n">FileField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A GridFS storage field with automatic compression of the file with gzip.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">proxy_class</span> <span class="o">=</span> <span class="n">GzipGridFSProxy</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span> <span class="o">=</span> <span class="n">compresslevel</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GzipFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AbiGzipFSProxy"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiGzipFSProxy">[docs]</a><span class="k">class</span> <span class="nc">AbiGzipFSProxy</span><span class="p">(</span><span class="n">GzipGridFSProxy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Proxy object to handle writing and reading of abinit related files to and from GridFS.</span>
+<span class="sd">    Files are compressed with gzip before being saved in the GridFS.</span>
+<span class="sd">    To decompress the object exposes an unzip method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AbiGzipFSProxy.abiopen"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiGzipFSProxy.abiopen">[docs]</a>    <span class="k">def</span> <span class="nf">abiopen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dump the unzipped gridfs data to a temporary file and use `abiopen` to open the file.&quot;&quot;&quot;</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+        <span class="c1"># Handle nested fields</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s1">&#39;field&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">FileField</span><span class="p">):</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">field</span>
+
+        <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;w+&#39;</span>
+        <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">abiform</span> <span class="o">==</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span>
+            <span class="n">mode</span> <span class="o">+=</span> <span class="s1">&#39;b&#39;</span>
+        <span class="k">with</span> <span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">field</span><span class="o">.</span><span class="n">abiext</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span> <span class="k">as</span> <span class="n">tmp_abifile</span><span class="p">:</span>
+            <span class="n">tmp_abifile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_gzip</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+            <span class="k">return</span> <span class="n">abilab</span><span class="o">.</span><span class="n">abiopen</span><span class="p">(</span><span class="n">tmp_abifile</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="AbiGzipFileField"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiGzipFileField">[docs]</a><span class="k">class</span> <span class="nc">AbiGzipFileField</span><span class="p">(</span><span class="n">GzipFileField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A GridFS storage field for abinit related files with automatic compression of the file with gzip.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">proxy_class</span> <span class="o">=</span> <span class="n">AbiGzipFSProxy</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiext</span><span class="p">,</span> <span class="n">abiform</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abiext</span> <span class="o">=</span><span class="n">abiext</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abiform</span> <span class="o">=</span> <span class="n">abiform</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AbiGzipFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">compresslevel</span><span class="o">=</span><span class="n">compresslevel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MongoFiles"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFiles">[docs]</a><span class="k">class</span> <span class="nc">MongoFiles</span><span class="p">(</span><span class="n">EmbeddedDocument</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Document with the output files produced by the AbiPy |Task|</span>
+<span class="sd">    (references to GridFs files)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gsr</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;GSR.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">hist</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;HIST&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">phbst</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;PHBST.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">phdos</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;PHDOS.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">sigres</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;SIGRES.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">mdf</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;MDF.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+
+    <span class="n">ddb</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;DDB&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+    <span class="n">output_file</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;abo&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;t&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MongoFiles.from_node"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFiles.from_node">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_node</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add to GridFs the files produced in the ``outdir`` of the node.&quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">AbiFileField</span><span class="p">):</span> <span class="k">continue</span>
+            <span class="n">ext</span><span class="p">,</span> <span class="n">form</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">abiext</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">abiform</span>
+
+            <span class="n">path</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">outdir</span><span class="o">.</span><span class="n">has_abiext</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span> <span class="o">+</span> <span class="n">form</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="c1"># Example: new.gsr.put(f)</span>
+                    <span class="n">fname</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.nc&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                    <span class="n">proxy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+                    <span class="n">proxy</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="c1"># Special treatment of the main output</span>
+        <span class="c1"># (the file is not located in node.outdir)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;output_file&quot;</span><span class="p">):</span>
+            <span class="c1">#print(&quot;in out&quot;)</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">output_file</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">output_file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">new</span></div>
+
+<div class="viewcode-block" id="MongoFiles.delete"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFiles.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete gridFs files&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">AbiFileField</span><span class="p">):</span> <span class="k">continue</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;delete&quot;</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Deleting </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">value</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="MSONDict"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MSONDict">[docs]</a><span class="k">class</span> <span class="nc">MSONDict</span><span class="p">(</span><span class="n">BaseDict</span><span class="p">):</span>
+<div class="viewcode-block" id="MSONDict.to_mgobj"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MSONDict.to_mgobj">[docs]</a>    <span class="k">def</span> <span class="nf">to_mgobj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MontyDecoder</span><span class="p">()</span><span class="o">.</span><span class="n">process_decoded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MSONField"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MSONField">[docs]</a><span class="k">class</span> <span class="nc">MSONField</span><span class="p">(</span><span class="n">DictField</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Descriptor for retrieving a value from a field in a document.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MSONField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">BaseDict</span><span class="p">):</span>
+            <span class="n">value</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">MSONDict</span>
+
+        <span class="c1"># print(&quot;value:&quot;, type(value))</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+    <span class="c1">#def to_python(self, value):</span>
+    <span class="c1">#    #print(&quot;to value:&quot;, type(value))</span>
+    <span class="c1">#    if isinstance(value, collections.Mapping) and &quot;@module&quot; in value:</span>
+    <span class="c1">#        value = MontyDecoder().process_decoded(value)</span>
+    <span class="c1">#    else:</span>
+    <span class="c1">#        value = super(MSONField, self).to_python(value)</span>
+
+    <span class="c1">#    print(&quot;to value:&quot;, type(value))</span>
+    <span class="c1">#    return value</span>
+
+    <span class="c1">#def to_mongo(self, value):</span>
+    <span class="c1">#    #print(value.as_dict())</span>
+    <span class="c1">#    return value.as_dict()</span>
+
+
+<div class="viewcode-block" id="MongoTaskResults"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoTaskResults">[docs]</a><span class="k">class</span> <span class="nc">MongoTaskResults</span><span class="p">(</span><span class="n">EmbeddedDocument</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Document with the most important results produced by the AbiPy |Task|&quot;&quot;&quot;</span>
+
+    <span class="c1">#meta = {&#39;allow_inheritance&#39;: True}</span>
+
+    <span class="c1">#: The initial input structure for the calculation in the pymatgen json representation</span>
+    <span class="c1">#initial_structure = DictField(required=True)</span>
+    <span class="n">initial_structure</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1">#: The final relaxed structure in a dict format.</span>
+    <span class="n">final_structure</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MongoTaskResults.from_task"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoTaskResults.from_task">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_task</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="c1"># TODO Different Documents depending on task.__class__ or duck typing?</span>
+        <span class="c1">#initial_structure = MSONField().to_mongo(task.input.structure.as_dict())</span>
+        <span class="n">initial_structure</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+        <span class="c1">#print(type(initial_structure))</span>
+        <span class="n">final_structure</span> <span class="o">=</span> <span class="n">initial_structure</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;open_gsr&quot;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">task</span><span class="o">.</span><span class="n">open_gsr</span><span class="p">()</span> <span class="k">as</span> <span class="n">gsr</span><span class="p">:</span>
+                <span class="n">final_structure</span> <span class="o">=</span> <span class="n">gsr</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+
+        <span class="n">new</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">initial_structure</span><span class="o">=</span><span class="n">initial_structure</span><span class="p">,</span>
+            <span class="n">final_structure</span><span class="o">=</span><span class="n">final_structure</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span></div></div>
+
+
+<div class="viewcode-block" id="MongoNode"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoNode">[docs]</a><span class="k">class</span> <span class="nc">MongoNode</span><span class="p">(</span><span class="n">Document</span><span class="p">):</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;allow_inheritance&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;collection&quot;</span><span class="p">:</span> <span class="s2">&quot;flowdata&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="c1">#meta = {&#39;meta&#39;: True}</span>
+
+    <span class="n">node_id</span> <span class="o">=</span> <span class="n">LongField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">node_class</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">workdir</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1">#date_modified = DateTimeField(default=datetime.datetime.now)</span>
+
+<div class="viewcode-block" id="MongoNode.from_node"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoNode.from_node">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_node</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">node_class</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">,</span>
+            <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">status</span><span class="p">),</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MongoEmbeddedNode"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoEmbeddedNode">[docs]</a><span class="k">class</span> <span class="nc">MongoEmbeddedNode</span><span class="p">(</span><span class="n">EmbeddedDocument</span><span class="p">):</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;allow_inheritance&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="c1">#meta = {&#39;meta&#39;: True}</span>
+
+    <span class="n">node_id</span> <span class="o">=</span> <span class="n">LongField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">node_class</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">status</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">workdir</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1">#date_modified = DateTimeField(default=datetime.datetime.now)</span>
+
+<div class="viewcode-block" id="MongoEmbeddedNode.from_node"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoEmbeddedNode.from_node">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_node</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">node_class</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">,</span>
+            <span class="n">status</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">status</span><span class="p">),</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MongoTask"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoTask">[docs]</a><span class="k">class</span> <span class="nc">MongoTask</span><span class="p">(</span><span class="n">MongoEmbeddedNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Document associated to an AbiPy |Task|&quot;&quot;&quot;</span>
+
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">input_str</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Abinit events.</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">num_warnings</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of warnings&quot;</span><span class="p">)</span>
+    <span class="n">num_errors</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of errors&quot;</span><span class="p">)</span>
+    <span class="n">num_comments</span> <span class="o">=</span>  <span class="n">IntField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of comments&quot;</span><span class="p">)</span>
+
+    <span class="c1">#: Total CPU time taken.</span>
+    <span class="c1">#cpu_time = FloatField(required=True)</span>
+    <span class="c1">#: Total wall time taken.</span>
+    <span class="c1">#wall_time = FloatField(required=True)</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">MongoTaskResults</span><span class="p">)</span>
+
+    <span class="n">outfiles</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">MongoFiles</span><span class="p">)</span>
+
+    <span class="c1">#@property</span>
+    <span class="c1">#def num_warnings(self):</span>
+    <span class="c1">#    &quot;&quot;&quot;Number of warnings reported.&quot;&quot;&quot;</span>
+    <span class="c1">#    return self.input.num_warnings</span>
+
+    <span class="c1">#@property</span>
+    <span class="c1">#def num_errors(self):</span>
+    <span class="c1">#    &quot;&quot;&quot;Number of errors reported.&quot;&quot;&quot;</span>
+    <span class="c1">#    return self.input.num_error</span>
+
+    <span class="c1">#@property</span>
+    <span class="c1">#def num_comments(self):</span>
+    <span class="c1">#    &quot;&quot;&quot;Number of comments reported.&quot;&quot;&quot;</span>
+    <span class="c1">#    return len(self.comments)</span>
+
+    <span class="c1">#@property</span>
+    <span class="c1">#def is_paw(self):</span>
+    <span class="c1">#    print(&quot;in is paw&quot;)</span>
+    <span class="c1">#    return True</span>
+
+<div class="viewcode-block" id="MongoTask.from_task"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoTask.from_task">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_task</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build the document from an AbiPy |Task| object.&quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_node</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+        <span class="n">new</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">input_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+
+        <span class="c1"># TODO: Handle None!</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">get_event_report</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;num_errors&quot;</span><span class="p">,</span> <span class="s2">&quot;num_comments&quot;</span><span class="p">,</span> <span class="s2">&quot;num_warnings&quot;</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">new</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">report</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+
+        <span class="n">new</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="n">MongoTaskResults</span><span class="o">.</span><span class="n">from_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">outfiles</span> <span class="o">=</span> <span class="n">MongoFiles</span><span class="o">.</span><span class="n">from_node</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new</span></div></div>
+
+
+<div class="viewcode-block" id="MongoWork"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoWork">[docs]</a><span class="k">class</span> <span class="nc">MongoWork</span><span class="p">(</span><span class="n">MongoEmbeddedNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Document associated to an AbiPy |Work|&quot;&quot;&quot;</span>
+
+    <span class="c1">#: List of tasks.</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">MongoTask</span><span class="p">),</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1">#: Output files produced by the work.</span>
+    <span class="n">outfiles</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">MongoFiles</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MongoWork.from_work"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoWork.from_work">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_work</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">work</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build and return the document from a AbiPy |Work| instance.&quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_node</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">MongoTask</span><span class="o">.</span><span class="n">from_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">work</span><span class="p">]</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">outfiles</span> <span class="o">=</span> <span class="n">MongoFiles</span><span class="o">.</span><span class="n">from_node</span><span class="p">(</span><span class="n">work</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Dictionary-style field of super</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">MongoWork</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># Assume int or slice</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="MongoFlow"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFlow">[docs]</a><span class="k">class</span> <span class="nc">MongoFlow</span><span class="p">(</span><span class="n">MongoNode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Document associated to an AbiPy |Flow|</span>
+
+<span class="sd">    Assumptions:</span>
+<span class="sd">        All the tasks must have the same list of pseudos,</span>
+<span class="sd">        same chemical formula.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: List of works</span>
+    <span class="n">works</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">MongoWork</span><span class="p">),</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1">#: Output files produced by the flow.</span>
+    <span class="n">outfiles</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">MongoFiles</span><span class="p">)</span>
+
+    <span class="c1">#meta = {</span>
+    <span class="c1">#    &quot;collection&quot;: &quot;flowdata&quot;,</span>
+    <span class="c1">#    #&quot;indexes&quot;: [&quot;status&quot;, &quot;priority&quot;, &quot;created&quot;],</span>
+    <span class="c1">#}</span>
+
+<div class="viewcode-block" id="MongoFlow.from_flow"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFlow.from_flow">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_flow</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">flow</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build and return the document from a AbiPy |Flow| instance.&quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_node</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">works</span> <span class="o">=</span> <span class="p">[</span><span class="n">MongoWork</span><span class="o">.</span><span class="n">from_work</span><span class="p">(</span><span class="n">work</span><span class="p">)</span> <span class="k">for</span> <span class="n">work</span> <span class="ow">in</span> <span class="n">flow</span><span class="p">]</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">outfiles</span> <span class="o">=</span> <span class="n">MongoFiles</span><span class="o">.</span><span class="n">from_node</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+        <span class="c1">#new.assimilated = flow.mongo_assimilate()</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Dictionary-style field of super</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">MongoFlow</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># Assume int or slice</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">works</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+<div class="viewcode-block" id="MongoFlow.pickle_load"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFlow.pickle_load">[docs]</a>    <span class="k">def</span> <span class="nf">pickle_load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the pickle file from the working directory of the flow.</span>
+
+<span class="sd">        Return: AbiPy |Flow| object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">flow</span> <span class="o">=</span> <span class="n">abilab</span><span class="o">.</span><span class="n">Flow</span><span class="o">.</span><span class="n">pickle_load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workdir</span><span class="p">)</span>
+        <span class="c1">#flow.set_mongo_id(self.id)</span>
+        <span class="k">return</span> <span class="n">flow</span></div>
+
+<div class="viewcode-block" id="MongoFlow.delete"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFlow.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Remove GridFs files.</span>
+        <span class="k">for</span> <span class="n">work</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">works</span><span class="p">:</span>
+            <span class="n">work</span><span class="o">.</span><span class="n">outfiles</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+            <span class="c1">#work.delete()</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">work</span><span class="p">:</span>
+                <span class="c1">#task.delete()</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">outfiles</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div>
+
+    <span class="nd">@queryset_manager</span>
+    <span class="k">def</span> <span class="nf">completed</span><span class="p">(</span><span class="n">doc_cls</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Completed&quot;</span><span class="p">)</span></div>
+
+    <span class="c1">#@queryset_manager</span>
+    <span class="c1">#def running(doc_cls, queryset):</span>
+    <span class="c1">#    return queryset.filter(status__in=[&quot;AbiCritical&quot;, &quot;QCritical&quot;, &quot;Error&quot;,])</span>
+
+    <span class="c1">#@queryset_manager</span>
+    <span class="c1">#def paw_flows(doc_cls, queryset):</span>
+    <span class="c1">#    return queryset.filter(is_paw=True)</span>
+
+    <span class="c1">#@queryset_manager</span>
+    <span class="c1">#def nc_flows(doc_cls, queryset):</span>
+    <span class="c1">#    return queryset.filter(is_nc=True)</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

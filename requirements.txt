@@ -1,9 +1,0 @@
-six
-numpy
-pymongo
-prettytable
-mongoengine
-paramiko
-fireworks
-abipy==0.5.0
-custodian

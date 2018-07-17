@@ -1,0 +1,4 @@
+<map id="inheritancecd8e0c6296" name="inheritancecd8e0c6296">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitGSOutputMixin" target="_top" title="Mixin providing generic fiels for abinit ground state calculation" alt="" coords="398,5,763,25"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.GroundStateOutputMixin" target="_top" title="Mixin providing generic fields for ground state calculation" alt="" coords="5,5,356,25"/>
+</map>

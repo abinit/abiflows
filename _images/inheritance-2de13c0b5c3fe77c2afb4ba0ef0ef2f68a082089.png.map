@@ -1,0 +1,4 @@
+<map id="inheritance7458679080" name="inheritance7458679080">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitDftpOutputMixin" target="_top" title="Mixin providing generic fiels for dfpt calculation" alt="" coords="4,4,355,24"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.abinit_mixins.AbinitPhononOutputMixin" target="_top" title="Mixin providing generic fiels for phonon calculation" alt="" coords="395,4,764,24"/>
+</map>

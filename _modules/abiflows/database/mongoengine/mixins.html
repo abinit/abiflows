@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.database.mongoengine.mixins &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.database.mongoengine.mixins</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">List of mixins to provide standard interfaces with the result databases.</span>
+<span class="sd">Most of them should still be considered as examples.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">from</span> <span class="nn">monty.dev</span> <span class="k">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pymatgen.symmetry.analyzer</span> <span class="k">import</span> <span class="n">SpacegroupAnalyzer</span>
+<span class="kn">from</span> <span class="nn">pymatgen.core.periodic_table</span> <span class="k">import</span> <span class="n">Element</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.models</span> <span class="k">import</span> <span class="n">AbiFileField</span><span class="p">,</span> <span class="n">MSONField</span>
+
+
+<div class="viewcode-block" id="CalculationMetadataMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.CalculationMetadataMixin">[docs]</a><span class="k">class</span> <span class="nc">CalculationMetadataMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing fields for the metadata of the calculation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">user</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Username of the author of the calculation&quot;</span><span class="p">)</span>
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Cluster where the calculation was performed&quot;</span><span class="p">)</span>
+    <span class="n">execution_date</span> <span class="o">=</span> <span class="n">DateTimeField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Date of the conclusion of the calculation&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RunStatsMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.RunStatsMixin">[docs]</a><span class="k">class</span> <span class="nc">RunStatsMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing fields for the statistics of execution of the calculation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">core_num</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of cores used to run the calculation&quot;</span><span class="p">)</span>
+    <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Time in seconds required to perform the calculation&quot;</span><span class="p">)</span>
+    <span class="n">maximum_memory_used</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Maximum memory used during the calculation in kb&quot;</span><span class="p">)</span>
+    <span class="n">number_of_restarts</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of times the calculation has been restarted&quot;</span><span class="p">)</span>
+    <span class="n">number_of_errors</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of errors corrected by error handlers&quot;</span><span class="p">)</span>
+    <span class="n">number_of_warnings</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of warnings in the last run&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SpaceGroupMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.SpaceGroupMixin">[docs]</a><span class="k">class</span> <span class="nc">SpaceGroupMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing fields to save space group data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">crystal_system</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">()</span>
+    <span class="n">hall</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">()</span>
+    <span class="n">number</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span>
+    <span class="n">point_group</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">()</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">()</span>
+    <span class="n">symbol</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">()</span>
+    <span class="c1">#TODO tolerances?</span>
+
+    <span class="nd">@deprecated</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;fill_from_structure has been renamed set_space_group_from_structure.&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">fill_from_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_space_group_from_structure</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SpaceGroupMixin.set_space_group_from_structure"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.SpaceGroupMixin.set_space_group_from_structure">[docs]</a>    <span class="k">def</span> <span class="nf">set_space_group_from_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">):</span>
+        <span class="n">spga</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crystal_system</span> <span class="o">=</span> <span class="n">spga</span><span class="o">.</span><span class="n">get_crystal_system</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hall</span> <span class="o">=</span> <span class="n">spga</span><span class="o">.</span><span class="n">get_hall</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number</span> <span class="o">=</span> <span class="n">spga</span><span class="o">.</span><span class="n">get_space_group_number</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;spglib&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">spga</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="SpaceGroupDocument"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.SpaceGroupDocument">[docs]</a><span class="k">class</span> <span class="nc">SpaceGroupDocument</span><span class="p">(</span><span class="n">SpaceGroupMixin</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Embedded document to describe the spacegroup of a material</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MaterialMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.MaterialMixin">[docs]</a><span class="k">class</span> <span class="nc">MaterialMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing the fields describing the material examined in the calculation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pretty_formula</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A nice string formula where the element amounts are normalized&quot;</span><span class="p">)</span>
+    <span class="n">full_formula</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A string of the full explicit formula for the unit cell&quot;</span><span class="p">)</span>
+    <span class="n">spacegroup</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">SpaceGroupDocument</span><span class="p">)</span>
+    <span class="n">unit_cell_formula</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A dict of the full (unnormalized) formula of the unit cell&quot;</span><span class="p">)</span>
+    <span class="n">reduced_cell_formula</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A dict of the normalized cell formula&quot;</span><span class="p">)</span>
+    <span class="n">anonymous_formula</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A string of the anonymous formula for the material&quot;</span><span class="p">)</span>
+    <span class="n">elements</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">StringField</span><span class="p">(),</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A list of element symbols present in this material&quot;</span><span class="p">)</span>
+    <span class="n">nelements</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of elements in this material&#39;s chemical system&quot;</span><span class="p">)</span>
+    <span class="n">nsites</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of sites in the structure&quot;</span><span class="p">)</span>
+    <span class="n">chemsys</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A string chemical system associated with the material&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MaterialMixin.set_material_data_from_structure"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.MaterialMixin.set_material_data_from_structure">[docs]</a>    <span class="k">def</span> <span class="nf">set_material_data_from_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">space_group</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">angle_tolerance</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the fields of the Document using a Structure and Spglib to determine the space group properties</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            structure: A |Structure|</span>
+<span class="sd">            space_group: if True sets the spacegroup fields using spglib_.</span>
+<span class="sd">            symprec (float): Tolerance for symmetry finding.</span>
+<span class="sd">            angle_tolerance (float): Angle tolerance for symmetry finding.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">composition</span>
+        <span class="n">el_amt</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">get_el_amt_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unit_cell_formula</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reduced_cell_formula</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">to_reduced_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">el_amt</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nelements</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">el_amt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pretty_formula</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">reduced_formula</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anonymous_formula</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">anonymized_formula</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nsites</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">num_atoms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chemsys</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">el_amt</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="n">space_group</span><span class="p">:</span>
+            <span class="n">sym</span> <span class="o">=</span> <span class="n">SpacegroupAnalyzer</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">symprec</span><span class="o">=</span><span class="n">symprec</span><span class="p">,</span> <span class="n">angle_tolerance</span><span class="o">=</span><span class="n">angle_tolerance</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spacegroup</span> <span class="o">=</span> <span class="n">SpaceGroupDocument</span><span class="p">(</span><span class="n">crystal_system</span><span class="o">=</span><span class="n">sym</span><span class="o">.</span><span class="n">get_crystal_system</span><span class="p">(),</span> <span class="n">hall</span><span class="o">=</span><span class="n">sym</span><span class="o">.</span><span class="n">get_hall</span><span class="p">(),</span>
+                                                 <span class="n">number</span><span class="o">=</span><span class="n">sym</span><span class="o">.</span><span class="n">get_space_group_number</span><span class="p">(),</span> <span class="n">point_group</span><span class="o">=</span><span class="n">sym</span><span class="o">.</span><span class="n">get_point_group_symbol</span><span class="p">(),</span>
+                                                 <span class="n">symbol</span><span class="o">=</span><span class="n">sym</span><span class="o">.</span><span class="n">get_space_group_symbol</span><span class="p">(),</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;spglib&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CalculationTypeMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.CalculationTypeMixin">[docs]</a><span class="k">class</span> <span class="nc">CalculationTypeMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing fields for basic details of the calculation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xc_functional</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Specific exchange-correlation functional used for the calculation&quot;</span><span class="p">)</span>
+    <span class="n">pseudo_type</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Type of the pseudopotential&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;nc&quot;</span><span class="p">,</span> <span class="s2">&quot;us&quot;</span><span class="p">,</span> <span class="s2">&quot;paw&quot;</span><span class="p">])</span>
+    <span class="n">is_hubbard</span> <span class="o">=</span> <span class="n">BooleanField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;True if calculation was performed with hubbard correction&quot;</span><span class="p">)</span>
+    <span class="n">pseudo_dojo_table</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;String describing the version of pseudo dojo table&quot;</span><span class="p">)</span></div>
+    <span class="c1"># other possibile fields: magnetization_type (unpolarized, polarized, non collinear), has_spin_orbit</span>
+
+
+<div class="viewcode-block" id="GroundStateOutputMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.GroundStateOutputMixin">[docs]</a><span class="k">class</span> <span class="nc">GroundStateOutputMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing generic fields for ground state calculation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#TODO would it be convenient to make these FloatWithUnitField?</span>
+    <span class="n">final_energy</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Final energy obtained computed in eV&quot;</span><span class="p">)</span>
+    <span class="n">efermi</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Computed Fermi energy in eV&quot;</span><span class="p">)</span>
+    <span class="n">total_magnetization</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Total magnetization computed&quot;</span><span class="p">)</span> <span class="c1"># does pymatgen have a default unit for this?</span>
+
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The structure used for the calculation. If a relaxation the final structure.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HubbardsField"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.HubbardsField">[docs]</a><span class="k">class</span> <span class="nc">HubbardsField</span><span class="p">(</span><span class="n">DictField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dictfield to validate the passed values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HubbardsField.validate"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.HubbardsField.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">Element</span><span class="o">.</span><span class="n">is_valid_symbol</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Keys should be element symbols&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Values should be numbers&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DictField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="HubbardMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.HubbardMixin">[docs]</a><span class="k">class</span> <span class="nc">HubbardMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing hubbard fields</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hubbards</span> <span class="o">=</span> <span class="n">HubbardsField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Dict containing the values of the Hubbard U values for each element&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DateMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.DateMixin">[docs]</a><span class="k">class</span> <span class="nc">DateMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing timestamp fields</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">created_on</span> <span class="o">=</span> <span class="n">DateTimeField</span><span class="p">()</span>
+    <span class="n">modified_on</span> <span class="o">=</span> <span class="n">DateTimeField</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DirectoryMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.DirectoryMixin">[docs]</a><span class="k">class</span> <span class="nc">DirectoryMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mixin providing the field to store the directories used during the workflow</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dir_names</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Keys are the folder containing the various steps of the calculation, with a &quot;</span>
+                                    <span class="s2">&quot;description of the step as value. Task name as value is the best option. &quot;</span>
+                                    <span class="s2">&quot;None is accettable&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DirectoryMixin.set_dir_names_from_fws_wf"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.DirectoryMixin.set_dir_names_from_fws_wf">[docs]</a>    <span class="k">def</span> <span class="nf">set_dir_names_from_fws_wf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fills the the dir_names of the mixin using the COMPLETED launches of a firework workflow.</span>
+<span class="sd">        Needs access to the full data of the workflow: Fireworks and Launches.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">#FIXME should the imports be moved to the top? Would it be better to not rely on external objects/functions?</span>
+        <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_last_completed_launch</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">:</span>
+            <span class="n">task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">task_index</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;unnamed&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="n">launch</span> <span class="o">=</span> <span class="n">get_last_completed_launch</span><span class="p">(</span><span class="n">fw</span><span class="p">)</span>
+
+            <span class="c1"># skip the fws that have not run yet</span>
+            <span class="k">if</span> <span class="n">launch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">d</span><span class="p">[</span><span class="n">launch</span><span class="o">.</span><span class="n">launch_dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_index</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dir_names</span> <span class="o">=</span> <span class="n">d</span></div></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

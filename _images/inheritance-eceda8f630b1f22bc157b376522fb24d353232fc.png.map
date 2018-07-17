@@ -1,0 +1,5 @@
+<map id="inheritancee24976935f" name="inheritancee24976935f">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitDftpOutputMixin" target="_top" title="Mixin providing generic fiels for dfpt calculation" alt="" coords="218,3,487,19"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.abinit_results.DteAbinitOutput" target="_top" title="EmbeddedDocument containing the typical outputs for a DTE workflow." alt="" coords="517,19,765,34"/>
+<area shape="rect" id="node3" title="A :class:`~mongoengine.Document` that isn&#39;t stored in its own" alt="" coords="260,34,445,49"/>
+</map>

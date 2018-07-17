@@ -1,0 +1,4 @@
+<map id="inheritancec182e2fc38" name="inheritancec182e2fc38">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData" target="_top" title="Embedded document providing some fields and function to save abinit pseudopotential data" alt="" coords="481,4,764,21"/>
+<area shape="rect" id="node2" title="A :class:`~mongoengine.Document` that isn&#39;t stored in its own" alt="" coords="242,4,448,21"/>
+</map>

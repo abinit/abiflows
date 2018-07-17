@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.utils.databases &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.fireworks.utils.databases</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utilities for database insertion</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">gridfs</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="kn">import</span> <span class="nn">paramiko</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
+
+
+<div class="viewcode-block" id="MongoDatabase"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.MongoDatabase">[docs]</a><span class="k">class</span> <span class="nc">MongoDatabase</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    MongoDB database class for access, insertion, update, ... in a MongoDB database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">database</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="n">gridfs_collection</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_port</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span> <span class="o">=</span> <span class="n">collection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gridfs_collection</span> <span class="o">=</span> <span class="n">gridfs_collection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_username</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">authenticate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gridfs_collection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gridfs</span> <span class="o">=</span> <span class="n">gridfs</span><span class="o">.</span><span class="n">GridFS</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_gridfs_collection</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gridfs</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MongoDatabase.insert_entry"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.MongoDatabase.insert_entry">[docs]</a>    <span class="k">def</span> <span class="nf">insert_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">gridfs_msonables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">gridfs_msonables</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">entry_value</span><span class="p">,</span> <span class="n">msonable_object</span> <span class="ow">in</span> <span class="n">gridfs_msonables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">dict_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msonable_object</span><span class="o">.</span><span class="n">as_dict</span><span class="p">())</span>
+                <span class="n">file_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gridfs</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">dict_str</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                <span class="n">entry</span><span class="p">[</span><span class="n">entry_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoDatabase.get_entry"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.MongoDatabase.get_entry">[docs]</a>    <span class="k">def</span> <span class="nf">get_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">criteria</span><span class="p">):</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No entry found with criteria ...&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Multiple entries (</span><span class="si">{:d}</span><span class="s2">) found with criteria ...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoDatabase.save_entry"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.MongoDatabase.save_entry">[docs]</a>    <span class="k">def</span> <span class="nf">save_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;_id&#39;</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Entry should contain &quot;_id&quot; field to be saved&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoDatabase.update_entry"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.MongoDatabase.update_entry">[docs]</a>    <span class="k">def</span> <span class="nf">update_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">entry_update</span><span class="p">,</span> <span class="n">gridfs_msonables</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Number of entries != 1, found : </span><span class="si">{:d}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">))</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find_one</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">entry</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">entry_update</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gridfs_msonables</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">entry_value</span><span class="p">,</span> <span class="n">msonable_object</span> <span class="ow">in</span> <span class="n">gridfs_msonables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">entry_value</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
+                    <span class="n">backup_current_entry_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry_value</span><span class="p">)</span>
+                    <span class="n">backup_number</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">backup_number</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Too many backups (10) for object with entry name &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">entry_value</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">backup_current_entry_value</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
+                            <span class="n">backup_current_entry_value</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_backup_</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">entry_value</span><span class="p">,</span> <span class="n">backup_number</span><span class="p">)</span>
+                            <span class="n">backup_number</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="n">entry</span><span class="p">[</span><span class="n">backup_current_entry_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="n">entry_value</span><span class="p">]</span>
+                        <span class="k">break</span>
+                <span class="n">dict_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msonable_object</span><span class="o">.</span><span class="n">as_dict</span><span class="p">())</span>
+                <span class="n">file_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gridfs</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">dict_str</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+                <span class="n">entry</span><span class="p">[</span><span class="n">entry_value</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MongoDatabase.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.MongoDatabase.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Json-serializable dict representation of a MongoDatabase</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dd</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;@module&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+              <span class="s2">&quot;@class&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+              <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">,</span>
+              <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">,</span>
+              <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">,</span>
+              <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_username</span><span class="p">,</span>
+              <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">,</span>
+              <span class="s2">&quot;collection&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="p">,</span>
+              <span class="s2">&quot;gridfs_collection&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gridfs_collection</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">dd</span></div>
+
+<div class="viewcode-block" id="MongoDatabase.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.MongoDatabase.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;host&#39;</span><span class="p">],</span> <span class="n">port</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;port&#39;</span><span class="p">],</span> <span class="n">database</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;database&#39;</span><span class="p">],</span>
+                   <span class="n">username</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">],</span> <span class="n">password</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">],</span> <span class="n">collection</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;collection&#39;</span><span class="p">],</span>
+                   <span class="n">gridfs_collection</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;gridfs_collection&#39;</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="StorageServer"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer">[docs]</a><span class="k">class</span> <span class="nc">StorageServer</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Storage server class for moving files to/from a given server</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">REMOTE_SERVER</span> <span class="o">=</span> <span class="s1">&#39;REMOTE_SERVER&#39;</span>
+    <span class="n">LOCAL_SERVER</span> <span class="o">=</span> <span class="s1">&#39;LOCAL_SERVER&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hostname</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server_type</span><span class="o">=</span><span class="n">REMOTE_SERVER</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span> <span class="o">=</span> <span class="n">hostname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span> <span class="o">=</span> <span class="n">server_type</span>
+        <span class="c1"># self.connect()</span>
+
+<div class="viewcode-block" id="StorageServer.connect"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">REMOTE_SERVER</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span> <span class="o">=</span> <span class="n">paramiko</span><span class="o">.</span><span class="n">SSHClient</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">load_system_host_keys</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+                                    <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">open_sftp</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="StorageServer.disconnect"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.disconnect">[docs]</a>    <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">REMOTE_SERVER</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ssh_client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="StorageServer.remotepath_exists"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.remotepath_exists">[docs]</a>    <span class="k">def</span> <span class="nf">remotepath_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">raise</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="StorageServer.remote_makedirs"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.remote_makedirs">[docs]</a>    <span class="k">def</span> <span class="nf">remote_makedirs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">head</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tail</span><span class="p">:</span>
+            <span class="n">head</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">head</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">head</span> <span class="ow">and</span> <span class="n">tail</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">remotepath_exists</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">head</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remote_makedirs</span><span class="p">(</span><span class="n">head</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tail</span> <span class="o">==</span> <span class="s1">&#39;.&#39;</span><span class="p">:</span>
+                <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StorageServer.put"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.put">[docs]</a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">localpath</span><span class="p">,</span> <span class="n">remotepath</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">makedirs</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">REMOTE_SERVER</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">localpath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Local path &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">localpath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">remotepath_exists</span><span class="p">(</span><span class="n">remotepath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Remote path &quot;</span><span class="si">{}</span><span class="s1">&quot; exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remotepath</span><span class="p">))</span>
+            <span class="n">rdirname</span><span class="p">,</span> <span class="n">rfilename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">remotepath</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">rfilename</span> <span class="ow">or</span> <span class="n">rfilename</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;..&#39;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Remote path &quot;</span><span class="si">{}</span><span class="s1">&quot; is not a valid filepath&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remotepath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">remotepath_exists</span><span class="p">(</span><span class="n">rdirname</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">makedirs</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">remote_makedirs</span><span class="p">(</span><span class="n">rdirname</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Directory of remote path &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exists and &#39;</span>
+                                  <span class="s1">&#39;&quot;makedirs&quot; is set to False&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remotepath</span><span class="p">))</span>
+            <span class="n">sftp_stat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">localpath</span><span class="o">=</span><span class="n">localpath</span><span class="p">,</span> <span class="n">remotepath</span><span class="o">=</span><span class="n">remotepath</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">sftp_stat</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">LOCAL_SERVER</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">localpath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Source path &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">localpath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">remotepath</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Dest path &quot;</span><span class="si">{}</span><span class="s1">&quot; exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remotepath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">localpath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Only files can be copied in LOCAL_SERVER mode.&#39;</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">localpath</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="n">remotepath</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Server type &quot;</span><span class="si">{}</span><span class="s1">&quot; is not allowed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server_type</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="StorageServer.get"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remotepath</span><span class="p">,</span> <span class="n">localpath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">makedirs</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">REMOTE_SERVER</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">remotepath_exists</span><span class="p">(</span><span class="n">remotepath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Remote path &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remotepath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">localpath</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">head</span><span class="p">,</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">remotepath</span><span class="p">)</span>
+                <span class="n">localpath</span> <span class="o">=</span> <span class="n">tail</span>
+            <span class="n">localpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">localpath</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">localpath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Local path &quot;</span><span class="si">{}</span><span class="s1">&quot; exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">localpath</span><span class="p">))</span>
+            <span class="c1"># Check if the remotepath is a regular file (right now, this is the only option that is implemented,</span>
+            <span class="c1">#  directories should be implemented, symbolic links should be handled in some way).</span>
+            <span class="n">remotepath_stat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">remotepath</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISREG</span><span class="p">(</span><span class="n">remotepath_stat</span><span class="o">.</span><span class="n">st_mode</span><span class="p">):</span>
+                <span class="n">sftp_stat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sftp_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">remotepath</span><span class="p">,</span> <span class="n">localpath</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Remote path &quot;</span><span class="si">{}</span><span class="s1">&quot; is not a regular file&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remotepath</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">sftp_stat</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">LOCAL_SERVER</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">remotepath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Source path &quot;</span><span class="si">{}</span><span class="s1">&quot; does not exist&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remotepath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">localpath</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Dest path &quot;</span><span class="si">{}</span><span class="s1">&quot; exists&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">localpath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">remotepath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Only files can be copied in LOCAL_SERVER mode.&#39;</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">remotepath</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="n">localpath</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Server type &quot;</span><span class="si">{}</span><span class="s1">&quot; is not allowed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server_type</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="StorageServer.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Json-serializable dict representation of a StorageServer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dd</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;@module&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+              <span class="s2">&quot;@class&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+              <span class="s2">&quot;hostname&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span>
+              <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+              <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+              <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+              <span class="s2">&quot;server_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_type</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">dd</span></div>
+
+<div class="viewcode-block" id="StorageServer.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.databases.StorageServer.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;hostname&#39;</span><span class="p">],</span> <span class="n">port</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;port&#39;</span><span class="p">],</span>
+                   <span class="n">username</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">],</span> <span class="n">password</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">],</span>
+                   <span class="n">server_type</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;server_type&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;server_type&#39;</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">else</span> <span class="bp">cls</span><span class="o">.</span><span class="n">REMOTE_SERVER</span><span class="p">)</span></div></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

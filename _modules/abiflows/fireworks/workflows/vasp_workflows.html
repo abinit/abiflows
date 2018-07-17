@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>abiflows.fireworks.workflows.vasp_workflows &#8212; abiflows 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for abiflows.fireworks.workflows.vasp_workflows</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Firework workflows</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">six</span>
+
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
+
+<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="k">import</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span><span class="p">,</span> <span class="n">VaspXMLValidatorController</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControlProcedure</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">append_fw_to_wf</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span><span class="p">,</span> <span class="n">links_dict_update</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="k">import</span> <span class="n">createVaspSRCFireworks</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="k">import</span> <span class="n">MPRelaxTaskHelper</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="k">import</span> <span class="n">GenerateNEBRelaxationTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_sets</span> <span class="k">import</span> <span class="n">MPNEBSet</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="k">import</span> <span class="n">DatabaseInsertTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">set_short_single_core_to_spec</span>
+
+<span class="kn">from</span> <span class="nn">pymatgen.io.vasp.sets</span> <span class="k">import</span> <span class="n">MPRelaxSet</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.transition_state</span> <span class="k">import</span> <span class="n">NEBAnalysis</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">))</span>
+
+
+
+<div class="viewcode-block" id="AbstractFWWorkflow"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow">[docs]</a><span class="nd">@six</span><span class="o">.</span><span class="n">add_metaclass</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">AbstractFWWorkflow</span><span class="p">(</span><span class="n">Workflow</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract Workflow class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AbstractFWWorkflow.add_to_db"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.add_to_db">[docs]</a>    <span class="k">def</span> <span class="nf">add_to_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lpad</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">lpad</span><span class="p">:</span>
+            <span class="n">lpad</span> <span class="o">=</span> <span class="n">LaunchPad</span><span class="o">.</span><span class="n">auto_load</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lpad</span><span class="o">.</span><span class="n">add_wf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractFWWorkflow.append_fw"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.append_fw">[docs]</a>    <span class="k">def</span> <span class="nf">append_fw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw</span><span class="p">,</span> <span class="n">short_single_spec</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">short_single_spec</span><span class="p">:</span>
+            <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">set_short_single_core_to_spec</span><span class="p">())</span>
+        <span class="n">append_fw_to_wf</span><span class="p">(</span><span class="n">fw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractFWWorkflow.set_short_single_core_to_spec"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.set_short_single_core_to_spec">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="p">{},</span> <span class="n">master_mem_overhead</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+        <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">get_short_single_core_spec</span><span class="p">(</span><span class="n">master_mem_overhead</span><span class="o">=</span><span class="n">master_mem_overhead</span><span class="p">)</span>
+        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qadapter_spec</span>
+        <span class="k">return</span> <span class="n">spec</span></div>
+
+<div class="viewcode-block" id="AbstractFWWorkflow.add_db_insert"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.add_db_insert">[docs]</a>    <span class="k">def</span> <span class="nf">add_db_insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mongo_database</span><span class="p">,</span> <span class="n">insertion_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                      <span class="n">criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">insertion_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">insertion_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="s1">&#39;get_final_structure&#39;</span><span class="p">}</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_short_single_core_to_spec</span><span class="p">()</span>
+        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mongo_database&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mongo_database</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;_add_launchpad_and_fw_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">insert_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">([</span><span class="n">DatabaseInsertTask</span><span class="p">(</span><span class="n">insertion_data</span><span class="o">=</span><span class="n">insertion_data</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">criteria</span><span class="p">)],</span>
+                             <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_insert&quot;</span><span class="p">))</span>
+
+        <span class="n">append_fw_to_wf</span><span class="p">(</span><span class="n">insert_fw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractFWWorkflow.add_metadata"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.add_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">add_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_metadata</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">wf_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">structure</span><span class="p">:</span>
+            <span class="n">composition</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">composition</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;nsites&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;elements&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">composition</span><span class="o">.</span><span class="n">elements</span><span class="p">]</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;reduced_formula&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span>
+
+        <span class="n">metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">additional_metadata</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractFWWorkflow.add_spec_to_all_fws"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.add_spec_to_all_fws">[docs]</a>    <span class="k">def</span> <span class="nf">add_spec_to_all_fws</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">:</span>
+            <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AbstractFWWorkflow.set_preserve_fworker"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.set_preserve_fworker">[docs]</a>    <span class="k">def</span> <span class="nf">set_preserve_fworker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_spec_to_all_fws</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">_preserve_fworker</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="MPRelaxFWWorkflowSRC"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.MPRelaxFWWorkflowSRC">[docs]</a><span class="k">class</span> <span class="nc">MPRelaxFWWorkflowSRC</span><span class="p">(</span><span class="n">AbstractFWWorkflow</span><span class="p">):</span>
+    <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;MPRelaxFWWorkflowSRC&#39;</span>
+    <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.vasp_workflows&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vasp_input_set</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="c1"># Initializes fws list and links_dict</span>
+        <span class="n">fws</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">links_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="s1">&#39;additional_controllers&#39;</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+            <span class="n">additional_controllers</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;additional_controllers&#39;</span><span class="p">]</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;additional_controllers&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">additional_controllers</span> <span class="o">=</span> <span class="p">[</span><span class="n">WalltimeController</span><span class="p">(),</span> <span class="n">MemoryController</span><span class="p">(),</span> <span class="n">VaspXMLValidatorController</span><span class="p">()]</span>
+
+        <span class="n">control_procedure</span> <span class="o">=</span> <span class="n">ControlProcedure</span><span class="p">(</span><span class="n">controllers</span><span class="o">=</span><span class="n">additional_controllers</span><span class="p">)</span>
+        <span class="n">task_helper</span> <span class="o">=</span> <span class="n">MPRelaxTaskHelper</span><span class="p">()</span>
+        <span class="n">task_type</span> <span class="o">=</span> <span class="n">task_helper</span><span class="o">.</span><span class="n">task_type</span>
+        <span class="n">src_fws</span> <span class="o">=</span> <span class="n">createVaspSRCFireworks</span><span class="p">(</span><span class="n">vasp_input_set</span><span class="o">=</span><span class="n">vasp_input_set</span><span class="p">,</span> <span class="n">task_helper</span><span class="o">=</span><span class="n">task_helper</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">,</span>
+                                         <span class="n">control_procedure</span><span class="o">=</span><span class="n">control_procedure</span><span class="p">,</span>
+                                         <span class="n">custodian_handlers</span><span class="o">=</span><span class="p">[],</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">src_cleaning</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                         <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                         <span class="n">setup_spec_update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_spec_update</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">fws</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">src_fws</span><span class="p">[</span><span class="s1">&#39;fws&#39;</span><span class="p">])</span>
+        <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span> <span class="n">links_update</span><span class="o">=</span><span class="n">src_fws</span><span class="p">[</span><span class="s1">&#39;links_dict&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">wf</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">fireworks</span><span class="o">=</span><span class="n">fws</span><span class="p">,</span> <span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;workflow_class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_class</span><span class="p">,</span>
+                                     <span class="s1">&#39;workflow_module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_module</span><span class="p">},</span>
+                           <span class="n">name</span><span class="o">=</span><span class="s1">&#39;MPRelaxFWWorkflowSRC&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MPRelaxFWWorkflowSRC.from_structure"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.MPRelaxFWWorkflowSRC.from_structure">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_structure</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">user_incar_settings</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">vis</span> <span class="o">=</span> <span class="n">MPRelaxSet</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">user_incar_settings</span><span class="o">=</span><span class="n">user_incar_settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">vasp_input_set</span><span class="o">=</span><span class="n">vis</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MPRelaxFWWorkflowSRC.get_final_structure"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.MPRelaxFWWorkflowSRC.get_final_structure">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_final_structure</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">wf</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">wf</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;workflow_class&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">workflow_class</span>
+        <span class="k">assert</span> <span class="n">wf</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;workflow_module&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">workflow_module</span>
+        <span class="n">step_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">final_fw_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s1">&#39;SRC_task_index&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">src_type</span> <span class="o">!=</span> <span class="s1">&#39;run&#39;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;SRC_task_index&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span> <span class="o">==</span> <span class="s1">&#39;MPRelaxVasp&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;</span> <span class="n">step_index</span><span class="p">:</span>
+                        <span class="n">step_index</span> <span class="o">=</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span>
+                        <span class="n">final_fw_id</span> <span class="o">=</span> <span class="n">fw_id</span>
+        <span class="k">if</span> <span class="n">final_fw_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Final structure not found ...&#39;</span><span class="p">)</span>
+        <span class="n">myfw</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="p">[</span><span class="n">final_fw_id</span><span class="p">]</span>
+        <span class="n">mytask</span> <span class="o">=</span> <span class="n">myfw</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">last_launch</span> <span class="o">=</span> <span class="p">(</span><span class="n">myfw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">myfw</span><span class="o">.</span><span class="n">launches</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># myfw.tasks[-1].set_workdir(workdir=last_launch.launch_dir)</span>
+        <span class="c1"># mytask.setup_rundir(last_launch.launch_dir, create_dirs=False)</span>
+        <span class="n">helper</span> <span class="o">=</span> <span class="n">MPRelaxTaskHelper</span><span class="p">()</span>
+        <span class="n">helper</span><span class="o">.</span><span class="n">set_task</span><span class="p">(</span><span class="n">mytask</span><span class="p">)</span>
+        <span class="n">helper</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">setup_rundir</span><span class="p">(</span><span class="n">last_launch</span><span class="o">.</span><span class="n">launch_dir</span><span class="p">)</span>
+
+        <span class="n">structure</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">get_final_structure</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="n">structure</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()}</span></div></div>
+
+
+<div class="viewcode-block" id="MPNEBRelaxFWWorkflowSRC"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.MPNEBRelaxFWWorkflowSRC">[docs]</a><span class="k">class</span> <span class="nc">MPNEBRelaxFWWorkflowSRC</span><span class="p">(</span><span class="n">AbstractFWWorkflow</span><span class="p">):</span>
+    <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;MPNEBRelaxFWWorkflowSRC&#39;</span>
+    <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.vasp_workflows&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neb_vasp_input_set</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">neb_terminals</span><span class="p">,</span> <span class="n">relax_terminals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_insert</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_nebs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                 <span class="n">relax_vasp_input_set</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_neb_structures</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">climbing_image</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">user_incar_settings</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NPAR&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;ISIF&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;SIGMA&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s1">&#39;ISMEAR&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">n_nebs</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Minimum one NEB ...&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">relax_terminals</span> <span class="ow">and</span> <span class="n">initial_neb_structures</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot relax terminals and start from initial NEB structures&#39;</span><span class="p">)</span>
+        <span class="c1"># Initializes fws list and links_dict</span>
+        <span class="n">fws</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">links_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="s1">&#39;additional_controllers&#39;</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+            <span class="n">additional_controllers</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;additional_controllers&#39;</span><span class="p">]</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;additional_controllers&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">additional_controllers</span> <span class="o">=</span> <span class="p">[</span><span class="n">WalltimeController</span><span class="p">(),</span> <span class="n">MemoryController</span><span class="p">(),</span> <span class="n">VaspXMLValidatorController</span><span class="p">()]</span>
+
+        <span class="c1"># Control procedure</span>
+        <span class="n">control_procedure</span> <span class="o">=</span> <span class="n">ControlProcedure</span><span class="p">(</span><span class="n">controllers</span><span class="o">=</span><span class="n">additional_controllers</span><span class="p">)</span>
+
+        <span class="c1"># First NEB</span>
+        <span class="n">gen_neb_spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">relax_terminals</span><span class="p">:</span>
+            <span class="n">gen_neb_spec</span><span class="p">[</span><span class="s1">&#39;terminal_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">gen_neb_spec</span><span class="p">[</span><span class="s1">&#39;terminal_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gen_neb_spec</span><span class="p">[</span><span class="s1">&#39;terminal_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neb_terminals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">gen_neb_spec</span><span class="p">[</span><span class="s1">&#39;terminal_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neb_terminals</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># gen_neb_spec[&#39;structures&#39;] = neb_terminals</span>
+        <span class="n">gen_neb_spec</span> <span class="o">=</span> <span class="n">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">gen_neb_spec</span><span class="p">)</span>
+
+        <span class="n">terminal_start_relax_task_type</span> <span class="o">=</span> <span class="s1">&#39;MPRelaxVasp-start&#39;</span>
+        <span class="n">terminal_end_relax_task_type</span> <span class="o">=</span> <span class="s1">&#39;MPRelaxVasp-end&#39;</span>
+        <span class="n">terminal_start_task_type</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">terminal_end_task_type</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">relax_terminals</span><span class="p">:</span>
+            <span class="n">terminal_start_task_type</span> <span class="o">=</span> <span class="n">terminal_start_relax_task_type</span>
+            <span class="n">terminal_end_task_type</span> <span class="o">=</span> <span class="n">terminal_end_relax_task_type</span>
+        <span class="n">gen_neb_task</span> <span class="o">=</span> <span class="n">GenerateNEBRelaxationTask</span><span class="p">(</span><span class="n">n_insert</span><span class="o">=</span><span class="n">n_insert</span><span class="p">,</span> <span class="n">user_incar_settings</span><span class="o">=</span><span class="n">user_incar_settings</span><span class="p">,</span>
+                                                 <span class="n">climbing_image</span><span class="o">=</span><span class="n">climbing_image</span><span class="p">,</span> <span class="n">task_index</span><span class="o">=</span><span class="s1">&#39;neb1&#39;</span><span class="p">,</span>
+                                                 <span class="n">terminal_start_task_type</span><span class="o">=</span><span class="n">terminal_start_task_type</span><span class="p">,</span>
+                                                 <span class="n">terminal_end_task_type</span><span class="o">=</span><span class="n">terminal_end_task_type</span><span class="p">)</span>
+        <span class="n">gen_neb_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">([</span><span class="n">gen_neb_task</span><span class="p">],</span> <span class="n">spec</span><span class="o">=</span><span class="n">gen_neb_spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;gen-neb1&#39;</span><span class="p">)</span>
+        <span class="n">fws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gen_neb_fw</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">relax_terminals</span><span class="p">:</span>
+            <span class="c1"># Start terminal</span>
+            <span class="n">relax_task_helper</span> <span class="o">=</span> <span class="n">MPRelaxTaskHelper</span><span class="p">()</span>
+            <span class="n">vis_start</span> <span class="o">=</span> <span class="n">relax_vasp_input_set</span><span class="p">(</span><span class="n">neb_terminals</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">user_incar_settings</span><span class="o">=</span><span class="n">user_incar_settings</span><span class="p">)</span>
+            <span class="n">start_src_fws</span> <span class="o">=</span> <span class="n">createVaspSRCFireworks</span><span class="p">(</span><span class="n">vasp_input_set</span><span class="o">=</span><span class="n">vis_start</span><span class="p">,</span> <span class="n">task_helper</span><span class="o">=</span><span class="n">relax_task_helper</span><span class="p">,</span>
+                                                   <span class="n">task_type</span><span class="o">=</span><span class="n">terminal_start_relax_task_type</span><span class="p">,</span>
+                                                   <span class="n">control_procedure</span><span class="o">=</span><span class="n">control_procedure</span><span class="p">,</span>
+                                                   <span class="n">custodian_handlers</span><span class="o">=</span><span class="p">[],</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">src_cleaning</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                                   <span class="n">task_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                                   <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                                   <span class="n">setup_spec_update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_spec_update</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">fws</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">start_src_fws</span><span class="p">[</span><span class="s1">&#39;fws&#39;</span><span class="p">])</span>
+            <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span> <span class="n">links_update</span><span class="o">=</span><span class="n">start_src_fws</span><span class="p">[</span><span class="s1">&#39;links_dict&#39;</span><span class="p">])</span>
+            <span class="n">linkupdate</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_src_fws</span><span class="p">[</span><span class="s1">&#39;control_fw&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fw_id</span><span class="p">:</span> <span class="n">gen_neb_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">}</span>
+            <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span>
+                              <span class="n">links_update</span><span class="o">=</span><span class="n">linkupdate</span><span class="p">)</span>
+
+            <span class="c1"># End terminal</span>
+
+            <span class="n">vis_end</span> <span class="o">=</span> <span class="n">relax_vasp_input_set</span><span class="p">(</span><span class="n">neb_terminals</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">user_incar_settings</span><span class="o">=</span><span class="n">user_incar_settings</span><span class="p">)</span>
+            <span class="n">end_src_fws</span> <span class="o">=</span> <span class="n">createVaspSRCFireworks</span><span class="p">(</span><span class="n">vasp_input_set</span><span class="o">=</span><span class="n">vis_end</span><span class="p">,</span> <span class="n">task_helper</span><span class="o">=</span><span class="n">relax_task_helper</span><span class="p">,</span>
+                                                 <span class="n">task_type</span><span class="o">=</span><span class="n">terminal_end_relax_task_type</span><span class="p">,</span>
+                                                 <span class="n">control_procedure</span><span class="o">=</span><span class="n">control_procedure</span><span class="p">,</span>
+                                                 <span class="n">custodian_handlers</span><span class="o">=</span><span class="p">[],</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">src_cleaning</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                                 <span class="n">task_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                                 <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                                 <span class="n">setup_spec_update</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_spec_update</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">fws</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">end_src_fws</span><span class="p">[</span><span class="s1">&#39;fws&#39;</span><span class="p">])</span>
+            <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span> <span class="n">links_update</span><span class="o">=</span><span class="n">end_src_fws</span><span class="p">[</span><span class="s1">&#39;links_dict&#39;</span><span class="p">])</span>
+            <span class="n">linkupdate</span> <span class="o">=</span> <span class="p">{</span><span class="n">end_src_fws</span><span class="p">[</span><span class="s1">&#39;control_fw&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fw_id</span><span class="p">:</span> <span class="n">gen_neb_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">}</span>
+            <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span>
+                              <span class="n">links_update</span><span class="o">=</span><span class="n">linkupdate</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">n_nebs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ineb</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_nebs</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">prev_gen_neb_fw</span> <span class="o">=</span> <span class="n">gen_neb_fw</span>
+                <span class="n">gen_neb_spec</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">gen_neb_spec</span><span class="p">[</span><span class="s1">&#39;structures&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">gen_neb_spec</span> <span class="o">=</span> <span class="n">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">gen_neb_spec</span><span class="p">)</span>
+                <span class="n">gen_neb_task</span> <span class="o">=</span> <span class="n">GenerateNEBRelaxationTask</span><span class="p">(</span><span class="n">n_insert</span><span class="o">=</span><span class="n">n_insert</span><span class="p">,</span> <span class="n">user_incar_settings</span><span class="o">=</span><span class="n">user_incar_settings</span><span class="p">,</span>
+                                                         <span class="n">climbing_image</span><span class="o">=</span><span class="n">climbing_image</span><span class="p">,</span>
+                                                         <span class="n">task_index</span><span class="o">=</span><span class="s1">&#39;neb</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ineb</span><span class="p">),</span>
+                                                         <span class="n">prev_neb_task_type</span><span class="o">=</span><span class="s1">&#39;neb</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ineb</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                                                         <span class="n">terminal_start_task_type</span><span class="o">=</span><span class="n">terminal_start_task_type</span><span class="p">,</span>
+                                                         <span class="n">terminal_end_task_type</span><span class="o">=</span><span class="n">terminal_end_task_type</span>
+                                                         <span class="p">)</span>
+                <span class="n">gen_neb_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">([</span><span class="n">gen_neb_task</span><span class="p">],</span> <span class="n">spec</span><span class="o">=</span><span class="n">gen_neb_spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;gen-neb</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ineb</span><span class="p">))</span>
+                <span class="n">fws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gen_neb_fw</span><span class="p">)</span>
+                <span class="n">linkupdate</span> <span class="o">=</span> <span class="p">{</span><span class="n">prev_gen_neb_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">:</span> <span class="n">gen_neb_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">}</span>
+                <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span>
+                                  <span class="n">links_update</span><span class="o">=</span><span class="n">linkupdate</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">relax_terminals</span><span class="p">:</span>
+                    <span class="n">linkupdate</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_src_fws</span><span class="p">[</span><span class="s1">&#39;control_fw&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fw_id</span><span class="p">:</span> <span class="n">gen_neb_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">}</span>
+                    <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span>
+                                      <span class="n">links_update</span><span class="o">=</span><span class="n">linkupdate</span><span class="p">)</span>
+                    <span class="n">linkupdate</span> <span class="o">=</span> <span class="p">{</span><span class="n">end_src_fws</span><span class="p">[</span><span class="s1">&#39;control_fw&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fw_id</span><span class="p">:</span> <span class="n">gen_neb_fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">}</span>
+                    <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span>
+                                      <span class="n">links_update</span><span class="o">=</span><span class="n">linkupdate</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">climbing_image</span><span class="p">:</span>
+            <span class="n">wfname</span> <span class="o">=</span> <span class="s2">&quot;MPcNEBRelaxFWWorkflowSRC&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">wfname</span> <span class="o">=</span> <span class="s2">&quot;MPcNEBRelaxFWWorkflowSRC&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wf</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">fireworks</span><span class="o">=</span><span class="n">fws</span><span class="p">,</span> <span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span>
+                           <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;workflow_class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_class</span><span class="p">,</span>
+                                     <span class="s1">&#39;workflow_module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_module</span><span class="p">},</span>
+                           <span class="n">name</span><span class="o">=</span><span class="n">wfname</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MPNEBRelaxFWWorkflowSRC.from_terminals"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.MPNEBRelaxFWWorkflowSRC.from_terminals">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_terminals</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">neb_terminals</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">relax_terminals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_insert</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_nebs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                       <span class="n">neb_vasp_input_set</span><span class="o">=</span><span class="n">MPNEBSet</span><span class="p">,</span>
+                       <span class="n">relax_vasp_input_set</span><span class="o">=</span><span class="n">MPRelaxSet</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">neb_vasp_input_set</span><span class="o">=</span><span class="n">neb_vasp_input_set</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">neb_terminals</span><span class="o">=</span><span class="n">neb_terminals</span><span class="p">,</span> <span class="n">relax_terminals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">n_insert</span><span class="o">=</span><span class="n">n_insert</span><span class="p">,</span> <span class="n">n_nebs</span><span class="o">=</span><span class="n">n_nebs</span><span class="p">,</span> <span class="n">relax_vasp_input_set</span><span class="o">=</span><span class="n">relax_vasp_input_set</span><span class="p">,</span>
+                   <span class="n">initial_neb_structures</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MPNEBRelaxFWWorkflowSRC.get_nebs_analysis"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.vasp_workflows.MPNEBRelaxFWWorkflowSRC.get_nebs_analysis">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_nebs_analysis</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">wf</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">wf</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;workflow_class&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">workflow_class</span>
+        <span class="k">assert</span> <span class="n">wf</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;workflow_module&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">workflow_module</span>
+
+        <span class="n">terminal_start_step_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">terminal_start_final_fw_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">terminal_end_step_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">terminal_end_final_fw_id</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">neb_tasks_step_index</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">neb_tasks_step_final_fw_id</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s1">&#39;SRC_task_index&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">src_type</span> <span class="o">!=</span> <span class="s1">&#39;run&#39;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;SRC_task_index&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s2">&quot;\&lt;neb\d\&gt;&quot;</span><span class="p">,</span> <span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">neb_tasks_step_index</span><span class="p">:</span>
+                        <span class="n">neb_tasks_step_index</span><span class="p">[</span><span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span>
+                        <span class="n">neb_tasks_step_final_fw_id</span><span class="p">[</span><span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">fw_id</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;</span> <span class="n">neb_tasks_step_index</span><span class="p">[</span><span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span><span class="p">]:</span>
+                            <span class="n">neb_tasks_step_index</span><span class="p">[</span><span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span>
+                            <span class="n">neb_tasks_step_final_fw_id</span><span class="p">[</span><span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">fw_id</span>
+                <span class="k">elif</span> <span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span> <span class="o">==</span> <span class="s1">&#39;MPRelaxVasp-start&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;</span> <span class="n">terminal_start_step_index</span><span class="p">:</span>
+                        <span class="n">terminal_start_step_index</span> <span class="o">=</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span>
+                        <span class="n">terminal_start_final_fw_id</span> <span class="o">=</span> <span class="n">fw_id</span>
+                <span class="k">elif</span> <span class="n">task_index</span><span class="o">.</span><span class="n">task_type</span> <span class="o">==</span> <span class="s1">&#39;MPRelaxVasp-end&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;</span> <span class="n">terminal_end_step_index</span><span class="p">:</span>
+                        <span class="n">terminal_end_step_index</span> <span class="o">=</span> <span class="n">task_index</span><span class="o">.</span><span class="n">index</span>
+                        <span class="n">terminal_end_final_fw_id</span> <span class="o">=</span> <span class="n">fw_id</span>
+        <span class="k">if</span> <span class="n">terminal_start_final_fw_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;No terminal-start relaxation found ...&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">terminal_end_final_fw_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;No terminal-end relaxation found ...&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">neb_tasks_step_index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;No NEB analysis found ...&#39;</span><span class="p">)</span>
+        <span class="c1"># Terminal start dir</span>
+        <span class="n">terminal_start_fw</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="p">[</span><span class="n">terminal_start_final_fw_id</span><span class="p">]</span>
+        <span class="n">terminal_start_last_launch</span> <span class="o">=</span> <span class="p">(</span><span class="n">terminal_start_fw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">terminal_start_fw</span><span class="o">.</span><span class="n">launches</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">terminal_start_run_dir</span> <span class="o">=</span> <span class="n">terminal_start_last_launch</span><span class="o">.</span><span class="n">launch_dir</span>
+        <span class="c1"># Terminal end dir</span>
+        <span class="n">terminal_end_fw</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="p">[</span><span class="n">terminal_end_final_fw_id</span><span class="p">]</span>
+        <span class="n">terminal_end_last_launch</span> <span class="o">=</span> <span class="p">(</span><span class="n">terminal_end_fw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">terminal_end_fw</span><span class="o">.</span><span class="n">launches</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">terminal_end_run_dir</span> <span class="o">=</span> <span class="n">terminal_end_last_launch</span><span class="o">.</span><span class="n">launch_dir</span>
+        <span class="n">nebs_analysis</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ineb</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">neb_tasks_step_index</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">neb_task</span> <span class="o">=</span> <span class="s1">&#39;neb</span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ineb</span><span class="p">)</span>
+            <span class="n">nebfw</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="p">[</span><span class="n">neb_tasks_step_final_fw_id</span><span class="p">[</span><span class="n">neb_task</span><span class="p">]]</span>
+            <span class="n">last_launch</span> <span class="o">=</span> <span class="p">(</span><span class="n">nebfw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">nebfw</span><span class="o">.</span><span class="n">launches</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">neb_analysis</span> <span class="o">=</span> <span class="n">NEBAnalysis</span><span class="o">.</span><span class="n">from_dir</span><span class="p">(</span><span class="n">last_launch</span><span class="o">.</span><span class="n">launch_dir</span><span class="p">,</span>
+                                                <span class="n">relaxation_dirs</span><span class="o">=</span><span class="p">(</span><span class="n">terminal_start_run_dir</span><span class="p">,</span> <span class="n">terminal_end_run_dir</span><span class="p">))</span>
+            <span class="n">nebs_analysis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neb_analysis</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;nebs_analysis&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">neb_analysis</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">neb_analysis</span> <span class="ow">in</span> <span class="n">nebs_analysis</span><span class="p">]}</span></div></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jul 18, 2018.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
