@@ -8,6 +8,10 @@ from pymatgen.analysis.chemenv.coordination_environments.coordination_geometry_f
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import LightStructureEnvironments
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import StructureEnvironments
 from pymatgen.analysis.bond_valence import BVAnalyzer
+try:
+    from pymatgen.ext.matproj import MPRester, MPRestError
+except ImportError:
+    from pymatgen.matproj.rest import MPRester, MPRestError
 
 
 class ChemEnvStructureEnvironmentsTask(FireTaskBase):
@@ -30,8 +34,6 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
             if identifier['source'] == 'MaterialsProject' and 'material_id' in identifier:
                 if not 'mapi_key' in fw_spec:
                     raise ValueError('The mapi_key should be provided to get the structure from the Materials Project')
-                # FIXME: Use MPRester from pymatgen
-                from pymatgen.matproj.rest import MPRester
                 a = MPRester(fw_spec['mapi_key'])
                 structure = a.get_structure_by_material_id(identifier['material_id'])
             else:

@@ -1,16 +1,36 @@
 language: python
+cache: pip
 services: mongodb
-#cache: true
+
+env:
+  global:
+    - ABINIT_VERSION=8.8.2
+    - ABIPY_PYTEST=yes
+    - OPENBLAS_NUM_THREADS=1
+    - OMP_NUM_THREADS=1
 
 # We don't actually use the Travis Python but conda
 matrix:
   include:
     - os: linux
       python: 2.7
-      env: ABINIT_VERSION=8.6.1
+      env: 
+        - ABIPY_INSTALLER=conda
     - os: linux
       python: 3.6
-      env: ABINIT_VERSION=8.6.1
+      env: 
+        - ABIPY_INSTALLER=pip
+    - os: linux
+      python: 3.6
+      env: 
+        - ABIPY_INSTALLER=conda ABIPY_COVERALLS=yes
+#    - os: linux
+#      python: 3.7
+#      # https://github.com/travis-ci/travis-ci/issues/9815
+#      dist: xenial
+#      sudo: true
+#      env: 
+#        - ABIPY_INSTALLER=pip
 
 #dist: precise
 sudo: false
@@ -18,18 +38,29 @@ install:
   #- sudo apt-get update
   - env
   #- set -ev  # exit on first error, print each command
+  - ulimit -s unlimited
 
-  # pip-based installation.
-  #- travis_wait pip install -r requirements.txt
-  #- travis_wait pip install -r requirements-optional.txt
-
-  # Install conda https://conda.io/docs/travis.html
-  - source dev_scripts/conda_get.sh
-  - source dev_scripts/conda_install.sh
-  - conda uninstall -y mongoengine 
-  - pip install mongoengine -U
-  - conda uninstall -y pymatgen
-  #- conda uninstall -y abipy
+  - |
+      if [ "${ABIPY_INSTALLER}" == "pip" ]; then
+        # pip-based installation.
+        source dev_scripts/conda_get.sh  # Needed for Abinit
+        echo "Installing abinit from abinit channel ..."
+        conda config --add channels conda-forge
+        conda install -y -c abinit abinit=${ABINIT_VERSION}
+        abinit --version
+        abinit --build
+        travis_wait pip install -r requirements.txt
+        travis_wait pip install -r requirements-optional.txt
+        
+      elif [ "${ABIPY_INSTALLER}" == "conda" ]; then
+        # Install conda https://conda.io/docs/travis.html
+        source dev_scripts/conda_get.sh
+        source dev_scripts/conda_install.sh
+        conda uninstall -y mongoengine 
+        pip install mongoengine -U
+        conda uninstall -y pymatgen
+        #conda uninstall -y abipy
+      fi
 
   #- pip install pytest scripttest nose nose-exclude
   - if [[ "${TRAVIS_PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
@@ -40,15 +71,16 @@ install:
   #- git clone --depth=50 https://github.com/gmatteo/pymatgen.git && cd pymatgen && pip install -r requirements.txt && pip install -r requirements-optional.txt && python setup.py install && cd ../
   # Use pymatgen master
   #- git clone --depth=50 https://github.com/materialsproject/pymatgen.git && cd pymatgen && pip install -r requirements.txt && pip install -r requirements-optional.txt && python setup.py install && cd ../
+  - rm -rf pymatgen
   
   # Install abipy from github (develop)
   - git clone --depth=50 https://github.com/abinit/abipy.git && cd abipy && python setup.py install && cd ../
     #- git clone --depth=50 https://github.com/abinit/abipy.git && cd abipy && pip install -r requirements.txt && pip install -r requirements-optional.txt && python setup.py install && cd ../
-
   - python setup.py install
   - mkdir -p ${HOME}/.abinit/abipy 
   - cp ./dev_scripts/travis_scheduler.yml ${HOME}/.abinit/abipy/scheduler.yml
   - cp ./dev_scripts/travis_manager.yml ${HOME}/.abinit/abipy/manager.yml
+  - rm -rf abipy
   - ./dev_scripts/pyclean.py .
 
 #before_script:
@@ -69,11 +101,12 @@ branches:
     - develop
 
 after_success:
-- if [[ "${TRAVIS_PYTHON_VERSION}" == "3.6" && "${TRAVIS_OS_NAME}" == "linux" ]]; then coveralls; fi
+    - if [[ "${ABIPY_COVERALLS}" == "yes" ]]; then coveralls; fi
 
 notifications:
   email:
     recipients:
       - gmatteo@gmail.com
+      - g.petretto@gmail.com
     on_success: change
     on_failure: always

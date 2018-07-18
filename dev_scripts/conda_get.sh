@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ev  # exit on first error, print each command
+set -e  # exit on first error, print each command
 
 # Install conda with travis: https://conda.io/docs/travis.html
 if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
