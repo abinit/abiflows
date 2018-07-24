@@ -5,8 +5,9 @@ abinit --version
 abinit --build
 abicheck.py --with-flow
 
-nosetests -v --with-coverage --cover-package=abiflows --logging-level=INFO --doctest-tests
+#nosetests -v --with-coverage --cover-package=abiflows --logging-level=INFO --doctest-tests
 #pytest -n 2 --cov-config=.coveragerc --cov=abiflows -v --doctest-modules
+pytest --cov-config=.coveragerc --cov=abiflows -v --doctest-modules abiflows --ignore=
 
 # This is to run the integration tests (append results)
 # integration_tests are excluded in setup.cfg
