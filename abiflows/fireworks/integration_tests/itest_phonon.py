@@ -14,7 +14,7 @@ from abipy.flowtk.tasks import TaskManager
 from fireworks.core.rocket_launcher import rapidfire
 from abiflows.fireworks.workflows.abinit_workflows import PhononFullFWWorkflow, PhononFWWorkflow
 from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
-from abiflows.core.testing import AbiflowsIntegrationTest
+from abiflows.core.testing import AbiflowsIntegrationTest, check_restart_task_type
 
 
 ABINIT_VERSION = "8.6.1"
@@ -144,33 +144,6 @@ class ItestPhonon(AbiflowsIntegrationTest):
             assert gen_energy == pytest.approx(full_energy, rel=1e-6)
             assert gen_phfreq == pytest.approx(full_phfreqs, rel=1e-6)
 
-    def check_restart_task_type(self, lp, fworker, tmpdir, fw_id, task_tag):
-
-        # resume the task for tag
-        wf = lp.get_wf_by_fw_id(fw_id)
-        fw = get_fw_by_task_index(wf, task_tag, index=1)
-        assert fw is not None
-        assert fw.state == "PAUSED"
-        lp.resume_fw(fw.fw_id)
-
-        # run the FW
-        rapidfire(lp, fworker, m_dir=str(tmpdir), nlaunches=1)
-
-        # the job should have a detour for the restart
-        wf = lp.get_wf_by_fw_id(fw_id)
-        fw = get_fw_by_task_index(wf, task_tag, index=2)
-        assert fw is not None
-        assert fw.state == "READY"
-
-        # run all the following and check that the last is correctly completed (if convergence is not achieved
-        # the final state should be FIZZLED)
-        rapidfire(lp, fworker, m_dir=str(tmpdir))
-
-        wf = lp.get_wf_by_fw_id(fw_id)
-        fw = get_fw_by_task_index(wf, task_tag, index=-1)
-
-        assert fw.state == "COMPLETED"
-
     def itest_not_converged(self, lp, fworker, tmpdir, input_scf_phonon_si_low):
         """
         Tests the missed convergence and restart for all the different kinds of tasks
@@ -194,7 +167,7 @@ class ItestPhonon(AbiflowsIntegrationTest):
         lp.pause_wf(scf_id)
 
         # DDK
-        self.check_restart_task_type(lp, fworker, tmpdir, scf_id, "ddk_0")
+        check_restart_task_type(lp, fworker, tmpdir, scf_id, "ddk_0")
 
         # reignite and run the other DDK to get to the DDE
         wf = lp.get_wf_by_fw_id(scf_id)
@@ -203,14 +176,57 @@ class ItestPhonon(AbiflowsIntegrationTest):
         rapidfire(lp, fworker, m_dir=str(tmpdir))
 
         # DDE
-        self.check_restart_task_type(lp, fworker, tmpdir, scf_id, "dde_0")
+        check_restart_task_type(lp, fworker, tmpdir, scf_id, "dde_0")
 
         # NSCF
-        self.check_restart_task_type(lp, fworker, tmpdir, scf_id, "nscf_wfq_0")
+        check_restart_task_type(lp, fworker, tmpdir, scf_id, "nscf_wfq_0")
 
         # phonon
-        self.check_restart_task_type(lp, fworker, tmpdir, scf_id, "phonon_0")
+        check_restart_task_type(lp, fworker, tmpdir, scf_id, "phonon_0")
 
         # don't run the wf until the end to save time. Other tests covered that.
         wf = lp.get_wf_by_fw_id(scf_id)
         assert wf.state == "PAUSED"
+
+    def itest_phonon_wfq_wf(self, lp, fworker, tmpdir, input_scf_phonon_si_low, db_data):
+        """
+        Tests the PhononFullFWWorkflow and PhononFWWorkflow
+        """
+        qpt = [[0.1111,0.2222,0.3333]]
+
+        # test at gamma. Pass a custom manager, to check proper serialization
+        manager_path = os.path.join(abidata.dirpath, 'managers', "travis_manager.yml")
+        ph_fac = PhononsFromGsFactory(qpoints=qpt, ph_tol = {"tolvrs": 1.0e-7},
+                                      wfq_tol = {"tolwfr": 1.0e-16}, with_ddk=False, with_dde=False,
+                                      manager=TaskManager.from_file(manager_path))
+
+        # first run the phonon workflow with generation task
+        wf_gen = PhononFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=False,
+                                  initialization_info={"qpoints": qpt, "kppa": 100})
+
+        wf_gen.add_mongoengine_db_insertion(db_data)
+
+        scf_id = wf_gen.scf_fw.fw_id
+        old_new = wf_gen.add_to_db(lpad=lp)
+        scf_id = old_new[scf_id]
+
+        # run all the workflow
+        rapidfire(lp, fworker, m_dir=str(tmpdir))
+
+        wf_gen = lp.get_wf_by_fw_id(scf_id)
+
+        assert wf_gen.state == "COMPLETED"
+
+        # then rerun a similar workflow, but completely generated at its creation
+        wf_full = PhononFullFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=False)
+
+        scf_id = wf_full.scf_fw.fw_id
+        old_new = wf_full.add_to_db(lpad=lp)
+        scf_id = old_new[scf_id]
+
+        # run all the workflow
+        rapidfire(lp, fworker, m_dir=str(tmpdir))
+
+        wf_full = lp.get_wf_by_fw_id(scf_id)
+
+        assert wf_full.state == "COMPLETED"

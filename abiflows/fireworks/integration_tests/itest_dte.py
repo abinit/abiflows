@@ -35,11 +35,11 @@ class ItestDte(AbiflowsIntegrationTest):
         input_scf_phonon_gan_low['ixc'] = 7
         dte_inputs = dte_from_gsinput(input_scf_phonon_gan_low, use_phonons=True, skip_dte_permutations=True,
                                       ph_tol={"tolvrs": 1.0e-7}, ddk_tol = {"tolwfr": 1.0e-16},
-                                      dde_tol = {"tolvrs": 1.0e-7}, dte_tol = {"tolwfr": 1.0e-15})
+                                      dde_tol = {"tolvrs": 1.0e-7})
 
         wf = DteFWWorkflow(input_scf_phonon_gan_low, ddk_inp = dte_inputs.filter_by_tags(DDK),
                            dde_inp = dte_inputs.filter_by_tags(DDE), dte_inp = dte_inputs.filter_by_tags(DTE),
-                           ph_inp = dte_inputs.filter_by_tags(PH_Q_PERT), autoparal=False,
+                           ph_inp = dte_inputs.filter_by_tags(PH_Q_PERT), autoparal=use_autoparal,
                            initialization_info={"kppa": 100})
 
         wf.add_anaddb_dte_fw(input_scf_phonon_gan_low.structure, dieflag=1, nlflag=1)
@@ -109,7 +109,7 @@ class ItestDte(AbiflowsIntegrationTest):
 
         dte_inputs = dte_from_gsinput(input_scf_phonon_gan_low, use_phonons=False, skip_dte_permutations=False,
                                       ph_tol={"tolvrs": 1.0e-7}, ddk_tol = {"tolwfr": 1.0e-16},
-                                      dde_tol = {"tolvrs": 1.0e-7}, dte_tol = {"tolwfr": 1.0e-16})
+                                      dde_tol = {"tolvrs": 1.0e-7})
 
         wf = DteFWWorkflow(input_scf_phonon_gan_low, ddk_inp = dte_inputs.filter_by_tags(DDK),
                            dde_inp = dte_inputs.filter_by_tags(DDE), dte_inp = dte_inputs.filter_by_tags(DTE),

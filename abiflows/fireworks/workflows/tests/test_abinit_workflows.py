@@ -81,7 +81,7 @@ class TestFromFactory(AbiflowsTest):
                                       initialization_info={"test": 1}, ph_ngqpt=[2,2,2], autoparal=True)
 
         PhononFullFWWorkflow.from_factory(self.gan_structure, self.gan_pseudos, ecut=4, spec={"test": 1},
-                                          initialization_info={"test": 1}, qpoints=[0.1,0,0])
+                                          initialization_info={"test": 1}, qpoints=[[0.1,0,0]])
 
     def test_dte_workflow(self):
         DteFWWorkflow.from_factory(self.gan_structure, self.gan_pseudos, ecut=4, smearing=None,
@@ -102,6 +102,21 @@ class TestFromFactory(AbiflowsTest):
         RelaxFWWorkflow.from_factory(self.gan_structure, self.gan_pseudos, ecut=4, spec={"test": 1},
                                      initialization_info={"test": 1}, target_dilatmx=1.01)
 
+    def test_dfpt_workflow(self):
+        # set ixc otherwise the dte part will fail
+        extra_abivars = {"ixc": 7}
+        DfptFWWorkflow.from_factory(self.gan_structure, self.gan_pseudos, ecut=4, spec={"test": 1},
+                                    initialization_info={"test": 1}, ph_ngqpt=[2,2,2], do_ddk=True,
+                                    do_dde=True, do_strain=True, do_dte=True, smearing=None,
+                                    spin_mode="unpolarized", extra_abivars=extra_abivars)
+
+        DfptFWWorkflow.from_factory(self.gan_structure, self.gan_pseudos, ecut=4, spec=None,
+                                    initialization_info=None, ph_ngqpt=[2, 2, 2], do_ddk=True, do_dde=True,
+                                    do_strain=False, do_dte=True, extra_abivars=extra_abivars,
+                                    smearing=None, spin_mode="unpolarized", autoparal=True)
+
+
+
 class TestFromPreviousInput(AbiflowsTest):
 
     @classmethod
@@ -120,3 +135,10 @@ class TestFromPreviousInput(AbiflowsTest):
         self.scf_inp['ixc'] = 7
         DteFWWorkflow.from_gs_input(gs_input=self.scf_inp, spec={"test": 1},
                                    initialization_info={"test": 1})
+
+    def test_dfpt_workflow(self):
+        self.scf_inp['ixc'] = 7
+        DfptFWWorkflow.from_gs_input(gs_input=self.scf_inp, spec=None,
+                                     initialization_info=None, ph_ngqpt=[2,2,2],
+                                     do_ddk=True,do_dde=True, do_strain=True, do_dte=True)
+

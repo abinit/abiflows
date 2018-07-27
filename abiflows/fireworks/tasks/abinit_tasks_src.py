@@ -588,6 +588,14 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
             (stdoutdata, stderrdata) = self.process.communicate()
             self.returncode = self.process.returncode
 
+        if os.path.isfile('run.log'):
+            from pymatgen.io.abinit.events import EventsParser
+            parser = EventsParser()
+            report = parser.parse('run.log')
+            if report.run_completed:
+                self.returncode = 0
+                return
+
         # initialize returncode to avoid missing references in case of exception in the other thread
         self.returncode = None
 

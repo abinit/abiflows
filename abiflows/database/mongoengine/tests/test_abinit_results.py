@@ -153,7 +153,47 @@ class TestAbinitResults(AbiflowsTest):
 
             doc.save()
 
-            query_result = DteResult.objects()
+    def test_dfpt_result(self):
+
+        doc = DfptResult(mp_id="mp-1", time_report={"test": 1}, fw_id=1, relax_db={"test": 1},
+                        relax_id="id_string")
+
+        doc.abinit_input.structure = self.si_structure.as_dict()
+        doc.abinit_input.gs_input = self.scf_inp.as_dict()
+        doc.abinit_input.ddk_input = self.scf_inp.as_dict()
+        doc.abinit_input.dde_input = self.scf_inp.as_dict()
+        doc.abinit_input.dde_input = self.scf_inp.as_dict()
+        doc.abinit_input.wfq_input = self.scf_inp.as_dict()
+        doc.abinit_input.strain_input = self.scf_inp.as_dict()
+        doc.abinit_input.dte_input = self.scf_inp.as_dict()
+        doc.abinit_input.phonon_input = self.scf_inp.as_dict()
+        doc.abinit_input.kppa = 1000
+        doc.abinit_output.structure = self.si_structure.as_dict()
+        doc.abinit_output.emacro = np.eye(3).tolist()
+        doc.abinit_output.emacro_rlx = np.eye(3).tolist()
+        doc.abinit_output.dchide = np.arange(36).reshape((4, 3, 3)).tolist()
+        doc.abinit_output.dchidt = np.arange(36).reshape((2, 2, 3, 3)).tolist()
+
+        if has_mongodb():
+            gsr_path = abidata.ref_file('si_scf_GSR.nc')
+
+            with open(gsr_path, "rb") as gsr:
+                doc.abinit_output.gs_gsr.put(gsr)
+
+            gs_outfile_path = self.out_file
+
+            # read/write in binary for py3k compatibility with mongoengine
+            with open(gs_outfile_path, "rb") as gs_outfile:
+                doc.abinit_output.gs_outfile.put(gs_outfile)
+
+            anaddb_nc_path = abidata.ref_file('ZnSe_hex_886.anaddb.nc')
+
+            with open(anaddb_nc_path, "rb") as anaddb_nc:
+                doc.abinit_output.anaddb_nc.put(anaddb_nc)
+
+            doc.save()
+
+            query_result = DfptResult.objects()
 
             assert len(query_result) == 1
             saved_doc = query_result[0]

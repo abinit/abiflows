@@ -518,7 +518,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                 command.extend(self.ftm.fw_policy.mpirun_cmd.split())
                 if 'mpi_ncpus' in fw_spec:
                     command.extend(['-n', str(fw_spec['mpi_ncpus'])])
-            command.append(self.ftm.fw_policy.abinit_cmd)
+            command.extend(self.ftm.fw_policy.abinit_cmd.split())
 
             if self.walltime:
                 mytimelimit = self.walltime
@@ -874,12 +874,13 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
             try:
                 p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err =p.communicate()
+                out, err = p.communicate()
+                print("!!!!", out, err, self.ftm.fw_policy.walltime_command)
                 status = p.returncode
                 if status == 0 and out:
-                    self.walltime = int(out)
+                    self.walltime = int(out.decode("utf-8"))
                 else:
-                    logger.warning("Impossible to get the walltime: " + err)
+                    logger.warning("Impossible to get the walltime: " + err.decode("utf-8"))
             except Exception as e:
                 logger.warning("Impossible to get the walltime: ", exc_info=True)
 
@@ -966,7 +967,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                 while True:
                     self.config_run(fw_spec)
                     # try to recover previous run
-                    if not os.path.isfile(self.output_file.path):
+                    if not self.ftm.fw_policy.recover_previous_job or not os.path.isfile(self.output_file.path):
                         self.run_abinit(fw_spec)
                     action = self.task_analysis(fw_spec)
                     if action:
@@ -1827,7 +1828,8 @@ class MergeDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         """
 
         if ddb_source_task_types is None:
-            ddb_source_task_types = [PhononTask.task_type, DdeTask.task_type, BecTask.task_type, DteTask.task_type]
+            ddb_source_task_types = [ScfFWTask.task_type, PhononTask.task_type, DdeTask.task_type, BecTask.task_type,
+                                     DteTask.task_type, StrainPertTask.task_type]
         elif not isinstance(ddb_source_task_types, (list, tuple)):
             ddb_source_task_types = [ddb_source_task_types]
 
@@ -2667,7 +2669,8 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         # Set a higher priority to favour the end of the WF
         #TODO improve the handling of the priorities
         mrgddb_spec['_priority'] = 10
-        num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
+        # add one for the scf that is linked to the mrgddbtask and will be merged as well
+        num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws) + 1
         mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
                              name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
 
@@ -2694,221 +2697,6 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         stored_data = dict(finalized=True)
 
         return FWAction(stored_data=stored_data, detours=ph_wf)
-
-
-class PhononWFGenerator(BasicAbinitTaskMixin, FireTaskBase):
-    """
-    Since the workflow generated for the phonons may by composed by thousands of FWs, the amount of information
-    to be storead in the FWAction will be large in this cases. Like all the documents in mongodb the launch cannot
-    exceed the 16MB size, which is often reached when the number of FWs generated is around 1000.
-    To avoid this problem it is mandatory to generate the whole workflow immediately.
-    This mimics the behaviour of :class:`GeneratePhononFlowFWAbinitTask`.
-
-    .. rubric:: Inheritance Diagram
-    .. inheritance-diagram:: PhononWFGenerator
-    """
-    def __init__(self, scf_input, phonon_factory, previous_task_type=ScfFWTask.task_type, handlers=[],
-                 with_autoparal=True, ddb_file=None, fw_task_manager=None, initialization_info={}):
-        self.scf_input = scf_input
-        self.phonon_factory = phonon_factory
-        self.previous_task_type = previous_task_type
-        self.handlers = handlers
-        self.with_autoparal=with_autoparal
-        self.ddb_file = ddb_file
-        self.fw_task_manager = fw_task_manager
-        self.initialization_info = initialization_info or {}
-
-    def run_autoparal(self, abiinput, autoparal_dir, ftm, clean_up='move'):
-        """
-        Runs the autoparal using AbinitInput abiget_autoparal_pconfs method.
-        The information are retrieved from the FWTaskManager that should be present and contain the standard
-        abipy TaskManager, that provides information about the queue adapters.
-        No check is performed on the autoparal_dir. If there is a possibility of overwriting output data due to
-        reuse of the same folder, it should be handled by the caller.
-        """
-        manager = ftm.task_manager
-        if not manager:
-            msg = 'No task manager available: autoparal could not be performed.'
-            logger.error(msg)
-            raise InitializationError(msg)
-        pconfs = abiinput.abiget_autoparal_pconfs(max_ncpus=manager.max_cores, workdir=autoparal_dir,
-                                                       manager=manager)
-        optconf = manager.select_qadapter(pconfs)
-        qadapter_spec = manager.qadapter.get_subs_dict()
-
-        d = pconfs.as_dict()
-        d["optimal_conf"] = optconf
-        json_pretty_dump(d, os.path.join(autoparal_dir, "autoparal.json"))
-
-        # Method to clean the output files
-        def safe_rm(name):
-            try:
-                path = os.path.join(autoparal_dir, name)
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
-                else:
-                    os.remove(path)
-            except OSError:
-                pass
-
-        # Method to rename the output files
-        def safe_mv(name):
-            try:
-                autoparal_backup_dir = os.path.join(autoparal_dir, 'autoparal_backup')
-                if not os.path.exists(autoparal_backup_dir):
-                    os.makedirs(autoparal_backup_dir)
-                current_path = os.path.join(autoparal_dir, name)
-                newpath = os.path.join(autoparal_backup_dir, name)
-                if not os.path.exists(newpath):
-                    shutil.move(current_path, newpath)
-                else:
-                    raise ValueError('Autoparal backup file already exists for the file "{}"'.format(name))
-            except OSError:
-                pass
-
-        # clean up useless files. The output files should removed also to avoid abinit renaming the out file in
-        # case the main run will be performed in the same dir
-
-        if clean_up == 'move':
-            to_be_moved = [OUTPUT_FILE_NAME, LOG_FILE_NAME, STDERR_FILE_NAME]
-            for r in to_be_moved:
-                safe_mv(r)
-            to_be_removed = [TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME]
-            for r in to_be_removed:
-                safe_rm(r)
-        elif clean_up == 'remove':
-            to_be_removed = [OUTPUT_FILE_NAME, LOG_FILE_NAME, STDERR_FILE_NAME, TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME]
-            for r in to_be_removed:
-                safe_rm(r)
-
-        return optconf, qadapter_spec, manager.qadapter
-
-    def get_fws(self, multi_inp, task_class, deps, new_spec, ftm, nscf_fws=None):
-        formula = multi_inp[0].structure.composition.reduced_formula
-        fws = []
-        fw_deps = defaultdict(list)
-        autoparal_spec = {}
-        for i, inp in enumerate(multi_inp):
-            new_spec = dict(new_spec)
-            start_task_index = 1
-            if self.with_autoparal:
-                if not autoparal_spec:
-                    autoparal_dir = os.path.join(os.path.abspath('.'), "autoparal_{}_{}".format(task_class.__name__, str(i)))
-                    optconf, qadapter_spec, qadapter = self.run_autoparal(inp, autoparal_dir, ftm)
-                    autoparal_spec['_queueadapter'] = qadapter_spec
-                    autoparal_spec['mpi_ncpus'] = optconf['mpi_ncpus']
-                new_spec.update(autoparal_spec)
-                inp.set_vars(optconf.vars)
-
-            current_deps = dict(deps)
-            parent_fw = None
-            if nscf_fws:
-                qpt = inp['qpt']
-                for nscf_fw in nscf_fws:
-                    if np.allclose(nscf_fw.tasks[0].abiinput['qpt'], qpt):
-                        parent_fw = nscf_fw
-                        current_deps[nscf_fw.tasks[0].task_type] = "WFQ"
-                        break
-
-
-            task = task_class(inp, handlers=self.handlers, deps=current_deps, is_autoparal=False)
-            # this index is for the different task, each performing a different perturbation
-            indexed_task_type = task_class.task_type + '_' + str(i)
-            # this index is to index the restarts of the single task
-            new_spec['wf_task_index'] = indexed_task_type + '_' + str(start_task_index)
-            fw = Firework(task, spec=new_spec, name=(formula + '_' + indexed_task_type)[:15])
-            fws.append(fw)
-            if parent_fw is not None:
-                fw_deps[parent_fw].append(fw)
-
-        return fws, fw_deps
-
-    def generate_wf(self, fw_spec):
-
-        if self.fw_task_manager is not None:
-            ftm = self.fw_task_manager
-        else:
-            #TODO read somehow
-            pass
-
-        # inject task manager
-        tasks.set_user_config_taskmanager(ftm.task_manager)
-
-        ph_inputs = self.phonon_factory.build_input(self.scf_input)
-
-        self.initialization_info['input_factory'] = self.phonon_factory.as_dict()
-        new_spec = dict(initialization_info=self.initialization_info)
-
-        ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
-        ddk_inputs = ph_inputs.filter_by_tags(DDK)
-        dde_inputs = ph_inputs.filter_by_tags(DDE)
-        bec_inputs = ph_inputs.filter_by_tags(BEC)
-
-        nscf_inputs = ph_inputs.filter_by_tags(NSCF)
-
-        nscf_fws = []
-        if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfFWTask,
-                                                 {self.previous_task_type: "WFK", self.previous_task_type: "DEN"}, new_spec, ftm)
-
-        ph_fws = []
-        if ph_q_pert_inputs:
-            ph_q_pert_inputs.set_vars(prtwf=-1)
-            ph_fws, ph_fw_deps = self.get_fws(ph_q_pert_inputs, PhononTask, {self.previous_task_type: "WFK"}, new_spec,
-                                              ftm, nscf_fws)
-
-        ddk_fws = []
-        if ddk_inputs:
-            ddk_fws, ddk_fw_deps = self.get_fws(ddk_inputs, DdkTask, {self.previous_task_type: "WFK"}, new_spec, ftm)
-
-        dde_fws = []
-        if dde_inputs:
-            dde_inputs.set_vars(prtwf=-1)
-            dde_fws, dde_fw_deps = self.get_fws(dde_inputs, DdeTask,
-                                                {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
-
-        bec_fws = []
-        if bec_inputs:
-            bec_inputs.set_vars(prtwf=-1)
-            bec_fws, bec_fw_deps = self.get_fws(bec_inputs, BecTask,
-                                                {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
-
-
-        mrgddb_spec = dict(new_spec)
-        mrgddb_spec['wf_task_index'] = 'mrgddb'
-        #FIXME import here to avoid circular imports.
-        from abiflows.fireworks.utils.fw_utils import get_short_single_core_spec
-        qadapter_spec = get_short_single_core_spec(ftm)
-        mrgddb_spec['mpi_ncpus'] = 1
-        mrgddb_spec['_queueadapter'] = qadapter_spec
-        # Set a higher priority to favour the end of the WF
-        #TODO improve the handling of the priorities
-        mrgddb_spec['_priority'] = 10
-        num_ddbs_to_be_merged = len(ph_fws) + len(dde_fws) + len(bec_fws)
-        mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False), spec=mrgddb_spec,
-                             name=ph_inputs[0].structure.composition.reduced_formula+'_mergeddb')
-
-        fws_deps = {}
-
-        if ddk_fws:
-            for ddk_fw in ddk_fws:
-                if dde_fws:
-                    fws_deps[ddk_fw] = dde_fws
-                if bec_fws:
-                    fws_deps[ddk_fw] = bec_fws
-
-        ddb_fws = dde_fws + ph_fws + bec_fws
-        #TODO pass all the tasks to the MergeDdbTask for logging or easier retrieve of the DDK?
-        for ddb_fw in ddb_fws:
-            fws_deps[ddb_fw] = mrgddb_fw
-
-        total_list_fws = ddb_fws+ddk_fws+[mrgddb_fw] + nscf_fws
-
-        fws_deps.update(ph_fw_deps)
-
-        ph_wf = Workflow(total_list_fws, fws_deps)
-
-        return ph_wf
 
 
 #TODO old implementation of GeneratePiezoElasticFlowFWAbinitTask based on SRC. Needs to be rewritten.

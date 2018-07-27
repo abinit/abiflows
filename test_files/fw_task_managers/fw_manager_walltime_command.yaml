@@ -1,0 +1,5 @@
+fw_policy:
+    rerun_same_dir: True,
+    max_restarts: 20
+    autoparal: True
+    walltime_command: echo 1000

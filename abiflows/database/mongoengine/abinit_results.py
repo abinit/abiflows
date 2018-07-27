@@ -64,7 +64,7 @@ class PhononAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
     phonon_input = MSONField(help_text="The last input used to calculate one of the phonons.")
     kppa = IntField()
     ngqpt = ListField(IntField())
-    qpoints = DictField()
+    qpoints = ListField()
     qppa = IntField()
 
 
@@ -156,3 +156,73 @@ class DteResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Docu
     abinit_input = EmbeddedDocumentField(DteAbinitInput, default=DteAbinitInput)
     abinit_output = EmbeddedDocumentField(DteAbinitOutput, default=DteAbinitOutput)
 
+
+class DfptAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical inputs for a dfpt workflow.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DfptAbinitInput
+    """
+
+    gs_input = MSONField(help_text="The last input used to calculate the wafunctions.")
+    ddk_input = MSONField(help_text="The last input used to calculate one of the ddk.")
+    dde_input = MSONField(help_text="The last input used to calculate one of the dde.")
+    wfq_input = MSONField(help_text="The last input used to calculate one of the wfq.")
+    phonon_input = MSONField(help_text="The last input used to calculate one of the phonons.")
+    strain_input = MSONField(help_text="The last input used to calculate one of the strain.")
+    dte_input = MSONField(help_text="The last input used to calculate one of the dte.")
+    kppa = IntField()
+    ngqpt = ListField(IntField())
+    qpoints = ListField()
+    qppa = IntField()
+
+
+class DfptAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical outputs for a dfpt workflow.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DfptAbinitOutput
+    """
+
+    gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
+                          db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
+    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
+                                 collection_name='phonon_gs_outfile_fs')
+
+    emacro = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
+    emacro_rlx = ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
+    dchide = ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
+    dchidt = ListField(ListField(ListField(ListField(FloatField()))),
+                       help_text="First-order change in the linear dielectric susceptibility")
+    elastic_clamped = ListField(ListField(FloatField()), help_text="Clamped-ion elastic tensor")
+    elastic_relaxed = ListField(ListField(FloatField()), help_text="Relaxed-ion elastic tensor")
+    elastic_stress = ListField(ListField(FloatField()), help_text="Relaxed-ion elastic tensorconsidering the "
+                                                                  "stress left inside cell")
+    piezo_clamped = ListField(ListField(FloatField()), help_text="Clamped-ion piezoelectric tensor")
+    piezo_relaxed = ListField(ListField(FloatField()), help_text="Relaxed-ion piezoelectric tensor")
+
+
+class DfptResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
+    """
+    Document containing the results for a dfpt workflow.
+    Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, strain, dte, anaddb)
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DfptResult
+    """
+
+    mp_id = StringField()
+    relax_db = MSONField()
+    relax_id = StringField()
+    time_report = MSONField()
+    fw_id = IntField()
+    abinit_input = EmbeddedDocumentField(DfptAbinitInput, default=DfptAbinitInput)
+    abinit_output = EmbeddedDocumentField(DfptAbinitOutput, default=DfptAbinitOutput)
+
+    has_phonons = BooleanField(help_text="Whether the phonon perturbations have been included or not", default=False)
+    has_ddk = BooleanField(help_text="Whether the ddk perturbations have been included or not", default=False)
+    has_dde = BooleanField(help_text="Whether the dde perturbations have been included or not", default=False)
+    has_strain = BooleanField(help_text="Whether the strain perturbations have been included or not", default=False)
+    has_dte = BooleanField(help_text="Whether the dte perturbations have been included or not", default=False)
