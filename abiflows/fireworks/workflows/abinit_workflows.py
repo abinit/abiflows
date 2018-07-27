@@ -3213,9 +3213,9 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                 elastic_relaxed = anc.elastic_data.elastic_relaxed
                 if elastic_relaxed is not None:
                     document.abinit_output.elastic_relaxed = elastic_relaxed.tolist()
-                elastic_stress = anc.elastic_data.elastic_stress
-                if elastic_stress is not None:
-                    document.abinit_output.elastic_stress = elastic_stress.tolist()
+                elastic_stress_corr = anc.elastic_data.elastic_stress_corr
+                if elastic_stress_corr is not None:
+                    document.abinit_output.elastic_stress_corr = elastic_stress_corr.tolist()
 
                 piezo_clamped = anc.elastic_data.piezo_clamped
                 if elastic_clamped is not None:

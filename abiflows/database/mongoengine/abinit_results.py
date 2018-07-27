@@ -198,7 +198,7 @@ class DfptAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
                        help_text="First-order change in the linear dielectric susceptibility")
     elastic_clamped = ListField(ListField(FloatField()), help_text="Clamped-ion elastic tensor")
     elastic_relaxed = ListField(ListField(FloatField()), help_text="Relaxed-ion elastic tensor")
-    elastic_stress = ListField(ListField(FloatField()), help_text="Relaxed-ion elastic tensorconsidering the "
+    elastic_stress_corr = ListField(ListField(FloatField()), help_text="Relaxed-ion elastic tensorconsidering the "
                                                                   "stress left inside cell")
     piezo_clamped = ListField(ListField(FloatField()), help_text="Clamped-ion piezoelectric tensor")
     piezo_relaxed = ListField(ListField(FloatField()), help_text="Relaxed-ion piezoelectric tensor")
