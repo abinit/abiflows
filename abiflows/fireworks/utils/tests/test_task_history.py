@@ -5,7 +5,7 @@ import os
 import abipy.data as abidata
 import abipy.abilab as abilab
 
-from abiflows.fireworks.tasks.abinit_tasks import RestartInfo, AbinitRuntimeError
+from abiflows.fireworks.tasks.abinit_tasks import RestartInfo, AbinitRuntimeError, RelaxFWTask
 from abiflows.fireworks.utils.task_history import TaskHistory, TaskEvent
 from abiflows.core.testing import AbiflowsTest
 from abipy.abio.factories import ion_ioncell_relax_input
@@ -19,7 +19,7 @@ class TestTaskHistory(AbiflowsTest):
         si_relax_input = ion_ioncell_relax_input(si, abidata.pseudos("14si.pspnc"), ecut=2).split_datasets()[1]
 
         th = TaskHistory()
-        th.log_initialization(initialization_info={"test_info": 1})
+        th.log_initialization(task=RelaxFWTask(si_relax_input), initialization_info={"test_info": 1})
         th.log_autoparal({u'time': u'12:0:0', u'ntasks': 15, u'partition': 'defq', u'nodes': 1, u'mem_per_cpu': 3000})
         th.log_finalized(final_input=si_relax_input)
         th.log_restart(RestartInfo(os.path.abspath('.'), reset=True, num_restarts=2))
@@ -29,7 +29,7 @@ class TestTaskHistory(AbiflowsTest):
 
         try:
             raise AbinitRuntimeError("test error")
-        except RuntimeError as exc:
+        except AbinitRuntimeError as exc:
             th.log_error(exc)
 
         try:

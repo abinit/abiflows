@@ -28,6 +28,8 @@ class ItestDfpt(AbiflowsIntegrationTest):
     def itest_dfpt_full(self, lp, fworker, tmpdir, input_scf_phonon_gan_low, use_autoparal, db_data):
         """
         Simple test of DteFWWorkflow with autoparal True and False.
+        Doesn't run anaddb since anaddb does not support a DDB with third order perturbations along with
+        other perturbations.
         Skips dte permutations.
         """
 
@@ -44,8 +46,7 @@ class ItestDfpt(AbiflowsIntegrationTest):
                             nscf_inp=dfpt_inputs.filter_by_tags(NSCF),initialization_info={"kppa": 100},
                             autoparal=use_autoparal)
 
-        # wf.add_anaddb_dfpt_fw(input_scf_phonon_gan_low.structure, ph_ngqpt=[2, 2, 2])
-        # wf.add_mongoengine_db_insertion(db_data)
+        wf.add_mongoengine_db_insertion(db_data)
         wf.add_final_cleanup(["WFK"])
 
         scf_fw_id = wf.scf_fw.fw_id
@@ -132,7 +133,10 @@ class ItestDfpt(AbiflowsIntegrationTest):
 
             ana_task = load_abitask(get_fw_by_task_index(wf, "anaddb", index=None))
             with ana_task.open_anaddbnc() as ananc:
-                assert float(ananc.emacro_rlx.cartesian_tensor[0,0]) == pytest.approx(64.8276774889143, rel=0.15)
+                assert float(ananc.emacro_rlx[0,0]) == pytest.approx(64.8276774889143, rel=0.15)
+
+                e = ananc.elastic_data
+                assert float(e.elastic_relaxed[0,0,0,0]) == pytest.approx(41.230540749230556, rel=0.15)
 
     def itest_dfpt_anaddb_dte(self, lp, fworker, tmpdir, input_scf_phonon_gan_low, db_data):
         """
@@ -154,6 +158,8 @@ class ItestDfpt(AbiflowsIntegrationTest):
                             nscf_inp=dfpt_inputs.filter_by_tags(NSCF),initialization_info={"kppa": 100},
                             autoparal=False)
 
+        wf.add_anaddb_dfpt_fw(input_scf_phonon_gan_low.structure)
+        wf.add_mongoengine_db_insertion(db_data)
         wf.add_final_cleanup(additional_spec={"test_spec":1})
 
         scf_fw_id = wf.scf_fw.fw_id
@@ -165,6 +171,11 @@ class ItestDfpt(AbiflowsIntegrationTest):
         wf = lp.get_wf_by_fw_id(scf_fw_id)
 
         assert wf.state == "COMPLETED"
+
+        if self.check_numerical_values:
+            ana_task = load_abitask(get_fw_by_task_index(wf, "anaddb", index=None))
+            with ana_task.open_anaddbnc() as ananc:
+                assert float(ananc.dchide[0,0,2]) == pytest.approx(-1.69328765210, rel=0.15)
 
     def itest_not_converged(self, lp, fworker, tmpdir, input_scf_phonon_si_low):
         """

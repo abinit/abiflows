@@ -169,10 +169,6 @@ class TestAbinitResults(AbiflowsTest):
         doc.abinit_input.phonon_input = self.scf_inp.as_dict()
         doc.abinit_input.kppa = 1000
         doc.abinit_output.structure = self.si_structure.as_dict()
-        doc.abinit_output.emacro = np.eye(3).tolist()
-        doc.abinit_output.emacro_rlx = np.eye(3).tolist()
-        doc.abinit_output.dchide = np.arange(36).reshape((4, 3, 3)).tolist()
-        doc.abinit_output.dchidt = np.arange(36).reshape((2, 2, 3, 3)).tolist()
 
         if has_mongodb():
             gsr_path = abidata.ref_file('si_scf_GSR.nc')

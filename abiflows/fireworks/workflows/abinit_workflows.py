@@ -2078,10 +2078,10 @@ class DteFWWorkflow(AbstractFWWorkflow):
             # the result is None if missing from the anaddb.nc
             emacro = anc.emacro
             if emacro is not None:
-                document.abinit_output.emacro = emacro.cartesian_tensor.tolist()
+                document.abinit_output.emacro = emacro.tolist()
             emacro_rlx = anc.emacro_rlx
             if emacro_rlx is not None:
-                document.abinit_output.emacro_rlx = emacro_rlx.cartesian_tensor.tolist()
+                document.abinit_output.emacro_rlx = emacro_rlx.tolist()
 
             dchide = anc.dchide
             if dchide is not None:
@@ -2093,7 +2093,7 @@ class DteFWWorkflow(AbstractFWWorkflow):
                 for i in dchidt:
                     dd = []
                     for j in i:
-                       dd.append(j.cartesian_tensor.tolist())
+                       dd.append(j.tolist())
                     dchidt_list.append(dd)
                 document.abinit_output.dchidt = dchidt_list
 
@@ -3193,46 +3193,6 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                 with open(anaddb_task.phdos_path, "rb") as f:
                     document.abinit_output.phonon_dos.put(f)
 
-            with AnaddbNcFile(anaddb_task.anaddb_nc_path) as anc:
-                # the result is None if missing from the anaddb.nc
-                emacro = anc.emacro
-                if emacro is not None:
-                    document.abinit_output.emacro = emacro.cartesian_tensor.tolist()
-                emacro_rlx = anc.emacro_rlx
-                if emacro_rlx is not None:
-                    document.abinit_output.emacro_rlx = emacro_rlx.cartesian_tensor.tolist()
-
-                dchide = anc.dchide
-                if dchide is not None:
-                    document.abinit_output.dchide = dchide.tolist()
-
-                dchidt = anc.dchidt
-                if dchidt is not None:
-                    dchidt_list = []
-                    for i in dchidt:
-                        dd = []
-                        for j in i:
-                            dd.append(j.cartesian_tensor.tolist())
-                        dchidt_list.append(dd)
-                    document.abinit_output.dchidt = dchidt_list
-
-                elastic_clamped = anc.elastic_data.elastic_clamped
-                if elastic_clamped is not None:
-                    document.abinit_output.elastic_clamped = elastic_clamped.tolist()
-                elastic_relaxed = anc.elastic_data.elastic_relaxed
-                if elastic_relaxed is not None:
-                    document.abinit_output.elastic_relaxed = elastic_relaxed.tolist()
-                elastic_stress_corr = anc.elastic_data.elastic_stress_corr
-                if elastic_stress_corr is not None:
-                    document.abinit_output.elastic_stress_corr = elastic_stress_corr.tolist()
-
-                piezo_clamped = anc.elastic_data.piezo_clamped
-                if elastic_clamped is not None:
-                    document.abinit_output.piezo_clamped = piezo_clamped.tolist()
-                piezo_relaxed = anc.elastic_data.piezo_relaxed
-                if piezo_relaxed is not None:
-                    document.abinit_output.piezo_relaxed = piezo_relaxed.tolist()
-
         document.fw_id = scf_fw.fw_id
 
         document.time_report = get_time_report_for_wf(wf).as_dict()
@@ -3263,7 +3223,7 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                 If gives the number of divisions for the smallest segment of the path.
         """
         anaddb_input = AnaddbInput.dfpt(structure, ngqpt=ph_ngqpt, relaxed_ion=self.has_gamma,
-                                        piezo=len(self.strain_fws), dde=len(self.dde_fws)>0,
+                                        piezo=len(self.strain_fws)>0, dde=len(self.dde_fws)>0,
                                         strain=len(self.strain_fws)>0, dte=len(self.dte_fws)>0, stress_correction=True,
                                         nqsmall=nqsmall, qppa=qppa, ndivsm=ndivsm, line_density=line_density,
                                         q1shft=(0, 0, 0), asr=2, chneut=1, dipdip=1, dos_method="tetra")

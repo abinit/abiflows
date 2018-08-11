@@ -191,18 +191,6 @@ class DfptAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
     gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
                                  collection_name='phonon_gs_outfile_fs')
 
-    emacro = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
-    emacro_rlx = ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
-    dchide = ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
-    dchidt = ListField(ListField(ListField(ListField(FloatField()))),
-                       help_text="First-order change in the linear dielectric susceptibility")
-    elastic_clamped = ListField(ListField(FloatField()), help_text="Clamped-ion elastic tensor")
-    elastic_relaxed = ListField(ListField(FloatField()), help_text="Relaxed-ion elastic tensor")
-    elastic_stress_corr = ListField(ListField(FloatField()), help_text="Relaxed-ion elastic tensorconsidering the "
-                                                                  "stress left inside cell")
-    piezo_clamped = ListField(ListField(FloatField()), help_text="Clamped-ion piezoelectric tensor")
-    piezo_relaxed = ListField(ListField(FloatField()), help_text="Relaxed-ion piezoelectric tensor")
-
 
 class DfptResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
     """
