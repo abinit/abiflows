@@ -1212,7 +1212,10 @@ class PhononFWWorkflow(AbstractFWWorkflow):
         scf_inp = gs_input.deepcopy()
         if structure:
             scf_inp.set_structure(structure)
-        scf_inp['tolwfr'] = scf_tol if scf_tol else 1.e-22
+        if scf_tol:
+            scf_inp.update(scf_tol)
+        else:
+            scf_inp['tolwfr'] = 1.e-22
         scf_inp['chksymbreak'] = 1
         if not scf_inp.get('nbdbuf', 0):
             scf_inp['nbdbuf'] = 4
@@ -1894,7 +1897,10 @@ class DteFWWorkflow(AbstractFWWorkflow):
         scf_inp = gs_input.deepcopy()
         if structure:
             scf_inp.set_structure(structure)
-        scf_inp['tolwfr'] = scf_tol if scf_tol else 1.e-22
+        if scf_tol:
+            scf_inp.update(scf_tol)
+        else:
+            scf_inp['tolwfr'] = 1.e-22
         scf_inp['chksymbreak'] = 1
         if not scf_inp.get('nbdbuf', 0):
             scf_inp['nbdbuf'] = 4
@@ -2994,7 +3000,10 @@ class DfptFWWorkflow(AbstractFWWorkflow):
         scf_inp = gs_input.deepcopy()
         if structure:
             scf_inp.set_structure(structure)
-        scf_inp['tolwfr'] = scf_tol if scf_tol else 1.e-22
+        if scf_tol:
+            scf_inp.update(scf_tol)
+        else:
+            scf_inp['tolwfr'] = 1.e-22
         scf_inp['chksymbreak'] = 1
         if not scf_inp.get('nbdbuf', 0):
             scf_inp['nbdbuf'] = 4
@@ -3253,12 +3262,11 @@ class DfptFWWorkflow(AbstractFWWorkflow):
             ndivsm: Used to generate a normalized path for the phonon bands.
                 If gives the number of divisions for the smallest segment of the path.
         """
-
-        anaddb_input = AnaddbInput.dfpt(structure, ngqpt=ph_ngqpt, ndivsm=ndivsm, nqsmall=nqsmall, qppa=qppa,
-                                        line_density=line_density, dde=len(self.dde_fws)>0,
-                                        strain=len(self.strain_fws)>0, dte=len(self.dte_fws)>0,
-                                        has_gamma_ph=self.has_gamma)
-
+        anaddb_input = AnaddbInput.dfpt(structure, ngqpt=ph_ngqpt, relaxed_ion=self.has_gamma,
+                                        piezo=len(self.strain_fws), dde=len(self.dde_fws)>0,
+                                        strain=len(self.strain_fws)>0, dte=len(self.dte_fws)>0, stress_correction=True,
+                                        nqsmall=nqsmall, qppa=qppa, ndivsm=ndivsm, line_density=line_density,
+                                        q1shft=(0, 0, 0), asr=2, chneut=1, dipdip=1, dos_method="tetra")
         anaddb_task = AnaDdbAbinitTask(anaddb_input, deps={MergeDdbAbinitTask.task_type: "DDB"})
         spec = dict(self.scf_fw.spec)
         spec['wf_task_index'] = 'anaddb'

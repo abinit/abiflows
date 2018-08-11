@@ -875,7 +875,6 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                 p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = p.communicate()
-                print("!!!!", out, err, self.ftm.fw_policy.walltime_command)
                 status = p.returncode
                 if status == 0 and out:
                     self.walltime = int(out.decode("utf-8"))
