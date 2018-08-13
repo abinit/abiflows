@@ -22,14 +22,15 @@ from monty.json import MontyEncoder, MontyDecoder, MSONable
 from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
 from pymatgen.analysis.elasticity import ElasticTensor
 from abipy.flowtk.utils import Directory, File
-from abipy.flowtk import events, tasks, NetcdfReader
+from abipy.flowtk import events, tasks
+from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
 from abipy.flowtk.utils import irdvars_for_ext
 from abipy.flowtk.wrappers import Mrgddb
 from abipy.flowtk.qutils import time2slurm
 from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.abio.input_tags import *
-from abipy.core.mixins import AbinitOutNcFile, Has_Structure
+from abipy.core.mixins import Has_Structure
 from abipy.core import Structure
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.utilities.fw_utilities import explicit_serialize
@@ -1071,7 +1072,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                 elif d.startswith('@outnc'):
                     varname = d.split('.')[1]
                     outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
-                    outnc_file = AbinitOutNcFile(outnc_path)
+                    outnc_file = _AbinitOutNcFile(outnc_path)
                     vars = outnc_file.get_vars(vars=[varname], strict=True)
                     self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):
@@ -3329,3 +3330,19 @@ class ElasticComplianceTensor(Has_Structure):
         Converts to a pymatgen :class:`ElasticTensor` object.
         """
         return ElasticTensor.from_voigt(self.elastic_tensor)
+
+
+
+#@deprecated(message="AbinitOutNcFile is deprecated, use abipy.abio.outputs.OutNcFile")
+class _AbinitOutNcFile(NetcdfReader):
+    """
+    Class representing the _OUT.nc file.
+    """
+
+    def get_vars(self, vars, strict=False):
+        # TODO: add a check on the variable names ?
+        default = NO_DEFAULT if strict else None
+        var_values = {}
+        for var in vars:
+            var_values[var] = self.read_value(varname=var, default=default)
+        return var_values
