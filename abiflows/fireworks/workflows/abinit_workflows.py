@@ -2076,12 +2076,12 @@ class DteFWWorkflow(AbstractFWWorkflow):
                 document.abinit_output.anaddb_nc.put(f)
             anc = AnaddbNcFile(anaddb_task.anaddb_nc_path)
             # the result is None if missing from the anaddb.nc
-            emacro = anc.emacro
-            if emacro is not None:
-                document.abinit_output.emacro = emacro.tolist()
-            emacro_rlx = anc.emacro_rlx
-            if emacro_rlx is not None:
-                document.abinit_output.emacro_rlx = emacro_rlx.tolist()
+            epsinf = anc.epsinf
+            if epsinf is not None:
+                document.abinit_output.epsinf = epsinf.tolist()
+            eps0 = anc.eps0
+            if eps0 is not None:
+                document.abinit_output.eps0 = eps0.tolist()
 
             dchide = anc.dchide
             if dchide is not None:

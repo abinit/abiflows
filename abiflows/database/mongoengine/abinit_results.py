@@ -132,8 +132,8 @@ class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
                                  collection_name='phonon_gs_outfile_fs')
     anaddb_nc = AbiFileField(abiext="anaddb.nc", abiform="b", db_field='anaddb_nc_id', collection_name='anaddb_nc_fs')
 
-    emacro = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
-    emacro_rlx= ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
+    epsinf = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
+    eps0 = ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
     dchide= ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
     dchidt= ListField(ListField(ListField(ListField(FloatField()))),
                       help_text="First-order change in the linear dielectric susceptibility")

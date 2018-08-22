@@ -29,7 +29,8 @@ from abipy.flowtk.qutils import time2slurm
 from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.abio.input_tags import *
-from abipy.core.mixins import AbinitOutNcFile, Has_Structure
+from abipy.abio.outputs import OutNcFile
+from abipy.core.mixins import Has_Structure
 from abipy.core import Structure
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.utilities.fw_utilities import explicit_serialize
@@ -1072,7 +1073,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                 elif d.startswith('@outnc'):
                     varname = d.split('.')[1]
                     outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
-                    outnc_file = AbinitOutNcFile(outnc_path)
+                    outnc_file = OutNcFile(outnc_path)
                     vars = outnc_file.get_vars(vars=[varname], strict=True)
                     self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):

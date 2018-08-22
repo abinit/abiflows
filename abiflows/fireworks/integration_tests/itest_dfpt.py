@@ -133,7 +133,7 @@ class ItestDfpt(AbiflowsIntegrationTest):
 
             ana_task = load_abitask(get_fw_by_task_index(wf, "anaddb", index=None))
             with ana_task.open_anaddbnc() as ananc:
-                assert float(ananc.emacro_rlx[0,0]) == pytest.approx(64.8276774889143, rel=0.15)
+                assert float(ananc.eps0[0,0]) == pytest.approx(64.8276774889143, rel=0.15)
 
                 e = ananc.elastic_data
                 assert float(e.elastic_relaxed[0,0,0,0]) == pytest.approx(41.230540749230556, rel=0.15)
