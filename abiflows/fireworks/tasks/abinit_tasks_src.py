@@ -22,8 +22,8 @@ from abipy.abio.factories import InputFactory
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput, Cut3DInput
 from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
+from abipy.abio.outputs import OutNcFile
 from abipy.electrons.gsr import GsrFile
-from abipy.core.mixins import AbinitOutNcFile
 from abipy.electrons.charges import HirshfeldCharges
 from fireworks import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
@@ -341,7 +341,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                 elif d.startswith('@outnc') or d.startswith('#outnc'):
                     varname = d.split('.')[1]
                     outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
-                    outnc_file = AbinitOutNcFile(outnc_path)
+                    outnc_file = OutNcFile(outnc_path)
                     vars = outnc_file.get_vars(vars=[varname], strict=True)
                     self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):

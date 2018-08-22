@@ -5,6 +5,7 @@ import copy
 import inspect
 import json
 import os
+import six
 
 from fireworks.core.firework import FireTaskBase
 from fireworks.core.firework import FWAction
@@ -429,7 +430,11 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         #         modified_objects[target] = action.apply(initial_objects[target])
 
         # New spec
-        new_spec = copy.deepcopy(self.run_fw.spec)
+        # remove "_tasks" which is present in spec for recent fireworks versions. Remove it here to avoid
+        # problems with deepcopy.
+        new_spec = dict(self.run_fw.spec)
+        new_spec.pop("_tasks", None)
+        new_spec = copy.deepcopy(new_spec)
 
         # New tasks
         setup_task = self.setup_fw.tasks[-1]
@@ -994,7 +999,7 @@ class SRCTaskIndex(MSONable):
 
     @classmethod
     def from_any(cls, SRC_task_index):
-        if isinstance(SRC_task_index, (str, unicode)):
+        if isinstance(SRC_task_index, six.string_types):
             return cls.from_string(SRC_task_index)
         elif isinstance(SRC_task_index, SRCTaskIndex):
             return cls(task_type=SRC_task_index.task_type, index=SRC_task_index.index)

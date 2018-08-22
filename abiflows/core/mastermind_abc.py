@@ -639,6 +639,7 @@ class Action(MSONable):
         return cls(callable=callable)
 
     def as_dict(self):
+        #FIXME this part is not compatible with python3 and unbound methods do not exist anymore
         return {'@class': self.__class__.__name__,
                 '@module': self.__class__.__module__,
                 'callable': {'module': self.callable.im_class.__module__,
