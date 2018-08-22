@@ -22,7 +22,8 @@ from monty.json import MontyEncoder, MontyDecoder, MSONable
 from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
 from pymatgen.analysis.elasticity import ElasticTensor
 from abipy.flowtk.utils import Directory, File
-from abipy.flowtk import events, tasks, NetcdfReader
+from abipy.flowtk import events, tasks
+from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
 from abipy.flowtk.utils import irdvars_for_ext
 from abipy.flowtk.wrappers import Mrgddb
 from abipy.flowtk.qutils import time2slurm
@@ -1070,12 +1071,13 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                         logger.error(msg)
                         raise InitializationError(msg)
                     self.abiinput.set_structure(previous_task['structure'])
-                elif d.startswith('@outnc'):
-                    varname = d.split('.')[1]
-                    outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
-                    outnc_file = OutNcFile(outnc_path)
-                    vars = outnc_file.get_vars(vars=[varname], strict=True)
-                    self.abiinput.set_vars(vars)
+                #FIXME out.nc is not safe. Check if needed and move to other nc files in case.
+                # elif d.startswith('@outnc'):
+                #     varname = d.split('.')[1]
+                #     outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
+                #     outnc_file = OutNcFile(outnc_path)
+                #     vars = {varname: outnc_file[varname]}
+                #     self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):
                     source_dir = previous_task['dir']
                     self.abiinput.set_vars(irdvars_for_ext(d))

@@ -25,6 +25,7 @@ from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
 from abipy.abio.outputs import OutNcFile
 from abipy.electrons.gsr import GsrFile
 from abipy.electrons.charges import HirshfeldCharges
+from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
 from fireworks import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
@@ -341,7 +342,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
                 elif d.startswith('@outnc') or d.startswith('#outnc'):
                     varname = d.split('.')[1]
                     outnc_path = os.path.join(previous_task['dir'], self.prefix.odata + "_OUT.nc")
-                    outnc_file = OutNcFile(outnc_path)
+                    outnc_file = _AbinitOutNcFile(outnc_path)
                     vars = outnc_file.get_vars(vars=[varname], strict=True)
                     self.abiinput.set_vars(vars)
                 elif not d.startswith('@'):
@@ -1753,3 +1754,19 @@ class RestartInfo(MSONable):
     @property
     def prev_indir(self):
         return Directory(os.path.join(self.previous_dir, INDIR_NAME))
+
+
+
+#@deprecated(message="AbinitOutNcFile is deprecated, use abipy.abio.outputs.OutNcFile")
+class _AbinitOutNcFile(NetcdfReader):
+    """
+    Class representing the _OUT.nc file.
+    """
+
+    def get_vars(self, vars, strict=False):
+        # TODO: add a check on the variable names ?
+        default = NO_DEFAULT if strict else None
+        var_values = {}
+        for var in vars:
+            var_values[var] = self.read_value(varname=var, default=default)
+        return var_values
