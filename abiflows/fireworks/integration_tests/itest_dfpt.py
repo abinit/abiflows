@@ -9,6 +9,7 @@ import numpy.testing.utils as nptu
 
 from abipy.abio.input_tags import *
 from abipy.abio.factories import dfpt_from_gsinput
+from abipy.core.testing import has_abinit
 from fireworks.core.rocket_launcher import rapidfire
 from abiflows.fireworks.workflows.abinit_workflows import DfptFWWorkflow
 from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
@@ -136,7 +137,8 @@ class ItestDfpt(AbiflowsIntegrationTest):
                 assert float(ananc.eps0[0,0]) == pytest.approx(64.8276774889143, rel=0.15)
 
                 e = ananc.elastic_data
-                assert float(e.elastic_relaxed[0,0,0,0]) == pytest.approx(41.230540749230556, rel=0.15)
+                if has_abinit("8.9.3"):
+                    assert float(e.elastic_relaxed[0,0,0,0]) == pytest.approx(41.230540749230556, rel=0.15)
 
     def itest_dfpt_anaddb_dte(self, lp, fworker, tmpdir, input_scf_phonon_gan_low, db_data):
         """
