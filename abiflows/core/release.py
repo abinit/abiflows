@@ -38,14 +38,14 @@ long_description = \
 license = 'GPL'
 
 author = 'The Abinit group'
-author_email = 'matteo.giantomassi at uclouvain.be'
+author_email = 'matteo.giantomassi@uclouvain.be'
 maintainer = "Matteo Giantomassi"
 maintainer_email = author_email
 authors = OrderedDict([
-    ('Guido', ('G. Petretto', 'guido.petretto at gmail.com')),
-    ('David', ('D. Waroquiers', '')),
-    ('Matteo', ('M. Giantomassi', 'matteo.giantomassi at uclouvain.be')),
-    ('Michiel', ('M. J. van Setten', 'mjvansetten at gmail.com')),
+    ('Guido', ('G. Petretto', 'nobody@nowhere')),
+    ('David', ('D. Waroquiers', 'nobody@nowhere')),
+    ('Matteo', ('M. Giantomassi', 'nobody@nowhere')),
+    ('Michiel', ('M. J. van Setten', 'nobody@nowhere')),
 ])
 
 url = "https://github.com/abinit/abiflows"
