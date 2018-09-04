@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.tasks package &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.fireworks.tasks package &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -48,7 +48,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -200,7 +200,7 @@ in the spec.</p>
 <code class="descname">run_autoparal</code><span class="sig-paren">(</span><em>abiinput</em>, <em>autoparal_dir</em>, <em>ftm</em>, <em>clean_up='move'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#BasicAbinitTaskMixin.run_autoparal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin.run_autoparal" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs the autoparal using AbinitInput abiget_autoparal_pconfs method.
 The information are retrieved from the FWTaskManager that should be present and contain the standard
-AbiPy <a class="reference external" href="http://pymatgen.org/pymatgen.io.abinit.tasks.html#pymatgen.io.abinit.tasks.TaskManager" title="(in pymatgen v2018.7.15)"><code class="xref py py-class docutils literal"><span class="pre">pymatgen.io.abinit.tasks.TaskManager</span></code></a>, that provides information about the queue adapters.
+AbiPy <a class="reference external" href="http://pymatgen.org/pymatgen.io.abinit.tasks.html#pymatgen.io.abinit.tasks.TaskManager" title="(in pymatgen v2018.8.10)"><code class="xref py py-class docutils literal"><span class="pre">pymatgen.io.abinit.tasks.TaskManager</span></code></a>, that provides information about the queue adapters.
 No check is performed on the autoparal_dir. If there is a possibility of overwriting output data due to
 reuse of the same folder, it should be handled by the caller.</p>
 </dd></dl>
@@ -274,7 +274,7 @@ It will first try to link the fortran file and then the Netcdf file, if the firs
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.AbiFireTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks.</code><code class="descname">AbiFireTask</code><span class="sig-paren">(</span><em>abiinput</em>, <em>restart_info=None</em>, <em>handlers=None</em>, <em>is_autoparal=None</em>, <em>deps=None</em>, <em>history=None</em>, <em>task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#AbiFireTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.AbiFireTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.AbiFireTask.CRITICAL_EVENTS">
 <code class="descname">CRITICAL_EVENTS</code><em class="property"> = []</em><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.AbiFireTask.CRITICAL_EVENTS" title="Permalink to this definition">¶</a></dt>
@@ -625,7 +625,7 @@ Useful in case of reset during a restart.</p>
 <dt id="abiflows.fireworks.tasks.abinit_tasks.GsFWTask.open_gsr">
 <code class="descname">open_gsr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#GsFWTask.open_gsr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.GsFWTask.open_gsr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Open the <a class="reference external" href="https://nbviewer.jupyter.org/github/abinit/abitutorials/blob/master/abitutorials/gsr.ipynb">GSR.nc</a> file located in the in self.outdir.
-Returns <a class="reference external" href="https://pythonhosted.org/abipy/api/electrons_api.html#abipy.electrons.gsr.GsrFile" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.electrons.gsr.GsrFile</span></code></a> object, raise a PostProcessError exception if file could not be found or file is not readable.</p>
+Returns <a class="reference external" href="http://abinit.github.io/abipy/api/electrons_api.html#abipy.electrons.gsr.GsrFile" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.electrons.gsr.GsrFile</span></code></a> object, raise a PostProcessError exception if file could not be found or file is not readable.</p>
 </dd></dl>
 
 </dd></dl>
@@ -859,7 +859,7 @@ be specified as depends on the specific iteration.</p>
 <dt id="abiflows.fireworks.tasks.abinit_tasks.HybridFWTask.open_sigres">
 <code class="descname">open_sigres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#HybridFWTask.open_sigres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.HybridFWTask.open_sigres" title="Permalink to this definition">¶</a></dt>
 <dd><p>Open the <a class="reference external" href="https://nbviewer.jupyter.org/github/abinit/abitutorials/blob/master/abitutorials/sigres.ipynb">SIGRES.nc</a> file located in the in self.outdir.
-Returns <a class="reference external" href="https://pythonhosted.org/abipy/api/electrons_api.html#abipy.electrons.gw.SigresFile" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.electrons.gw.SigresFile</span></code></a> object, None if file could not be found or file is not readable.</p>
+Returns <a class="reference external" href="http://abinit.github.io/abipy/api/electrons_api.html#abipy.electrons.gw.SigresFile" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.electrons.gw.SigresFile</span></code></a> object, None if file could not be found or file is not readable.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1091,7 +1091,7 @@ signals that a restart is needed.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.MergeDdbAbinitTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks.</code><code class="descname">MergeDdbAbinitTask</code><span class="sig-paren">(</span><em>ddb_source_task_types=None</em>, <em>delete_source_ddbs=True</em>, <em>num_ddbs=None</em>, <em>task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#MergeDdbAbinitTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.MergeDdbAbinitTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <p>Task to handle the merge of multiple DDB files with mrgddb</p>
 <p class="rubric">Inheritance Diagram</p>
 <img src="../_images/inheritance-d49eef7db07202ccfc7a7caf25e9f97825ac870a.png" alt="Inheritance diagram of MergeDdbAbinitTask" usemap="#inheritance2d2359adba" class="inheritance"/>
@@ -1174,7 +1174,7 @@ In this case it contains the current workdir.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks.</code><code class="descname">AnaDdbAbinitTask</code><span class="sig-paren">(</span><em>anaddb_input</em>, <em>restart_info=None</em>, <em>handlers=None</em>, <em>is_autoparal=None</em>, <em>deps=None</em>, <em>history=None</em>, <em>task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#AnaDdbAbinitTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <p>Task that handles the run of anaddb based on a custom input</p>
 <p class="rubric">Inheritance Diagram</p>
 <img src="../_images/inheritance-c4d9597a1025ea68211360224a7ff7388ccd036d.png" alt="Inheritance diagram of AnaDdbAbinitTask" usemap="#inheritance3ab5b00a83" class="inheritance"/>
@@ -1296,14 +1296,14 @@ from the $PATH. By default, anaddb is retrieved from the PATH.</p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phbst">
 <code class="descname">open_phbst</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#AnaDdbAbinitTask.open_phbst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phbst" title="Permalink to this definition">¶</a></dt>
-<dd><p>Open PHBST file produced by Anaddb and returns <a class="reference external" href="https://pythonhosted.org/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhbstFile" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.dfpt.phonons.PhbstFile</span></code></a> object.
+<dd><p>Open PHBST file produced by Anaddb and returns <a class="reference external" href="http://abinit.github.io/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhbstFile" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.dfpt.phonons.PhbstFile</span></code></a> object.
 Raise a PostProcessError exception if file could not be found or file is not readable.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phdos">
 <code class="descname">open_phdos</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#AnaDdbAbinitTask.open_phdos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phdos" title="Permalink to this definition">¶</a></dt>
-<dd><p>Open PHDOS file produced by Anaddb and returns <a class="reference external" href="https://pythonhosted.org/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhdosFile" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.dfpt.phonons.PhdosFile</span></code></a> object.
+<dd><p>Open PHDOS file produced by Anaddb and returns <a class="reference external" href="http://abinit.github.io/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhdosFile" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.dfpt.phonons.PhdosFile</span></code></a> object.
 Raise a PostProcessError exception if file could not be found or file is not readable.</p>
 </dd></dl>
 
@@ -1347,7 +1347,7 @@ Raise a PostProcessError exception if file could not be found or file is not rea
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.GeneratePhononFlowFWAbinitTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks.</code><code class="descname">GeneratePhononFlowFWAbinitTask</code><span class="sig-paren">(</span><em>phonon_factory</em>, <em>previous_task_type='scf'</em>, <em>handlers=None</em>, <em>with_autoparal=None</em>, <em>ddb_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#GeneratePhononFlowFWAbinitTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.GeneratePhononFlowFWAbinitTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <p>Task that generates all the phonon perturbation based on the input of the previous ground state step</p>
 <p class="rubric">Inheritance Diagram</p>
 <img src="../_images/inheritance-cc3367ec7b07e9199a7f09f449bbb68ddf8a349b.png" alt="Inheritance diagram of GeneratePhononFlowFWAbinitTask" usemap="#inheritance5f6653290a" class="inheritance"/>
@@ -1367,7 +1367,7 @@ Raise a PostProcessError exception if file could not be found or file is not rea
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>multi_inp</strong> – <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</li>
+<li><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</li>
 <li><strong>task_class</strong> – class of the tasks that should be generated</li>
 <li><strong>deps</strong> – dict with the dependencies already set for this type of task</li>
 <li><strong>new_spec</strong> – spec for the new Fireworks that will be created</li>
@@ -1401,46 +1401,6 @@ Will be linked if needed.</li>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.GeneratePhononFlowFWAbinitTask.run_task">
 <code class="descname">run_task</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#GeneratePhononFlowFWAbinitTask.run_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.GeneratePhononFlowFWAbinitTask.run_task" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator">
-<em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks.</code><code class="descname">PhononWFGenerator</code><span class="sig-paren">(</span><em>scf_input</em>, <em>phonon_factory</em>, <em>previous_task_type='scf'</em>, <em>handlers=[]</em>, <em>with_autoparal=True</em>, <em>ddb_file=None</em>, <em>fw_task_manager=None</em>, <em>initialization_info={}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#PhononWFGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
-<p>Since the workflow generated for the phonons may by composed by thousands of FWs, the amount of information
-to be storead in the FWAction will be large in this cases. Like all the documents in mongodb the launch cannot
-exceed the 16MB size, which is often reached when the number of FWs generated is around 1000.
-To avoid this problem it is mandatory to generate the whole workflow immediately.
-This mimics the behaviour of <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks.GeneratePhononFlowFWAbinitTask" title="abiflows.fireworks.tasks.abinit_tasks.GeneratePhononFlowFWAbinitTask"><code class="xref py py-class docutils literal"><span class="pre">GeneratePhononFlowFWAbinitTask</span></code></a>.</p>
-<p class="rubric">Inheritance Diagram</p>
-<img src="../_images/inheritance-47aa7d2583efc41f1acf78e162ca3a3d19b9e6dc.png" alt="Inheritance diagram of PhononWFGenerator" usemap="#inheritancefff9cf6a43" class="inheritance"/>
-<map id="inheritancefff9cf6a43" name="inheritancefff9cf6a43">
-<area shape="rect" id="node1" href="#abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" target="_top" title="abiflows.fireworks.tasks.abinit_tasks.BasicAbinitTaskMixin" alt="" coords="344,3,541,16"/>
-<area shape="rect" id="node2" href="#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator" target="_top" title="Since the workflow generated for the phonons may by composed by thousands of FWs, the amount of information" alt="" coords="567,16,765,29"/>
-<area shape="rect" id="node4" title="defaultdict(default_factory[, ...]) &#45;&#45;&gt; dict with default factory" alt="" coords="43,16,123,29"/>
-<area shape="rect" id="node5" title="FiretaskBase is used like an abstract class that defines a computing task" alt="" coords="190,29,318,42"/>
-<area shape="rect" id="node6" title="To create a serializable object within FireWorks, you should subclass this" alt="" coords="3,42,164,55"/>
-</map>
-<dl class="method">
-<dt id="abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.run_autoparal">
-<code class="descname">run_autoparal</code><span class="sig-paren">(</span><em>abiinput</em>, <em>autoparal_dir</em>, <em>ftm</em>, <em>clean_up='move'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#PhononWFGenerator.run_autoparal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.run_autoparal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs the autoparal using AbinitInput abiget_autoparal_pconfs method.
-The information are retrieved from the FWTaskManager that should be present and contain the standard
-abipy TaskManager, that provides information about the queue adapters.
-No check is performed on the autoparal_dir. If there is a possibility of overwriting output data due to
-reuse of the same folder, it should be handled by the caller.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.get_fws">
-<code class="descname">get_fws</code><span class="sig-paren">(</span><em>multi_inp</em>, <em>task_class</em>, <em>deps</em>, <em>new_spec</em>, <em>ftm</em>, <em>nscf_fws=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#PhononWFGenerator.get_fws"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.get_fws" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.generate_wf">
-<code class="descname">generate_wf</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#PhononWFGenerator.generate_wf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.generate_wf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1646,6 +1606,45 @@ of restarts.</p>
 <dt id="abiflows.fireworks.tasks.abinit_tasks.RestartInfo.prev_indir">
 <code class="descname">prev_indir</code><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.RestartInfo.prev_indir" title="Permalink to this definition">¶</a></dt>
 <dd><p>A Directory object pointing to the indir of the previous step.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks.</code><code class="descname">ElasticComplianceTensor</code><span class="sig-paren">(</span><em>elastic_tensor</em>, <em>compliance_tensor</em>, <em>structure</em>, <em>additional_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#ElasticComplianceTensor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.mixins.Has_Structure" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.core.mixins.Has_Structure</span></code></a></p>
+<p>This object is used to store the elastic and compliance tensors.</p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.structure">
+<code class="descname">structure</code><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.structure" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.core.structure.Structure</span></code></a> object.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.from_ec_nc_file">
+<em class="property">classmethod </em><code class="descname">from_ec_nc_file</code><span class="sig-paren">(</span><em>ec_nc_file</em>, <em>tensor_type='relaxed_ion'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#ElasticComplianceTensor.from_ec_nc_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.from_ec_nc_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.as_dict">
+<code class="descname">as_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#ElasticComplianceTensor.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.extended_dict">
+<code class="descname">extended_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#ElasticComplianceTensor.extended_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.extended_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.from_dict">
+<em class="property">classmethod </em><code class="descname">from_dict</code><span class="sig-paren">(</span><em>dd</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#ElasticComplianceTensor.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.get_pmg_elastic_tensor">
+<code class="descname">get_pmg_elastic_tensor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#ElasticComplianceTensor.get_pmg_elastic_tensor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.get_pmg_elastic_tensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts to a pymatgen <code class="xref py py-class docutils literal"><span class="pre">ElasticTensor</span></code> object.</p>
 </dd></dl>
 
 </dd></dl>
@@ -2050,7 +2049,7 @@ Try to handle an input with many perturbation calculated at the same time. link/
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTaskOld">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks_src.</code><code class="descname">Cut3DAbinitTaskOld</code><span class="sig-paren">(</span><em>cut3d_option=None</em>, <em>deps=None</em>, <em>cut3d_input_file='cut3d.in'</em>, <em>cut3d_log_file='cut3d.log'</em>, <em>cut3d_err_file='cut3d.err'</em>, <em>task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks_src.html#Cut3DAbinitTaskOld"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTaskOld" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin" title="abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin" title="abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTaskOld.CUT3D_OPTIONS">
 <code class="descname">CUT3D_OPTIONS</code><em class="property"> = ['den_to_cube']</em><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTaskOld.CUT3D_OPTIONS" title="Permalink to this definition">¶</a></dt>
@@ -2117,7 +2116,7 @@ Try to handle an input with many perturbation calculated at the same time. link/
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks_src.</code><code class="descname">Cut3DAbinitTask</code><span class="sig-paren">(</span><em>cut3d_input</em>, <em>structure=None</em>, <em>deps=None</em>, <em>task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks_src.html#Cut3DAbinitTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin" title="abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin" title="abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTask.task_type">
 <code class="descname">task_type</code><em class="property"> = 'cut3d'</em><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTask.task_type" title="Permalink to this definition">¶</a></dt>
@@ -2195,7 +2194,7 @@ Try to handle an input with many perturbation calculated at the same time. link/
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.BaderTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks_src.</code><code class="descname">BaderTask</code><span class="sig-paren">(</span><em>bader_log_file='bader.log'</em>, <em>bader_err_file='bader.err'</em>, <em>electrons=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks_src.html#BaderTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.BaderTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin" title="abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin" title="abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.BaderTask.task_type">
 <code class="descname">task_type</code><em class="property"> = 'bader'</em><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.BaderTask.task_type" title="Permalink to this definition">¶</a></dt>
@@ -2247,7 +2246,7 @@ Try to handle an input with many perturbation calculated at the same time. link/
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.GeneratePiezoElasticFlowFWSRCAbinitTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.abinit_tasks_src.</code><code class="descname">GeneratePiezoElasticFlowFWSRCAbinitTask</code><span class="sig-paren">(</span><em>piezo_elastic_factory=None</em>, <em>helper=None</em>, <em>previous_scf_task_type='scf'</em>, <em>previous_ddk_task_type='ddk'</em>, <em>control_procedure=None</em>, <em>additional_controllers=None</em>, <em>mrgddb_task_type='mrgddb-strains'</em>, <em>rf_tol=None</em>, <em>additional_input_vars=None</em>, <em>rf_deps=None</em>, <em>allow_parallel_perturbations=True</em>, <em>do_phonons=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks_src.html#GeneratePiezoElasticFlowFWSRCAbinitTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.GeneratePiezoElasticFlowFWSRCAbinitTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.abinit_tasks_src.GeneratePiezoElasticFlowFWSRCAbinitTask.run_task">
 <code class="descname">run_task</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks_src.html#GeneratePiezoElasticFlowFWSRCAbinitTask.run_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks_src.GeneratePiezoElasticFlowFWSRCAbinitTask.run_task" title="Permalink to this definition">¶</a></dt>
@@ -2333,7 +2332,7 @@ Try to handle an input with many perturbation calculated at the same time. link/
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.analysis_tasks.ChemEnvStructureEnvironmentsTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.analysis_tasks.</code><code class="descname">ChemEnvStructureEnvironmentsTask</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/analysis_tasks.html#ChemEnvStructureEnvironmentsTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.analysis_tasks.ChemEnvStructureEnvironmentsTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.analysis_tasks.ChemEnvStructureEnvironmentsTask.run_task">
 <code class="descname">run_task</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/analysis_tasks.html#ChemEnvStructureEnvironmentsTask.run_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.analysis_tasks.ChemEnvStructureEnvironmentsTask.run_task" title="Permalink to this definition">¶</a></dt>
@@ -2344,7 +2343,7 @@ Try to handle an input with many perturbation calculated at the same time. link/
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.analysis_tasks.ChemEnvLightStructureEnvironmentsTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.analysis_tasks.</code><code class="descname">ChemEnvLightStructureEnvironmentsTask</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/analysis_tasks.html#ChemEnvLightStructureEnvironmentsTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.analysis_tasks.ChemEnvLightStructureEnvironmentsTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.analysis_tasks.ChemEnvLightStructureEnvironmentsTask.run_task">
 <code class="descname">run_task</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/analysis_tasks.html#ChemEnvLightStructureEnvironmentsTask.run_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.analysis_tasks.ChemEnvLightStructureEnvironmentsTask.run_task" title="Permalink to this definition">¶</a></dt>
@@ -2358,7 +2357,7 @@ Try to handle an input with many perturbation calculated at the same time. link/
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.flow_wrapper_tasks.FireTaskWithFlow">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.flow_wrapper_tasks.</code><code class="descname">FireTaskWithFlow</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/flow_wrapper_tasks.html#FireTaskWithFlow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.flow_wrapper_tasks.FireTaskWithFlow" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.flow_wrapper_tasks.FireTaskWithFlow.required_params">
 <code class="descname">required_params</code><em class="property"> = ['flow']</em><a class="headerlink" href="#abiflows.fireworks.tasks.flow_wrapper_tasks.FireTaskWithFlow.required_params" title="Permalink to this definition">¶</a></dt>
@@ -2616,7 +2615,7 @@ overhead of the master process.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.src_tasks_abc.SetupTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.src_tasks_abc.</code><code class="descname">SetupTask</code><span class="sig-paren">(</span><em>deps=None</em>, <em>restart_info=None</em>, <em>task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/src_tasks_abc.html#SetupTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.src_tasks_abc.SetupTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin" title="abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin" title="abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.src_tasks_abc.SetupTask.src_type">
 <code class="descname">src_type</code><em class="property"> = 'setup'</em><a class="headerlink" href="#abiflows.fireworks.tasks.src_tasks_abc.SetupTask.src_type" title="Permalink to this definition">¶</a></dt>
@@ -2672,7 +2671,7 @@ overhead of the master process.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.src_tasks_abc.RunTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.src_tasks_abc.</code><code class="descname">RunTask</code><span class="sig-paren">(</span><em>control_procedure</em>, <em>task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/src_tasks_abc.html#RunTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.src_tasks_abc.RunTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin" title="abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin" title="abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.src_tasks_abc.RunTask.src_type">
 <code class="descname">src_type</code><em class="property"> = 'run'</em><a class="headerlink" href="#abiflows.fireworks.tasks.src_tasks_abc.RunTask.src_type" title="Permalink to this definition">¶</a></dt>
@@ -2744,7 +2743,7 @@ overhead of the master process.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.src_tasks_abc.ControlTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.src_tasks_abc.</code><code class="descname">ControlTask</code><span class="sig-paren">(</span><em>control_procedure</em>, <em>manager=None</em>, <em>max_restarts=10</em>, <em>src_cleaning=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/src_tasks_abc.html#ControlTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.src_tasks_abc.ControlTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin" title="abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin" title="abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin</span></code></a>, <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.src_tasks_abc.ControlTask.src_type">
 <code class="descname">src_type</code><em class="property"> = 'control'</em><a class="headerlink" href="#abiflows.fireworks.tasks.src_tasks_abc.ControlTask.src_type" title="Permalink to this definition">¶</a></dt>
@@ -3069,7 +3068,7 @@ overhead of the master process.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.utility_tasks.FinalCleanUpTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.utility_tasks.</code><code class="descname">FinalCleanUpTask</code><span class="sig-paren">(</span><em>out_exts=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/utility_tasks.html#FinalCleanUpTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.FinalCleanUpTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <p>Eliminates all the files in outdata based on the extension of the files and deletes of the files in
 indata and tmpdata.</p>
 <dl class="attribute">
@@ -3102,7 +3101,7 @@ indata and tmpdata.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.utility_tasks.DatabaseInsertTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.utility_tasks.</code><code class="descname">DatabaseInsertTask</code><span class="sig-paren">(</span><em>insertion_data=None</em>, <em>criteria=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/utility_tasks.html#DatabaseInsertTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.DatabaseInsertTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.utility_tasks.DatabaseInsertTask.task_type">
 <code class="descname">task_type</code><em class="property"> = 'dbinsert'</em><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.DatabaseInsertTask.task_type" title="Permalink to this definition">¶</a></dt>
@@ -3133,7 +3132,7 @@ indata and tmpdata.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.utility_tasks.MongoEngineDBInsertionTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.utility_tasks.</code><code class="descname">MongoEngineDBInsertionTask</code><span class="sig-paren">(</span><em>db_data</em>, <em>object_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/utility_tasks.html#MongoEngineDBInsertionTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.MongoEngineDBInsertionTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <p>Task that insert the results of a workflow in a database. The method calls the “get_mongoengine_results”
 of the workflow generator.
 The database is defined according to a DatabaseData.</p>
@@ -3157,7 +3156,7 @@ The database is defined according to a DatabaseData.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.utility_tasks.CheckMemoryTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.utility_tasks.</code><code class="descname">CheckMemoryTask</code><span class="sig-paren">(</span><em>memory_increase_megabytes=1000</em>, <em>max_memory_megabytes=7600</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/utility_tasks.html#CheckMemoryTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.CheckMemoryTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.utility_tasks.CheckMemoryTask.task_type">
 <code class="descname">task_type</code><em class="property"> = 'checkmem'</em><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.CheckMemoryTask.task_type" title="Permalink to this definition">¶</a></dt>
@@ -3178,7 +3177,7 @@ The database is defined according to a DatabaseData.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.utility_tasks.CheckTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.utility_tasks.</code><code class="descname">CheckTask</code><span class="sig-paren">(</span><em>handlers=None</em>, <em>validators=None</em>, <em>max_restarts=10</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/utility_tasks.html#CheckTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.CheckTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.utility_tasks.CheckTask.task_type">
 <code class="descname">task_type</code><em class="property"> = 'check'</em><a class="headerlink" href="#abiflows.fireworks.tasks.utility_tasks.CheckTask.task_type" title="Permalink to this definition">¶</a></dt>
@@ -3237,7 +3236,7 @@ The database is defined according to a DatabaseData.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.vasp_sets.MPNEBSet">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.vasp_sets.</code><code class="descname">MPNEBSet</code><span class="sig-paren">(</span><em>structures</em>, <em>unset_encut=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/vasp_sets.html#MPNEBSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_sets.MPNEBSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="http://pymatgen.org/pymatgen.io.vasp.sets.html#pymatgen.io.vasp.sets.MPRelaxSet" title="(in pymatgen v2018.7.15)"><code class="xref py py-class docutils literal"><span class="pre">pymatgen.io.vasp.sets.MPRelaxSet</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="http://pymatgen.org/pymatgen.io.vasp.sets.html#pymatgen.io.vasp.sets.MPRelaxSet" title="(in pymatgen v2018.8.10)"><code class="xref py py-class docutils literal"><span class="pre">pymatgen.io.vasp.sets.MPRelaxSet</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.tasks.vasp_sets.MPNEBSet.poscar">
 <code class="descname">poscar</code><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_sets.MPNEBSet.poscar" title="Permalink to this definition">¶</a></dt>
@@ -3376,7 +3375,7 @@ running endpoint calculations.</li>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.vasp_tasks_src.GenerateVacanciesRelaxationTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.vasp_tasks_src.</code><code class="descname">GenerateVacanciesRelaxationTask</code><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/vasp_tasks_src.html#GenerateVacanciesRelaxationTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_tasks_src.GenerateVacanciesRelaxationTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.vasp_tasks_src.GenerateVacanciesRelaxationTask.run_task">
 <code class="descname">run_task</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/vasp_tasks_src.html#GenerateVacanciesRelaxationTask.run_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_tasks_src.GenerateVacanciesRelaxationTask.run_task" title="Permalink to this definition">¶</a></dt>
@@ -3397,7 +3396,7 @@ running endpoint calculations.</li>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.vasp_tasks_src.GenerateNEBRelaxationTask">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.tasks.vasp_tasks_src.</code><code class="descname">GenerateNEBRelaxationTask</code><span class="sig-paren">(</span><em>n_insert=1</em>, <em>user_incar_settings=None</em>, <em>climbing_image=True</em>, <em>task_index=None</em>, <em>terminal_start_task_type=None</em>, <em>terminal_end_task_type=None</em>, <em>prev_neb_task_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/vasp_tasks_src.html#GenerateNEBRelaxationTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_tasks_src.GenerateNEBRelaxationTask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.FireTaskBase" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.FireTaskBase</span></code></a></p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.vasp_tasks_src.GenerateNEBRelaxationTask.run_task">
 <code class="descname">run_task</code><span class="sig-paren">(</span><em>fw_spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/vasp_tasks_src.html#GenerateNEBRelaxationTask.run_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_tasks_src.GenerateNEBRelaxationTask.run_task" title="Permalink to this definition">¶</a></dt>
@@ -3606,7 +3605,7 @@ running endpoint calculations.</li>
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

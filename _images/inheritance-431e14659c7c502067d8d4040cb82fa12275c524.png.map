@@ -1,0 +1,6 @@
+<map id="inheritance0514434545" name="inheritance0514434545">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitDftpOutputMixin" target="_top" title="Mixin providing generic fiels for dfpt calculation" alt="" coords="3,3,241,16"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.abinit_mixins.AbinitPhononOutputMixin" target="_top" title="Mixin providing generic fiels for phonon calculation" alt="" coords="267,3,517,16"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitOutput" target="_top" title="EmbeddedDocument containing the typical outputs for a dfpt workflow." alt="" coords="544,16,765,30"/>
+<area shape="rect" id="node4" title="A :class:`~mongoengine.Document` that isn&#39;t stored in its own" alt="" coords="310,30,474,43"/>
+</map>

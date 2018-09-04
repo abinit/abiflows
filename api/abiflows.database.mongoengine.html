@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.database.mongoengine package &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.database.mongoengine package &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -48,7 +48,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -233,12 +233,12 @@ of the field to be used as a list in the database.</p>
 <dl class="method">
 <dt id="abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData.set_pseudos_from_abinit_input">
 <code class="descname">set_pseudos_from_abinit_input</code><span class="sig-paren">(</span><em>abinit_input</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_mixins.html#AbinitPseudoData.set_pseudos_from_abinit_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData.set_pseudos_from_abinit_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the fields of the document using an <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object.</p>
+<dd><p>Sets the fields of the document using an <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>abinit_input</strong> – An <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>abinit_input</strong> – An <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</td>
 </tr>
 </tbody>
 </table>
@@ -332,7 +332,7 @@ Only valid values are subclasses of <code class="xref py py-class docutils liter
 <dl class="method">
 <dt id="abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin.set_abinit_basic_from_abinit_input">
 <code class="descname">set_abinit_basic_from_abinit_input</code><span class="sig-paren">(</span><em>abinit_input</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_mixins.html#AbinitBasicInputMixin.set_abinit_basic_from_abinit_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin.set_abinit_basic_from_abinit_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>sets the fields of the object from an <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</p>
+<dd><p>sets the fields of the object from an <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</p>
 </dd></dl>
 
 </dd></dl>
@@ -479,16 +479,17 @@ similar to an embedded document, but the structure is not defined.</p>
 <dl class="class">
 <dt id="abiflows.database.mongoengine.abinit_results.RelaxResult">
 <em class="property">class </em><code class="descclassname">abiflows.database.mongoengine.abinit_results.</code><code class="descname">RelaxResult</code><span class="sig-paren">(</span><em>*args</em>, <em>**values</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_results.html#RelaxResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.RelaxResult" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.mixins.MaterialMixin" title="abiflows.database.mongoengine.mixins.MaterialMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.MaterialMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DateMixin" title="abiflows.database.mongoengine.mixins.DateMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DateMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" title="abiflows.database.mongoengine.mixins.DirectoryMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DirectoryMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.Document</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.mixins.MaterialMixin" title="abiflows.database.mongoengine.mixins.MaterialMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.MaterialMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DateMixin" title="abiflows.database.mongoengine.mixins.DateMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DateMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" title="abiflows.database.mongoengine.mixins.DirectoryMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DirectoryMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" title="abiflows.database.mongoengine.mixins.CustomFieldMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.CustomFieldMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.Document</span></code></p>
 <p>Document containing the results for a relaxation workflow consisting of an ion followed by ioncell relaxations.</p>
 <p class="rubric">Inheritance Diagram</p>
-<img src="../_images/inheritance-9e8dd7ab9bb68ba9ec57e43a2822212727a6e93c.png" alt="Inheritance diagram of RelaxResult" usemap="#inheritance477e9de62e" class="inheritance"/>
+<img src="../_images/inheritance-3d9ab544255fa17b3afec3bb6f2bc25a6a43a905.png" alt="Inheritance diagram of RelaxResult" usemap="#inheritance477e9de62e" class="inheritance"/>
 <map id="inheritance477e9de62e" name="inheritance477e9de62e">
-<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.RelaxResult" target="_top" title="Document containing the results for a relaxation workflow consisting of an ion followed by ioncell relaxations." alt="" coords="508,53,764,70"/>
-<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="241,4,473,20"/>
-<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="247,37,466,53"/>
-<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="239,70,475,87"/>
-<area shape="rect" id="node5" title="The base class used for defining the structure and properties of" alt="" coords="278,103,436,120"/>
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.RelaxResult" target="_top" title="Document containing the results for a relaxation workflow consisting of an ion followed by ioncell relaxations." alt="" coords="513,69,764,85"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="243,4,471,20"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="250,36,465,52"/>
+<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="241,69,473,85"/>
+<area shape="rect" id="node5" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" target="_top" title="Mixin providing a DictField for storing user specific additional properties" alt="" coords="234,101,481,118"/>
+<area shape="rect" id="node6" title="The base class used for defining the structure and properties of" alt="" coords="280,134,435,150"/>
 </map>
 <dl class="attribute">
 <dt id="abiflows.database.mongoengine.abinit_results.RelaxResult.history">
@@ -628,17 +629,12 @@ of the field to be used as a list in the database.</p>
 <dl class="attribute">
 <dt id="abiflows.database.mongoengine.abinit_results.PhononAbinitInput.qpoints">
 <code class="descname">qpoints</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.PhononAbinitInput.qpoints" title="Permalink to this definition">¶</a></dt>
-<dd><p>A dictionary field that wraps a standard Python dictionary. This is
-similar to an embedded document, but the structure is not defined.</p>
+<dd><p>A list field that wraps a standard field, allowing multiple instances
+of the field to be used as a list in the database.</p>
+<p>If using with ReferenceFields see: <span class="xref std std-ref">one-to-many-with-listfields</span></p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Required means it cannot be empty - as the default for DictFields is {}</p>
-</div>
-<div class="versionadded">
-<p><span class="versionmodified">New in version 0.3.</span></p>
-</div>
-<div class="versionchanged">
-<p><span class="versionmodified">Changed in version 0.5: </span>- Can now handle complex / varying types of data</p>
+<p class="last">Required means it cannot be empty - as the default for ListFields is []</p>
 </div>
 </dd></dl>
 
@@ -681,17 +677,18 @@ we can use <code class="docutils literal"><span class="pre">abiopen</span></code
 <dl class="class">
 <dt id="abiflows.database.mongoengine.abinit_results.PhononResult">
 <em class="property">class </em><code class="descclassname">abiflows.database.mongoengine.abinit_results.</code><code class="descname">PhononResult</code><span class="sig-paren">(</span><em>*args</em>, <em>**values</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_results.html#PhononResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.PhononResult" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.mixins.MaterialMixin" title="abiflows.database.mongoengine.mixins.MaterialMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.MaterialMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DateMixin" title="abiflows.database.mongoengine.mixins.DateMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DateMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" title="abiflows.database.mongoengine.mixins.DirectoryMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DirectoryMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.Document</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.mixins.MaterialMixin" title="abiflows.database.mongoengine.mixins.MaterialMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.MaterialMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DateMixin" title="abiflows.database.mongoengine.mixins.DateMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DateMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" title="abiflows.database.mongoengine.mixins.DirectoryMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DirectoryMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" title="abiflows.database.mongoengine.mixins.CustomFieldMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.CustomFieldMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.Document</span></code></p>
 <p>Document containing the results for a phonon workflow.
 Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, anaddb)</p>
 <p class="rubric">Inheritance Diagram</p>
-<img src="../_images/inheritance-a636589a2532273b839f7aa2463c77817dbd6892.png" alt="Inheritance diagram of PhononResult" usemap="#inheritance6b5723e234" class="inheritance"/>
+<img src="../_images/inheritance-c9924b575b8cd994e29fb2ac6e086c4cf4df3c41.png" alt="Inheritance diagram of PhononResult" usemap="#inheritance6b5723e234" class="inheritance"/>
 <map id="inheritance6b5723e234" name="inheritance6b5723e234">
-<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.PhononResult" target="_top" title="Document containing the results for a phonon workflow." alt="" coords="503,53,764,69"/>
-<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="238,4,468,20"/>
-<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="245,36,461,53"/>
-<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="236,69,470,86"/>
-<area shape="rect" id="node5" title="The base class used for defining the structure and properties of" alt="" coords="275,102,431,119"/>
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.PhononResult" target="_top" title="Document containing the results for a phonon workflow." alt="" coords="508,68,764,84"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="241,4,466,20"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="247,36,460,52"/>
+<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="239,68,468,84"/>
+<area shape="rect" id="node5" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" target="_top" title="Mixin providing a DictField for storing user specific additional properties" alt="" coords="232,100,476,116"/>
+<area shape="rect" id="node6" title="The base class used for defining the structure and properties of" alt="" coords="277,132,430,149"/>
 </map>
 <dl class="attribute">
 <dt id="abiflows.database.mongoengine.abinit_results.PhononResult.mp_id">
@@ -854,8 +851,8 @@ we can use <code class="docutils literal"><span class="pre">abiopen</span></code
 </dd></dl>
 
 <dl class="attribute">
-<dt id="abiflows.database.mongoengine.abinit_results.DteAbinitOutput.emacro">
-<code class="descname">emacro</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DteAbinitOutput.emacro" title="Permalink to this definition">¶</a></dt>
+<dt id="abiflows.database.mongoengine.abinit_results.DteAbinitOutput.epsinf">
+<code class="descname">epsinf</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DteAbinitOutput.epsinf" title="Permalink to this definition">¶</a></dt>
 <dd><p>A list field that wraps a standard field, allowing multiple instances
 of the field to be used as a list in the database.</p>
 <p>If using with ReferenceFields see: <span class="xref std std-ref">one-to-many-with-listfields</span></p>
@@ -866,8 +863,8 @@ of the field to be used as a list in the database.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="abiflows.database.mongoengine.abinit_results.DteAbinitOutput.emacro_rlx">
-<code class="descname">emacro_rlx</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DteAbinitOutput.emacro_rlx" title="Permalink to this definition">¶</a></dt>
+<dt id="abiflows.database.mongoengine.abinit_results.DteAbinitOutput.eps0">
+<code class="descname">eps0</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DteAbinitOutput.eps0" title="Permalink to this definition">¶</a></dt>
 <dd><p>A list field that wraps a standard field, allowing multiple instances
 of the field to be used as a list in the database.</p>
 <p>If using with ReferenceFields see: <span class="xref std std-ref">one-to-many-with-listfields</span></p>
@@ -906,17 +903,18 @@ of the field to be used as a list in the database.</p>
 <dl class="class">
 <dt id="abiflows.database.mongoengine.abinit_results.DteResult">
 <em class="property">class </em><code class="descclassname">abiflows.database.mongoengine.abinit_results.</code><code class="descname">DteResult</code><span class="sig-paren">(</span><em>*args</em>, <em>**values</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_results.html#DteResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DteResult" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.mixins.MaterialMixin" title="abiflows.database.mongoengine.mixins.MaterialMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.MaterialMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DateMixin" title="abiflows.database.mongoengine.mixins.DateMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DateMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" title="abiflows.database.mongoengine.mixins.DirectoryMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DirectoryMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.Document</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.mixins.MaterialMixin" title="abiflows.database.mongoengine.mixins.MaterialMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.MaterialMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DateMixin" title="abiflows.database.mongoengine.mixins.DateMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DateMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" title="abiflows.database.mongoengine.mixins.DirectoryMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DirectoryMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" title="abiflows.database.mongoengine.mixins.CustomFieldMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.CustomFieldMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.Document</span></code></p>
 <p>Document containing the results for a dte workflow.
 Includes information from the various steps of the workflow (scf, ddk, dde, ph, dte, anaddb)</p>
 <p class="rubric">Inheritance Diagram</p>
-<img src="../_images/inheritance-3cdc10c151224d14181e70eb280aa7e48402f101.png" alt="Inheritance diagram of DteResult" usemap="#inheritance47d38bbb17" class="inheritance"/>
+<img src="../_images/inheritance-e6deb86d52f474b626170d6a143a8fbeca0cd237.png" alt="Inheritance diagram of DteResult" usemap="#inheritance47d38bbb17" class="inheritance"/>
 <map id="inheritance47d38bbb17" name="inheritance47d38bbb17">
-<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.DteResult" target="_top" title="Document containing the results for a dte workflow." alt="" coords="514,54,764,71"/>
-<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="244,4,479,21"/>
-<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="250,37,472,54"/>
-<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="241,71,481,88"/>
-<area shape="rect" id="node5" title="The base class used for defining the structure and properties of" alt="" coords="281,104,441,121"/>
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.DteResult" target="_top" title="Document containing the results for a dte workflow." alt="" coords="519,70,764,86"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="246,4,477,20"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="253,37,470,53"/>
+<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="244,70,479,86"/>
+<area shape="rect" id="node5" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" target="_top" title="Mixin providing a DictField for storing user specific additional properties" alt="" coords="237,102,486,119"/>
+<area shape="rect" id="node6" title="The base class used for defining the structure and properties of" alt="" coords="283,135,440,152"/>
 </map>
 <dl class="attribute">
 <dt id="abiflows.database.mongoengine.abinit_results.DteResult.mp_id">
@@ -981,6 +979,254 @@ Only valid values are subclasses of <code class="xref py py-class docutils liter
 <dl class="attribute">
 <dt id="abiflows.database.mongoengine.abinit_results.DteResult.objects">
 <code class="descname">objects</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DteResult.objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default QuerySet Manager.</p>
+<p>Custom QuerySet Manager functions can extend this class and users can
+add extra queryset functionality.  Any custom manager methods must accept a
+<code class="xref py py-class docutils literal"><span class="pre">Document</span></code> class as its first argument, and a
+<code class="xref py py-class docutils literal"><span class="pre">QuerySet</span></code> as its second argument.</p>
+<p>The method function should return a <code class="xref py py-class docutils literal"><span class="pre">QuerySet</span></code>
+, probably the same one that was passed in, but modified in some way.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput">
+<em class="property">class </em><code class="descclassname">abiflows.database.mongoengine.abinit_results.</code><code class="descname">DfptAbinitInput</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_results.html#DfptAbinitInput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin" title="abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.EmbeddedDocument</span></code></p>
+<p>EmbeddedDocument containing the typical inputs for a dfpt workflow.</p>
+<p class="rubric">Inheritance Diagram</p>
+<img src="../_images/inheritance-441240b8b187e45fa4bdf59a818a2c31ace6b8ca.png" alt="Inheritance diagram of DfptAbinitInput" usemap="#inheritancec3a341a5b9" class="inheritance"/>
+<map id="inheritancec3a341a5b9" name="inheritancec3a341a5b9">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin" target="_top" title="Mixin providing some basic fields that are required to run a calculation." alt="" coords="219,3,489,19"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput" target="_top" title="EmbeddedDocument containing the typical inputs for a dfpt workflow." alt="" coords="519,19,765,34"/>
+<area shape="rect" id="node3" title="A :class:`~mongoengine.Document` that isn&#39;t stored in its own" alt="" coords="261,34,447,49"/>
+</map>
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.gs_input">
+<code class="descname">gs_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.gs_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.ddk_input">
+<code class="descname">ddk_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.ddk_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.dde_input">
+<code class="descname">dde_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.dde_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.wfq_input">
+<code class="descname">wfq_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.wfq_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.phonon_input">
+<code class="descname">phonon_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.phonon_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.strain_input">
+<code class="descname">strain_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.strain_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.dte_input">
+<code class="descname">dte_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.dte_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.kppa">
+<code class="descname">kppa</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.kppa" title="Permalink to this definition">¶</a></dt>
+<dd><p>32-bit integer field.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.ngqpt">
+<code class="descname">ngqpt</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.ngqpt" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list field that wraps a standard field, allowing multiple instances
+of the field to be used as a list in the database.</p>
+<p>If using with ReferenceFields see: <span class="xref std std-ref">one-to-many-with-listfields</span></p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Required means it cannot be empty - as the default for ListFields is []</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.qpoints">
+<code class="descname">qpoints</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.qpoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list field that wraps a standard field, allowing multiple instances
+of the field to be used as a list in the database.</p>
+<p>If using with ReferenceFields see: <span class="xref std std-ref">one-to-many-with-listfields</span></p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Required means it cannot be empty - as the default for ListFields is []</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitInput.qppa">
+<code class="descname">qppa</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitInput.qppa" title="Permalink to this definition">¶</a></dt>
+<dd><p>32-bit integer field.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitOutput">
+<em class="property">class </em><code class="descclassname">abiflows.database.mongoengine.abinit_results.</code><code class="descname">DfptAbinitOutput</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_results.html#DfptAbinitOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.abinit_mixins.AbinitPhononOutputMixin" title="abiflows.database.mongoengine.abinit_mixins.AbinitPhononOutputMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.abinit_mixins.AbinitPhononOutputMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.EmbeddedDocument</span></code></p>
+<p>EmbeddedDocument containing the typical outputs for a dfpt workflow.</p>
+<p class="rubric">Inheritance Diagram</p>
+<img src="../_images/inheritance-431e14659c7c502067d8d4040cb82fa12275c524.png" alt="Inheritance diagram of DfptAbinitOutput" usemap="#inheritance0514434545" class="inheritance"/>
+<map id="inheritance0514434545" name="inheritance0514434545">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_mixins.AbinitDftpOutputMixin" target="_top" title="Mixin providing generic fiels for dfpt calculation" alt="" coords="3,3,241,16"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.abinit_mixins.AbinitPhononOutputMixin" target="_top" title="Mixin providing generic fiels for phonon calculation" alt="" coords="267,3,517,16"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitOutput" target="_top" title="EmbeddedDocument containing the typical outputs for a dfpt workflow." alt="" coords="544,16,765,30"/>
+<area shape="rect" id="node4" title="A :class:`~mongoengine.Document` that isn&#39;t stored in its own" alt="" coords="310,30,474,43"/>
+</map>
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitOutput.gs_gsr">
+<code class="descname">gs_gsr</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitOutput.gs_gsr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extend <code class="docutils literal"><span class="pre">FileField</span></code>. Use customized version of proxy_class so that
+we can use <code class="docutils literal"><span class="pre">abiopen</span></code> to construct the AbiPy object from the gridfs content.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptAbinitOutput.gs_outfile">
+<code class="descname">gs_outfile</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptAbinitOutput.gs_outfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>A GridFS storage field for abinit related files with automatic compression of the file with gzip.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult">
+<em class="property">class </em><code class="descclassname">abiflows.database.mongoengine.abinit_results.</code><code class="descname">DfptResult</code><span class="sig-paren">(</span><em>*args</em>, <em>**values</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_results.html#DfptResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.database.mongoengine.mixins.MaterialMixin" title="abiflows.database.mongoengine.mixins.MaterialMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.MaterialMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DateMixin" title="abiflows.database.mongoengine.mixins.DateMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DateMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" title="abiflows.database.mongoengine.mixins.DirectoryMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.DirectoryMixin</span></code></a>, <a class="reference internal" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" title="abiflows.database.mongoengine.mixins.CustomFieldMixin"><code class="xref py py-class docutils literal"><span class="pre">abiflows.database.mongoengine.mixins.CustomFieldMixin</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">mongoengine.document.Document</span></code></p>
+<p>Document containing the results for a dfpt workflow.
+Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, strain, dte, anaddb)</p>
+<p class="rubric">Inheritance Diagram</p>
+<img src="../_images/inheritance-1427f065b8a1f39f08b4d79866f0869a8460993a.png" alt="Inheritance diagram of DfptResult" usemap="#inheritanceb88fa1a166" class="inheritance"/>
+<map id="inheritanceb88fa1a166" name="inheritanceb88fa1a166">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.DfptResult" target="_top" title="Document containing the results for a dfpt workflow." alt="" coords="518,69,764,86"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="245,4,475,20"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="252,36,469,53"/>
+<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="243,69,477,86"/>
+<area shape="rect" id="node5" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" target="_top" title="Mixin providing a DictField for storing user specific additional properties" alt="" coords="236,102,485,119"/>
+<area shape="rect" id="node6" title="The base class used for defining the structure and properties of" alt="" coords="282,135,439,151"/>
+</map>
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.mp_id">
+<code class="descname">mp_id</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.mp_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>A unicode string field.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.relax_db">
+<code class="descname">relax_db</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.relax_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.relax_id">
+<code class="descname">relax_id</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.relax_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>A unicode string field.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.time_report">
+<code class="descname">time_report</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.time_report" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.fw_id">
+<code class="descname">fw_id</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.fw_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>32-bit integer field.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.abinit_input">
+<code class="descname">abinit_input</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.abinit_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>An embedded document field - with a declared document_type.
+Only valid values are subclasses of <code class="xref py py-class docutils literal"><span class="pre">EmbeddedDocument</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.abinit_output">
+<code class="descname">abinit_output</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.abinit_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>An embedded document field - with a declared document_type.
+Only valid values are subclasses of <code class="xref py py-class docutils literal"><span class="pre">EmbeddedDocument</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.has_phonons">
+<code class="descname">has_phonons</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.has_phonons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean field type.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.1.2.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.has_ddk">
+<code class="descname">has_ddk</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.has_ddk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean field type.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.1.2.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.has_dde">
+<code class="descname">has_dde</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.has_dde" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean field type.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.1.2.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.has_strain">
+<code class="descname">has_strain</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.has_strain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean field type.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.1.2.</span></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.has_dte">
+<code class="descname">has_dte</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.has_dte" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean field type.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.1.2.</span></p>
+</div>
+</dd></dl>
+
+<dl class="exception">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.DoesNotExist">
+<em class="property">exception </em><code class="descname">DoesNotExist</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">mongoengine.errors.DoesNotExist</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.MultipleObjectsReturned">
+<em class="property">exception </em><code class="descname">MultipleObjectsReturned</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">mongoengine.errors.MultipleObjectsReturned</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.id">
+<code class="descname">id</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>A field wrapper around MongoDB’s ObjectIds.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.abinit_results.DfptResult.objects">
+<code class="descname">objects</code><a class="headerlink" href="#abiflows.database.mongoengine.abinit_results.DfptResult.objects" title="Permalink to this definition">¶</a></dt>
 <dd><p>The default QuerySet Manager.</p>
 <p>Custom QuerySet Manager functions can extend this class and users can
 add extra queryset functionality.  Any custom manager methods must accept a
@@ -1238,7 +1484,7 @@ of the field to be used as a list in the database.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>structure</strong> – A <a class="reference external" href="https://pythonhosted.org/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.core.structure.Structure</span></code></a></li>
+<li><strong>structure</strong> – A <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.core.structure.Structure</span></code></a></li>
 <li><strong>space_group</strong> – if True sets the spacegroup fields using <a class="reference external" href="https://atztogo.github.io/spglib/">spglib</a>.</li>
 <li><strong>symprec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Tolerance for symmetry finding.</li>
 <li><strong>angle_tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – Angle tolerance for symmetry finding.</li>
@@ -1410,6 +1656,30 @@ Needs access to the full data of the workflow: Fireworks and Launches.</p>
 
 </dd></dl>
 
+<dl class="class">
+<dt id="abiflows.database.mongoengine.mixins.CustomFieldMixin">
+<em class="property">class </em><code class="descclassname">abiflows.database.mongoengine.mixins.</code><code class="descname">CustomFieldMixin</code><a class="reference internal" href="../_modules/abiflows/database/mongoengine/mixins.html#CustomFieldMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Mixin providing a DictField for storing user specific additional properties</p>
+<dl class="attribute">
+<dt id="abiflows.database.mongoengine.mixins.CustomFieldMixin.custom">
+<code class="descname">custom</code><a class="headerlink" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin.custom" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary field that wraps a standard Python dictionary. This is
+similar to an embedded document, but the structure is not defined.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Required means it cannot be empty - as the default for DictFields is {}</p>
+</div>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.3.</span></p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 0.5: </span>- Can now handle complex / varying types of data</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="module-abiflows.database.mongoengine.utils">
 <span id="abiflows-database-mongoengine-utils-module"></span><h2>abiflows.database.mongoengine.utils module<a class="headerlink" href="#module-abiflows.database.mongoengine.utils" title="Permalink to this headline">¶</a></h2>
@@ -1468,7 +1738,7 @@ Wraps mongoengine’s connect and switch_collection functions.</p>
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.utils package &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.fireworks.utils package &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -48,7 +48,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -473,11 +473,6 @@
 <span id="abiflows-fireworks-utils-fw-utils-module"></span><h2>abiflows.fireworks.utils.fw_utils module<a class="headerlink" href="#module-abiflows.fireworks.utils.fw_utils" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for fireworks</p>
 <dl class="function">
-<dt id="abiflows.fireworks.utils.fw_utils.parse_workflow">
-<code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">parse_workflow</code><span class="sig-paren">(</span><em>fws</em>, <em>links_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#parse_workflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.parse_workflow" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
 <dt id="abiflows.fireworks.utils.fw_utils.append_fw_to_wf">
 <code class="descclassname">abiflows.fireworks.utils.fw_utils.</code><code class="descname">append_fw_to_wf</code><span class="sig-paren">(</span><em>new_fw</em>, <em>wf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/utils/fw_utils.html#append_fw_to_wf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.append_fw_to_wf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -518,12 +513,12 @@ This is now the preferred choice. If this value is not defined, it will be loade
 
 <dl class="attribute">
 <dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.fw_policy_defaults">
-<code class="descname">fw_policy_defaults</code><em class="property"> = {'rerun_same_dir': False, 'max_restarts': 10, 'autoparal': False, 'abinit_cmd': 'abinit', 'mrgddb_cmd': 'mrgddb', 'anaddb_cmd': 'anaddb', 'cut3d_cmd': 'cut3d', 'mpirun_cmd': 'mpirun', 'copy_deps': False, 'walltime_command': None, 'continue_unconverged_on_rerun': True, 'allow_local_restart': False, 'timelimit_buffer': 120, 'short_job_timelimit': 600, 'abipy_manager': None}</em><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.fw_policy_defaults" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fw_policy_defaults</code><em class="property"> = {'rerun_same_dir': False, 'max_restarts': 10, 'autoparal': False, 'abinit_cmd': 'abinit', 'mrgddb_cmd': 'mrgddb', 'anaddb_cmd': 'anaddb', 'cut3d_cmd': 'cut3d', 'mpirun_cmd': 'mpirun', 'copy_deps': False, 'walltime_command': None, 'continue_unconverged_on_rerun': True, 'allow_local_restart': False, 'timelimit_buffer': 120, 'short_job_timelimit': 600, 'recover_previous_job': True, 'abipy_manager': None}</em><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.fw_policy_defaults" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="class">
 <dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy">
-<em class="property">class </em><code class="descname">FWPolicy</code><span class="sig-paren">(</span><em>rerun_same_dir</em>, <em>max_restarts</em>, <em>autoparal</em>, <em>abinit_cmd</em>, <em>mrgddb_cmd</em>, <em>anaddb_cmd</em>, <em>cut3d_cmd</em>, <em>mpirun_cmd</em>, <em>copy_deps</em>, <em>walltime_command</em>, <em>continue_unconverged_on_rerun</em>, <em>allow_local_restart</em>, <em>timelimit_buffer</em>, <em>short_job_timelimit</em>, <em>abipy_manager</em><span class="sig-paren">)</span><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">FWPolicy</code><span class="sig-paren">(</span><em>rerun_same_dir</em>, <em>max_restarts</em>, <em>autoparal</em>, <em>abinit_cmd</em>, <em>mrgddb_cmd</em>, <em>anaddb_cmd</em>, <em>cut3d_cmd</em>, <em>mpirun_cmd</em>, <em>copy_deps</em>, <em>walltime_command</em>, <em>continue_unconverged_on_rerun</em>, <em>allow_local_restart</em>, <em>timelimit_buffer</em>, <em>short_job_timelimit</em>, <em>recover_previous_job</em>, <em>abipy_manager</em><span class="sig-paren">)</span><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></a></p>
 <dl class="attribute">
 <dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.abinit_cmd">
@@ -534,7 +529,7 @@ This is now the preferred choice. If this value is not defined, it will be loade
 <dl class="attribute">
 <dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.abipy_manager">
 <code class="descname">abipy_manager</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.abipy_manager" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 14</p>
+<dd><p>Alias for field number 15</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -589,6 +584,12 @@ This is now the preferred choice. If this value is not defined, it will be loade
 <dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.mrgddb_cmd">
 <code class="descname">mrgddb_cmd</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.mrgddb_cmd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 4</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.recover_previous_job">
+<code class="descname">recover_previous_job</code><a class="headerlink" href="#abiflows.fireworks.utils.fw_utils.FWTaskManager.FWPolicy.recover_previous_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 14</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -932,7 +933,7 @@ Includes both the time required for the calculations as well as the cpu time con
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

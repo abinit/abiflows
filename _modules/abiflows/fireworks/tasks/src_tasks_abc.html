@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.tasks.src_tasks_abc &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.fireworks.tasks.src_tasks_abc &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -46,7 +46,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -123,6 +123,7 @@
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">six</span>
 
 <span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">FireTaskBase</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">FWAction</span>
@@ -547,7 +548,11 @@
         <span class="c1">#         modified_objects[target] = action.apply(initial_objects[target])</span>
 
         <span class="c1"># New spec</span>
-        <span class="n">new_spec</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_fw</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+        <span class="c1"># remove &quot;_tasks&quot; which is present in spec for recent fireworks versions. Remove it here to avoid</span>
+        <span class="c1"># problems with deepcopy.</span>
+        <span class="n">new_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_fw</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">new_spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_tasks&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">new_spec</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">new_spec</span><span class="p">)</span>
 
         <span class="c1"># New tasks</span>
         <span class="n">setup_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -1112,7 +1117,7 @@
 
 <div class="viewcode-block" id="SRCTaskIndex.from_any"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskIndex.from_any">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_any</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">SRC_task_index</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">SRC_task_index</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">unicode</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">SRC_task_index</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">SRC_task_index</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">SRC_task_index</span><span class="p">,</span> <span class="n">SRCTaskIndex</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">task_type</span><span class="o">=</span><span class="n">SRC_task_index</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">SRC_task_index</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
@@ -1268,7 +1273,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

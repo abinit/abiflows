@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.tasks.abinit_tasks &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.fireworks.tasks.abinit_tasks &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -46,7 +46,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -138,16 +138,18 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span><span class="p">,</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyEncoder</span><span class="p">,</span> <span class="n">MontyDecoder</span><span class="p">,</span> <span class="n">MSONable</span>
 <span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">json_pretty_dump</span><span class="p">,</span> <span class="n">pmg_serialize</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.elasticity</span> <span class="k">import</span> <span class="n">ElasticTensor</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="k">import</span> <span class="n">events</span><span class="p">,</span> <span class="n">tasks</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.netcdf</span> <span class="k">import</span> <span class="n">NetcdfReader</span><span class="p">,</span> <span class="n">NO_DEFAULT</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">irdvars_for_ext</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk.wrappers</span> <span class="k">import</span> <span class="n">Mrgddb</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk.qutils</span> <span class="k">import</span> <span class="n">time2slurm</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">InputFactory</span><span class="p">,</span> <span class="n">PiezoElasticFromGsFactory</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span>
-<span class="kn">from</span> <span class="nn">abipy.dfpt.ddb</span> <span class="k">import</span> <span class="n">ElasticComplianceTensor</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">abipy.core.mixins</span> <span class="k">import</span> <span class="n">AbinitOutNcFile</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.outputs</span> <span class="k">import</span> <span class="n">OutNcFile</span>
+<span class="kn">from</span> <span class="nn">abipy.core.mixins</span> <span class="k">import</span> <span class="n">Has_Structure</span>
 <span class="kn">from</span> <span class="nn">abipy.core</span> <span class="k">import</span> <span class="n">Structure</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">,</span> <span class="n">FWAction</span><span class="p">,</span> <span class="n">Workflow</span>
 <span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="k">import</span> <span class="n">explicit_serialize</span>
@@ -636,7 +638,7 @@
                 <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">mpirun_cmd</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
                 <span class="k">if</span> <span class="s1">&#39;mpi_ncpus&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
                     <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">])])</span>
-            <span class="n">command</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">abinit_cmd</span><span class="p">)</span>
+            <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">abinit_cmd</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span><span class="p">:</span>
                 <span class="n">mytimelimit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span>
@@ -816,8 +818,9 @@
             <span class="c1">#TODO length should always be enough, but maybe it&#39;s worth cutting the message if it&#39;s too long</span>
             <span class="n">err_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
             <span class="c1"># It happened that the text file contained non utf-8 characters.</span>
-            <span class="c1"># sanitize the text to avoid problems during database inserption</span>
-            <span class="n">err_msg</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="c1"># sanitize the text to avoid problems during database insertion</span>
+            <span class="c1"># remove decode as incompatible with python 3</span>
+            <span class="c1"># err_msg.decode(&quot;utf-8&quot;, &quot;ignore&quot;)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;return code </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">returncode</span><span class="p">))</span>
         <span class="k">raise</span> <span class="n">AbinitRuntimeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">)</span></div>
 
@@ -991,12 +994,12 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">walltime_command</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
                                      <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span>
                 <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">out</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Impossible to get the walltime: &quot;</span> <span class="o">+</span> <span class="n">err</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Impossible to get the walltime: &quot;</span> <span class="o">+</span> <span class="n">err</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Impossible to get the walltime: &quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -1028,7 +1031,7 @@
                               <span class="s1">&#39;required by factory </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">abiinput</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                         <span class="k">raise</span> <span class="n">InitializationError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-                    <span class="n">task_type_source</span> <span class="o">=</span> <span class="n">previous_fws</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">task_type_source</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">previous_fws</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="c1"># the task_type_source should contain just one task and contain the &#39;input&#39; key</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">previous_fws</span><span class="p">[</span><span class="n">task_type_source</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">previous_fws</span><span class="p">[</span><span class="n">task_type_source</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
                     <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;The factory </span><span class="si">{}</span><span class="s1"> requires the input from previous run in the spec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">abiinput</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
@@ -1083,7 +1086,7 @@
                 <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">config_run</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span>
                     <span class="c1"># try to recover previous run</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">recover_previous_job</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">run_abinit</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span>
                     <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_analysis</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">action</span><span class="p">:</span>
@@ -1186,12 +1189,13 @@
                         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                         <span class="k">raise</span> <span class="n">InitializationError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">abiinput</span><span class="o">.</span><span class="n">set_structure</span><span class="p">(</span><span class="n">previous_task</span><span class="p">[</span><span class="s1">&#39;structure&#39;</span><span class="p">])</span>
-                <span class="k">elif</span> <span class="n">d</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;@outnc&#39;</span><span class="p">):</span>
-                    <span class="n">varname</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-                    <span class="n">outnc_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">previous_task</span><span class="p">[</span><span class="s1">&#39;dir&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">odata</span> <span class="o">+</span> <span class="s2">&quot;_OUT.nc&quot;</span><span class="p">)</span>
-                    <span class="n">outnc_file</span> <span class="o">=</span> <span class="n">AbinitOutNcFile</span><span class="p">(</span><span class="n">outnc_path</span><span class="p">)</span>
-                    <span class="nb">vars</span> <span class="o">=</span> <span class="n">outnc_file</span><span class="o">.</span><span class="n">get_vars</span><span class="p">(</span><span class="nb">vars</span><span class="o">=</span><span class="p">[</span><span class="n">varname</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">abiinput</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
+                <span class="c1">#FIXME out.nc is not safe. Check if needed and move to other nc files in case.</span>
+                <span class="c1"># elif d.startswith(&#39;@outnc&#39;):</span>
+                <span class="c1">#     varname = d.split(&#39;.&#39;)[1]</span>
+                <span class="c1">#     outnc_path = os.path.join(previous_task[&#39;dir&#39;], self.prefix.odata + &quot;_OUT.nc&quot;)</span>
+                <span class="c1">#     outnc_file = OutNcFile(outnc_path)</span>
+                <span class="c1">#     vars = {varname: outnc_file[varname]}</span>
+                <span class="c1">#     self.abiinput.set_vars(vars)</span>
                 <span class="k">elif</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;@&#39;</span><span class="p">):</span>
                     <span class="n">source_dir</span> <span class="o">=</span> <span class="n">previous_task</span><span class="p">[</span><span class="s1">&#39;dir&#39;</span><span class="p">]</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">abiinput</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">irdvars_for_ext</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
@@ -1944,7 +1948,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">ddb_source_task_types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ddb_source_task_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">PhononTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">DdeTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">BecTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">DteTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">]</span>
+            <span class="n">ddb_source_task_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ScfFWTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">PhononTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">DdeTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">BecTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span>
+                                     <span class="n">DteTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">StrainPertTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">]</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ddb_source_task_types</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="n">ddb_source_task_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ddb_source_task_types</span><span class="p">]</span>
 
@@ -2577,7 +2582,8 @@
 <span class="sd">        Note that the method still takes is_autoparal as input even if this is switched to True irrespectively of the</span>
 <span class="sd">        provided value, as the point of the task is to run autoparal. This is done to preserve the API in cases where</span>
 <span class="sd">        automatic generation of tasks is involved.</span>
-<span class="sd">        skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: default [&#39;wf_task_index&#39;]</span>
+<span class="sd">        skip_spec_keys allows to specify a list of keys to skip when forwarding the spec: &#39;wf_task_index&#39; will</span>
+<span class="sd">        be always skipped. All the reserved keys starting with _ will always be skipped as well.</span>
 <span class="sd">        If abiinput is None, autoparal will not run and the preferred configuration will be chosen based on</span>
 <span class="sd">        the options set in the manager.</span>
 <span class="sd">        #FIXME find a better solution if this model is preserved</span>
@@ -2589,7 +2595,10 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">AutoparalTask</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">abiinput</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="n">restart_info</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="n">handlers</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                                             <span class="n">deps</span><span class="o">=</span><span class="n">deps</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">forward_spec</span> <span class="o">=</span> <span class="n">forward_spec</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">skip_spec_keys</span> <span class="o">=</span> <span class="n">skip_spec_keys</span> <span class="ow">or</span> <span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_spec_keys</span><span class="p">:</span>
+            <span class="n">skip_spec_keys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">skip_spec_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">skip_spec_keys</span> <span class="o">=</span> <span class="n">skip_spec_keys</span>
 
 <div class="viewcode-block" id="AutoparalTask.autoparal"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.AutoparalTask.autoparal">[docs]</a>    <span class="k">def</span> <span class="nf">autoparal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -2609,7 +2618,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_spec</span><span class="p">:</span>
             <span class="c1"># forward all the specs of the task</span>
-            <span class="n">new_spec</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;_tasks&#39;</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_spec_keys</span><span class="p">}</span>
+            <span class="n">new_spec</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_spec_keys</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">new_spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="c1"># set quadapter specification. Note that mpi_ncpus may be different from ntasks</span>
@@ -2780,7 +2789,8 @@
         <span class="c1"># Set a higher priority to favour the end of the WF</span>
         <span class="c1">#TODO improve the handling of the priorities</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;_priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
-        <span class="n">num_ddbs_to_be_merged</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ph_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">dde_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">bec_fws</span><span class="p">)</span>
+        <span class="c1"># add one for the scf that is linked to the mrgddbtask and will be merged as well</span>
+        <span class="n">num_ddbs_to_be_merged</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ph_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">dde_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">bec_fws</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="n">mrgddb_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">MergeDdbAbinitTask</span><span class="p">(</span><span class="n">num_ddbs</span><span class="o">=</span><span class="n">num_ddbs_to_be_merged</span><span class="p">,</span> <span class="n">delete_source_ddbs</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">spec</span><span class="o">=</span><span class="n">mrgddb_spec</span><span class="p">,</span>
                              <span class="n">name</span><span class="o">=</span><span class="n">ph_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="o">+</span><span class="s1">&#39;_mergeddb&#39;</span><span class="p">)</span>
 
@@ -2807,221 +2817,6 @@
         <span class="n">stored_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">finalized</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">FWAction</span><span class="p">(</span><span class="n">stored_data</span><span class="o">=</span><span class="n">stored_data</span><span class="p">,</span> <span class="n">detours</span><span class="o">=</span><span class="n">ph_wf</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="PhononWFGenerator"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator">[docs]</a><span class="k">class</span> <span class="nc">PhononWFGenerator</span><span class="p">(</span><span class="n">BasicAbinitTaskMixin</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Since the workflow generated for the phonons may by composed by thousands of FWs, the amount of information</span>
-<span class="sd">    to be storead in the FWAction will be large in this cases. Like all the documents in mongodb the launch cannot</span>
-<span class="sd">    exceed the 16MB size, which is often reached when the number of FWs generated is around 1000.</span>
-<span class="sd">    To avoid this problem it is mandatory to generate the whole workflow immediately.</span>
-<span class="sd">    This mimics the behaviour of :class:`GeneratePhononFlowFWAbinitTask`.</span>
-
-<span class="sd">    .. rubric:: Inheritance Diagram</span>
-<span class="sd">    .. inheritance-diagram:: PhononWFGenerator</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_input</span><span class="p">,</span> <span class="n">phonon_factory</span><span class="p">,</span> <span class="n">previous_task_type</span><span class="o">=</span><span class="n">ScfFWTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="p">[],</span>
-                 <span class="n">with_autoparal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ddb_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fw_task_manager</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="p">{}):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scf_input</span> <span class="o">=</span> <span class="n">scf_input</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">phonon_factory</span> <span class="o">=</span> <span class="n">phonon_factory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">previous_task_type</span> <span class="o">=</span> <span class="n">previous_task_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="n">handlers</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">with_autoparal</span><span class="o">=</span><span class="n">with_autoparal</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ddb_file</span> <span class="o">=</span> <span class="n">ddb_file</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fw_task_manager</span> <span class="o">=</span> <span class="n">fw_task_manager</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">initialization_info</span> <span class="o">=</span> <span class="n">initialization_info</span> <span class="ow">or</span> <span class="p">{}</span>
-
-<div class="viewcode-block" id="PhononWFGenerator.run_autoparal"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.run_autoparal">[docs]</a>    <span class="k">def</span> <span class="nf">run_autoparal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">autoparal_dir</span><span class="p">,</span> <span class="n">ftm</span><span class="p">,</span> <span class="n">clean_up</span><span class="o">=</span><span class="s1">&#39;move&#39;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Runs the autoparal using AbinitInput abiget_autoparal_pconfs method.</span>
-<span class="sd">        The information are retrieved from the FWTaskManager that should be present and contain the standard</span>
-<span class="sd">        abipy TaskManager, that provides information about the queue adapters.</span>
-<span class="sd">        No check is performed on the autoparal_dir. If there is a possibility of overwriting output data due to</span>
-<span class="sd">        reuse of the same folder, it should be handled by the caller.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">manager</span> <span class="o">=</span> <span class="n">ftm</span><span class="o">.</span><span class="n">task_manager</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">manager</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;No task manager available: autoparal could not be performed.&#39;</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="n">InitializationError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="n">pconfs</span> <span class="o">=</span> <span class="n">abiinput</span><span class="o">.</span><span class="n">abiget_autoparal_pconfs</span><span class="p">(</span><span class="n">max_ncpus</span><span class="o">=</span><span class="n">manager</span><span class="o">.</span><span class="n">max_cores</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">autoparal_dir</span><span class="p">,</span>
-                                                       <span class="n">manager</span><span class="o">=</span><span class="n">manager</span><span class="p">)</span>
-        <span class="n">optconf</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">select_qadapter</span><span class="p">(</span><span class="n">pconfs</span><span class="p">)</span>
-        <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">qadapter</span><span class="o">.</span><span class="n">get_subs_dict</span><span class="p">()</span>
-
-        <span class="n">d</span> <span class="o">=</span> <span class="n">pconfs</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
-        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;optimal_conf&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optconf</span>
-        <span class="n">json_pretty_dump</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">autoparal_dir</span><span class="p">,</span> <span class="s2">&quot;autoparal.json&quot;</span><span class="p">))</span>
-
-        <span class="c1"># Method to clean the output files</span>
-        <span class="k">def</span> <span class="nf">safe_rm</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">autoparal_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
-                    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="k">pass</span>
-
-        <span class="c1"># Method to rename the output files</span>
-        <span class="k">def</span> <span class="nf">safe_mv</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">autoparal_backup_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">autoparal_dir</span><span class="p">,</span> <span class="s1">&#39;autoparal_backup&#39;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">autoparal_backup_dir</span><span class="p">):</span>
-                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">autoparal_backup_dir</span><span class="p">)</span>
-                <span class="n">current_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">autoparal_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-                <span class="n">newpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">autoparal_backup_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">newpath</span><span class="p">):</span>
-                    <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">current_path</span><span class="p">,</span> <span class="n">newpath</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Autoparal backup file already exists for the file &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="k">pass</span>
-
-        <span class="c1"># clean up useless files. The output files should removed also to avoid abinit renaming the out file in</span>
-        <span class="c1"># case the main run will be performed in the same dir</span>
-
-        <span class="k">if</span> <span class="n">clean_up</span> <span class="o">==</span> <span class="s1">&#39;move&#39;</span><span class="p">:</span>
-            <span class="n">to_be_moved</span> <span class="o">=</span> <span class="p">[</span><span class="n">OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">LOG_FILE_NAME</span><span class="p">,</span> <span class="n">STDERR_FILE_NAME</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">to_be_moved</span><span class="p">:</span>
-                <span class="n">safe_mv</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-            <span class="n">to_be_removed</span> <span class="o">=</span> <span class="p">[</span><span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">to_be_removed</span><span class="p">:</span>
-                <span class="n">safe_rm</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">clean_up</span> <span class="o">==</span> <span class="s1">&#39;remove&#39;</span><span class="p">:</span>
-            <span class="n">to_be_removed</span> <span class="o">=</span> <span class="p">[</span><span class="n">OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">LOG_FILE_NAME</span><span class="p">,</span> <span class="n">STDERR_FILE_NAME</span><span class="p">,</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">to_be_removed</span><span class="p">:</span>
-                <span class="n">safe_rm</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">optconf</span><span class="p">,</span> <span class="n">qadapter_spec</span><span class="p">,</span> <span class="n">manager</span><span class="o">.</span><span class="n">qadapter</span></div>
-
-<div class="viewcode-block" id="PhononWFGenerator.get_fws"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.get_fws">[docs]</a>    <span class="k">def</span> <span class="nf">get_fws</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">multi_inp</span><span class="p">,</span> <span class="n">task_class</span><span class="p">,</span> <span class="n">deps</span><span class="p">,</span> <span class="n">new_spec</span><span class="p">,</span> <span class="n">ftm</span><span class="p">,</span> <span class="n">nscf_fws</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">formula</span> <span class="o">=</span> <span class="n">multi_inp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span>
-        <span class="n">fws</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">fw_deps</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        <span class="n">autoparal_spec</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">multi_inp</span><span class="p">):</span>
-            <span class="n">new_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new_spec</span><span class="p">)</span>
-            <span class="n">start_task_index</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_autoparal</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">autoparal_spec</span><span class="p">:</span>
-                    <span class="n">autoparal_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="s2">&quot;autoparal_</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task_class</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
-                    <span class="n">optconf</span><span class="p">,</span> <span class="n">qadapter_spec</span><span class="p">,</span> <span class="n">qadapter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_autoparal</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">autoparal_dir</span><span class="p">,</span> <span class="n">ftm</span><span class="p">)</span>
-                    <span class="n">autoparal_spec</span><span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qadapter_spec</span>
-                    <span class="n">autoparal_spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optconf</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span>
-                <span class="n">new_spec</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">autoparal_spec</span><span class="p">)</span>
-                <span class="n">inp</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">optconf</span><span class="o">.</span><span class="n">vars</span><span class="p">)</span>
-
-            <span class="n">current_deps</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">deps</span><span class="p">)</span>
-            <span class="n">parent_fw</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">nscf_fws</span><span class="p">:</span>
-                <span class="n">qpt</span> <span class="o">=</span> <span class="n">inp</span><span class="p">[</span><span class="s1">&#39;qpt&#39;</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">nscf_fw</span> <span class="ow">in</span> <span class="n">nscf_fws</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">nscf_fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">abiinput</span><span class="p">[</span><span class="s1">&#39;qpt&#39;</span><span class="p">],</span> <span class="n">qpt</span><span class="p">):</span>
-                        <span class="n">parent_fw</span> <span class="o">=</span> <span class="n">nscf_fw</span>
-                        <span class="n">current_deps</span><span class="p">[</span><span class="n">nscf_fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">task_type</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;WFQ&quot;</span>
-                        <span class="k">break</span>
-
-
-            <span class="n">task</span> <span class="o">=</span> <span class="n">task_class</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">handlers</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="n">current_deps</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="c1"># this index is for the different task, each performing a different perturbation</span>
-            <span class="n">indexed_task_type</span> <span class="o">=</span> <span class="n">task_class</span><span class="o">.</span><span class="n">task_type</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-            <span class="c1"># this index is to index the restarts of the single task</span>
-            <span class="n">new_spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">indexed_task_type</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_task_index</span><span class="p">)</span>
-            <span class="n">fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">new_spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">formula</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">indexed_task_type</span><span class="p">)[:</span><span class="mi">15</span><span class="p">])</span>
-            <span class="n">fws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fw</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">parent_fw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">fw_deps</span><span class="p">[</span><span class="n">parent_fw</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fw</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">fws</span><span class="p">,</span> <span class="n">fw_deps</span></div>
-
-<div class="viewcode-block" id="PhononWFGenerator.generate_wf"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.PhononWFGenerator.generate_wf">[docs]</a>    <span class="k">def</span> <span class="nf">generate_wf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">):</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_task_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">ftm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fw_task_manager</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1">#TODO read somehow</span>
-            <span class="k">pass</span>
-
-        <span class="c1"># inject task manager</span>
-        <span class="n">tasks</span><span class="o">.</span><span class="n">set_user_config_taskmanager</span><span class="p">(</span><span class="n">ftm</span><span class="o">.</span><span class="n">task_manager</span><span class="p">)</span>
-
-        <span class="n">ph_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phonon_factory</span><span class="o">.</span><span class="n">build_input</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scf_input</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">initialization_info</span><span class="p">[</span><span class="s1">&#39;input_factory&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phonon_factory</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
-        <span class="n">new_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">initialization_info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initialization_info</span><span class="p">)</span>
-
-        <span class="n">ph_q_pert_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">PH_Q_PERT</span><span class="p">)</span>
-        <span class="n">ddk_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDK</span><span class="p">)</span>
-        <span class="n">dde_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDE</span><span class="p">)</span>
-        <span class="n">bec_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">BEC</span><span class="p">)</span>
-
-        <span class="n">nscf_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">NSCF</span><span class="p">)</span>
-
-        <span class="n">nscf_fws</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">nscf_inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nscf_fws</span><span class="p">,</span> <span class="n">nscf_fw_deps</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">nscf_inputs</span><span class="p">,</span> <span class="n">NscfFWTask</span><span class="p">,</span>
-                                                 <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;WFK&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;DEN&quot;</span><span class="p">},</span> <span class="n">new_spec</span><span class="p">,</span> <span class="n">ftm</span><span class="p">)</span>
-
-        <span class="n">ph_fws</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">ph_q_pert_inputs</span><span class="p">:</span>
-            <span class="n">ph_q_pert_inputs</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">prtwf</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">ph_fws</span><span class="p">,</span> <span class="n">ph_fw_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">ph_q_pert_inputs</span><span class="p">,</span> <span class="n">PhononTask</span><span class="p">,</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;WFK&quot;</span><span class="p">},</span> <span class="n">new_spec</span><span class="p">,</span>
-                                              <span class="n">ftm</span><span class="p">,</span> <span class="n">nscf_fws</span><span class="p">)</span>
-
-        <span class="n">ddk_fws</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">ddk_inputs</span><span class="p">:</span>
-            <span class="n">ddk_fws</span><span class="p">,</span> <span class="n">ddk_fw_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">ddk_inputs</span><span class="p">,</span> <span class="n">DdkTask</span><span class="p">,</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;WFK&quot;</span><span class="p">},</span> <span class="n">new_spec</span><span class="p">,</span> <span class="n">ftm</span><span class="p">)</span>
-
-        <span class="n">dde_fws</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">dde_inputs</span><span class="p">:</span>
-            <span class="n">dde_inputs</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">prtwf</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">dde_fws</span><span class="p">,</span> <span class="n">dde_fw_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">dde_inputs</span><span class="p">,</span> <span class="n">DdeTask</span><span class="p">,</span>
-                                                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;WFK&quot;</span><span class="p">,</span> <span class="n">DdkTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">:</span> <span class="s2">&quot;DDK&quot;</span><span class="p">},</span> <span class="n">new_spec</span><span class="p">,</span> <span class="n">ftm</span><span class="p">)</span>
-
-        <span class="n">bec_fws</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">bec_inputs</span><span class="p">:</span>
-            <span class="n">bec_inputs</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">prtwf</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">bec_fws</span><span class="p">,</span> <span class="n">bec_fw_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">bec_inputs</span><span class="p">,</span> <span class="n">BecTask</span><span class="p">,</span>
-                                                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;WFK&quot;</span><span class="p">,</span> <span class="n">DdkTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">:</span> <span class="s2">&quot;DDK&quot;</span><span class="p">},</span> <span class="n">new_spec</span><span class="p">,</span> <span class="n">ftm</span><span class="p">)</span>
-
-
-        <span class="n">mrgddb_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new_spec</span><span class="p">)</span>
-        <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;mrgddb&#39;</span>
-        <span class="c1">#FIXME import here to avoid circular imports.</span>
-        <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_short_single_core_spec</span>
-        <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">get_short_single_core_spec</span><span class="p">(</span><span class="n">ftm</span><span class="p">)</span>
-        <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qadapter_spec</span>
-        <span class="c1"># Set a higher priority to favour the end of the WF</span>
-        <span class="c1">#TODO improve the handling of the priorities</span>
-        <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;_priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
-        <span class="n">num_ddbs_to_be_merged</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ph_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">dde_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">bec_fws</span><span class="p">)</span>
-        <span class="n">mrgddb_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">MergeDdbAbinitTask</span><span class="p">(</span><span class="n">num_ddbs</span><span class="o">=</span><span class="n">num_ddbs_to_be_merged</span><span class="p">,</span> <span class="n">delete_source_ddbs</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">spec</span><span class="o">=</span><span class="n">mrgddb_spec</span><span class="p">,</span>
-                             <span class="n">name</span><span class="o">=</span><span class="n">ph_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span><span class="o">+</span><span class="s1">&#39;_mergeddb&#39;</span><span class="p">)</span>
-
-        <span class="n">fws_deps</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="k">if</span> <span class="n">ddk_fws</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">ddk_fw</span> <span class="ow">in</span> <span class="n">ddk_fws</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">dde_fws</span><span class="p">:</span>
-                    <span class="n">fws_deps</span><span class="p">[</span><span class="n">ddk_fw</span><span class="p">]</span> <span class="o">=</span> <span class="n">dde_fws</span>
-                <span class="k">if</span> <span class="n">bec_fws</span><span class="p">:</span>
-                    <span class="n">fws_deps</span><span class="p">[</span><span class="n">ddk_fw</span><span class="p">]</span> <span class="o">=</span> <span class="n">bec_fws</span>
-
-        <span class="n">ddb_fws</span> <span class="o">=</span> <span class="n">dde_fws</span> <span class="o">+</span> <span class="n">ph_fws</span> <span class="o">+</span> <span class="n">bec_fws</span>
-        <span class="c1">#TODO pass all the tasks to the MergeDdbTask for logging or easier retrieve of the DDK?</span>
-        <span class="k">for</span> <span class="n">ddb_fw</span> <span class="ow">in</span> <span class="n">ddb_fws</span><span class="p">:</span>
-            <span class="n">fws_deps</span><span class="p">[</span><span class="n">ddb_fw</span><span class="p">]</span> <span class="o">=</span> <span class="n">mrgddb_fw</span>
-
-        <span class="n">total_list_fws</span> <span class="o">=</span> <span class="n">ddb_fws</span><span class="o">+</span><span class="n">ddk_fws</span><span class="o">+</span><span class="p">[</span><span class="n">mrgddb_fw</span><span class="p">]</span> <span class="o">+</span> <span class="n">nscf_fws</span>
-
-        <span class="n">fws_deps</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ph_fw_deps</span><span class="p">)</span>
-
-        <span class="n">ph_wf</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">total_list_fws</span><span class="p">,</span> <span class="n">fws_deps</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">ph_wf</span></div></div>
 
 
 <span class="c1">#TODO old implementation of GeneratePiezoElasticFlowFWAbinitTask based on SRC. Needs to be rewritten.</span>
@@ -3358,6 +3153,95 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="n">Directory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_dir</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ElasticComplianceTensor"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor">[docs]</a><span class="k">class</span> <span class="nc">ElasticComplianceTensor</span><span class="p">(</span><span class="n">Has_Structure</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This object is used to store the elastic and compliance tensors.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elastic_tensor</span><span class="p">,</span> <span class="n">compliance_tensor</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">additional_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            elastic_tensor: (6, 6) array with the elastic tensor in Cartesian coordinates</span>
+<span class="sd">            compliance_tensor: (6, 6) array with the compliance tensor in Cartesian coordinates</span>
+<span class="sd">            structure: |Structure| object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span> <span class="o">=</span> <span class="n">structure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span> <span class="o">=</span> <span class="n">elastic_tensor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span> <span class="o">=</span> <span class="n">compliance_tensor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">additional_info</span> <span class="o">=</span> <span class="n">additional_info</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;|Structure| object.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ElasticComplianceTensor.from_ec_nc_file"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.from_ec_nc_file">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_ec_nc_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">ec_nc_file</span><span class="p">,</span> <span class="n">tensor_type</span><span class="o">=</span><span class="s1">&#39;relaxed_ion&#39;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">NetcdfReader</span><span class="p">(</span><span class="n">ec_nc_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">nc_reader</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tensor_type</span> <span class="o">==</span> <span class="s1">&#39;relaxed_ion&#39;</span><span class="p">:</span>
+                <span class="n">ec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nc_reader</span><span class="o">.</span><span class="n">read_variable</span><span class="p">(</span><span class="s1">&#39;elastic_constants_relaxed_ion&#39;</span><span class="p">))</span>
+                <span class="n">compl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nc_reader</span><span class="o">.</span><span class="n">read_variable</span><span class="p">(</span><span class="s1">&#39;compliance_constants_relaxed_ion&#39;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">tensor_type</span> <span class="o">==</span> <span class="s1">&#39;clamped_ion&#39;</span><span class="p">:</span>
+                <span class="n">ec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nc_reader</span><span class="o">.</span><span class="n">read_variable</span><span class="p">(</span><span class="s1">&#39;elastic_constants_clamped_ion&#39;</span><span class="p">))</span>
+                <span class="n">compl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nc_reader</span><span class="o">.</span><span class="n">read_variable</span><span class="p">(</span><span class="s1">&#39;compliance_constants_clamped_ion&#39;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">tensor_type</span> <span class="o">==</span> <span class="s1">&#39;relaxed_ion_stress_corrected&#39;</span><span class="p">:</span>
+                <span class="n">ec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nc_reader</span><span class="o">.</span><span class="n">read_variable</span><span class="p">(</span><span class="s1">&#39;elastic_constants_relaxed_ion_stress_corrected&#39;</span><span class="p">))</span>
+                <span class="n">compl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nc_reader</span><span class="o">.</span><span class="n">read_variable</span><span class="p">(</span><span class="s1">&#39;compliance_constants_relaxed_ion_stress_corrected&#39;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;tensor_type &quot;</span><span class="si">{0}</span><span class="s1">&quot; not allowed&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tensor_type</span><span class="p">))</span>
+        <span class="c1">#TODO: add the structure object!</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">elastic_tensor</span><span class="o">=</span><span class="n">ec</span><span class="p">,</span> <span class="n">compliance_tensor</span><span class="o">=</span><span class="n">compl</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">additional_info</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;tensor_type&#39;</span><span class="p">:</span> <span class="n">tensor_type</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="ElasticComplianceTensor.as_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;elastic_tensor&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">,</span> <span class="s1">&#39;compliance_tensor&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">,</span>
+                <span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s1">&#39;additional_info&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_info</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="ElasticComplianceTensor.extended_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.extended_dict">[docs]</a>    <span class="k">def</span> <span class="nf">extended_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
+        <span class="n">K_Voigt</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span>
+                   <span class="mf">2.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">2.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mf">2.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mf">9.0</span>
+        <span class="n">K_Reuss</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span>
+                         <span class="mf">2.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">2.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+</span>
+                         <span class="mf">2.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">G_Voigt</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+                   <span class="mf">3.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span> <span class="o">/</span> <span class="mf">15.0</span>
+        <span class="n">G_Reuss</span> <span class="o">=</span> <span class="mf">15.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">4.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">4.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span>
+                          <span class="mf">4.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">4.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span>
+                          <span class="mf">4.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">4.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+                          <span class="mf">3.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">+</span>
+                          <span class="mf">3.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">compliance_tensor</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+        <span class="n">K_VRH</span> <span class="o">=</span> <span class="p">(</span><span class="n">K_Voigt</span> <span class="o">+</span> <span class="n">K_Reuss</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">G_VRH</span> <span class="o">=</span> <span class="p">(</span><span class="n">G_Voigt</span> <span class="o">+</span> <span class="n">G_Reuss</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">universal_elastic_anisotropy</span> <span class="o">=</span> <span class="mf">5.0</span><span class="o">*</span><span class="n">G_Voigt</span><span class="o">/</span><span class="n">G_Reuss</span> <span class="o">+</span> <span class="n">K_Voigt</span><span class="o">/</span><span class="n">K_Reuss</span> <span class="o">-</span> <span class="mf">6.0</span>
+        <span class="n">isotropic_poisson_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">*</span><span class="n">K_VRH</span> <span class="o">-</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">G_VRH</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">6.0</span><span class="o">*</span><span class="n">K_VRH</span> <span class="o">+</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">G_VRH</span><span class="p">)</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;K_Voigt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">K_Voigt</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;G_Voigt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">G_Voigt</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;K_Reuss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">K_Reuss</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;G_Reuss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">G_Reuss</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;K_VRH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">K_VRH</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;G_VRH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">G_VRH</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;universal_elastic_anistropy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">universal_elastic_anisotropy</span>
+        <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;isotropic_poisson_ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">isotropic_poisson_ratio</span>
+        <span class="k">return</span> <span class="n">dd</span></div>
+
+<div class="viewcode-block" id="ElasticComplianceTensor.from_dict"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dd</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">elastic_tensor</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;elastic_tensor&#39;</span><span class="p">],</span> <span class="n">compliance_tensor</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;compliance_tensor&#39;</span><span class="p">],</span>
+                   <span class="n">structure</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;structure&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;structure&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">additional_info</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;additional_info&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ElasticComplianceTensor.get_pmg_elastic_tensor"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.get_pmg_elastic_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">get_pmg_elastic_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts to a pymatgen :class:`ElasticTensor` object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ElasticTensor</span><span class="o">.</span><span class="n">from_voigt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elastic_tensor</span><span class="p">)</span></div></div>
 </pre></div>
 
     </div>
@@ -3372,7 +3256,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

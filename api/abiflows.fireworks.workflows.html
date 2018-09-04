@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.workflows package &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.fireworks.workflows package &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -48,7 +48,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -155,7 +155,7 @@
 <dl class="class">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="descname">AbstractFWWorkflow</code><span class="sig-paren">(</span><em>fireworks</em>, <em>links_dict=None</em>, <em>name=None</em>, <em>metadata=None</em>, <em>created_on=None</em>, <em>updated_on=None</em>, <em>fw_states=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#AbstractFWWorkflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.Workflow" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.Workflow</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.Workflow" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.Workflow</span></code></a></p>
 <p>Abstract class of the workflow generators.
 Subclasses should define a “wf” attribute at the end of the init, containing an instance of a fireworks Workflow.
 Normally subclasses should alse define attributes containing the different Fireworks that have been generated.</p>
@@ -316,7 +316,7 @@ MongoEngineDBInsertionTask.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>input</strong> – An <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object or a <a class="reference external" href="https://pythonhosted.org/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.core.structure.Structure</span></code></a></td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>input</strong> – An <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object or a <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.core.structure.Structure</span></code></a></td>
 </tr>
 </tbody>
 </table>
@@ -348,7 +348,7 @@ file ~/.fireworks/my_fworker.yaml)</p>
 <dt id="abiflows.fireworks.workflows.abinit_workflows.InputFWWorkflow">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="descname">InputFWWorkflow</code><span class="sig-paren">(</span><em>abiinput</em>, <em>task_type=&lt;class 'abiflows.fireworks.tasks.abinit_tasks.AbiFireTask'&gt;</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#InputFWWorkflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.InputFWWorkflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow</span></code></a></p>
-<p>Generator of a fireworks workflow with a single abinit task based on a generic <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a>.</p>
+<p>Generator of a fireworks workflow with a single abinit task based on a generic <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a>.</p>
 </dd></dl>
 
 <dl class="class">
@@ -440,27 +440,6 @@ of the factory for the definition of the arguments.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld">
-<em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="descname">RelaxFWWorkflowSRCOld</code><span class="sig-paren">(</span><em>ion_input</em>, <em>ioncell_input</em>, <em>spec=None</em>, <em>initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#RelaxFWWorkflowSRCOld"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow</span></code></a></p>
-<dl class="attribute">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld.workflow_class">
-<code class="descname">workflow_class</code><em class="property"> = 'RelaxFWWorkflowSRC'</em><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld.workflow_class" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld.workflow_module">
-<code class="descname">workflow_module</code><em class="property"> = 'abiflows.fireworks.workflows.abinit_workflows'</em><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld.workflow_module" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="classmethod">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld.get_final_structure_and_history">
-<em class="property">classmethod </em><code class="descname">get_final_structure_and_history</code><span class="sig-paren">(</span><em>wf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#RelaxFWWorkflowSRCOld.get_final_structure_and_history"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRCOld.get_final_structure_and_history" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRC">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="descname">RelaxFWWorkflowSRC</code><span class="sig-paren">(</span><em>ion_input</em>, <em>ioncell_input</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>additional_controllers=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#RelaxFWWorkflowSRC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflowSRC" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow</span></code></a></p>
@@ -545,29 +524,6 @@ See the description of the factories for the definition of the arguments.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld">
-<em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="descname">PhononFWWorkflowOld</code><span class="sig-paren">(</span><em>scf_inp</em>, <em>phonon_factory</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#PhononFWWorkflowOld"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow</span></code></a></p>
-<p>First version of the generator of a fireworks workflow for the calculation of phonon properties.
-Deprecated.</p>
-<dl class="attribute">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld.workflow_class">
-<code class="descname">workflow_class</code><em class="property"> = 'PhononFWWorkflowOld'</em><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld.workflow_class" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld.workflow_module">
-<code class="descname">workflow_module</code><em class="property"> = 'abiflows.fireworks.workflows.abinit_workflows'</em><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld.workflow_module" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="classmethod">
-<dt id="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld.from_factory">
-<em class="property">classmethod </em><code class="descname">from_factory</code><span class="sig-paren">(</span><em>structure</em>, <em>pseudos</em>, <em>kppa=None</em>, <em>ecut=None</em>, <em>pawecutdg=None</em>, <em>nband=None</em>, <em>accuracy='normal'</em>, <em>spin_mode='polarized'</em>, <em>smearing='fermi_dirac:0.1 eV'</em>, <em>charge=0.0</em>, <em>scf_algorithm=None</em>, <em>shift_mode='Symmetric'</em>, <em>ph_ngqpt=None</em>, <em>with_ddk=True</em>, <em>with_dde=True</em>, <em>with_bec=False</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#PhononFWWorkflowOld.from_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflowOld.from_factory" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="descname">PhononFWWorkflow</code><span class="sig-paren">(</span><em>scf_inp</em>, <em>phonon_factory</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#PhononFWWorkflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow</span></code></a></p>
@@ -598,7 +554,7 @@ The manager can be a TaskManager or a FWTaskManager.</p>
 <dl class="classmethod">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow.from_gs_input">
 <em class="property">classmethod </em><code class="descname">from_gs_input</code><span class="sig-paren">(</span><em>gs_input</em>, <em>structure=None</em>, <em>ph_ngqpt=None</em>, <em>qpoints=None</em>, <em>qppa=None</em>, <em>with_ddk=True</em>, <em>with_dde=True</em>, <em>with_bec=False</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>wfq_tol=None</em>, <em>qpoints_to_skip=None</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#PhononFWWorkflow.from_gs_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow.from_gs_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an instance of PhononFWWorkflow using a custom <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> for a ground state calculation and the
+<dd><p>Creates an instance of PhononFWWorkflow using a custom <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> for a ground state calculation and the
 phonons_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
 default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
 See the description of the phonons_from_gsinput factory for the definition of the arguments.
@@ -673,7 +629,7 @@ Subclass of PhononFWWorkflow but the Fireworks with phonon perturbations will be
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>multi_inp</strong> – <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</li>
+<li><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</li>
 <li><strong>task_class</strong> – class of the tasks that should be generated</li>
 <li><strong>deps</strong> – dict with the dependencies already set for this type of task</li>
 <li><strong>spec</strong> – spec for the new Fireworks that will be created</li>
@@ -770,7 +726,7 @@ Parallelization over all the perturbations. The phonon perturbations are optiona
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>multi_inp</strong> – <a class="reference external" href="https://pythonhosted.org/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.2.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</li>
+<li><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</li>
 <li><strong>task_class</strong> – class of the tasks that should be generated</li>
 <li><strong>deps</strong> – dict with the dependencies already set for this type of task</li>
 <li><strong>spec</strong> – spec for the new Fireworks that will be created</li>
@@ -809,7 +765,7 @@ Parallelization over all the perturbations. The phonon perturbations are optiona
 
 <dl class="classmethod">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow.from_factory">
-<em class="property">classmethod </em><code class="descname">from_factory</code><span class="sig-paren">(</span><em>structure</em>, <em>pseudos</em>, <em>kppa=None</em>, <em>ecut=None</em>, <em>pawecutdg=None</em>, <em>nband=None</em>, <em>accuracy='normal'</em>, <em>spin_mode='polarized'</em>, <em>smearing='fermi_dirac:0.1 eV'</em>, <em>charge=0.0</em>, <em>scf_algorithm=None</em>, <em>shift_mode='Symmetric'</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>dte_tol=None</em>, <em>use_phonons=False</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>skip_dte_permutations=False</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DteFWWorkflow.from_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow.from_factory" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">from_factory</code><span class="sig-paren">(</span><em>structure</em>, <em>pseudos</em>, <em>kppa=None</em>, <em>ecut=None</em>, <em>pawecutdg=None</em>, <em>nband=None</em>, <em>accuracy='normal'</em>, <em>spin_mode='polarized'</em>, <em>smearing='fermi_dirac:0.1 eV'</em>, <em>charge=0.0</em>, <em>scf_algorithm=None</em>, <em>shift_mode='Symmetric'</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>use_phonons=False</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>skip_dte_permutations=False</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DteFWWorkflow.from_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow.from_factory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an instance of DteFWWorkflow using the scf_for_phonons and dte_from_gsinput factory functions.
 See the description of the factories for the definition of the arguments.
 The manager can be a TaskManager or a FWTaskManager.</p>
@@ -817,7 +773,7 @@ The manager can be a TaskManager or a FWTaskManager.</p>
 
 <dl class="classmethod">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow.from_gs_input">
-<em class="property">classmethod </em><code class="descname">from_gs_input</code><span class="sig-paren">(</span><em>gs_input</em>, <em>structure=None</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>dte_tol=None</em>, <em>use_phonons=False</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>skip_dte_permutations=False</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DteFWWorkflow.from_gs_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow.from_gs_input" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">from_gs_input</code><span class="sig-paren">(</span><em>gs_input</em>, <em>structure=None</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>use_phonons=False</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>skip_dte_permutations=False</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DteFWWorkflow.from_gs_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow.from_gs_input" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an instance of DteFWWorkflow using a custom AbinitInput for a ground state calculation and the
 dte_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
 default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
@@ -940,6 +896,166 @@ fireworks database and access to the file system containing the calculations.</p
 
 </dd></dl>
 
+<dl class="class">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow">
+<em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="descname">DfptFWWorkflow</code><span class="sig-paren">(</span><em>scf_inp</em>, <em>ph_inp=None</em>, <em>nscf_inp=None</em>, <em>ddk_inp=None</em>, <em>dde_inp=None</em>, <em>strain_inp=None</em>, <em>dte_inp=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow"><code class="xref py py-class docutils literal"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow</span></code></a></p>
+<p>Generator of a fireworks workflow for the calculation of various properties with DFPT.
+Parallelization over all the perturbations.</p>
+<p>N.B. Currently (version 8.8.3) anaddb does not support a DDB containing both 2nd order derivatives with qpoints
+different from gamma AND 3rd order derivatives. The calculations could be run, but the global DDB will not
+be directly usable as is in anaddb.</p>
+<dl class="attribute">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.workflow_class">
+<code class="descname">workflow_class</code><em class="property"> = 'DfptFWWorkflow'</em><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.workflow_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.workflow_module">
+<code class="descname">workflow_module</code><em class="property"> = 'abiflows.fireworks.workflows.abinit_workflows'</em><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.workflow_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.get_fws">
+<code class="descname">get_fws</code><span class="sig-paren">(</span><em>multi_inp</em>, <em>task_class</em>, <em>deps</em>, <em>spec</em>, <em>nscf_fws=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow.get_fws"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.get_fws" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares the fireworks for a specific type of calculation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</li>
+<li><strong>task_class</strong> – class of the tasks that should be generated</li>
+<li><strong>deps</strong> – dict with the dependencies already set for this type of task</li>
+<li><strong>spec</strong> – spec for the new Fireworks that will be created</li>
+<li><strong>nscf_fws</strong> – list of NSCF fws for the calculation of WFQ files, in case they are present.
+Will be linked if needed.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li>fws (list): The list of new Fireworks.</li>
+<li><dl class="first docutils">
+<dt>fw_deps (dict): The dependencies related to these fireworks.</dt>
+<dd>Should be used when generating the workflow.</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">(<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)">tuple</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.get_autoparal_fw">
+<code class="descname">get_autoparal_fw</code><span class="sig-paren">(</span><em>inp</em>, <em>task_type</em>, <em>deps</em>, <em>spec</em>, <em>nscf_fws=None</em>, <em>formula=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow.get_autoparal_fw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.get_autoparal_fw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares a single Firework containing an AutoparalTask to perform the autoparal for each group of calculations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inp</strong> – one of the inputs for which the autoparal should be run</li>
+<li><strong>task_type</strong> – task_type of the class for the current type of calculation</li>
+<li><strong>deps</strong> – dict with the dependencies already set for this type of task</li>
+<li><strong>spec</strong> – spec for the new Fireworks that will be created</li>
+<li><strong>nscf_fws</strong> – list of NSCF fws for the calculation of WFQ files, in case they are present.
+Will be linked if needed.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li>fws (list): The new Firework.</li>
+<li><dl class="first docutils">
+<dt>fw_deps (dict): The dependencies between related to this firework.</dt>
+<dd>Should be used when generating the workflow.</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">(<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)">tuple</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.from_factory">
+<em class="property">classmethod </em><code class="descname">from_factory</code><span class="sig-paren">(</span><em>structure</em>, <em>pseudos</em>, <em>kppa=None</em>, <em>ecut=None</em>, <em>pawecutdg=None</em>, <em>nband=None</em>, <em>accuracy='normal'</em>, <em>spin_mode='polarized'</em>, <em>smearing='fermi_dirac:0.1 eV'</em>, <em>charge=0.0</em>, <em>scf_algorithm=None</em>, <em>shift_mode='Symmetric'</em>, <em>ph_ngqpt=None</em>, <em>qpoints=None</em>, <em>qppa=None</em>, <em>do_ddk=True</em>, <em>do_dde=True</em>, <em>do_strain=True</em>, <em>do_dte=False</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>wfq_tol=None</em>, <em>strain_tol=None</em>, <em>skip_dte_permutations=False</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow.from_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.from_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an instance of DfptFWWorkflow using the scf_for_phonons and dfpt_from_gsinput factory functions.
+See the description of the factories for the definition of the arguments.
+The manager can be a TaskManager or a FWTaskManager.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.from_gs_input">
+<em class="property">classmethod </em><code class="descname">from_gs_input</code><span class="sig-paren">(</span><em>gs_input</em>, <em>structure=None</em>, <em>ph_ngqpt=None</em>, <em>qpoints=None</em>, <em>qppa=None</em>, <em>do_ddk=True</em>, <em>do_dde=True</em>, <em>do_strain=True</em>, <em>do_dte=False</em>, <em>scf_tol=None</em>, <em>ph_tol=None</em>, <em>ddk_tol=None</em>, <em>dde_tol=None</em>, <em>wfq_tol=None</em>, <em>strain_tol=None</em>, <em>skip_dte_permutations=False</em>, <em>extra_abivars=None</em>, <em>decorators=None</em>, <em>autoparal=False</em>, <em>spec=None</em>, <em>initialization_info=None</em>, <em>manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow.from_gs_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.from_gs_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an instance of DfptFWWorkflow using a custom <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.6.0)"><code class="xref py py-class docutils literal"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> for a ground state calculation and the
+dfpt_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
+default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
+See the description of the dfpt_from_gsinput factory for the definition of the arguments.
+The manager can be a TaskManager or a FWTaskManager.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.get_mongoengine_results">
+<em class="property">classmethod </em><code class="descname">get_mongoengine_results</code><span class="sig-paren">(</span><em>wf</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow.get_mongoengine_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.get_mongoengine_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates the PhononResult mongoengine document containing the results of the calculation.
+The workflow should have been generated from this class and requires an open connection to the
+fireworks database and access to the file system containing the calculations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wf</strong> – the fireworks Workflow instance of the workflow.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A PhononResult document.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.add_anaddb_dfpt_fw">
+<code class="descname">add_anaddb_dfpt_fw</code><span class="sig-paren">(</span><em>structure</em>, <em>ph_ngqpt=None</em>, <em>ndivsm=20</em>, <em>nqsmall=15</em>, <em>qppa=None</em>, <em>line_density=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow.add_anaddb_dfpt_fw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.add_anaddb_dfpt_fw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends a Firework with a task for the calculation of various properties obtained from the  with anaddb.</p>
+<p>Notice that in the current abinit version, the presence of the third order derivatives is incompatible with
+the presence q-points different from gamma in the DDB and first order derivative. Anaddb calculation can
+either fail or produce meaningless results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>structure</strong> – the input structure</li>
+<li><strong>ngqpt</strong> – Monkhorst-Pack divisions for the phonon Q-mesh (coarse one)</li>
+<li><strong>nqsmall</strong> – Used to generate the (dense) mesh for the DOS.
+It defines the number of q-points used to sample the smallest lattice vector.</li>
+<li><strong>ndivsm</strong> – Used to generate a normalized path for the phonon bands.
+If gives the number of divisions for the smallest segment of the path.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="module-abiflows.fireworks.workflows.vasp_workflows">
 <span id="abiflows-fireworks-workflows-vasp-workflows-module"></span><h2>abiflows.fireworks.workflows.vasp_workflows module<a class="headerlink" href="#module-abiflows.fireworks.workflows.vasp_workflows" title="Permalink to this headline">¶</a></h2>
@@ -947,7 +1063,7 @@ fireworks database and access to the file system containing the calculations.</p
 <dl class="class">
 <dt id="abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow">
 <em class="property">class </em><code class="descclassname">abiflows.fireworks.workflows.vasp_workflows.</code><code class="descname">AbstractFWWorkflow</code><span class="sig-paren">(</span><em>fireworks</em>, <em>links_dict=None</em>, <em>name=None</em>, <em>metadata=None</em>, <em>created_on=None</em>, <em>updated_on=None</em>, <em>fw_states=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/vasp_workflows.html#AbstractFWWorkflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.Workflow" title="(in FireWorks v1.7.5)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.Workflow</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://materialsproject.github.io/fireworks/fireworks.core.html#fireworks.core.firework.Workflow" title="(in FireWorks v1.7.8)"><code class="xref py py-class docutils literal"><span class="pre">fireworks.core.firework.Workflow</span></code></a></p>
 <p>Abstract Workflow class.</p>
 <dl class="method">
 <dt id="abiflows.fireworks.workflows.vasp_workflows.AbstractFWWorkflow.add_to_db">
@@ -1057,7 +1173,7 @@ fireworks database and access to the file system containing the calculations.</p
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

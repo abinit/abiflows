@@ -1,0 +1,8 @@
+<map id="inheritanceb88fa1a166" name="inheritanceb88fa1a166">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.DfptResult" target="_top" title="Document containing the results for a dfpt workflow." alt="" coords="518,69,764,86"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="245,4,475,20"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="252,36,469,53"/>
+<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="243,69,477,86"/>
+<area shape="rect" id="node5" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" target="_top" title="Mixin providing a DictField for storing user specific additional properties" alt="" coords="236,102,485,119"/>
+<area shape="rect" id="node6" title="The base class used for defining the structure and properties of" alt="" coords="282,135,439,151"/>
+</map>

@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.database.mongoengine.abinit_results &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.database.mongoengine.abinit_results &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -46,7 +46,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -118,7 +118,7 @@
   <h1>Source code for abiflows.database.mongoengine.abinit_results</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
 
-<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.mixins</span> <span class="k">import</span> <span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span>
+<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.mixins</span> <span class="k">import</span> <span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">CustomFieldMixin</span>
 <span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.abinit_mixins</span> <span class="k">import</span> <span class="n">AbinitPhononOutputMixin</span><span class="p">,</span> <span class="n">AbinitBasicInputMixin</span><span class="p">,</span> \
     <span class="n">AbinitGSOutputMixin</span><span class="p">,</span> <span class="n">AbinitPhononOutputMixin</span><span class="p">,</span> <span class="n">AbinitDftpOutputMixin</span>
 <span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="o">*</span>
@@ -151,7 +151,7 @@
                                        <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;relax_outfile_fs&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="RelaxResult"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.RelaxResult">[docs]</a><span class="k">class</span> <span class="nc">RelaxResult</span><span class="p">(</span><span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
+<div class="viewcode-block" id="RelaxResult"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.RelaxResult">[docs]</a><span class="k">class</span> <span class="nc">RelaxResult</span><span class="p">(</span><span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">CustomFieldMixin</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Document containing the results for a relaxation workflow consisting of an ion followed by ioncell relaxations.</span>
 
@@ -182,7 +182,7 @@
     <span class="n">phonon_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate one of the phonons.&quot;</span><span class="p">)</span>
     <span class="n">kppa</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span>
     <span class="n">ngqpt</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">IntField</span><span class="p">())</span>
-    <span class="n">qpoints</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">()</span>
+    <span class="n">qpoints</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">()</span>
     <span class="n">qppa</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span></div>
 
 
@@ -200,7 +200,7 @@
                                  <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;phonon_gs_outfile_fs&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="PhononResult"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.PhononResult">[docs]</a><span class="k">class</span> <span class="nc">PhononResult</span><span class="p">(</span><span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
+<div class="viewcode-block" id="PhononResult"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.PhononResult">[docs]</a><span class="k">class</span> <span class="nc">PhononResult</span><span class="p">(</span><span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">CustomFieldMixin</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Document containing the results for a phonon workflow.</span>
 <span class="sd">    Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, anaddb)</span>
@@ -250,14 +250,14 @@
                                  <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;phonon_gs_outfile_fs&#39;</span><span class="p">)</span>
     <span class="n">anaddb_nc</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;anaddb.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;anaddb_nc_id&#39;</span><span class="p">,</span> <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;anaddb_nc_fs&#39;</span><span class="p">)</span>
 
-    <span class="n">emacro</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">FloatField</span><span class="p">()),</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Macroscopic dielectric tensor&quot;</span><span class="p">)</span>
-    <span class="n">emacro_rlx</span><span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">FloatField</span><span class="p">()),</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Relaxed ion Macroscopic dielectric tensor&quot;</span><span class="p">)</span>
+    <span class="n">epsinf</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">FloatField</span><span class="p">()),</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Macroscopic dielectric tensor&quot;</span><span class="p">)</span>
+    <span class="n">eps0</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">FloatField</span><span class="p">()),</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Relaxed ion Macroscopic dielectric tensor&quot;</span><span class="p">)</span>
     <span class="n">dchide</span><span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">FloatField</span><span class="p">())),</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Non-linear optical susceptibilities tensor&quot;</span><span class="p">)</span>
     <span class="n">dchidt</span><span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">ListField</span><span class="p">(</span><span class="n">FloatField</span><span class="p">()))),</span>
                       <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;First-order change in the linear dielectric susceptibility&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DteResult"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.DteResult">[docs]</a><span class="k">class</span> <span class="nc">DteResult</span><span class="p">(</span><span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
+<div class="viewcode-block" id="DteResult"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.DteResult">[docs]</a><span class="k">class</span> <span class="nc">DteResult</span><span class="p">(</span><span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">CustomFieldMixin</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Document containing the results for a dte workflow.</span>
 <span class="sd">    Includes information from the various steps of the workflow (scf, ddk, dde, ph, dte, anaddb)</span>
@@ -274,6 +274,64 @@
     <span class="n">abinit_input</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">DteAbinitInput</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DteAbinitInput</span><span class="p">)</span>
     <span class="n">abinit_output</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">DteAbinitOutput</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DteAbinitOutput</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="DfptAbinitInput"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.DfptAbinitInput">[docs]</a><span class="k">class</span> <span class="nc">DfptAbinitInput</span><span class="p">(</span><span class="n">AbinitBasicInputMixin</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    EmbeddedDocument containing the typical inputs for a dfpt workflow.</span>
+
+<span class="sd">    .. rubric:: Inheritance Diagram</span>
+<span class="sd">    .. inheritance-diagram:: DfptAbinitInput</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">gs_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate the wafunctions.&quot;</span><span class="p">)</span>
+    <span class="n">ddk_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate one of the ddk.&quot;</span><span class="p">)</span>
+    <span class="n">dde_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate one of the dde.&quot;</span><span class="p">)</span>
+    <span class="n">wfq_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate one of the wfq.&quot;</span><span class="p">)</span>
+    <span class="n">phonon_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate one of the phonons.&quot;</span><span class="p">)</span>
+    <span class="n">strain_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate one of the strain.&quot;</span><span class="p">)</span>
+    <span class="n">dte_input</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The last input used to calculate one of the dte.&quot;</span><span class="p">)</span>
+    <span class="n">kppa</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span>
+    <span class="n">ngqpt</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">IntField</span><span class="p">())</span>
+    <span class="n">qpoints</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">()</span>
+    <span class="n">qppa</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DfptAbinitOutput"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.DfptAbinitOutput">[docs]</a><span class="k">class</span> <span class="nc">DfptAbinitOutput</span><span class="p">(</span><span class="n">AbinitPhononOutputMixin</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    EmbeddedDocument containing the typical outputs for a dfpt workflow.</span>
+
+<span class="sd">    .. rubric:: Inheritance Diagram</span>
+<span class="sd">    .. inheritance-diagram:: DfptAbinitOutput</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">gs_gsr</span> <span class="o">=</span> <span class="n">AbiFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;GSR.nc&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Gsr file produced by the Ground state calculation&quot;</span><span class="p">,</span>
+                          <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;gs_gsr_id&#39;</span><span class="p">,</span> <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;phonon_gs_gsr_fs&#39;</span><span class="p">)</span>
+    <span class="n">gs_outfile</span><span class="o">=</span> <span class="n">AbiGzipFileField</span><span class="p">(</span><span class="n">abiext</span><span class="o">=</span><span class="s2">&quot;abo&quot;</span><span class="p">,</span> <span class="n">abiform</span><span class="o">=</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="n">db_field</span><span class="o">=</span><span class="s1">&#39;gs_outfile_id&#39;</span><span class="p">,</span>
+                                 <span class="n">collection_name</span><span class="o">=</span><span class="s1">&#39;phonon_gs_outfile_fs&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DfptResult"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.DfptResult">[docs]</a><span class="k">class</span> <span class="nc">DfptResult</span><span class="p">(</span><span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">CustomFieldMixin</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Document containing the results for a dfpt workflow.</span>
+<span class="sd">    Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, strain, dte, anaddb)</span>
+
+<span class="sd">    .. rubric:: Inheritance Diagram</span>
+<span class="sd">    .. inheritance-diagram:: DfptResult</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mp_id</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">()</span>
+    <span class="n">relax_db</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">()</span>
+    <span class="n">relax_id</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">()</span>
+    <span class="n">time_report</span> <span class="o">=</span> <span class="n">MSONField</span><span class="p">()</span>
+    <span class="n">fw_id</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">()</span>
+    <span class="n">abinit_input</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">DfptAbinitInput</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DfptAbinitInput</span><span class="p">)</span>
+    <span class="n">abinit_output</span> <span class="o">=</span> <span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">DfptAbinitOutput</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DfptAbinitOutput</span><span class="p">)</span>
+
+    <span class="n">has_phonons</span> <span class="o">=</span> <span class="n">BooleanField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Whether the phonon perturbations have been included or not&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">has_ddk</span> <span class="o">=</span> <span class="n">BooleanField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Whether the ddk perturbations have been included or not&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">has_dde</span> <span class="o">=</span> <span class="n">BooleanField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Whether the dde perturbations have been included or not&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">has_strain</span> <span class="o">=</span> <span class="n">BooleanField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Whether the strain perturbations have been included or not&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">has_dte</span> <span class="o">=</span> <span class="n">BooleanField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Whether the dte perturbations have been included or not&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 </pre></div>
 
     </div>
@@ -288,7 +346,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

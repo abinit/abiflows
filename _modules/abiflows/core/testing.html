@@ -3,14 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.core.testing &#8212; abiflows 0.2.0 documentation</title>
+    <title>abiflows.core.testing &#8212; abiflows 0.4 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -46,7 +46,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -143,6 +143,8 @@
 <span class="kn">from</span> <span class="nn">abipy.core.testing</span> <span class="k">import</span> <span class="n">AbipyTest</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.fworker</span> <span class="k">import</span> <span class="n">FWorker</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.rocket_launcher</span> <span class="k">import</span> <span class="n">rapidfire</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_fw_by_task_index</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
@@ -256,6 +258,34 @@
 <span class="sd">        naming is so that it is consistent with standard unittest methods.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">nptu</span><span class="o">.</span><span class="n">assert_almost_equal</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">desired</span><span class="p">,</span> <span class="n">decimal</span><span class="p">,</span> <span class="n">err_msg</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_restart_task_type</span><span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">fworker</span><span class="p">,</span> <span class="n">tmpdir</span><span class="p">,</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">task_tag</span><span class="p">):</span>
+
+    <span class="c1"># resume the task for tag</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">lp</span><span class="o">.</span><span class="n">get_wf_by_fw_id</span><span class="p">(</span><span class="n">fw_id</span><span class="p">)</span>
+    <span class="n">fw</span> <span class="o">=</span> <span class="n">get_fw_by_task_index</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">task_tag</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">fw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;PAUSED&quot;</span>
+    <span class="n">lp</span><span class="o">.</span><span class="n">resume_fw</span><span class="p">(</span><span class="n">fw</span><span class="o">.</span><span class="n">fw_id</span><span class="p">)</span>
+
+    <span class="c1"># run the FW</span>
+    <span class="n">rapidfire</span><span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">fworker</span><span class="p">,</span> <span class="n">m_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">),</span> <span class="n">nlaunches</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># the job should have a detour for the restart</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">lp</span><span class="o">.</span><span class="n">get_wf_by_fw_id</span><span class="p">(</span><span class="n">fw_id</span><span class="p">)</span>
+    <span class="n">fw</span> <span class="o">=</span> <span class="n">get_fw_by_task_index</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">task_tag</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">fw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;READY&quot;</span>
+
+    <span class="c1"># run all the following and check that the last is correctly completed (if convergence is not achieved</span>
+    <span class="c1"># the final state should be FIZZLED)</span>
+    <span class="n">rapidfire</span><span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">fworker</span><span class="p">,</span> <span class="n">m_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">))</span>
+
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">lp</span><span class="o">.</span><span class="n">get_wf_by_fw_id</span><span class="p">(</span><span class="n">fw_id</span><span class="p">)</span>
+    <span class="n">fw</span> <span class="o">=</span> <span class="n">get_fw_by_task_index</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">task_tag</span><span class="p">,</span> <span class="n">index</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;COMPLETED&quot;</span>
 </pre></div>
 
     </div>
@@ -270,7 +300,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jul 18, 2018.<br/>
+      Last updated on Sep 05, 2018.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
     </p>
   </div>

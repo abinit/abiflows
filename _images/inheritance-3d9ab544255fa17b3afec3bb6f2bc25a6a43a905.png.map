@@ -1,0 +1,8 @@
+<map id="inheritance477e9de62e" name="inheritance477e9de62e">
+<area shape="rect" id="node1" href="#abiflows.database.mongoengine.abinit_results.RelaxResult" target="_top" title="Document containing the results for a relaxation workflow consisting of an ion followed by ioncell relaxations." alt="" coords="513,69,764,85"/>
+<area shape="rect" id="node2" href="#abiflows.database.mongoengine.mixins.MaterialMixin" target="_top" title="Mixin providing the fields describing the material examined in the calculation" alt="" coords="243,4,471,20"/>
+<area shape="rect" id="node3" href="#abiflows.database.mongoengine.mixins.DateMixin" target="_top" title="Mixin providing timestamp fields" alt="" coords="250,36,465,52"/>
+<area shape="rect" id="node4" href="#abiflows.database.mongoengine.mixins.DirectoryMixin" target="_top" title="Mixin providing the field to store the directories used during the workflow" alt="" coords="241,69,473,85"/>
+<area shape="rect" id="node5" href="#abiflows.database.mongoengine.mixins.CustomFieldMixin" target="_top" title="Mixin providing a DictField for storing user specific additional properties" alt="" coords="234,101,481,118"/>
+<area shape="rect" id="node6" title="The base class used for defining the structure and properties of" alt="" coords="280,134,435,150"/>
+</map>
