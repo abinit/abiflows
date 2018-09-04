@@ -1,6 +1,6 @@
 from __future__ import print_function, division, unicode_literals, absolute_import
 
-from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin
+from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin
 from abiflows.database.mongoengine.abinit_mixins import AbinitPhononOutputMixin, AbinitBasicInputMixin, \
     AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin
 from mongoengine import *
@@ -33,7 +33,7 @@ class RelaxAbinitOutput(AbinitGSOutputMixin, EmbeddedDocument):
                                        collection_name='relax_outfile_fs')
 
 
-class RelaxResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
+class RelaxResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
     """
     Document containing the results for a relaxation workflow consisting of an ion followed by ioncell relaxations.
 
@@ -64,7 +64,7 @@ class PhononAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
     phonon_input = MSONField(help_text="The last input used to calculate one of the phonons.")
     kppa = IntField()
     ngqpt = ListField(IntField())
-    qpoints = DictField()
+    qpoints = ListField()
     qppa = IntField()
 
 
@@ -82,7 +82,7 @@ class PhononAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
                                  collection_name='phonon_gs_outfile_fs')
 
 
-class PhononResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
+class PhononResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
     """
     Document containing the results for a phonon workflow.
     Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, anaddb)
@@ -132,14 +132,14 @@ class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
                                  collection_name='phonon_gs_outfile_fs')
     anaddb_nc = AbiFileField(abiext="anaddb.nc", abiform="b", db_field='anaddb_nc_id', collection_name='anaddb_nc_fs')
 
-    emacro = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
-    emacro_rlx= ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
+    epsinf = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
+    eps0 = ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
     dchide= ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
     dchidt= ListField(ListField(ListField(ListField(FloatField()))),
                       help_text="First-order change in the linear dielectric susceptibility")
 
 
-class DteResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
+class DteResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
     """
     Document containing the results for a dte workflow.
     Includes information from the various steps of the workflow (scf, ddk, dde, ph, dte, anaddb)
@@ -156,3 +156,61 @@ class DteResult(MaterialMixin, DateMixin, DirectoryMixin, Document):
     abinit_input = EmbeddedDocumentField(DteAbinitInput, default=DteAbinitInput)
     abinit_output = EmbeddedDocumentField(DteAbinitOutput, default=DteAbinitOutput)
 
+
+class DfptAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical inputs for a dfpt workflow.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DfptAbinitInput
+    """
+
+    gs_input = MSONField(help_text="The last input used to calculate the wafunctions.")
+    ddk_input = MSONField(help_text="The last input used to calculate one of the ddk.")
+    dde_input = MSONField(help_text="The last input used to calculate one of the dde.")
+    wfq_input = MSONField(help_text="The last input used to calculate one of the wfq.")
+    phonon_input = MSONField(help_text="The last input used to calculate one of the phonons.")
+    strain_input = MSONField(help_text="The last input used to calculate one of the strain.")
+    dte_input = MSONField(help_text="The last input used to calculate one of the dte.")
+    kppa = IntField()
+    ngqpt = ListField(IntField())
+    qpoints = ListField()
+    qppa = IntField()
+
+
+class DfptAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
+    """
+    EmbeddedDocument containing the typical outputs for a dfpt workflow.
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DfptAbinitOutput
+    """
+
+    gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
+                          db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
+    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
+                                 collection_name='phonon_gs_outfile_fs')
+
+
+class DfptResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):
+    """
+    Document containing the results for a dfpt workflow.
+    Includes information from the various steps of the workflow (scf, nscf, ddk, dde, ph, strain, dte, anaddb)
+
+    .. rubric:: Inheritance Diagram
+    .. inheritance-diagram:: DfptResult
+    """
+
+    mp_id = StringField()
+    relax_db = MSONField()
+    relax_id = StringField()
+    time_report = MSONField()
+    fw_id = IntField()
+    abinit_input = EmbeddedDocumentField(DfptAbinitInput, default=DfptAbinitInput)
+    abinit_output = EmbeddedDocumentField(DfptAbinitOutput, default=DfptAbinitOutput)
+
+    has_phonons = BooleanField(help_text="Whether the phonon perturbations have been included or not", default=False)
+    has_ddk = BooleanField(help_text="Whether the ddk perturbations have been included or not", default=False)
+    has_dde = BooleanField(help_text="Whether the dde perturbations have been included or not", default=False)
+    has_strain = BooleanField(help_text="Whether the strain perturbations have been included or not", default=False)
+    has_dte = BooleanField(help_text="Whether the dte perturbations have been included or not", default=False)

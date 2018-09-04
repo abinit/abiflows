@@ -25,6 +25,8 @@ from monty.string import is_string
 from abipy.core.testing import AbipyTest
 from fireworks.core.launchpad import LaunchPad
 from fireworks.core.fworker import FWorker
+from fireworks.core.rocket_launcher import rapidfire
+from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index
 
 import logging
 logger = logging.getLogger(__file__)
@@ -138,3 +140,31 @@ class AbiflowsIntegrationTest(object):
         naming is so that it is consistent with standard unittest methods.
         """
         return nptu.assert_almost_equal(actual, desired, decimal, err_msg, verbose)
+
+
+def check_restart_task_type(lp, fworker, tmpdir, fw_id, task_tag):
+
+    # resume the task for tag
+    wf = lp.get_wf_by_fw_id(fw_id)
+    fw = get_fw_by_task_index(wf, task_tag, index=1)
+    assert fw is not None
+    assert fw.state == "PAUSED"
+    lp.resume_fw(fw.fw_id)
+
+    # run the FW
+    rapidfire(lp, fworker, m_dir=str(tmpdir), nlaunches=1)
+
+    # the job should have a detour for the restart
+    wf = lp.get_wf_by_fw_id(fw_id)
+    fw = get_fw_by_task_index(wf, task_tag, index=2)
+    assert fw is not None
+    assert fw.state == "READY"
+
+    # run all the following and check that the last is correctly completed (if convergence is not achieved
+    # the final state should be FIZZLED)
+    rapidfire(lp, fworker, m_dir=str(tmpdir))
+
+    wf = lp.get_wf_by_fw_id(fw_id)
+    fw = get_fw_by_task_index(wf, task_tag, index=-1)
+
+    assert fw.state == "COMPLETED"

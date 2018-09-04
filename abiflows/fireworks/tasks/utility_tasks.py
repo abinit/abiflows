@@ -109,6 +109,8 @@ class FinalCleanUpTask(FireTaskBase):
 
     @staticmethod
     def delete_files(d, exts=None):
+        if exts and not isinstance(exts, (list, tuple)):
+            exts = [exts]
         deleted_files = []
         if os.path.isdir(d):
             for f in os.listdir(d):

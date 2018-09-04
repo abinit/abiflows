@@ -200,3 +200,11 @@ class DirectoryMixin(object):
             d[launch.launch_dir] = task_index
 
         self.dir_names = d
+
+
+class CustomFieldMixin(object):
+    """
+    Mixin providing a DictField for storing user specific additional properties
+    """
+
+    custom = DictField(help_text="Dict storing additional custom properties to identify the calculation.")

@@ -1,6 +1,7 @@
 from __future__ import print_function, division, unicode_literals, absolute_import
 
 from math import sqrt
+from six.moves import reduce
 
 ##############################################################
 ### cartesian product of lists ##################################

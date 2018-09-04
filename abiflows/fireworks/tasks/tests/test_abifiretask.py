@@ -12,7 +12,6 @@ from abipy.abio.factories import ScfForPhononsFactory
 from abipy.abio.inputs import AnaddbInput
 from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.tests import mock_objects
-from pymatgen.io.abinit.events import Correction, DilatmxErrorHandler, DilatmxError
 from fireworks import FWAction
 
 
@@ -30,11 +29,29 @@ class TestAbiFireTask(AbiflowsTest):
         self.si_scf_input = ebands_input(self.si_structure, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10).split_datasets()[0]
         self.si_scf_factory = ScfForPhononsFactory(self.si_structure, abidata.pseudos("14si.pspnc"), ecut=2, kppa=10)
 
-    def test_AbiFireTask(self):
+    def test_AbiFireTask_basic(self):
         task = abinit_tasks.AbiFireTask(self.si_scf_input)
         task.to_dict()
         self.assertMSONable(self.si_scf_input)
         self.assertFwSerializable(task)
+
+    def test_AbiFireTask_methods(self):
+        task = abinit_tasks.AbiFireTask(self.si_scf_input)
+
+        assert task.get_fw_task_manager({'ftm_file': os.path.join(test_dir, "fw_manager_ok.yaml")})
+
+        ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
+        ftm = abiflows.fireworks.utils.fw_utils.FWTaskManager.from_file(ftm_path)
+        # remove the task manager to make the function fail
+        ftm.task_manager = None
+        with self.assertRaises(abinit_tasks.InitializationError):
+            task.run_autoparal(self.si_scf_input, '.', ftm)
+
+        ftm_path = os.path.join(test_dir, "fw_manager_walltime_command.yaml")
+        task.is_autoparal = None
+        task.setup_task({'ftm_file': ftm_path})
+        self.assertEqual(task.walltime, 1000)
+
 
     def test_ScfFireTask(self):
         task = abinit_tasks.ScfFWTask(self.si_scf_input)
@@ -113,6 +130,7 @@ class TestErrorClasses(AbiflowsTest):
     def test_abinit_runtime_error(self, report):
         err = abinit_tasks.AbinitRuntimeError(msg="test error", num_errors=5)
         err.to_dict()
+        new_err = abinit_tasks.AbinitRuntimeError.from_dict(err.as_dict())
 
         scf_task = abinit_tasks.ScfFWTask(self.si_scf_input)
 

@@ -22,6 +22,7 @@ from abipy.abio.factories import InputFactory
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput, Cut3DInput
 from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
+from abipy.abio.outputs import OutNcFile
 from abipy.electrons.gsr import GsrFile
 from abipy.electrons.charges import HirshfeldCharges
 from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
@@ -587,6 +588,14 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
 
             (stdoutdata, stderrdata) = self.process.communicate()
             self.returncode = self.process.returncode
+
+        if os.path.isfile('run.log'):
+            from pymatgen.io.abinit.events import EventsParser
+            parser = EventsParser()
+            report = parser.parse('run.log')
+            if report.run_completed:
+                self.returncode = 0
+                return
 
         # initialize returncode to avoid missing references in case of exception in the other thread
         self.returncode = None
