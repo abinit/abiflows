@@ -1,5 +1,5 @@
 language: python
-cache: pip
+#cache: pip
 services: mongodb
 
 env:
@@ -62,9 +62,11 @@ install:
         #conda uninstall -y abipy
       fi
 
-  #- pip install pytest scripttest nose nose-exclude
   - if [[ "${TRAVIS_PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
+  #- pip install pytest scripttest nose nose-exclude
   - pip install nose nose-exclude
+  - pip install coverage -U
+  - pip install pytest-cov -U
 
   # Use gmatteo's pymatgen fork
   #- git clone --depth=50 https://github.com/gmatteo/pymatgen.git && cd pymatgen && python setup.py install && cd ../
