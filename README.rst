@@ -11,5 +11,12 @@
 
 .. image:: https://img.shields.io/badge/license-GPL-blue.svg
 
-# abiflows
-High-throughput calculations with Abinit
+.. image:: https://img.shields.io/badge/docs-ff69b4.svg
+     :alt: Abiflows Documentation
+     :target: http://abinit.github.io/abiflows/
+
+
+About
+=====
+
+Abiflows provides fireworks workflows to run several kind of DFT/DFPT simulations with Abinit. 
