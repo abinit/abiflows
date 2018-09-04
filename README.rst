@@ -9,11 +9,10 @@
 .. image:: https://coveralls.io/repos/github/abinit/abiflows/badge.svg?branch=develop
         :target: https://coveralls.io/github/abinit/abiflows?branch=develop
 
-.. image:: https://img.shields.io/badge/license-GPL-blue.svg
-
 .. image:: https://img.shields.io/badge/docs-ff69b4.svg
-     :alt: Abiflows Documentation
      :target: http://abinit.github.io/abiflows/
+
+.. image:: https://img.shields.io/badge/license-GPL-blue.svg
 
 
 About
