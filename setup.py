@@ -98,8 +98,20 @@ def cleanup():
 
 # List of external packages we rely on.
 # Note setup install will download them from Pypi if they are not available.
-with open("requirements.txt", "rt") as fh:
-    install_requires = [s.strip() for s in fh]
+#with open("requirements.txt", "rt") as fh:
+#    install_requires = [s.strip() for s in fh]
+
+install_requires = [
+"six",
+"numpy",
+"pymongo",
+"prettytable",
+"mongoengine",
+"paramiko",
+"fireworks",
+"abipy==0.6.0",
+"custodian",
+]
 
 #---------------------------------------------------------------------------
 # Find all the packages, package data, and data_files

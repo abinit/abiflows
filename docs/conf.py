@@ -390,7 +390,8 @@ intersphinx_mapping = {
     "monty": ("http://pythonhosted.org/monty/", None),
     "pymatgen": ("http://pymatgen.org/", None),
     "fireworks": ("https://materialsproject.github.io/fireworks/", None),
-    "abipy": ("http://pythonhosted.org/abipy/", None),
+    "abipy": ("http://abinit.github.io/abipy/", None),
+    #"abipy": ("http://pythonhosted.org/abipy/", None),
 }
 
 # If true, Sphinx will warn about all references where the target cannot be found.

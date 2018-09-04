@@ -4,14 +4,6 @@ abiflows\.core package
 Submodules
 ----------
 
-abiflows\.core\.client module
------------------------------
-
-.. automodule:: abiflows.core.client
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 abiflows\.core\.controllers module
 ----------------------------------
 
@@ -40,22 +32,6 @@ abiflows\.core\.release module
 ------------------------------
 
 .. automodule:: abiflows.core.release
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-abiflows\.core\.scheduler module
---------------------------------
-
-.. automodule:: abiflows.core.scheduler
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-abiflows\.core\.server module
------------------------------
-
-.. automodule:: abiflows.core.server
     :members:
     :undoc-members:
     :show-inheritance:
