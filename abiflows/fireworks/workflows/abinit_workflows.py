@@ -636,6 +636,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         initialization_info = history_ioncell.get_events_by_types(TaskEvent.INITIALIZED)[0].details.get('initialization_info', {})
         document.abinit_input.kppa = initialization_info.get('kppa', None)
         document.mp_id = initialization_info.get('mp_id', None)
+        document.custom = initialization_info.get("custom", None)
 
         document.abinit_input.pseudopotentials.set_pseudos_from_files_file(relax_task.files_file.path, len(structure.composition.elements))
 
@@ -1341,6 +1342,7 @@ class PhononFWWorkflow(AbstractFWWorkflow):
 
         initialization_info = scf_history.get_events_by_types(TaskEvent.INITIALIZED)[0].details.get('initialization_info', {})
         document.mp_id = initialization_info.get('mp_id', None)
+        document.custom = initialization_info.get("custom", None)
 
         document.relax_db = initialization_info['relax_db'].as_dict() if 'relax_db' in initialization_info else None
         document.relax_id = initialization_info.get('relax_id', None)
@@ -2038,6 +2040,7 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
         initialization_info = scf_history.get_events_by_types(TaskEvent.INITIALIZED)[0].details.get('initialization_info', {})
         document.mp_id = initialization_info.get('mp_id', None)
+        document.custom = initialization_info.get("custom", None)
 
         document.relax_db = initialization_info['relax_db'].as_dict() if 'relax_db' in initialization_info else None
         document.relax_id = initialization_info.get('relax_id', None)
@@ -3137,6 +3140,7 @@ class DfptFWWorkflow(AbstractFWWorkflow):
 
         initialization_info = scf_history.get_events_by_types(TaskEvent.INITIALIZED)[0].details.get('initialization_info', {})
         document.mp_id = initialization_info.get('mp_id', None)
+        document.custom = initialization_info.get("custom", None)
 
         document.relax_db = initialization_info['relax_db'].as_dict() if 'relax_db' in initialization_info else None
         document.relax_id = initialization_info.get('relax_id', None)
