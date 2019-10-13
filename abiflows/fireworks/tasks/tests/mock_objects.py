@@ -2,7 +2,7 @@ from __future__ import print_function, division, unicode_literals, absolute_impo
 
 import os
 
-from pymatgen.io.abinit.events import EventReport, ScfConvergenceWarning, RelaxConvergenceWarning, AbinitError
+from abipy.flowtk.events import EventReport, ScfConvergenceWarning, RelaxConvergenceWarning, AbinitError
 
 from fireworks import Firework, FireTaskBase, FWAction, explicit_serialize
 from abiflows.fireworks.workflows.abinit_workflows import AbstractFWWorkflow

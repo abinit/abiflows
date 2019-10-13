@@ -8,11 +8,9 @@ import logging
 import os
 
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
-from pymatgen.io.abinit.scheduler_error_parsers import MemoryCancelError
-from pymatgen.io.abinit.scheduler_error_parsers import MasterProcessMemoryCancelError
-from pymatgen.io.abinit.scheduler_error_parsers import SlaveProcessMemoryCancelError
-from pymatgen.io.abinit.scheduler_error_parsers import TimeCancelError
-from pymatgen.io.abinit.qadapters import QueueAdapter
+from abipy.flowtk.scheduler_error_parsers import (MemoryCancelError, 
+        MasterProcessMemoryCancelError, SlaveProcessMemoryCancelError, TimeCancelError)
+from abipy.flowtk.qadapters import QueueAdapter
 
 
 logger = logging.getLogger(__name__)

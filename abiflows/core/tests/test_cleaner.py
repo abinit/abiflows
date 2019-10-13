@@ -29,26 +29,26 @@ class TestCleaner(AbiflowsTest):
         os.makedirs('results')
         os.makedirs('temporary')
 
-        os.mknod('somefile.txt')
-        os.mknod('somefile.txt.backup')
+        open('somefile.txt', "w").close()
+        open('somefile.txt.backup', "w").close()
 
-        os.mknod('outputs/text/text1.abc')
-        os.mknod('outputs/text/text2.abc')
-        os.mknod('outputs/text/text3.abc')
-        os.mknod('outputs/text/text1.def')
-        os.mknod('outputs/text/text15.def')
+        open('outputs/text/text1.abc', "w").close()
+        open('outputs/text/text2.abc', "w").close()
+        open('outputs/text/text3.abc', "w").close()
+        open('outputs/text/text1.def', "w").close()
+        open('outputs/text/text15.def', "w").close()
 
-        os.mknod('outputs/formatted/formatted1.txt')
-        os.mknod('outputs/formatted/formatted2.txt')
-        os.mknod('outputs/formatted/formatted3.log')
-        os.mknod('outputs/formatted/formatted4.log')
-        os.mknod('outputs/formatted/formatted5.log')
-        os.mknod('outputs/formatted/formatted6.bin')
-        os.mknod('outputs/formatted/formatted7.bog')
-        os.mknod('outputs/formatted/formatted8.beg')
+        open('outputs/formatted/formatted1.txt', "w").close()
+        open('outputs/formatted/formatted2.txt', "w").close()
+        open('outputs/formatted/formatted3.log', "w").close()
+        open('outputs/formatted/formatted4.log', "w").close()
+        open('outputs/formatted/formatted5.log', "w").close()
+        open('outputs/formatted/formatted6.bin', "w").close()
+        open('outputs/formatted/formatted7.bog', "w").close()
+        open('outputs/formatted/formatted8.beg', "w").close()
 
-        os.mknod('temporary/item.log')
-        os.mknod('temporary/result.txt')
+        open('temporary/item.log', "w").close()
+        open('temporary/result.txt', "w").close()
 
         # Create a first cleaner
         cleaner1 = Cleaner(dirs_and_patterns=[{'directory': 'outputs/text',

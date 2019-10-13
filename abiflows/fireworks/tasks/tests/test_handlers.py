@@ -4,8 +4,8 @@ from __future__ import print_function, division, unicode_literals, absolute_impo
 import json
 import os
 
-from pymatgen.io.abinit.qadapters import QueueAdapter
 from fireworks.core.firework import Firework
+from abipy.flowtk.qadapters import QueueAdapter
 from abiflows.core.testing import AbiflowsTest
 from abiflows.fireworks.tasks.handlers import WalltimeHandler
 from abiflows.fireworks.tasks.utility_tasks import CheckTask

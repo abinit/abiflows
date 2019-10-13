@@ -10,14 +10,12 @@ import threading
 import subprocess
 import time
 
-from monty.json import MSONable
-from monty.json import MontyDecoder
+from monty.json import MSONable, MontyDecoder
 from monty.os.path import which
 from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
-from pymatgen.io.abinit.utils import Directory, File
-from pymatgen.io.abinit.utils import irdvars_for_ext
-from pymatgen.io.abinit import events
-from pymatgen.io.abinit.qutils import time2slurm
+from abipy.flowtk.utils import Directory, File, irdvars_for_ext
+from abipy.flowtk import events
+from abipy.flowtk.qutils import time2slurm
 from abipy.abio.factories import InputFactory
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput, Cut3DInput
