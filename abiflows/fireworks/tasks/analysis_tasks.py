@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import logging
 import json
 
@@ -8,10 +6,7 @@ from pymatgen.analysis.chemenv.coordination_environments.coordination_geometry_f
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import LightStructureEnvironments
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import StructureEnvironments
 from pymatgen.analysis.bond_valence import BVAnalyzer
-try:
-    from pymatgen.ext.matproj import MPRester, MPRestError
-except ImportError:
-    from pymatgen.matproj.rest import MPRester, MPRestError
+from pymatgen.ext.matproj import MPRester, MPRestError
 
 
 class ChemEnvStructureEnvironmentsTask(FireTaskBase):

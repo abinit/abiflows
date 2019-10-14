@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import abc
 import copy
 import inspect
@@ -1115,8 +1113,8 @@ class FWTime(MSONable):
 class SRCFWTime(FWTime):
     def __init__(self, fw_name, fw_id, ncpus, fwtime_secs, clustertime_secs=None,
                  src_type=None, task_type=None, task_index=None):
-        super(SRCFWTime, self).__init__(fw_name=fw_name, fw_id=fw_id, ncpus=ncpus,
-                                        fwtime_secs=fwtime_secs, clustertime_secs=clustertime_secs)
+        super().__init__(fw_name=fw_name, fw_id=fw_id, ncpus=ncpus,
+                         fwtime_secs=fwtime_secs, clustertime_secs=clustertime_secs)
         self.src_type = src_type
         self.task_type = task_type
         self.task_index = task_index

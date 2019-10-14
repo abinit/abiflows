@@ -86,7 +86,7 @@
                 "qname": "main",
                 "qnodes": "shared"
             },
-            "@module": "pymatgen.io.abinit.qadapters",
+            "@module": "abipy.flowtk.qadapters",
             "priority": 99,
             "job": {},
             "@class": "PbsProAdapter",

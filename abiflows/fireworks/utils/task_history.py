@@ -2,8 +2,6 @@
 """
 Task history related objects
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import collections
 import traceback
 import logging

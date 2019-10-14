@@ -2,8 +2,6 @@
 """
 Abinit Task classes for Fireworks.
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import inspect
 import subprocess
 import logging
@@ -341,7 +339,8 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
     def __init__(self, abiinput, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None,
                  task_type=None):
         """
-        Basic __init__, subclasses are supposed to define the same input parameters, add their own and call super for
+        Basic __init__, subclasses are supposed to define the same input parameters, 
+        add their own and call super for
         the basic ones. The input parameter should be stored as attributes of the instance for serialization and
         for inspection.
 
@@ -1447,7 +1446,7 @@ class RelaxFWTask(GsFWTask):
 
         self.abiinput.set_structure(self.get_final_structure())
 
-        return super(RelaxFWTask, self).prepare_restart(fw_spec, reset)
+        return super().prepare_restart(fw_spec, reset)
 
     def restart(self):
         """
@@ -1515,12 +1514,12 @@ class RelaxFWTask(GsFWTask):
         Add the final structure to the basic current_task_info
         """
 
-        d = super(RelaxFWTask, self).current_task_info(fw_spec)
+        d = super().current_task_info(fw_spec)
         d['structure'] = self.get_final_structure()
         return d
 
     # def conclude_task(self, fw_spec):
-    #     update_spec, mod_spec, stored_data = super(RelaxFWTask, self).conclude_task(fw_spec)
+    #     update_spec, mod_spec, stored_data = super().conclude_task(fw_spec)
     #     update_spec['previous_run']['structure'] = self.get_final_structure()
     #     return update_spec, mod_spec, stored_data
 
@@ -1694,7 +1693,7 @@ class DdkTask(DfptTask):
         for f in wf_files:
             os.symlink(f.path, f.path+'_DDK')
 
-        return super(DdkTask, self).conclude_task(fw_spec)
+        return super().conclude_task(fw_spec)
 
 
 @explicit_serialize
@@ -1786,8 +1785,8 @@ class RelaxDilatmxFWTask(RelaxFWTask):
         if history is None:
             history = []
         self.target_dilatmx = target_dilatmx
-        super(RelaxDilatmxFWTask, self).__init__(abiinput=abiinput, restart_info=restart_info, handlers=handlers,
-                                                 is_autoparal=is_autoparal, deps=deps, history=history)
+        super().__init__(abiinput=abiinput, restart_info=restart_info, handlers=handlers,
+                         is_autoparal=is_autoparal, deps=deps, history=history)
 
     def check_parameters_convergence(self, fw_spec):
         """
@@ -2474,8 +2473,8 @@ class AutoparalTask(AbiFireTask):
             handlers = []
         if history is None:
             history = []
-        super(AutoparalTask, self).__init__(abiinput, restart_info=restart_info, handlers=handlers, is_autoparal=True,
-                                            deps=deps, history=history, task_type=task_type)
+        super().__init__(abiinput, restart_info=restart_info, handlers=handlers, is_autoparal=True,
+                         deps=deps, history=history, task_type=task_type)
         self.forward_spec = forward_spec
         if not skip_spec_keys:
             skip_spec_keys = []
@@ -2821,7 +2820,7 @@ class AbiFWError(Exception):
     """
 
     def __init__(self, msg):
-        super(AbiFWError, self).__init__(msg)
+        super().__init__(msg)
         self.msg = msg
 
     def to_dict(self):
@@ -2851,7 +2850,7 @@ class AbinitRuntimeError(AbiFWError):
         """
 
         # This can handle both the cases of DECODE_MONTY=True and False (Since it has a from_dict method).
-        super(AbinitRuntimeError, self).__init__(msg)
+        super().__init__(msg)
         self.task = task
         if self.task is not None and hasattr(self.task, "report") and self.task.report is not None:
             report = self.task.report
@@ -2926,14 +2925,14 @@ class UnconvergedError(AbinitRuntimeError):
             restart_info: the RestartInfo required to restart the job.
             history: a TaskHistory.
         """
-        super(UnconvergedError, self).__init__(task, msg, num_errors, num_warnings, errors, warnings)
+        super().__init__(task, msg, num_errors, num_warnings, errors, warnings)
         self.abiinput = abiinput
         self.restart_info = restart_info
         self.history = history
 
     @pmg_serialize
     def to_dict(self):
-        d = super(UnconvergedError, self).to_dict()
+        d = super().to_dict()
         d['abiinput'] = self.abiinput.as_dict() if self.abiinput else None
         d['restart_info'] = self.restart_info.as_dict() if self.restart_info else None
         d['history'] = self.history.as_dict() if self.history else None

@@ -1,7 +1,5 @@
 # coding: utf-8
 """Release data for the abiflows project."""
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 from collections import OrderedDict
 
 # Name of the package for release purposes.  This is the name which labels

@@ -1,6 +1,4 @@
 """Configuration file for pytest."""
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import os
 import pytest
 import abipy.abilab as abilab
@@ -11,10 +9,7 @@ from abipy.abio.factories import ebands_input, ion_ioncell_relax_input, scf_for_
 from abipy.data.benchmark_structures import simple_semiconductors, simple_metals
 from abiflows.database.mongoengine.utils import DatabaseData
 from fireworks import LaunchPad, FWorker
-try:
-    from pymatgen.ext.matproj import MPRester
-except ImportError:
-    from pymatgen.matproj.rest import MPRester
+from pymatgen.ext.matproj import MPRester
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 

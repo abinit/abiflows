@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import os
 import shutil
 import inspect
@@ -123,7 +121,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         if 'previous_src' in fw_spec:
             self.prev_outdir = Directory(os.path.join(fw_spec['previous_src']['src_directories']['run_dir'],
                                                       OUTDIR_NAME))
-        return super(AbinitSetupTask, self).run_task(fw_spec)
+        return super().run_task(fw_spec)
 
     def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
         self.abiinput.remove_vars(['npkpt', 'npspinor', 'npband', 'npfft', 'bandpp'], strict=False)
@@ -814,8 +812,7 @@ class RelaxTaskHelper(GsTaskHelper):
 
     # def prepare_restart(self):
     #     self.task.abiinput.set_structure(self.get_final_structure())
-    #
-    #     return super(RelaxTaskHelper, self).prepare_restart()
+    #     return super().prepare_restart()
 
     def restart(self, restart_info):
         """
@@ -877,12 +874,12 @@ class RelaxTaskHelper(GsTaskHelper):
                     logger.info("Will restart from %s", restart_file)
 
     # def current_task_info(self, fw_spec):
-    #     d = super(RelaxTaskHelper, self).current_task_info(fw_spec)
+    #     d = super().current_task_info(fw_spec)
     #     d['structure'] = self.get_final_structure()
     #     return d
 
     # def conclude_task(self, fw_spec):
-    #     update_spec, mod_spec, stored_data = super(RelaxFWTask, self).conclude_task(fw_spec)
+    #     update_spec, mod_spec, stored_data = super().conclude_task(fw_spec)
     #     update_spec['previous_run']['structure'] = self.get_final_structure()
     #     return update_spec, mod_spec, stored_data
 
@@ -954,7 +951,7 @@ class DdkTaskHelper(DfptTaskHelper):
         for f in wf_files:
             os.symlink(f.path, f.path+'_DDK')
 
-        super(DdkTaskHelper, self).conclude_task()
+        super().conclude_task()
 
 
 class DdeTaskHelper(DfptTaskHelper):

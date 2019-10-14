@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 from fireworks import FireTaskBase, FWAction, Firework, explicit_serialize
 from abipy.abilab import Flow
 
@@ -12,7 +10,7 @@ class FireTaskWithFlow(FireTaskBase):
     #def __init__(self, *args, **kwargs):
     #    #print("args", args, "kwargs", kwargs)
     #    #self._flow = kwargs["flow"]
-    #    super(FireTaskWithFlow, self).__init__(*args, **kwargs)
+    #    super().__init__(*args, **kwargs)
 
     def run_task(self, fw_spec):
         # print("entering run_task: %s " % str(self))

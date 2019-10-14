@@ -2,8 +2,6 @@
 """
 Utilities to handle mongoengine classes and connections.
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import contextlib
 
 from pymatgen.util.serialization import pmg_serialize

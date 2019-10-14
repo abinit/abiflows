@@ -2,15 +2,14 @@
 """
 Error handlers and validators
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import logging
 import os
 
 from abiflows.fireworks.utils.custodian_utils import SRCErrorHandler
-from abipy.flowtk.scheduler_error_parsers import (MemoryCancelError, 
+from abipy.flowtk.scheduler_error_parsers import (MemoryCancelError,
         MasterProcessMemoryCancelError, SlaveProcessMemoryCancelError, TimeCancelError)
 from abipy.flowtk.qadapters import QueueAdapter
+from abipy.flowtk.scheduler_error_parsers import get_parser
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ class AbinitHandler(SRCErrorHandler):
         Args:
             job_rundir: Directory where the job was run.
         """
-        super(AbinitHandler, self).__init__()
+        super().__init__()
         self.job_rundir = job_rundir
         self.critical_events = critical_events
 
@@ -131,7 +130,7 @@ class WalltimeHandler(SRCErrorHandler):
             max_timelimit: Maximum timelimit (in seconds) allowed by the resource manager for the queue.
             timelimit_increase: Amount of time (in seconds) to increase the timelimit.
         """
-        super(WalltimeHandler, self).__init__()
+        super().__init__()
         self.job_rundir = job_rundir
         self.qout_file = qout_file
         self.qerr_file = qerr_file
@@ -204,7 +203,6 @@ class WalltimeHandler(SRCErrorHandler):
         self.timelimit_error = None
         self.queue_errors = None
         if qerr_info or qout_info:
-            from pymatgen.io.abinit.scheduler_error_parsers import get_parser
             qtype = self.queue_adapter.QTYPE
             scheduler_parser = get_parser(qtype, err_file=self.qerr_filepath,
                                           out_file=self.qout_filepath)
@@ -288,7 +286,7 @@ class MemoryHandler(SRCErrorHandler):
             master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process
                                              in megabytes.
         """
-        super(MemoryHandler, self).__init__()
+        super().__init__()
         self.job_rundir = job_rundir
         self.qout_file = qout_file
         self.qerr_file = qerr_file
@@ -367,7 +365,6 @@ class MemoryHandler(SRCErrorHandler):
         self.memory_error = None
         self.queue_errors = None
         if qerr_info or qout_info:
-            from pymatgen.io.abinit.scheduler_error_parsers import get_parser
             qtype = self.queue_adapter.QTYPE
             scheduler_parser = get_parser(qtype, err_file=self.qerr_filepath,
                                           out_file=self.qout_filepath)
@@ -449,14 +446,14 @@ class UltimateMemoryHandler(MemoryHandler):
             master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process
                                              in megabytes.
         """
-        super(UltimateMemoryHandler, self).__init__()
+        super().__init__()
 
     @property
     def handler_priority(self):
         return self.PRIORITY_LAST
 
     def check(self):
-        mem_check = super(UltimateMemoryHandler, self).check()
+        mem_check = super().check()
         if mem_check:
             raise ValueError('This error should have been caught by a standard MemoryHandler ...')
         #TODO: Do we have some check that we can do here ?

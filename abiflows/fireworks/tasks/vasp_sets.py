@@ -1,8 +1,5 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import numpy as np
 import os
-
 
 from pymatgen.io.vasp.sets import MPRelaxSet
 from pymatgen.io.vasp.outputs import Poscar
@@ -106,7 +103,7 @@ class MPNEBSet(MPRelaxSet):
 
 class MPcNEBSet(MPNEBSet):
     def __init__(self, structures, unset_encut=False, **kwargs):
-        super(MPcNEBSet, self).__init__(structures, unset_encut=False, **kwargs)
+        super().__init__(structures, unset_encut=False, **kwargs)
         # cNEB specific defaults
         defaults = {'LCLIMB': True}
         self.config_dict["INCAR"].update(defaults)

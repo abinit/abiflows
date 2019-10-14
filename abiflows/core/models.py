@@ -1,9 +1,6 @@
 # coding: utf-8
 """Object-Document mapper"""
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import os
-import six
 import collections
 import shutil
 import gzip
@@ -43,7 +40,7 @@ class AbiFileField(FileField):
         self.abiext = kwargs.pop("abiext")
         self.abiform = kwargs.pop("abiform")
 
-        super(AbiFileField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def _monkey_patch_proxy(self, proxy):
         """
@@ -54,12 +51,12 @@ class AbiFileField(FileField):
         return proxy
 
     def get_proxy_obj(self, **kwargs):
-        proxy = super(AbiFileField, self).get_proxy_obj(**kwargs)
+        proxy = super().get_proxy_obj(**kwargs)
         return self._monkey_patch_proxy(proxy)
 
     def to_python(self, value):
         if value is not None:
-            proxy = super(AbiFileField, self).to_python(value)
+            proxy = super().to_python(value)
             return self._monkey_patch_proxy(proxy)
 
 
@@ -80,8 +77,8 @@ class GzipGridFSProxy(GridFSProxy):
             if f and callable(f):
                 if magic.from_buffer(file_obj.read(3), mime=True) == "application/gzip":
                     file_obj.seek(0)
-                    return super(GzipGridFSProxy, self).put(file_obj, **kwargs)
-                        
+                    return super().put(file_obj, **kwargs)
+
             file_obj.seek(0)
 
         except ImportError:
@@ -98,7 +95,7 @@ class GzipGridFSProxy(GridFSProxy):
             tmp_gz.close()
             tmp_file.seek(0)
 
-            return super(GzipGridFSProxy, self).put(tmp_file, **kwargs)
+            return super().put(tmp_file, **kwargs)
 
     def write(self, *args, **kwargs):
         raise RuntimeError("Please use \"put\" method instead")
@@ -125,7 +122,7 @@ class GzipFileField(FileField):
 
     def __init__(self, compresslevel=9, **kwargs):
         self.compresslevel = compresslevel
-        super(GzipFileField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 class AbiGzipFSProxy(GzipGridFSProxy):
@@ -160,7 +157,7 @@ class AbiGzipFileField(GzipFileField):
     def __init__(self, abiext, abiform, compresslevel=9, **kwargs):
         self.abiext =abiext
         self.abiform = abiform
-        super(AbiGzipFileField, self).__init__(compresslevel=compresslevel, **kwargs)
+        super().__init__(compresslevel=compresslevel, **kwargs)
 
 
 class MongoFiles(EmbeddedDocument):
@@ -223,7 +220,7 @@ class MSONField(DictField):
     def __get__(self, instance, owner):
         """Descriptor for retrieving a value from a field in a document.
         """
-        value = super(MSONField, self).__get__(instance, owner)
+        value = super().__get__(instance, owner)
         if isinstance(value, BaseDict):
             value.__class__ = MSONDict
 
@@ -235,7 +232,7 @@ class MSONField(DictField):
     #    if isinstance(value, collections.Mapping) and "@module" in value:
     #        value = MontyDecoder().process_decoded(value)
     #    else:
-    #        value = super(MSONField, self).to_python(value)
+    #        value = super().to_python(value)
 
     #    print("to value:", type(value))
     #    return value
@@ -407,7 +404,7 @@ class MongoWork(MongoEmbeddedNode):
     def __getitem__(self, name):
         try:
             # Dictionary-style field of super
-            return super(MongoWork, self).__getitem__(name)
+            return super().__getitem__(name)
         except KeyError:
             # Assume int or slice
             try:
@@ -448,7 +445,7 @@ class MongoFlow(MongoNode):
     def __getitem__(self, name):
         try:
             # Dictionary-style field of super
-            return super(MongoFlow, self).__getitem__(name)
+            return super().__getitem__(name)
         except KeyError:
             # Assume int or slice
             try:

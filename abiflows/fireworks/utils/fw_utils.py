@@ -2,8 +2,6 @@
 """
 Utilities for fireworks
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import copy
 import os
 import traceback
@@ -185,7 +183,7 @@ class FWTaskManager(object):
         for path in paths:
             if path and os.path.exists(path):
                 with io.open(path, "rt", encoding="utf-8") as fh:
-                    config = yaml.load(fh)
+                    config = yaml.safe_load(fh)
                 logger.info("Reading manager from {}.".format(path))
                 break
 
@@ -195,7 +193,7 @@ class FWTaskManager(object):
     def from_file(cls, path):
         """Read the configuration parameters from the Yaml file filename."""
         with open(path, "rt") as fh:
-            d = yaml.load(fh)
+            d = yaml.safe_load(fh)
         return cls(**d)
 
     def has_task_manager(self):
@@ -379,7 +377,7 @@ def get_lp_and_fw_id_from_task(task, fw_spec):
         except IOError:
             try:
                 with open('FW.yaml', "rt") as fh:
-                    fw_dict = yaml.load(fh)
+                    fw_dict = yaml.safe_load(fh)
             except IOError:
                 raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
                                    "impossible to determine fw_id")

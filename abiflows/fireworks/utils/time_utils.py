@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import prettytable as pt
 
 from pymatgen.util.serialization import pmg_serialize

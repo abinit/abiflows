@@ -1,12 +1,9 @@
 # coding: utf-8
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import os
 import shutil
 
 from abiflows.core.mastermind_abc import Cleaner
 from abiflows.core.testing import AbiflowsTest
-
 
 test_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..",
                         "test_files")
@@ -16,7 +13,9 @@ class TestCleaner(AbiflowsTest):
     def test_cleaner(self):
         # Keep current working directory, create tmp directory and change to tmp directory
         cwd = os.getcwd()
-        tmp_dir = 'tmp'
+        tmp_dir = '_tmp_cleaner'
+        if os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir)
         os.makedirs(tmp_dir)
         os.chdir(tmp_dir)
 

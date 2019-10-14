@@ -2,8 +2,6 @@
 """
 Utility tasks for Fireworks.
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import copy
 import os
 import shutil
@@ -387,7 +385,7 @@ class CheckTask(FireTaskBase):
     optional_params = ['handlers', 'validators']
 
     def __init__(self, handlers=None, validators=None, max_restarts=10):
-        #super(CheckTask).__init__(self)
+        #super().__init__(self)
         self.handlers = handlers
         # Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)
         if self.handlers is not None:

@@ -2,8 +2,6 @@
 """
 Utilities to get factors of a given number or related things ...
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import itertools
 import math
 
