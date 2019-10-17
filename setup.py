@@ -10,10 +10,6 @@ import numpy as np
 from glob import glob
 from setuptools import find_packages, setup, Extension
 
-if sys.version[0:3] < '2.7':
-    sys.stderr.write("abiflows requires Python version 2.7 or above. Exiting.")
-    sys.exit(1)
-
 #-------------------------------------------------------------------------------
 # Useful globals and utility functions
 #-------------------------------------------------------------------------------
