@@ -13,12 +13,12 @@ from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
 from abiflows.core.controllers import VaspNEBValidatorController
 from abiflows.core.mastermind_abc import ControlProcedure
-from pymatgen.io.abinit.tasks import ParalHints
+from abipy.flowtk.tasks import ParalHints
 from fireworks import explicit_serialize
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.firework import FWAction
 from pymatgen.util.serialization import pmg_serialize
-from pymatgen.io.abinit.utils import Directory
+from abipy.flowtk.utils import Directory
 from pymatgen.io.vasp import Vasprun
 from pymatgen.analysis.transition_state import NEBAnalysis
 from abiflows.fireworks.tasks.vasp_sets import MPNEBSet

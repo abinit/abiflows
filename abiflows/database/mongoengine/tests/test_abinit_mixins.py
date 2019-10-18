@@ -30,7 +30,7 @@ class TestAbinitPseudoData(AbiflowsTest):
         pseudo = AbinitPseudoData()
         pseudo.set_pseudos_from_abinit_input(self.scf_inp)
         with tempfile.NamedTemporaryFile("wt") as files_file:
-            files_file.write("run.abi\nrun.abo\nin\n\out\ntmp\n")
+            files_file.write("run.abi\nrun.abo\nin\nout\ntmp\n")
             files_file.writelines([abidata.pseudo("C.oncvpsp").filepath,
                                    abidata.pseudo("Ga.oncvpsp").filepath])
             pseudo.set_pseudos_from_files_file(files_file.name, 2)
