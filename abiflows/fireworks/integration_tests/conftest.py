@@ -56,6 +56,7 @@ def get_si_structure():
 
     return structure
 
+
 def get_gan_structure():
     cif_file = abidata.cif_file("gan.cif")
     structure = abilab.Structure.from_file(cif_file)
@@ -70,6 +71,7 @@ def input_scf_si_low():
 
     return ebands_input(structure, pseudos, kppa=100, ecut=6, spin_mode="unpolarized",
                         accuracy="low").split_datasets()[0]
+
 
 @pytest.fixture(scope="function")
 def input_ebands_si_low():
@@ -101,7 +103,8 @@ def input_scf_phonon_si_low():
     scf_in = scf_for_phonons(structure, pseudos, kppa=100, ecut=4, spin_mode="unpolarized", accuracy="low",
                              smearing=None)
 
-    return  scf_in
+    return scf_in
+
 
 @pytest.fixture(scope="function")
 def input_scf_phonon_gan_low():
@@ -112,7 +115,8 @@ def input_scf_phonon_gan_low():
     scf_in = scf_for_phonons(structure, pseudos, kppa=100, ecut=4, spin_mode="unpolarized", accuracy="low",
                              smearing=None)
 
-    return  scf_in
+    return scf_in
+
 
 @pytest.fixture(scope="function")
 def db_data():
@@ -135,7 +139,7 @@ def benchmark_input_scf(request):
     structure = rest.get_structure_by_material_id(request.param)
     try:
         return ebands_input(structure, pseudos, kppa=100, ecut=6).split_datasets()[0]
-    except:
+    except Exception:
         #to deal with missing pseudos
         pytest.skip('Cannot create input for material {}.'.format(request.param))
 
@@ -154,6 +158,3 @@ def fwp(tmpdir):
     fwp.scheduler = abilab.PyFlowScheduler.from_file(os.path.join(os.path.dirname(__file__), "scheduler.yml"))
 
     return fwp
-
-
-

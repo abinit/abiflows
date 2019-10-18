@@ -155,7 +155,7 @@ class AbiGzipFileField(GzipFileField):
     proxy_class = AbiGzipFSProxy
 
     def __init__(self, abiext, abiform, compresslevel=9, **kwargs):
-        self.abiext =abiext
+        self.abiext = abiext
         self.abiform = abiform
         super().__init__(compresslevel=compresslevel, **kwargs)
 
@@ -333,7 +333,7 @@ class MongoTask(MongoEmbeddedNode):
     report = DictField(required=True)
     num_warnings = IntField(required=True, help_text="Number of warnings")
     num_errors = IntField(required=True, help_text="Number of errors")
-    num_comments =  IntField(required=True, help_text="Number of comments")
+    num_comments = IntField(required=True, help_text="Number of comments")
 
     #: Total CPU time taken.
     #cpu_time = FloatField(required=True)

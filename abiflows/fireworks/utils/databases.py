@@ -56,7 +56,7 @@ class MongoDatabase(MSONable):
         return self.collection.find_one(criteria)
 
     def save_entry(self, entry):
-        if not '_id' in entry:
+        if '_id' not in entry:
             raise ValueError('Entry should contain "_id" field to be saved')
         self.collection.save(entry)
 

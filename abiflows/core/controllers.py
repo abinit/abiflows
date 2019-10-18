@@ -27,6 +27,7 @@ from abiflows.core.mastermind_abc import PRIORITY_LOWEST
 
 logger = logging.getLogger(__name__)
 
+
 class AbinitController(Controller):
     """
     General handler for abinit's events.
@@ -143,8 +144,8 @@ class AbinitController(Controller):
                     note.state = ControllerNote.EVERYTHING_OK
                     note.is_valid = True
             elif report.errors:
-            # Abinit reported problems
-            # Check if the errors could be handled
+                # Abinit reported problems
+                # Check if the errors could be handled
                 logger.debug('Found errors in report')
                 # for error in report.errors:
                 #     logger.debug(str(error))
@@ -178,12 +179,12 @@ class AbinitController(Controller):
                     note.add_problem(err)
 
             else:
-            # Calculation not completed but no errors. No fix could be applied in this controller
+                # Calculation not completed but no errors. No fix could be applied in this controller
                 note.state = ControllerNote.ERROR_UNRECOVERABLE
                 note.add_problem('Abinit calculation not completed but no errors in report.')
 
         else:
-        # report does not exist. No fix could be applied in this controller
+            # report does not exist. No fix could be applied in this controller
             note.state = ControllerNote.NOTHING_FOUND
             note.add_problem('No Abinit report')
 
@@ -483,8 +484,8 @@ class MemoryController(Controller, QueueControllerMixin):
 #                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):
 
     def __init__(self, max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
-                       max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
-                       memory_policy='physical_memory'):
+                 max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
+                 memory_policy='physical_memory'):
         """
         Initializes the handler with the directory where the job was run, the standard output and error files
         of the queue manager and the queue adapter used.
@@ -629,7 +630,7 @@ class AbinitZenobeSlaveMemoryController(Controller, QueueControllerMixin):
 #                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):
 
     def __init__(self, max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
-                       memory_policy='physical_memory'):
+                 memory_policy='physical_memory'):
         """
         Initializes the handler with the directory where the job was run, the standard output and error files
         of the queue manager and the queue adapter used.
@@ -751,7 +752,6 @@ class AbinitZenobeSlaveMemoryController(Controller, QueueControllerMixin):
         note.reset_restart()
         return note
 
-
     # def process(self, **kwargs):
     #     # Create the Controller Note
     #     note = ControllerNote(controller=self)
@@ -846,8 +846,8 @@ class UltimateMemoryController(Controller, QueueControllerMixin):
 #                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):
 
     def __init__(self, max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
-                       max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
-                       memory_policy='physical_memory'):
+                 max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
+                 memory_policy='physical_memory'):
         """
         Initializes the handler with the directory where the job was run, the standard output and error files
         of the queue manager and the queue adapter used.
@@ -1020,7 +1020,7 @@ class VaspXMLValidatorController(Controller):
         note.is_valid = True
         try:
             Vasprun(vasprun_xml_file)
-        except:
+        except Exception:
             note.state = ControllerNote.ERROR_NOFIX
             note.is_valid = False
         return note
@@ -1028,6 +1028,7 @@ class VaspXMLValidatorController(Controller):
     @property
     def validated(self):
         return True
+
 
 class VaspNEBValidatorController(Controller):
     """
@@ -1076,7 +1077,7 @@ class VaspNEBValidatorController(Controller):
                          kwargs['additional_vasp_wf_info']['terminal_end_run_dir'])
         try:
             NEBAnalysis.from_dir(run_dir, relaxation_dirs=terminal_dirs)
-        except:
+        except Exception:
             note.state = ControllerNote.ERROR_NOFIX
             note.is_valid = False
         return note

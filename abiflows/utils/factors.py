@@ -5,6 +5,7 @@ Utilities to get factors of a given number or related things ...
 import itertools
 import math
 
+
 def lowest_nn_gte_mm(mm, factors):
     if mm < 1:
         raise ValueError('Number mm should be >= 1')

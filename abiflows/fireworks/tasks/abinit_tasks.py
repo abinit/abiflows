@@ -25,12 +25,17 @@ from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
 from abipy.flowtk.utils import irdvars_for_ext
 from abipy.flowtk.wrappers import Mrgddb
 from abipy.flowtk.qutils import time2slurm
+from abipy.flowtk.tasks import ParalHints
 from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
 from abipy.abio.input_tags import *
 from abipy.abio.outputs import OutNcFile
 from abipy.core.mixins import Has_Structure
 from abipy.core import Structure
+from abipy.electrons.gsr import GsrFile
+from abipy.electrons.gw import SigresFile
+from abipy.dfpt.phonons import PhbstFile, PhdosFile
+from abipy.dfpt.anaddbnc import AnaddbNcFile
 from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
@@ -101,7 +106,7 @@ class BasicAbinitTaskMixin(object):
             logger.error(msg)
             raise InitializationError(msg)
         pconfs = abiinput.abiget_autoparal_pconfs(max_ncpus=manager.max_cores, workdir=autoparal_dir,
-                                                       manager=manager)
+                                                  manager=manager)
         optconf = manager.select_qadapter(pconfs)
         qadapter_spec = manager.qadapter.get_subs_dict()
 
@@ -166,7 +171,7 @@ class BasicAbinitTaskMixin(object):
 
         # all the options have the same priority, let the qadapter decide which is preferred.
         fake_conf_list = list({'tot_ncpus': i, 'mpi_ncpus': i, 'efficiency': 1} for i in range(1, manager.max_cores+1))
-        from pymatgen.io.abinit.tasks import ParalHints
+
         pconfs = ParalHints({}, fake_conf_list)
 
         optconf = manager.select_qadapter(pconfs)
@@ -184,7 +189,7 @@ class BasicAbinitTaskMixin(object):
         the list associated with self.task_type. Requires a "current_task_info" method.
         """
 
-        return [{'_push': {'previous_fws->'+self.task_type: self.current_task_info(fw_spec)}}]
+        return [{'_push': {'previous_fws->' + self.task_type: self.current_task_info(fw_spec)}}]
         # if 'previous_fws' in fw_spec:
         #     prev_fws = fw_spec['previous_fws'].copy()
         # else:
@@ -339,7 +344,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
     def __init__(self, abiinput, restart_info=None, handlers=None, is_autoparal=None, deps=None, history=None,
                  task_type=None):
         """
-        Basic __init__, subclasses are supposed to define the same input parameters, 
+        Basic __init__, subclasses are supposed to define the same input parameters,
         add their own and call super for
         the basic ones. The input parameter should be stored as attributes of the instance for serialization and
         for inspection.
@@ -427,9 +432,9 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         if not any(os.path.isfile(f) for f in files_to_rename):
             return
 
-        file_paths = [f for file_path in files_to_rename for f in glob.glob(file_path+'*')]
+        file_paths = [f for file_path in files_to_rename for f in glob.glob(file_path + '*')]
         nums = [int(f) for f in [f.split("_")[-1] for f in file_paths] if f.isdigit()]
-        new_index = (max(nums) if nums else 0) +1
+        new_index = (max(nums) if nums else 0) + 1
 
         for f in files_to_rename:
             try:
@@ -531,7 +536,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
                     open(self.stderr_file.path, 'w') as stderr:
                 self.process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
 
-            (stdoutdata, stderrdata) = self.process.communicate()
+            stdoutdata, stderrdata = self.process.communicate()
             self.returncode = self.process.returncode
 
         # initialize returncode to avoid missing references in case of exception in the other thread
@@ -696,6 +701,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         #TODO check if some cases could be handled here
         err_msg = None
         if self.stderr_file.exists:
+            #print(self.stderr_file)
             #TODO length should always be enough, but maybe it's worth cutting the message if it's too long
             err_msg = self.stderr_file.read()
             # It happened that the text file contained non utf-8 characters.
@@ -949,7 +955,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         # assume that DECODE_MONTY=True so that a handeled exception has already been deserialized
         if exception_details and isinstance(exception_details, AbinitRuntimeError):
             error_code = exception_details.ERROR_CODE
-            if (self.ftm.fw_policy.continue_unconverged_on_rerun and error_code==ErrorCode.UNCONVERGED and
+            if (self.ftm.fw_policy.continue_unconverged_on_rerun and error_code == ErrorCode.UNCONVERGED and
                     exception_details.abiinput and exception_details.restart_info and
                     exception_details.history):
                 self.abiinput = exception_details.abiinput
@@ -1262,7 +1268,6 @@ class GsFWTask(AbiFireTask):
             raise PostProcessError(msg)
 
         # Open the GSR file.
-        from abipy.electrons.gsr import GsrFile
         try:
             return GsrFile(gsr_path)
         except Exception as exc:
@@ -1412,6 +1417,7 @@ class NscfWfqFWTask(NscfFWTask):
                     raise e
 
         return dest
+
 
 @explicit_serialize
 class RelaxFWTask(GsFWTask):
@@ -1603,7 +1609,6 @@ class HybridFWTask(GsFWTask):
             raise PostProcessError(msg)
 
         # Open the SIGRES file and add its data to results.out
-        from abipy.electrons.gw import SigresFile
         try:
             return SigresFile(sigres_path)
         except Exception as exc:
@@ -2253,7 +2258,7 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
             try:
                 p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err =p.communicate()
+                out, err = p.communicate()
                 status = p.returncode
                 if status == 0:
                     self.walltime = int(out)
@@ -2396,7 +2401,6 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         Open PHBST file produced by Anaddb and returns |PhbstFile| object.
         Raise a PostProcessError exception if file could not be found or file is not readable.
         """
-        from abipy.dfpt.phonons import PhbstFile
         if not self.phbst_path:
             msg = "No PHBST file available for task {} in {}".format(self, self.outdir)
             logger.critical(msg)
@@ -2414,7 +2418,6 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         Open PHDOS file produced by Anaddb and returns |PhdosFile| object.
         Raise a PostProcessError exception if file could not be found or file is not readable.
         """
-        from abipy.dfpt.phonons import PhdosFile
         if not self.phdos_path:
             msg = "No PHDOS file available for task {} in {}".format(self, self.outdir)
             logger.critical(msg)
@@ -2432,7 +2435,6 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         Open anaddb.nc file produced by Anaddb and returns |AnaddbNcFile| object.
         Raise a PostProcessError exception if file could not be found or file is not readable.
         """
-        from abipy.dfpt.anaddbnc import AnaddbNcFile
         if not self.anaddb_nc_path:
             msg = "No anaddb.nc file available for task {} in {}".format(self, self.outdir)
             logger.critical(msg)
@@ -2512,6 +2514,7 @@ class AutoparalTask(AbiFireTask):
 # Generation tasks
 ##############################
 
+
 @explicit_serialize
 class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
     """
@@ -2527,7 +2530,7 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         self.phonon_factory = phonon_factory
         self.previous_task_type = previous_task_type
         self.handlers = handlers
-        self.with_autoparal=with_autoparal
+        self.with_autoparal = with_autoparal
         self.ddb_file = ddb_file
 
     def get_fws(self, multi_inp, task_class, deps, new_spec, ftm, nscf_fws=None):
@@ -2579,7 +2582,6 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
                         parent_fw = nscf_fw
                         current_deps[nscf_fw.tasks[0].task_type] = "WFQ"
                         break
-
 
             task = task_class(inp, handlers=self.handlers, deps=current_deps, is_autoparal=False)
             # this index is for the different task, each performing a different perturbation
@@ -2634,8 +2636,8 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
 
         nscf_fws = []
         if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfWfqFWTask,
-                                                 {self.previous_task_type: "WFK", self.previous_task_type: "DEN"}, new_spec, ftm)
+            nscf_fws, nscf_fw_deps = self.get_fws(nscf_inputs, NscfWfqFWTask,
+                                                  {self.previous_task_type: "WFK", self.previous_task_type: "DEN"}, new_spec, ftm)
 
         ph_fws = []
         if ph_q_pert_inputs:
@@ -2658,7 +2660,6 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
             bec_inputs.set_vars(prtwf=-1)
             bec_fws, bec_fw_deps = self.get_fws(bec_inputs, BecTask,
                                                 {self.previous_task_type: "WFK", DdkTask.task_type: "DDK"}, new_spec, ftm)
-
 
         mrgddb_spec = dict(new_spec)
         mrgddb_spec['wf_task_index'] = 'mrgddb'

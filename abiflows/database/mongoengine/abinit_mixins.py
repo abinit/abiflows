@@ -92,7 +92,6 @@ class AbinitBasicInputMixin(object):
     tsmear = FloatField()
     pseudopotentials = EmbeddedDocumentField(AbinitPseudoData, default=AbinitPseudoData)
 
-
     def set_abinit_basic_from_abinit_input(self, abinit_input):
         """
         sets the fields of the object from an |AbinitInput| object

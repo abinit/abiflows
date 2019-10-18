@@ -63,6 +63,7 @@ class Cut3DInput(object):
 
         return cls.hirshfeld(density_file_path, all_el_dens_paths)
 
+
 def unprime_nband(nband, number_of_primes=10):
     allowed_nbands = []
     with open('{}/n1000multiples_primes.json'.format(module_dir), 'r') as f:

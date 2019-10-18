@@ -10,10 +10,10 @@ from fireworks.core.rocket_launcher import rapidfire
 from abiflows.fireworks.workflows.abinit_workflows import InputFWWorkflow
 from abiflows.fireworks.tasks.abinit_tasks import ScfFWTask
 
-ABINIT_VERSION = "7.11.5"
 
+#ABINIT_VERSION = "7.11.5"
 # pytestmark = [pytest.mark.skipif(not has_abinit(ABINIT_VERSION), reason="Abinit version {} is not in PATH".format(ABINIT_VERSION)),
-#               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
+#               pytest.mark.skipif(not has_fireworks(), reason="fireworks package is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
 
 pytestmark = [pytest.mark.usefixtures("cleandb"), pytest.mark.check_abiflow]
@@ -96,12 +96,3 @@ class ItestCheckScf():
         assert num_restarts_fw == num_restarts_abiflow
 
         assert match_results(lp.get_wf_by_fw_id(scf_fw_id).fws[-1], t0)
-
-
-
-
-
-
-
-
-

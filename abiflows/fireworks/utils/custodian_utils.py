@@ -21,7 +21,6 @@ class SRCErrorHandler(ErrorHandler):
     PRIORITY_VERY_LOW = HANDLER_PRIORITIES['PRIORITY_VERY_LOW']
     PRIORITY_LAST = HANDLER_PRIORITIES['PRIORITY_LAST']
 
-
     def __init__(self):
         self.fw_spec = None
         self.fw_to_check = None

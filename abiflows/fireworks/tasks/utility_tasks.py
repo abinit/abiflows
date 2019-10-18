@@ -122,7 +122,7 @@ class FinalCleanUpTask(FireTaskBase):
                         elif os.path.islink(fp):
                             os.unlink(fp)
                         deleted_files.append(fp)
-                    except:
+                    except Exception:
                         logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
 
         return deleted_files
@@ -309,7 +309,7 @@ class CheckMemoryTask(FireTaskBase):
     #             qout_info = f.read()
     #
     #     if qerr_info or qout_info:
-    #         from pymatgen.io.abinit.scheduler_error_parsers import get_parser
+    #         from abipt.flowtkscheduler_error_parsers import get_parser
     #         qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
     #         qtype = qtk_qadapter.QTYPE
     #         scheduler_parser = get_parser(qtype, err_file=qerr_file,
@@ -562,6 +562,7 @@ class CheckTask(FireTaskBase):
 
 def print_myself():
     print('myself')
+
 
 def get_fw_task_manager(fw_spec):
     if 'ftm_file' in fw_spec:

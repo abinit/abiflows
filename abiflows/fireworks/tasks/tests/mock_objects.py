@@ -12,28 +12,35 @@ from mongoengine import Document, StringField, IntField
 # Test reports
 ##########################
 
+
 def report_ok():
     return EventReport('.')
+
 
 def report_ScfConvergenceWarning():
     er = EventReport('.', events=[ScfConvergenceWarning(message='Fake warning', src_file=__file__, src_line=0)])
     er.set_run_completed(True,'', ' ')
     return er
 
+
 def report_RelaxConvergenceWarning():
     return EventReport('.', events=[RelaxConvergenceWarning(message='Fake warning', src_file=__file__, src_line=0)])
 
+
 def report_AbinitError():
     return EventReport('.', events=[AbinitError(message='Fake warning', src_file=__file__, src_line=0)])
+
 
 ##########################
 # Fake Tasks
 ##########################
 
+
 @explicit_serialize
 class FakeTask(FireTaskBase):
     def run_task(self, fw_spec):
         return FWAction()
+
 
 fake_fw = Firework([FakeTask()])
 
@@ -60,10 +67,12 @@ class CreateOutputsTask(FireTaskBase):
 # Fake Workflows
 ##########################
 
+
 class DataDocument(Document):
 
     test_field_string = StringField()
     test_field_int = IntField()
+
 
 class SaveDataWorkflow(AbstractFWWorkflow):
 

@@ -59,7 +59,7 @@ class TaskHistory(collections.deque, MSONable):
         self.append(TaskEvent(TaskEvent.FINALIZED, details=details))
 
     def log_converge_params(self, unconverged_params, abiinput):
-        params={}
+        params = {}
         for param, new_value in unconverged_params.items():
             params[param] = dict(old_value=abiinput.get(param, 'Default'), new_value=new_value)
         self.append(TaskEvent(TaskEvent.UNCONVERGED_PARAMS, details={'params': params}))
@@ -81,7 +81,6 @@ class TaskHistory(collections.deque, MSONable):
 
     def log_abinit_stop(self, run_time=None):
         self.append(TaskEvent(TaskEvent.ABINIT_STOP, details={'run_time': run_time}))
-
 
     def get_events_by_types(self, types):
         """
@@ -140,4 +139,3 @@ class TaskEvent(MSONable):
         dec = MontyDecoder()
         details = dec.process_decoded(d['details']) if 'details' in d else None
         return cls(event_type=d['event_type'], details=details)
-

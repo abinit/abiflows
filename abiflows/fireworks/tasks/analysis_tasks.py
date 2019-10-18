@@ -27,7 +27,7 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
             structure = fw_spec['structure']
         else:
             if identifier['source'] == 'MaterialsProject' and 'material_id' in identifier:
-                if not 'mapi_key' in fw_spec:
+                if 'mapi_key' not in fw_spec:
                     raise ValueError('The mapi_key should be provided to get the structure from the Materials Project')
                 a = MPRester(fw_spec['mapi_key'])
                 structure = a.get_structure_by_material_id(identifier['material_id'])
@@ -45,7 +45,7 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                 bva = BVAnalyzer()
                 valences = bva.get_valences(structure=structure)
                 info['valences'] = {'origin': 'BVAnalyzer'}
-            except:
+            except Exception:
                 valences = 'undefined'
                 info['valences'] = {'origin': 'None'}
         excluded_atoms = None
@@ -103,6 +103,7 @@ class ChemEnvStructureEnvironmentsTask(FireTaskBase):
                                       gridfs_msonables=gridfs_msonables)
             else:
                 database.insert_entry(entry=entry, gridfs_msonables=gridfs_msonables)
+
 
 class ChemEnvLightStructureEnvironmentsTask(FireTaskBase):
     _fw_name = "ChemEnvLightStructureEnvironmentsTask"

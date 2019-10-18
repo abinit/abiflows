@@ -43,7 +43,8 @@ class TimeReport(MSONable):
     def as_dict(self):
         d = dict(total_run_time=self.total_run_time, n_fws=self.n_fws, total_cpu_time=self.total_cpu_time,
                  contributed_cpu_time=self.contributed_cpu_time, total_run_time_per_tag=self.total_run_time_per_tag,
-                 total_cpu_time_per_tag=self.total_cpu_time_per_tag, contributed_cpu_time_per_tag=self.contributed_cpu_time_per_tag,
+                 total_cpu_time_per_tag=self.total_cpu_time_per_tag,
+                 contributed_cpu_time_per_tag=self.contributed_cpu_time_per_tag,
                  worker=self.worker)
 
         return d
@@ -66,13 +67,16 @@ class TimeReport(MSONable):
         t.align['task tag'] = 'l'
         if self.total_run_time_per_tag:
             for task_tag in self.total_run_time_per_tag.keys():
-                # t.add_row([task_tag, self.total_run_time_per_tag[task_tag]/3600, self.total_cpu_time_per_tag.get(task_tag, 0)/3600,
+                # t.add_row([task_tag, self.total_run_time_per_tag[task_tag]/3600,
+                            #self.total_cpu_time_per_tag.get(task_tag, 0)/3600,
                 #           self.contributed_cpu_time_per_tag.get(task_tag, 0)])
-                t.add_row([task_tag, seconds_to_hms(self.total_run_time_per_tag[task_tag]), seconds_to_hms(self.total_cpu_time_per_tag.get(task_tag, 0)),
+                t.add_row([task_tag, seconds_to_hms(self.total_run_time_per_tag[task_tag]),
+                          seconds_to_hms(self.total_cpu_time_per_tag.get(task_tag, 0)),
                           self.contributed_cpu_time_per_tag.get(task_tag, 0)])
 
         # t.add_row(['Total', self.total_run_time/3600, self.total_cpu_time/3600, self.contributed_cpu_time])
-        t.add_row(['Total', seconds_to_hms(self.total_run_time), seconds_to_hms(self.total_cpu_time), self.contributed_cpu_time])
+        t.add_row(['Total', seconds_to_hms(self.total_run_time),
+                   seconds_to_hms(self.total_cpu_time), self.contributed_cpu_time])
 
         s += str(t)
 

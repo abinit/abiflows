@@ -13,8 +13,8 @@ from abiflows.fireworks.workflows.abinit_workflows import DfptFWWorkflow
 from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index, load_abitask
 from abiflows.core.testing import AbiflowsIntegrationTest, check_restart_task_type
 
-ABINIT_VERSION = "8.6.1"
 
+#ABINIT_VERSION = "8.6.1"
 # pytestmark = [pytest.mark.skipif(not has_abinit(ABINIT_VERSION), reason="Abinit version {} is not in PATH".format(ABINIT_VERSION)),
 #               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
@@ -71,7 +71,6 @@ class ItestDfpt(AbiflowsIntegrationTest):
         Simple test of DteFWWorkflow with autoparal True and False.
         Skips dte permutations.
         """
-
         dfpt_inputs = dfpt_from_gsinput(input_scf_phonon_gan_low, ph_ngqpt=[2, 2, 2], do_ddk=True, do_dde=True,
                                         do_strain=True, do_dte=False,
                                         ddk_tol = {"tolwfr": 1.0e-16}, dde_tol = {"tolvrs": 1.0e-7},

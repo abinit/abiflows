@@ -50,9 +50,8 @@ url = "https://github.com/abinit/abiflows"
 download_url = "https://github.com/abinit/abiflows"
 platforms = ['Linux', 'darwin']
 keywords = ["ABINIT", "ab-initio", "density-function-theory", "first-principles", "electronic-structure", "pymatgen"]
-classifiers=[
-    "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.7",
+
+classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",

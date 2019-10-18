@@ -5,6 +5,7 @@ from six.moves import reduce
 ### cartesian product of lists ##################################
 ##############################################################
 
+
 def _append_es2sequences(sequences, es):
     result = []
     if not sequences:

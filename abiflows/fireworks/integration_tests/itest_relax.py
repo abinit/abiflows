@@ -16,13 +16,14 @@ from abiflows.fireworks.utils.fw_utils import get_fw_by_task_index,load_abitask,
 from abiflows.core.testing import AbiflowsIntegrationTest
 
 
-ABINIT_VERSION = "8.6.1"
+#ABINIT_VERSION = "8.6.1"
 
 # pytestmark = [pytest.mark.skipif(not has_abinit(ABINIT_VERSION), reason="Abinit version {} is not in PATH".format(ABINIT_VERSION)),
-#               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
+#               pytest.mark.skipif(not has_fireworks(), reason="fireworks package is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
 
 pytestmark = pytest.mark.usefixtures("cleandb")
+
 
 class ItestRelax(AbiflowsIntegrationTest):
 
@@ -80,10 +81,10 @@ class ItestRelax(AbiflowsIntegrationTest):
             # list instead of an array in the deserialization
             db_structure = r.abinit_output.structure.to_mgobj()
             for s in db_structure:
-                s._properties = {}
+                s.properties = {}
             hist_structure = hist.structures[-1]
             for s in hist_structure:
-                s._properties = {}
+                s.properties = {}
             assert db_structure == hist_structure
             assert r.abinit_input.ecut == inputs_relax_si_low[0]['ecut']
             assert r.abinit_input.kppa == 100

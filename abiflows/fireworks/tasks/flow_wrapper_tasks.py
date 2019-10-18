@@ -2,6 +2,7 @@
 from fireworks import FireTaskBase, FWAction, Firework, explicit_serialize
 from abipy.abilab import Flow
 
+
 @explicit_serialize
 class FireTaskWithFlow(FireTaskBase):
 
