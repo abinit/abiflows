@@ -1,5 +1,5 @@
 from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin
-from abiflows.database.mongoengine.abinit_mixins import AbinitPhononOutputMixin, AbinitBasicInputMixin, \
+from abiflows.database.mongoengine.abinit_mixins import AbinitBasicInputMixin, \
     AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin
 from mongoengine import *
 from abiflows.core.models import AbiFileField, MSONField, AbiGzipFileField

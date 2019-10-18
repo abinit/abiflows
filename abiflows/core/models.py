@@ -1,13 +1,11 @@
 # coding: utf-8
 """Object-Document mapper"""
-import os
-import collections
+#import collections
 import shutil
 import gzip
 
 from tempfile import mkstemp, TemporaryFile, NamedTemporaryFile
 from monty.json import MontyDecoder
-from monty.functools import lazy_property
 from mongoengine import *
 from mongoengine.fields import GridFSProxy
 from mongoengine.base.datastructures import BaseDict

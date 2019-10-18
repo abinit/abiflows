@@ -6,11 +6,10 @@ import abipy.data as abidata
 
 from pymongo import MongoClient
 from abipy.abio.factories import ebands_input, ion_ioncell_relax_input, scf_for_phonons, phonons_from_gsinput
-from abipy.data.benchmark_structures import simple_semiconductors, simple_metals
+from abipy.data.benchmark_structures import simple_semiconductors #, simple_metals
 from abiflows.database.mongoengine.utils import DatabaseData
 from fireworks import LaunchPad, FWorker
 from pymatgen.ext.matproj import MPRester
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 TESTDB_NAME = 'abiflows_unittest'

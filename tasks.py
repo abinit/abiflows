@@ -14,6 +14,7 @@ from monty.os import cd
 ROOTDIR = os.path.dirname(__file__)
 DOCS_DIR = os.path.join(ROOTDIR, "docs")
 
+
 @task
 def make_doc(ctx):
     with cd(DOCS_DIR):
@@ -51,6 +52,7 @@ pytest -n 2 --cov-config=.coveragerc --cov=abiflows -v --doctest-modules abiflow
 """
     with cd(ROOTDIR):
         ctx.run(pytest_cmd, pty=True)
+
 
 @task
 def itest(ctx):

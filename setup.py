@@ -5,14 +5,14 @@ from __future__ import print_function
 import sys
 import os
 import shutil
-import numpy as np
 
 from glob import glob
-from setuptools import find_packages, setup, Extension
+from setuptools import find_packages, setup
 
 #-------------------------------------------------------------------------------
 # Useful globals and utility functions
 #-------------------------------------------------------------------------------
+
 
 # A little utility we'll need below, since glob() does NOT allow you to do exclusion on multiple endings!
 def file_doesnt_end_with(test, endings):
@@ -86,10 +86,10 @@ def cleanup():
     if "develop" not in sys.argv:
         try:
             shutil.rmtree('abiflows.egg-info')
-        except:
+        except Exception:
             try:
                 os.unlink('abiflows.egg-info')
-            except:
+            except Exception:
                 pass
 
 # List of external packages we rely on.

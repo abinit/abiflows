@@ -20,7 +20,6 @@ from abipy.abio.factories import InputFactory
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput, Cut3DInput
 from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
-from abipy.abio.outputs import OutNcFile
 from abipy.electrons.gsr import GsrFile
 from abipy.electrons.charges import HirshfeldCharges
 from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
