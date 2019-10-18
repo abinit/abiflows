@@ -12,7 +12,6 @@ conda install -c abinit apscheduler==2.1.0
 echo "Installing requirements listed requirements.txt and requirements-optional.txt ..."
 # https://github.com/ContinuumIO/anaconda-issues/issues/542
 conda install -y -c anaconda setuptools
-#conda install -c blaze flask-mongoengine
 
 # We are gonna use the github version from gmatteo
 #sed -i '/pymatgen/d' requirements.txt
