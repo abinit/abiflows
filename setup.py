@@ -104,9 +104,9 @@ install_requires = [
 "prettytable",
 "mongoengine",
 "paramiko",
-"fireworks",
-"abipy==0.6.0",
 "custodian",
+"fireworks",
+"abipy>=0.7.0",
 ]
 
 #---------------------------------------------------------------------------
