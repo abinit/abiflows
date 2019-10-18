@@ -105,6 +105,7 @@ class MaterialMixin(object):
         self.anonymous_formula = comp.anonymized_formula
         self.nsites = comp.num_atoms
         self.chemsys = "-".join(sorted(el_amt.keys()))
+        self.full_formula = comp.formula
         if space_group:
             sym = SpacegroupAnalyzer(structure, symprec=symprec, angle_tolerance=angle_tolerance)
             self.spacegroup = SpaceGroupDocument(crystal_system=sym.get_crystal_system(), hall=sym.get_hall(),
