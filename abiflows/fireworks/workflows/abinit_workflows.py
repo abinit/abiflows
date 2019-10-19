@@ -3214,8 +3214,9 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                 If gives the number of divisions for the smallest segment of the path.
         """
         anaddb_input = AnaddbInput.dfpt(structure, ngqpt=ph_ngqpt, relaxed_ion=self.has_gamma,
-                                        piezo=len(self.strain_fws)>0, dde=len(self.dde_fws)>0,
-                                        strain=len(self.strain_fws)>0, dte=len(self.dte_fws)>0, stress_correction=True,
+                                        piezo=len(self.strain_fws) > 0, dde=len(self.dde_fws) > 0,
+                                        strain=len(self.strain_fws) > 0, dte=len(self.dte_fws) > 0,
+                                        stress_correction=True,
                                         nqsmall=nqsmall, qppa=qppa, ndivsm=ndivsm, line_density=line_density,
                                         q1shft=(0, 0, 0), asr=2, chneut=1, dipdip=1, dos_method="tetra")
         anaddb_task = AnaDdbAbinitTask(anaddb_input, deps={MergeDdbAbinitTask.task_type: "DDB"})

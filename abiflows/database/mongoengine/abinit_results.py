@@ -135,7 +135,7 @@ class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
     eps0 = ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
     dchide = ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
     dchidt = ListField(ListField(ListField(ListField(FloatField()))),
-                      help_text="First-order change in the linear dielectric susceptibility")
+                       help_text="First-order change in the linear dielectric susceptibility")
 
 
 class DteResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):

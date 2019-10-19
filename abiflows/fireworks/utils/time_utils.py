@@ -68,7 +68,7 @@ class TimeReport(MSONable):
         if self.total_run_time_per_tag:
             for task_tag in self.total_run_time_per_tag.keys():
                 # t.add_row([task_tag, self.total_run_time_per_tag[task_tag]/3600,
-                            #self.total_cpu_time_per_tag.get(task_tag, 0)/3600,
+                #           self.total_cpu_time_per_tag.get(task_tag, 0)/3600,
                 #           self.contributed_cpu_time_per_tag.get(task_tag, 0)])
                 t.add_row([task_tag, seconds_to_hms(self.total_run_time_per_tag[task_tag]),
                           seconds_to_hms(self.total_cpu_time_per_tag.get(task_tag, 0)),

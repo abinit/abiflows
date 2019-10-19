@@ -82,4 +82,3 @@ class SaveDataWorkflow(AbstractFWWorkflow):
     @classmethod
     def get_mongoengine_results(cls, wf):
         return DataDocument(test_field_string="test_text", test_field_int=5)
-
