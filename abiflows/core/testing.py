@@ -1,4 +1,5 @@
 # coding: utf-8
+# flake8: noqa
 """
 Common test support for abiflows test scripts.
 
@@ -7,19 +8,16 @@ in a single location, so that test scripts can just import it and work right awa
 This module heavily depends on the abipy.testing module/
 """
 import os
-import numpy
-import subprocess
-import json
-import tempfile
 import shutil
 import glob
-import unittest
+#import tempfile
+#import unittest
 import numpy.testing.utils as nptu
 
 from mongoengine import connect, Document
-from mongoengine.connection import get_db, get_connection
-from monty.os.path import which
-from monty.string import is_string
+from mongoengine.connection import get_db #, get_connection
+#from monty.os.path import which
+#from monty.string import is_string
 from abipy.core.testing import AbipyTest
 from fireworks.core.launchpad import LaunchPad
 from fireworks.core.fworker import FWorker

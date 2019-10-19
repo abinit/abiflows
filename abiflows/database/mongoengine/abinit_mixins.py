@@ -7,8 +7,7 @@ import os
 
 from monty.json import jsanitize
 from monty.dev import deprecated
-from mongoengine import *
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from mongoengine import EmbeddedDocument, ListField, StringField, FloatField, IntField, EmbeddedDocumentField
 from abipy.flowtk.pseudos import Pseudo
 from abiflows.core.models import AbiFileField, MSONField
 from abiflows.database.mongoengine.mixins import GroundStateOutputMixin

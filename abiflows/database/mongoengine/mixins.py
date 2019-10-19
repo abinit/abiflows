@@ -4,10 +4,11 @@ List of mixins to provide standard interfaces with the result databases.
 Most of them should still be considered as examples.
 """
 from monty.dev import deprecated
-from mongoengine import *
+from mongoengine import (StringField, DateTimeField, BooleanField, IntField, FloatField, ListField, DictField,
+        EmbeddedDocument, EmbeddedDocumentField)
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
-from abiflows.core.models import AbiFileField, MSONField
+from abiflows.core.models import MSONField #AbiFileField,
 
 
 class CalculationMetadataMixin(object):

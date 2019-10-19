@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+# flake8: noqa
 """Setup script for abiflows."""
-from __future__ import print_function
 
 import sys
 import os
@@ -96,6 +96,7 @@ def cleanup():
 
 # List of external packages we rely on.
 # Note setup install will download them from Pypi if they are not available.
+
 
 install_requires = [
 "six",

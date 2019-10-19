@@ -5,7 +5,6 @@ Abinit Task classes for Fireworks.
 import inspect
 import subprocess
 import logging
-import collections
 import time
 import shutil
 import json
@@ -14,6 +13,7 @@ import glob
 import os
 import errno
 import numpy as np
+import abipy.abio.input_tags as atags
 
 from collections import namedtuple, defaultdict
 from monty.json import MontyEncoder, MontyDecoder, MSONable
@@ -21,17 +21,14 @@ from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
 from pymatgen.analysis.elasticity import ElasticTensor
 from abipy.flowtk.utils import Directory, File
 from abipy.flowtk import events, tasks
-from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
+from abipy.flowtk.netcdf import NetcdfReader
 from abipy.flowtk.utils import irdvars_for_ext
 from abipy.flowtk.wrappers import Mrgddb
 from abipy.flowtk.qutils import time2slurm
 from abipy.flowtk.tasks import ParalHints
-from abipy.abio.factories import InputFactory, PiezoElasticFromGsFactory
+from abipy.abio.factories import InputFactory #, PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput
-from abipy.abio.input_tags import *
-from abipy.abio.outputs import OutNcFile
 from abipy.core.mixins import Has_Structure
-from abipy.core import Structure
 from abipy.electrons.gsr import GsrFile
 from abipy.electrons.gw import SigresFile
 from abipy.dfpt.phonons import PhbstFile, PhdosFile
@@ -40,8 +37,8 @@ from fireworks.core.firework import Firework, FireTaskBase, FWAction, Workflow
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 from abiflows.fireworks.utils.task_history import TaskHistory
-from abiflows.fireworks.utils.fw_utils import links_dict_update
-from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
+#from abiflows.fireworks.utils.fw_utils import links_dict_update
+#from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
     LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
     ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
@@ -326,7 +323,7 @@ class BasicAbinitTaskMixin(object):
 
     #from Task
     # Prefixes for Abinit (input, output, temporary) files.
-    Prefix = collections.namedtuple("Prefix", "idata odata tdata")
+    Prefix = namedtuple("Prefix", "idata odata tdata")
     pj = os.path.join
 
     prefix = Prefix(pj("indata", "in"), pj("outdata", "out"), pj("tmpdata", "tmp"))
@@ -2627,12 +2624,12 @@ class GeneratePhononFlowFWAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         if '_fworker' in fw_spec:
             new_spec['_fworker'] = fw_spec['_fworker']
 
-        ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
-        ddk_inputs = ph_inputs.filter_by_tags(DDK)
-        dde_inputs = ph_inputs.filter_by_tags(DDE)
-        bec_inputs = ph_inputs.filter_by_tags(BEC)
+        ph_q_pert_inputs = ph_inputs.filter_by_tags(atags.PH_Q_PERT)
+        ddk_inputs = ph_inputs.filter_by_tags(atags.DDK)
+        dde_inputs = ph_inputs.filter_by_tags(atags.DDE)
+        bec_inputs = ph_inputs.filter_by_tags(atags.BEC)
 
-        nscf_inputs = ph_inputs.filter_by_tags(NSCF)
+        nscf_inputs = ph_inputs.filter_by_tags(atags.NSCF)
 
         nscf_fws = []
         if nscf_inputs is not None:

@@ -19,7 +19,7 @@ from abipy.flowtk.events import EventsParser
 from abipy.abio.factories import InputFactory
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput, Cut3DInput
-from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
+from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, PHONON
 from abipy.electrons.gsr import GsrFile
 from abipy.electrons.charges import HirshfeldCharges
 from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
@@ -33,8 +33,7 @@ from abiflows.fireworks.utils.fw_utils import FWTaskManager, links_dict_update, 
 from abiflows.fireworks.utils.math_utils import divisors
 from abiflows.fireworks.tasks.abinit_tasks import MergeDdbAbinitTask
 from abiflows.fireworks.tasks.abinit_common import TMPDIR_NAME, OUTDIR_NAME, INDIR_NAME, STDERR_FILE_NAME, \
-    LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE, DUMMY_FILENAME, \
-    ELPHON_OUTPUT_FILE_NAME, DDK_FILES_FILE_NAME, HISTORY_JSON
+    LOG_FILE_NAME, FILES_FILE_NAME, OUTPUT_FILE_NAME, INPUT_FILE_NAME, MPIABORTFILE
 
 
 RESET_RESTART = ControllerNote.RESET_RESTART

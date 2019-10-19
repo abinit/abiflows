@@ -14,7 +14,7 @@ import io
 from collections import namedtuple
 from monty.json import MontyDecoder
 from abipy.flowtk.tasks import TaskManager, ParalHints
-from fireworks.core.firework import Firework, Workflow
+from fireworks.core.firework import Firework #, Workflow
 from fireworks.core.launchpad import LaunchPad
 from abiflows.fireworks.utils.time_utils import TimeReport
 

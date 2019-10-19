@@ -1,7 +1,8 @@
+from mongoengine import (StringField, BooleanField, IntField, FloatField, ListField, DictField,
+        Document, EmbeddedDocument, EmbeddedDocumentField)
 from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin
-from abiflows.database.mongoengine.abinit_mixins import AbinitBasicInputMixin, \
-    AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin
-from mongoengine import *
+from abiflows.database.mongoengine.abinit_mixins import (AbinitBasicInputMixin,
+    AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin)
 from abiflows.core.models import AbiFileField, MSONField, AbiGzipFileField
 
 

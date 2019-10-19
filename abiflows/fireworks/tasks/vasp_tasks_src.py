@@ -1,8 +1,6 @@
 import copy
 import logging
 import os
-import threading
-import subprocess
 
 from monty.json import MSONable
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask
@@ -10,7 +8,7 @@ from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.src_tasks_abc import SRCTaskIndex
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
-from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
+from abiflows.core.controllers import WalltimeController, MemoryController #, VaspXMLValidatorController
 from abiflows.core.controllers import VaspNEBValidatorController
 from abiflows.core.mastermind_abc import ControlProcedure
 from abipy.flowtk.tasks import ParalHints

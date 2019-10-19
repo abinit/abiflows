@@ -6,7 +6,7 @@ from pymatgen.analysis.chemenv.coordination_environments.coordination_geometry_f
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import LightStructureEnvironments
 from pymatgen.analysis.chemenv.coordination_environments.structure_environments import StructureEnvironments
 from pymatgen.analysis.bond_valence import BVAnalyzer
-from pymatgen.ext.matproj import MPRester, MPRestError
+from pymatgen.ext.matproj import MPRester #, MPRestError
 
 
 class ChemEnvStructureEnvironmentsTask(FireTaskBase):

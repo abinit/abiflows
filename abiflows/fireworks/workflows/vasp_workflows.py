@@ -5,13 +5,10 @@ Firework workflows
 import logging
 import sys
 import abc
-import os
 import re
-import six
 
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.launchpad import LaunchPad
-
 from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
 from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
@@ -29,8 +26,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AbstractFWWorkflow(Workflow):
+class AbstractFWWorkflow(Workflow, metaclass=abc.ABCMeta):
     """
     Abstract Workflow class.
     """
