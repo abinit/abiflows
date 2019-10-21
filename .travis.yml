@@ -50,6 +50,7 @@ install:
       elif [ "${ABIPY_INSTALLER}" == "conda" ]; then
         # Python software stack is installed in test-environment while ABINIT in abinit-environment
         # hence we need to activate abinit-environment before running ABINT.
+        conda config --add channels abinit
         source dev_scripts/conda_get.sh
         source dev_scripts/conda_install.sh
         #conda uninstall -y mongoengine
