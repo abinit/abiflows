@@ -40,8 +40,8 @@ class ItestDfpt(AbiflowsIntegrationTest):
                                         strain_tol={"tolvrs": 1.0e-7}, ph_tol={"tolvrs": 1.0e-7})
 
         wf = DfptFWWorkflow(input_scf_phonon_gan_low, ddk_inp = dfpt_inputs.filter_by_tags(DDK),
-                           dde_inp = dfpt_inputs.filter_by_tags(DDE), strain_inp=dfpt_inputs.filter_by_tags(STRAIN),
-                           ph_inp = dfpt_inputs.filter_by_tags(PH_Q_PERT), dte_inp = dfpt_inputs.filter_by_tags(DTE),
+                            dde_inp = dfpt_inputs.filter_by_tags(DDE), strain_inp=dfpt_inputs.filter_by_tags(STRAIN),
+                            ph_inp = dfpt_inputs.filter_by_tags(PH_Q_PERT), dte_inp = dfpt_inputs.filter_by_tags(DTE),
                             nscf_inp=dfpt_inputs.filter_by_tags(NSCF),initialization_info={"kppa": 100},
                             autoparal=use_autoparal)
 
