@@ -12,10 +12,6 @@ env:
 # We don't actually use the Travis Python but conda
 matrix:
   include:
-      #- os: linux
-      #- python: 3.6
-      #- env:
-      #-   - ABIPY_INSTALLER=conda
     - os: linux
       python: 3.6
       env:
@@ -24,11 +20,15 @@ matrix:
       python: 3.7
       env:
         - ABIPY_INSTALLER=pip
+    - os: linux
+      python: 3.7
+      env:
+        - ABIPY_INSTALLER=conda
+
 
 #dist: precise
 sudo: false
 install:
-  #- sudo apt-get update
   - env
   #- set -ev  # exit on first error, print each command
   - ulimit -s unlimited
@@ -37,16 +37,19 @@ install:
       if [ "${ABIPY_INSTALLER}" == "pip" ]; then
         # pip-based installation.
         source dev_scripts/conda_get.sh  # Needed for Abinit
-        echo "Installing abinit from abinit channel ..."
-        conda config --add channels conda-forge
-        conda install -y -c abinit abinit=${ABINIT_VERSION}
-        abinit --version
-        abinit --build
+        #echo "Installing abinit from abinit channel ..."
+        #conda config --add channels conda-forge
+        #conda install -y -c abinit abinit=${ABINIT_VERSION}
+        #abinit --version
+        #abinit --build
+        # Install python code in the same env as ABINIT
+        source activate abinit-environment
         travis_wait pip install -r requirements.txt
         travis_wait pip install -r requirements-optional.txt
 
       elif [ "${ABIPY_INSTALLER}" == "conda" ]; then
-        # Install conda https://conda.io/docs/travis.html
+        # Python software stack is installed in test-environment while ABINIT in abinit-environment
+        # hence we need to activate abinit-environment before running ABINT.
         source dev_scripts/conda_get.sh
         source dev_scripts/conda_install.sh
         #conda uninstall -y mongoengine
@@ -55,9 +58,6 @@ install:
         #conda uninstall -y abipy
       fi
 
-  - if [[ "${TRAVIS_PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
-  #- pip install pytest scripttest nose nose-exclude
-  #- pip install nose nose-exclude
   - pip install coverage -U
   - pip install pytest-cov -U
 
