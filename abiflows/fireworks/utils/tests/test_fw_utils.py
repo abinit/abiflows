@@ -7,7 +7,7 @@ import unittest
 import yaml
 
 from monty.tempfile import ScratchDir
-from fireworks import Firework, LaunchPad
+from fireworks import Firework, LaunchPad, Workflow
 from fireworks.core.rocket_launcher import rapidfire
 from fireworks.user_objects.firetasks.script_task import PyTask
 from abiflows.core.testing import AbiflowsTest, has_mongodb, TESTDB_NAME

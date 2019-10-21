@@ -13,7 +13,7 @@ from fireworks.core.launchpad import LaunchPad
 from fireworks.utilities.fw_utilities import explicit_serialize
 from fireworks.utilities.fw_serializers import serialize_fw
 
-from monty.json import MontyDecoder, MontyEncoder
+from monty.json import MontyDecoder #, MontyEncoder
 from monty.json import MSONable
 from monty.serialization import loadfn
 from monty.subprocess import Command

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+# flake8: noqa
 """Setup script for abiflows."""
-from __future__ import print_function
 
 import sys
 import os
@@ -31,6 +31,7 @@ def file_doesnt_end_with(test, endings):
 # Basic project information
 #---------------------------------------------------------------------------
 
+
 # release.py contains version, authors, license, url, keywords, etc.
 release_file = os.path.join('abiflows', 'core', 'release.py')
 
@@ -41,6 +42,7 @@ with open(release_file) as f:
 #---------------------------------------------------------------------------
 # Find package data
 #---------------------------------------------------------------------------
+
 
 def find_package_data():
     """Find abiflows package_data."""
@@ -94,8 +96,7 @@ def cleanup():
 
 # List of external packages we rely on.
 # Note setup install will download them from Pypi if they are not available.
-#with open("requirements.txt", "rt") as fh:
-#    install_requires = [s.strip() for s in fh]
+
 
 install_requires = [
 "six",
@@ -104,9 +105,9 @@ install_requires = [
 "prettytable",
 "mongoengine",
 "paramiko",
-"fireworks",
-"abipy==0.6.0",
 "custodian",
+"fireworks",
+"abipy>=0.7.0",
 ]
 
 #---------------------------------------------------------------------------

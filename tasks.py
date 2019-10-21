@@ -8,8 +8,6 @@ import os
 from invoke import task
 from monty.os import cd
 
-#from abipy.core.release import __version__ as CURRENT_VER
-#NEW_VER = datetime.datetime.today().strftime("%Y.%-m.%-d")
 
 ROOTDIR = os.path.dirname(__file__)
 DOCS_DIR = os.path.join(ROOTDIR, "docs")
@@ -62,16 +60,6 @@ pytest --cov-config=.coveragerc --cov=abiflows --cov-append -v abiflows/firework
     with cd(ROOTDIR):
         ctx.run(pytest_cmd, pty=True)
 
-
-#@task
-#def plots(ctx):
-#    with cd(os.path.join(ROOTDIR, "abipy", "examples")):
-#        ctx.run("_runplots.py", pty=True)
-
-#@task
-#def flows(ctx):
-#    with cd(os.path.join(ROOTDIR, "abipy", "examples")):
-#        ctx.run("_runflows.py", pty=True)
 
 #@task
 #def move_to_master(ctx):

@@ -5,13 +5,10 @@ Firework workflows
 import logging
 import sys
 import abc
-import os
 import re
-import six
 
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.launchpad import LaunchPad
-
 from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
 from abiflows.core.mastermind_abc import ControlProcedure
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
@@ -29,9 +26,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-
-@six.add_metaclass(abc.ABCMeta)
-class AbstractFWWorkflow(Workflow):
+class AbstractFWWorkflow(Workflow, metaclass=abc.ABCMeta):
     """
     Abstract Workflow class.
     """
@@ -69,7 +64,7 @@ class AbstractFWWorkflow(Workflow):
         append_fw_to_wf(insert_fw, self.wf)
 
     def add_metadata(self, structure=None, additional_metadata={}):
-        metadata = dict(wf_type = self.__class__.__name__)
+        metadata = dict(wf_type=self.__class__.__name__)
         if structure:
             composition = structure.composition
             metadata['nsites'] = len(structure)
@@ -273,7 +268,6 @@ class MPNEBRelaxFWWorkflowSRC(AbstractFWWorkflow):
                            metadata={'workflow_class': self.workflow_class,
                                      'workflow_module': self.workflow_module},
                            name=wfname)
-
 
     @classmethod
     def from_terminals(cls, neb_terminals, spec, relax_terminals=True, n_insert=1, n_nebs=3,

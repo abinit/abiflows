@@ -337,12 +337,12 @@ class QueueControllerMixin(object):
         queue_adapter = kwargs.get('queue_adapter', None)
         memory_policy = kwargs.get('memory_policy', None)
         #TODO: deal with the memory policy in the scheduler parser (whether it is vmem or mem in PBS for example ...)
-        if 'queue_adapter' is None:
-            raise ValueError('WalltimeController should have access to the queue_adapter')
-        if 'qerr_filepath' is None:
-            raise ValueError('WalltimeController should have access to the qerr_filepath')
-        if 'qout_filepath' is None:
-            raise ValueError('WalltimeController should have access to the qout_filepath')
+        #if 'queue_adapter' is None:
+        #    raise ValueError('WalltimeController should have access to the queue_adapter')
+        #if 'qerr_filepath' is None:
+        #    raise ValueError('WalltimeController should have access to the qerr_filepath')
+        #if 'qout_filepath' is None:
+        #    raise ValueError('WalltimeController should have access to the qout_filepath')
         # Analyze the stderr and stdout files of the resource manager system.
         qerr_info = None
         qout_info = None

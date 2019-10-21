@@ -1,8 +1,6 @@
 import copy
 import logging
 import os
-import threading
-import subprocess
 
 from monty.json import MSONable
 from abiflows.fireworks.tasks.src_tasks_abc import SetupTask, RunTask, ControlTask
@@ -10,15 +8,15 @@ from abiflows.core.mastermind_abc import ControllerNote
 from abiflows.fireworks.utils.fw_utils import FWTaskManager
 from abiflows.fireworks.tasks.src_tasks_abc import SRCTaskIndex
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec
-from abiflows.core.controllers import WalltimeController, MemoryController, VaspXMLValidatorController
+from abiflows.core.controllers import WalltimeController, MemoryController #, VaspXMLValidatorController
 from abiflows.core.controllers import VaspNEBValidatorController
 from abiflows.core.mastermind_abc import ControlProcedure
-from pymatgen.io.abinit.tasks import ParalHints
+from abipy.flowtk.tasks import ParalHints
 from fireworks import explicit_serialize
 from fireworks.core.firework import Firework, Workflow
 from fireworks.core.firework import FWAction
 from pymatgen.util.serialization import pmg_serialize
-from pymatgen.io.abinit.utils import Directory
+from abipy.flowtk.utils import Directory
 from pymatgen.io.vasp import Vasprun
 from pymatgen.analysis.transition_state import NEBAnalysis
 from abiflows.fireworks.tasks.vasp_sets import MPNEBSet
@@ -116,9 +114,9 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
         # Write input files
         self.vasp_input_set.write_input(self.run_dir)
 
+
 @explicit_serialize
 class VaspRunTask(VaspSRCMixin, RunTask):
-
 
     def __init__(self, control_procedure, task_helper, task_type=None, custodian_handlers=None):
         if task_type is None:
@@ -145,7 +143,7 @@ class VaspRunTask(VaspSRCMixin, RunTask):
         #                  gamma_vasp_cmd=None, copy_magmom=False, auto_continue=False):
         try:
             vasp_cmd = os.environ['VASP_CMD'].split()
-        except:
+        except Exception:
             raise ValueError('Unable to find vasp command')
         if 'custodian_jobs' in fw_spec:
             jobs = fw_spec['custodian_jobs']
@@ -193,7 +191,6 @@ class GenerateVacanciesRelaxationTask(FireTaskBase):
     def __init__(self):
         from abiflows.fireworks.tasks.utility_tasks import print_myself
         print_myself()
-
 
     def run_task(self, fw_spec):
         pass
@@ -375,7 +372,9 @@ def createVaspSRCFireworks(vasp_input_set, task_helper, task_type, control_proce
 # Helpers
 ####################
 
+
 class VaspTaskHelper(MSONable):
+
     task_type = 'vasp'
 
     CRITICAL_EVENTS = []
@@ -431,7 +430,7 @@ class MPRelaxTaskHelper(VaspTaskHelper):
     def get_final_structure(self):
         try:
             vasprun = Vasprun(os.path.join(self.task.run_dir, 'vasprun.xml'))
-        except:
+        except Exception:
             raise ValueError('Failed to get final structure ...')
         return vasprun.final_structure
 
@@ -485,6 +484,7 @@ class PostProcessError(Exception):
 ##############################
 # Other objects
 ##############################
+
 
 class RestartInfo(MSONable):
     """

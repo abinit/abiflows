@@ -1,7 +1,8 @@
+from mongoengine import (StringField, BooleanField, IntField, FloatField, ListField, DictField,
+        Document, EmbeddedDocument, EmbeddedDocumentField)
 from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin
-from abiflows.database.mongoengine.abinit_mixins import AbinitBasicInputMixin, \
-    AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin
-from mongoengine import *
+from abiflows.database.mongoengine.abinit_mixins import (AbinitBasicInputMixin,
+    AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin)
 from abiflows.core.models import AbiFileField, MSONField, AbiGzipFileField
 
 
@@ -135,7 +136,7 @@ class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
     eps0 = ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
     dchide = ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
     dchidt = ListField(ListField(ListField(ListField(FloatField()))),
-                      help_text="First-order change in the linear dielectric susceptibility")
+                       help_text="First-order change in the linear dielectric susceptibility")
 
 
 class DteResult(MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin, Document):

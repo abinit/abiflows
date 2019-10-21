@@ -1,12 +1,12 @@
 # coding: utf-8
 """Object-Document mapper"""
-#import collections
 import shutil
 import gzip
 
 from tempfile import mkstemp, TemporaryFile, NamedTemporaryFile
 from monty.json import MontyDecoder
-from mongoengine import *
+from mongoengine import (FileField, StringField, IntField, LongField, ListField, DictField,
+        Document, EmbeddedDocument, EmbeddedDocumentField, queryset_manager)
 from mongoengine.fields import GridFSProxy
 from mongoengine.base.datastructures import BaseDict
 from abipy import abilab

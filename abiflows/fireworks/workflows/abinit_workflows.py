@@ -10,6 +10,7 @@ import six
 import datetime
 import json
 import numpy as np
+import abipy.abio.input_tags as atags
 
 from collections import defaultdict
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory
@@ -18,7 +19,6 @@ from abipy.abio.factories import ion_ioncell_relax_input, scf_input, dte_from_gs
 from abipy.abio.factories import dfpt_from_gsinput
 from abipy.abio.inputs import AbinitInput, AnaddbInput
 from abipy.abio.abivars_db import get_abinit_variables
-from abipy.abio.input_tags import *
 from abipy.dfpt.anaddbnc import AnaddbNcFile
 from abipy.flowtk.abiobjects import KSampling
 from fireworks.core.firework import Firework, Workflow, FWorker
@@ -40,7 +40,7 @@ from abiflows.fireworks.tasks.abinit_tasks import AnaDdbAbinitTask, StrainPertTa
 from abiflows.fireworks.tasks.abinit_tasks import NscfWfqFWTask
 from abiflows.fireworks.tasks.src_tasks_abc import createSRCFireworks
 from abiflows.fireworks.tasks.utility_tasks import FinalCleanUpTask, DatabaseInsertTask, MongoEngineDBInsertionTask
-from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld
+#from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld
 from abiflows.fireworks.utils.fw_utils import append_fw_to_wf, get_short_single_core_spec, links_dict_update
 from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get_last_completed_launch
 from abiflows.fireworks.utils.fw_utils import get_time_report_for_wf, FWTaskManager
@@ -1456,12 +1456,12 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
         else:
             ph_inputs = phonon_factory
 
-        ph_q_pert_inputs = ph_inputs.filter_by_tags(PH_Q_PERT)
-        ddk_inputs = ph_inputs.filter_by_tags(DDK)
-        dde_inputs = ph_inputs.filter_by_tags(DDE)
-        bec_inputs = ph_inputs.filter_by_tags(BEC)
+        ph_q_pert_inputs = ph_inputs.filter_by_tags(atags.PH_Q_PERT)
+        ddk_inputs = ph_inputs.filter_by_tags(atags.DDK)
+        dde_inputs = ph_inputs.filter_by_tags(atags.DDE)
+        bec_inputs = ph_inputs.filter_by_tags(atags.BEC)
 
-        nscf_inputs = ph_inputs.filter_by_tags(NSCF)
+        nscf_inputs = ph_inputs.filter_by_tags(atags.NSCF)
 
         previous_task_type = scf_task.task_type
 
@@ -1495,7 +1495,7 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
         mrgddb_spec = dict(spec)
         mrgddb_spec['wf_task_index'] = 'mrgddb'
         #FIXME import here to avoid circular imports.
-        from abiflows.fireworks.utils.fw_utils import get_short_single_core_spec
+        #from abiflows.fireworks.utils.fw_utils import get_short_single_core_spec
         qadapter_spec = self.set_short_single_core_to_spec(mrgddb_spec)
         mrgddb_spec['mpi_ncpus'] = 1
         # Set a higher priority to favour the end of the WF
@@ -1861,8 +1861,8 @@ class DteFWWorkflow(AbstractFWWorkflow):
         for d in decorators:
             d(inp)
 
-        dte_wf = cls(scf_inp, ddk_inp=inp.filter_by_tags(DDK), dde_inp=inp.filter_by_tags(DDE),
-                     dte_inp=inp.filter_by_tags(DTE), ph_inp=inp.filter_by_tags(PH_Q_PERT), autoparal=autoparal,
+        dte_wf = cls(scf_inp, ddk_inp=inp.filter_by_tags(atags.DDK), dde_inp=inp.filter_by_tags(atags.DDE),
+                     dte_inp=inp.filter_by_tags(atags.DTE), ph_inp=inp.filter_by_tags(atags.PH_Q_PERT), autoparal=autoparal,
                      spec=spec, initialization_info=initialization_info)
 
         return dte_wf
@@ -1929,8 +1929,8 @@ class DteFWWorkflow(AbstractFWWorkflow):
         for d in decorators:
             d(inp)
 
-        dte_wf = cls(scf_inp, ddk_inp=inp.filter_by_tags(DDK), dde_inp=inp.filter_by_tags(DDE),
-                     dte_inp=inp.filter_by_tags(DTE), ph_inp=inp.filter_by_tags(PH_Q_PERT), autoparal=autoparal,
+        dte_wf = cls(scf_inp, ddk_inp=inp.filter_by_tags(atags.DDK), dde_inp=inp.filter_by_tags(atags.DDE),
+                     dte_inp=inp.filter_by_tags(atags.DTE), ph_inp=inp.filter_by_tags(atags.PH_Q_PERT), autoparal=autoparal,
                      spec=spec, initialization_info=initialization_info)
 
         return dte_wf
@@ -3020,12 +3020,12 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                                   wfq_tol=wfq_tol, strain_tol=strain_tol, skip_dte_permutations=skip_dte_permutations,
                                   manager=manager)
 
-        ph_inp = multi.filter_by_tags(PH_Q_PERT)
-        nscf_inp = multi.filter_by_tags(NSCF)
-        ddk_inp = multi.filter_by_tags(DDK)
-        dde_inp = multi.filter_by_tags(DDE)
-        strain_inp = multi.filter_by_tags(STRAIN)
-        dte_inp = multi.filter_by_tags(DTE)
+        ph_inp = multi.filter_by_tags(atags.PH_Q_PERT)
+        nscf_inp = multi.filter_by_tags(atags.NSCF)
+        ddk_inp = multi.filter_by_tags(atags.DDK)
+        dde_inp = multi.filter_by_tags(atags.DDE)
+        strain_inp = multi.filter_by_tags(atags.STRAIN)
+        dte_inp = multi.filter_by_tags(atags.DTE)
 
         dfpt_wf = cls(scf_inp, ph_inp, nscf_inp, ddk_inp, dde_inp, strain_inp, dte_inp, autoparal=autoparal,
                       spec=spec, initialization_info=initialization_info)
@@ -3218,8 +3218,9 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                 If gives the number of divisions for the smallest segment of the path.
         """
         anaddb_input = AnaddbInput.dfpt(structure, ngqpt=ph_ngqpt, relaxed_ion=self.has_gamma,
-                                        piezo=len(self.strain_fws)>0 and len(self.dde_fws)>0, dde=len(self.dde_fws)>0,
-                                        strain=len(self.strain_fws)>0, dte=len(self.dte_fws)>0, stress_correction=True,
+                                        piezo=len(self.strain_fws) > 0 and len(self.dde_fws) > 0,
+                                        dde=len(self.dde_fws) > 0, strain=len(self.strain_fws) > 0,
+                                        dte=len(self.dte_fws) > 0, stress_correction=True,
                                         nqsmall=nqsmall, qppa=qppa, ndivsm=ndivsm, line_density=line_density,
                                         q1shft=(0, 0, 0), asr=2, chneut=1, dipdip=1, dos_method="tetra")
         anaddb_task = AnaDdbAbinitTask(anaddb_input, deps={MergeDdbAbinitTask.task_type: "DDB"})

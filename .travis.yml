@@ -15,16 +15,20 @@ matrix:
     - os: linux
       python: 3.6
       env:
-        - ABIPY_INSTALLER=conda ABIPY_COVERALLS=yes
+        - ABIPY_INSTALLER=pip ABIPY_COVERALLS=yes
     - os: linux
       python: 3.7
       env:
         - ABIPY_INSTALLER=pip
+    - os: linux
+      python: 3.7
+      env:
+        - ABIPY_INSTALLER=conda
+
 
 #dist: precise
 sudo: false
 install:
-  #- sudo apt-get update
   - env
   #- set -ev  # exit on first error, print each command
   - ulimit -s unlimited
@@ -33,16 +37,20 @@ install:
       if [ "${ABIPY_INSTALLER}" == "pip" ]; then
         # pip-based installation.
         source dev_scripts/conda_get.sh  # Needed for Abinit
-        echo "Installing abinit from abinit channel ..."
-        conda config --add channels conda-forge
-        conda install -y -c abinit abinit=${ABINIT_VERSION}
-        abinit --version
-        abinit --build
+        #echo "Installing abinit from abinit channel ..."
+        #conda config --add channels conda-forge
+        #conda install -y -c abinit abinit=${ABINIT_VERSION}
+        #abinit --version
+        #abinit --build
+        # Install python code in the same env as ABINIT
+        source activate abinit-environment
         travis_wait pip install -r requirements.txt
         travis_wait pip install -r requirements-optional.txt
 
       elif [ "${ABIPY_INSTALLER}" == "conda" ]; then
-        # Install conda https://conda.io/docs/travis.html
+        # Python software stack is installed in test-environment while ABINIT in abinit-environment
+        # hence we need to activate abinit-environment before running ABINT.
+        conda config --add channels abinit
         source dev_scripts/conda_get.sh
         source dev_scripts/conda_install.sh
         #conda uninstall -y mongoengine
@@ -51,9 +59,6 @@ install:
         #conda uninstall -y abipy
       fi
 
-  - if [[ "${TRAVIS_PYTHON_VERSION}" == "2.7" ]]; then conda install mock; fi
-  #- pip install pytest scripttest nose nose-exclude
-  - pip install nose nose-exclude
   - pip install coverage -U
   - pip install pytest-cov -U
 
@@ -63,12 +68,12 @@ install:
   # Use pymatgen master
   #- git clone --depth=50 https://github.com/materialsproject/pymatgen.git && cd pymatgen && pip install -r requirements.txt && pip install -r requirements-optional.txt && python setup.py install && cd ../
   #- rm -rf pymatgen
-  
+
   # Install abipy from github (develop)
   #- git clone --depth=50 https://github.com/abinit/abipy.git && cd abipy && python setup.py install && cd ../
     #- git clone --depth=50 https://github.com/abinit/abipy.git && cd abipy && pip install -r requirements.txt && pip install -r requirements-optional.txt && python setup.py install && cd ../
   #- python setup.py install
-  - mkdir -p ${HOME}/.abinit/abipy 
+  - mkdir -p ${HOME}/.abinit/abipy
   - cp ./dev_scripts/travis_scheduler.yml ${HOME}/.abinit/abipy/scheduler.yml
   - cp ./dev_scripts/travis_manager.yml ${HOME}/.abinit/abipy/manager.yml
   - rm -rf abipy
@@ -81,7 +86,7 @@ install:
     #- "sh -e /etc/init.d/xvfb start"
     #- sleep 3 # give xvfb some time to start
     # https://github.com/travis-ci/travis-ci/issues/6307
-    #- if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then rvm get head; fi 
+    #- if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then rvm get head; fi
 
 # command to run tests
 script: ./dev_scripts/runtests.sh

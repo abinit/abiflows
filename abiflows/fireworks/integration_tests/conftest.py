@@ -4,8 +4,7 @@ import pytest
 import abipy.abilab as abilab
 import abipy.data as abidata
 
-from pymongo import MongoClient
-from abipy.abio.factories import ebands_input, ion_ioncell_relax_input, scf_for_phonons, phonons_from_gsinput
+from abipy.abio.factories import ebands_input, ion_ioncell_relax_input, scf_for_phonons #, phonons_from_gsinput
 from abipy.data.benchmark_structures import simple_semiconductors #, simple_metals
 from abiflows.database.mongoengine.utils import DatabaseData
 from fireworks import LaunchPad, FWorker
