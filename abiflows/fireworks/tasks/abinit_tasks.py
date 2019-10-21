@@ -57,7 +57,7 @@ class BasicAbinitTaskMixin(object):
     @serialize_fw
     def to_dict(self):
         d = {}
-        for arg in inspect.getargspec(self.__init__).args:
+        for arg in inspect.getfullargspec(self.__init__).args:
             if arg != "self":
                 val = self.__getattribute__(arg)
                 if hasattr(val, "as_dict"):
@@ -72,7 +72,7 @@ class BasicAbinitTaskMixin(object):
     def from_dict(cls, d):
         dec = MontyDecoder()
         kwargs = {k: dec.process_decoded(v) for k, v in d.items()
-                  if k in inspect.getargspec(cls.__init__).args}
+                  if k in inspect.getfullargspec(cls.__init__).args}
         return cls(**kwargs)
 
     def get_fw_task_manager(self, fw_spec):
@@ -733,7 +733,7 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         """
 
         init_dict = {}
-        for arg in inspect.getargspec(self.__init__).args:
+        for arg in inspect.getfullargspec(self.__init__).args:
             if arg != "self":
                 init_dict[arg] = self.__getattribute__(arg)
 

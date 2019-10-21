@@ -30,11 +30,9 @@ class ItestPhonon(AbiflowsIntegrationTest):
         Tests the complete running of PhononFullFWWorkflow and PhononFWWorkflow
         """
 
-        # test at gamma. Pass a custom manager, to check proper serialization
-        manager_path = os.path.join(abidata.dirpath, 'managers', "travis_manager.yml")
+        # test at gamma.
         ph_fac = PhononsFromGsFactory(qpoints=[[0,0,0]], ph_tol = {"tolvrs": 1.0e-7}, ddk_tol = {"tolwfr": 1.0e-16},
-                                      dde_tol = {"tolvrs": 1.0e-7}, wfq_tol = {"tolwfr": 1.0e-16},
-                                      manager=TaskManager.from_file(manager_path))
+                                      dde_tol = {"tolvrs": 1.0e-7}, wfq_tol = {"tolwfr": 1.0e-16})
 
         # first run the phonon workflow with generation task
         wf_gen = PhononFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=use_autoparal,
@@ -192,11 +190,9 @@ class ItestPhonon(AbiflowsIntegrationTest):
         """
         qpt = [[0.1111,0.2222,0.3333]]
 
-        # test at gamma. Pass a custom manager, to check proper serialization
-        manager_path = os.path.join(abidata.dirpath, 'managers', "travis_manager.yml")
+        # test at gamma.
         ph_fac = PhononsFromGsFactory(qpoints=qpt, ph_tol = {"tolvrs": 1.0e-7},
-                                      wfq_tol = {"tolwfr": 1.0e-16}, with_ddk=False, with_dde=False,
-                                      manager=TaskManager.from_file(manager_path))
+                                      wfq_tol = {"tolwfr": 1.0e-16}, with_ddk=False, with_dde=False)
 
         # first run the phonon workflow with generation task
         wf_gen = PhononFWWorkflow(input_scf_phonon_si_low, ph_fac, autoparal=False,

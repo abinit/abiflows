@@ -48,7 +48,6 @@ class ItestScf(AbiflowsIntegrationTest):
             with task.open_gsr() as gsr:
                 assert gsr.energy == pytest.approx(-241.239839134, rel=0.05)
 
-
     def itest_scf_wf(self, lp, fworker, tmpdir, input_scf_si_low, use_autoparal):
         """
         Tests a simple scf run with the ScfFWWorkflow
@@ -133,7 +132,6 @@ class ItestScf(AbiflowsIntegrationTest):
 
             with task.open_gsr() as gsr:
                 assert gsr.energy == pytest.approx(-241.239839133, rel=0.05)
-
 
     def itest_not_converged_fizzled(self, lp, fworker, tmpdir, input_scf_si_low):
         """

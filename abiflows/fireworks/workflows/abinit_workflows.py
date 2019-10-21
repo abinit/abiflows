@@ -698,19 +698,23 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
             spec = {}
         if initialization_info is None:
             initialization_info = {}
+        ion_ioncell_input = ion_ioncell_relax_input(structure=structure, pseudos=pseudos, kppa=kppa, nband=nband, ecut=ecut,
+                                                    pawecutdg=pawecutdg, accuracy=accuracy, spin_mode=spin_mode,
+                                                    smearing=smearing, charge=charge, scf_algorithm=scf_algorithm,
+                                                    shift_mode=shift_mode)
 
-        ion_input = ion_ioncell_relax_input(structure=structure, pseudos=pseudos, kppa=kppa, nband=nband, ecut=ecut,
-                                            pawecutdg=pawecutdg, accuracy=accuracy, spin_mode=spin_mode,
-                                            smearing=smearing, charge=charge, scf_algorithm=scf_algorithm,
-                                            shift_mode=shift_mode)[0]
-
-        ion_input.set_vars(**extra_abivars)
+        ion_ioncell_input.set_vars(**extra_abivars)
         for d in decorators:
-            ion_input = d(ion_input)
+            ion_ioncell_input = d(ion_ioncell_input)
 
-        ioncell_fact = IoncellRelaxFromGsFactory(accuracy=accuracy, extra_abivars=extra_abivars, decorators=decorators)
+        ion_input = ion_ioncell_input[0]
+        if skip_ion:
+            ioncell_input = ion_ioncell_input[1]
+        else:
+            ioncell_input = IoncellRelaxFromGsFactory(accuracy=accuracy, extra_abivars=extra_abivars,
+                                                     decorators=decorators)
 
-        return cls(ion_input, ioncell_fact, autoparal=autoparal, spec=spec, initialization_info=initialization_info,
+        return cls(ion_input, ioncell_input, autoparal=autoparal, spec=spec, initialization_info=initialization_info,
                    target_dilatmx=target_dilatmx,skip_ion=skip_ion)
 
 
@@ -3214,9 +3218,9 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                 If gives the number of divisions for the smallest segment of the path.
         """
         anaddb_input = AnaddbInput.dfpt(structure, ngqpt=ph_ngqpt, relaxed_ion=self.has_gamma,
-                                        piezo=len(self.strain_fws) > 0, dde=len(self.dde_fws) > 0,
-                                        strain=len(self.strain_fws) > 0, dte=len(self.dte_fws) > 0,
-                                        stress_correction=True,
+                                        piezo=len(self.strain_fws) > 0 and len(self.dde_fws) > 0,
+                                        dde=len(self.dde_fws) > 0, strain=len(self.strain_fws) > 0,
+                                        dte=len(self.dte_fws) > 0, stress_correction=True,
                                         nqsmall=nqsmall, qppa=qppa, ndivsm=ndivsm, line_density=line_density,
                                         q1shft=(0, 0, 0), asr=2, chneut=1, dipdip=1, dos_method="tetra")
         anaddb_task = AnaDdbAbinitTask(anaddb_input, deps={MergeDdbAbinitTask.task_type: "DDB"})
