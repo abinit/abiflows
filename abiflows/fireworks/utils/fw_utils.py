@@ -2,8 +2,6 @@
 """
 Utilities for fireworks
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import copy
 import os
 import traceback
@@ -86,15 +84,15 @@ def get_short_single_core_spec(fw_manager=None, master_mem_overhead=0, return_qt
 
 
 def set_short_single_core_to_spec(spec={}, master_mem_overhead=0, fw_manager=None):
-        if spec is None:
-            spec = {}
-        else:
-            spec = dict(spec)
+    if spec is None:
+        spec = {}
+    else:
+        spec = dict(spec)
 
-        qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead, fw_manager=fw_manager)
-        spec['mpi_ncpus'] = 1
-        spec['_queueadapter'] = qadapter_spec
-        return spec
+    qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead, fw_manager=fw_manager)
+    spec['mpi_ncpus'] = 1
+    spec['_queueadapter'] = qadapter_spec
+    return spec
 
 
 class FWTaskManager(object):
@@ -160,7 +158,7 @@ class FWTaskManager(object):
             else:
                 try:
                     self.task_manager = TaskManager.from_user_config()
-                except:
+                except Exception:
                     logger.warning("Couldn't load the abipy task manager.")
                     self.task_manager = None
 
@@ -185,7 +183,7 @@ class FWTaskManager(object):
         for path in paths:
             if path and os.path.exists(path):
                 with io.open(path, "rt", encoding="utf-8") as fh:
-                    config = yaml.load(fh)
+                    config = yaml.safe_load(fh)
                 logger.info("Reading manager from {}.".format(path))
                 break
 
@@ -195,7 +193,7 @@ class FWTaskManager(object):
     def from_file(cls, path):
         """Read the configuration parameters from the Yaml file filename."""
         with open(path, "rt") as fh:
-            d = yaml.load(fh)
+            d = yaml.safe_load(fh)
         return cls(**d)
 
     def has_task_manager(self):
@@ -309,6 +307,7 @@ def load_abitask(fw):
 
     return None
 
+
 def get_fw_by_task_index(wf, task_tag, index=1):
     """
     Given a workflow object (with connection to the db) returns the wf corresponding to the task_type.
@@ -322,9 +321,8 @@ def get_fw_by_task_index(wf, task_tag, index=1):
     Returns:
         a fireworks Firework object. None if no match is found.
     """
-
     task_index = None
-    if index is not None and index >=0:
+    if index is not None and index >= 0:
         task_index = "{}_{}".format(task_tag, index)
 
     selected_fw = None
@@ -342,10 +340,10 @@ def get_fw_by_task_index(wf, task_tag, index=1):
                 # if no other indices has been found select that one
                 try:
                     fw_ind = int(fw_task_index.split('_')[-1])
-                    if  fw_ind > max_ind:
+                    if fw_ind > max_ind:
                         selected_fw = fw
                         max_ind = fw_ind
-                except:
+                except Exception:
                     if selected_fw is None:
                         selected_fw = fw
 
@@ -379,7 +377,7 @@ def get_lp_and_fw_id_from_task(task, fw_spec):
         except IOError:
             try:
                 with open('FW.yaml', "rt") as fh:
-                    fw_dict = yaml.load(fh)
+                    fw_dict = yaml.safe_load(fh)
             except IOError:
                 raise RuntimeError("Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: "
                                    "impossible to determine fw_id")

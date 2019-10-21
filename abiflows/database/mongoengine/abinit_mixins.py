@@ -3,8 +3,6 @@
 List of mixins to provide standard interfaces with the result databases for abinit calculations.
 Most of them should still be considered as examples.
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import os
 
 from monty.json import jsanitize
@@ -93,7 +91,6 @@ class AbinitBasicInputMixin(object):
     occopt = IntField()
     tsmear = FloatField()
     pseudopotentials = EmbeddedDocumentField(AbinitPseudoData, default=AbinitPseudoData)
-
 
     def set_abinit_basic_from_abinit_input(self, abinit_input):
         """

@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import os
 import shutil
 import inspect
@@ -16,11 +14,12 @@ from pymatgen.util.serialization import json_pretty_dump, pmg_serialize
 from abipy.flowtk.utils import Directory, File, irdvars_for_ext
 from abipy.flowtk import events
 from abipy.flowtk.qutils import time2slurm
+from abipy.flowtk.events import EventsParser
+
 from abipy.abio.factories import InputFactory
 from abipy.abio.factories import PiezoElasticFromGsFactory
 from abipy.abio.inputs import AbinitInput, Cut3DInput
 from abipy.abio.input_tags import STRAIN, GROUND_STATE, NSCF, BANDS, PHONON
-from abipy.abio.outputs import OutNcFile
 from abipy.electrons.gsr import GsrFile
 from abipy.electrons.charges import HirshfeldCharges
 from abipy.flowtk.netcdf import NetcdfReader, NO_DEFAULT
@@ -43,6 +42,7 @@ SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
 RESTART_FROM_SCRATCH = ControllerNote.RESTART_FROM_SCRATCH
 
 logger = logging.getLogger(__name__)
+
 
 class AbinitSRCMixin(object):
 
@@ -123,7 +123,7 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
         if 'previous_src' in fw_spec:
             self.prev_outdir = Directory(os.path.join(fw_spec['previous_src']['src_directories']['run_dir'],
                                                       OUTDIR_NAME))
-        return super(AbinitSetupTask, self).run_task(fw_spec)
+        return super().run_task(fw_spec)
 
     def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
         self.abiinput.remove_vars(['npkpt', 'npspinor', 'npband', 'npfft', 'bandpp'], strict=False)
@@ -323,7 +323,6 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
             ddk_files.append(self.link_ext(ext, source_dir))
 
         return ddk_files
-
 
     def resolve_deps_per_task_type(self, previous_tasks, deps_list):
         for previous_task in previous_tasks:
@@ -554,7 +553,6 @@ class AbinitSetupTask(AbinitSRCMixin, SetupTask):
 @explicit_serialize
 class AbinitRunTask(AbinitSRCMixin, RunTask):
 
-
     def __init__(self, control_procedure, task_helper, task_type=None):
         if task_type is None:
             task_type = task_helper.task_type
@@ -588,7 +586,6 @@ class AbinitRunTask(AbinitSRCMixin, RunTask):
             self.returncode = self.process.returncode
 
         if os.path.isfile('run.log'):
-            from pymatgen.io.abinit.events import EventsParser
             parser = EventsParser()
             report = parser.parse('run.log')
             if report.run_completed:
@@ -756,7 +753,6 @@ class ScfTaskHelper(GsTaskHelper):
             self.task.abiinput.set_vars(irdvars)
 
 
-
 class NscfTaskHelper(GsTaskHelper):
     task_type = "nscf"
 
@@ -814,8 +810,7 @@ class RelaxTaskHelper(GsTaskHelper):
 
     # def prepare_restart(self):
     #     self.task.abiinput.set_structure(self.get_final_structure())
-    #
-    #     return super(RelaxTaskHelper, self).prepare_restart()
+    #     return super().prepare_restart()
 
     def restart(self, restart_info):
         """
@@ -877,12 +872,12 @@ class RelaxTaskHelper(GsTaskHelper):
                     logger.info("Will restart from %s", restart_file)
 
     # def current_task_info(self, fw_spec):
-    #     d = super(RelaxTaskHelper, self).current_task_info(fw_spec)
+    #     d = super().current_task_info(fw_spec)
     #     d['structure'] = self.get_final_structure()
     #     return d
 
     # def conclude_task(self, fw_spec):
-    #     update_spec, mod_spec, stored_data = super(RelaxFWTask, self).conclude_task(fw_spec)
+    #     update_spec, mod_spec, stored_data = super().conclude_task(fw_spec)
     #     update_spec['previous_run']['structure'] = self.get_final_structure()
     #     return update_spec, mod_spec, stored_data
 
@@ -954,7 +949,7 @@ class DdkTaskHelper(DfptTaskHelper):
         for f in wf_files:
             os.symlink(f.path, f.path+'_DDK')
 
-        super(DdkTaskHelper, self).conclude_task()
+        super().conclude_task()
 
 
 class DdeTaskHelper(DfptTaskHelper):
@@ -983,7 +978,6 @@ class Cut3DAbinitTaskOld(AbinitSRCMixin, FireTaskBase):
     task_type = "cut3d"
 
     CUT3D_OPTIONS = ['den_to_cube']
-
 
     def __init__(self, cut3d_option=None, deps=None, cut3d_input_file='cut3d.in',
                  cut3d_log_file='cut3d.log', cut3d_err_file='cut3d.err', task_type=None):
@@ -1044,7 +1038,7 @@ class Cut3DAbinitTaskOld(AbinitSRCMixin, FireTaskBase):
             try:
                 p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err =p.communicate()
+                out, err = p.communicate()
                 status = p.returncode
                 if status == 0:
                     self.walltime = int(out)
@@ -1243,7 +1237,7 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
             try:
                 p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err =p.communicate()
+                out, err = p.communicate()
                 status = p.returncode
                 if status == 0:
                     self.walltime = int(out)
@@ -1346,7 +1340,7 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
         return cls(cut3d_input=cut3d_input, deps=deps, task_type=task_type)
 
     @classmethod
-    def hirshfeld(cls, deps, structure, task_type=None, all_el_dens_paths = None, fhi_all_el_path = None):
+    def hirshfeld(cls, deps, structure, task_type=None, all_el_dens_paths=None, fhi_all_el_path=None):
         if task_type is None:
             task_type = 'cut3d-hirshfeld'
 
@@ -1397,12 +1391,10 @@ class Cut3DAbinitTask(AbinitSRCMixin, FireTaskBase):
 class BaderTask(AbinitSRCMixin, FireTaskBase):
     task_type = "bader"
 
-
     def __init__(self, bader_log_file='bader.log', bader_err_file='bader.err', electrons=None):
         """
         General constructor for Cut3D task.
         """
-
         self.bader_log_file = bader_log_file
         self.bader_err_file = bader_err_file
         if electrons is not None:
@@ -1427,7 +1419,7 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
             try:
                 p = subprocess.Popen(self.ftm.fw_policy.walltime_command, shell=True, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err =p.communicate()
+                out, err = p.communicate()
                 status = p.returncode
                 if status == 0:
                     self.walltime = int(out)
@@ -1535,7 +1527,6 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
         return cls(**kwargs)
 
 
-
 ##############################
 # Generation tasks
 ##############################
@@ -1543,6 +1534,7 @@ class BaderTask(AbinitSRCMixin, FireTaskBase):
 
 @explicit_serialize
 class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
+
     def __init__(self, piezo_elastic_factory=None, helper=None, previous_scf_task_type=ScfTaskHelper.task_type,
                  previous_ddk_task_type=DdkTaskHelper.task_type, control_procedure=None,
                  additional_controllers=None,
@@ -1585,8 +1577,8 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         if not previous_scf_input:
             raise InitializationError('No input file available '
                                       'from task of type {}'.format(self.previous_scf_task_type))
-        from pymatgen.io.abinit import tasks
         ftm = self.get_fw_task_manager(fw_spec)
+        from abipy.flowtkt import tasks
         tasks._USER_CONFIG_TASKMANAGER = ftm.task_manager
 
         # Get the strain RF inputs
@@ -1604,7 +1596,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
             new_spec['initial_parameters'] = initial_parameters
 
         if '_preserve_fworker' in fw_spec:
-            new_spec['_preserve_fworker']=True
+            new_spec['_preserve_fworker'] = True
         if '_fworker' in fw_spec:
             new_spec['_fworker'] = fw_spec['_fworker']
 
@@ -1649,8 +1641,6 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
                     links_dict_update(links_dict=fws_deps, links_update=link_dict_update)
                 prev_src_pert = rf_fws
 
-
-
         # Adding the MrgDdb Firework
         mrgddb_spec = dict(new_spec)
         mrgddb_spec = set_short_single_core_to_spec(mrgddb_spec)
@@ -1659,7 +1649,7 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         mrgddb_fw = Firework(MergeDdbAbinitTask(ddb_source_task_types=strain_task_types,
                                                 num_ddbs=num_ddbs_to_be_merged,
                                                 delete_source_ddbs=True,
-                                                task_type= self.mrgddb_task_type),
+                                                task_type=self.mrgddb_task_type),
                              spec=mrgddb_spec, name='mrgddb-strains')
         total_list_fws.append(mrgddb_fw)
         #Adding the dependencies
@@ -1700,11 +1690,10 @@ class GeneratePiezoElasticFlowFWSRCAbinitTask(FireTaskBase):
         return ftm
 
 
-
-
 ####################
 # Exceptions
 ####################
+
 
 class HelperError(Exception):
     pass
@@ -1728,6 +1717,7 @@ class PostProcessError(Exception):
 ##############################
 # Other objects
 ##############################
+
 
 class RestartInfo(MSONable):
     """
@@ -1754,13 +1744,11 @@ class RestartInfo(MSONable):
         return Directory(os.path.join(self.previous_dir, INDIR_NAME))
 
 
-
 #@deprecated(message="AbinitOutNcFile is deprecated, use abipy.abio.outputs.OutNcFile")
 class _AbinitOutNcFile(NetcdfReader):
     """
     Class representing the _OUT.nc file.
     """
-
     def get_vars(self, vars, strict=False):
         # TODO: add a check on the variable names ?
         default = NO_DEFAULT if strict else None

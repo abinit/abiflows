@@ -2,8 +2,6 @@
 """
 Utility tasks for Fireworks.
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import copy
 import os
 import shutil
@@ -11,6 +9,7 @@ import logging
 import traceback
 import importlib
 import json
+import yaml
 
 from monty.json import jsanitize
 from monty.json import MontyDecoder
@@ -124,7 +123,7 @@ class FinalCleanUpTask(FireTaskBase):
                         elif os.path.islink(fp):
                             os.unlink(fp)
                         deleted_files.append(fp)
-                    except:
+                    except Exception:
                         logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
 
         return deleted_files
@@ -311,7 +310,7 @@ class CheckMemoryTask(FireTaskBase):
     #             qout_info = f.read()
     #
     #     if qerr_info or qout_info:
-    #         from pymatgen.io.abinit.scheduler_error_parsers import get_parser
+    #         from abipt.flowtkscheduler_error_parsers import get_parser
     #         qtk_qadapter = fizzled_fw.spec['qtk_queueadapter']
     #         qtype = qtk_qadapter.QTYPE
     #         scheduler_parser = get_parser(qtype, err_file=qerr_file,
@@ -387,7 +386,7 @@ class CheckTask(FireTaskBase):
     optional_params = ['handlers', 'validators']
 
     def __init__(self, handlers=None, validators=None, max_restarts=10):
-        #super(CheckTask).__init__(self)
+        #super().__init__(self)
         self.handlers = handlers
         # Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)
         if self.handlers is not None:
@@ -564,6 +563,7 @@ class CheckTask(FireTaskBase):
 
 def print_myself():
     print('myself')
+
 
 def get_fw_task_manager(fw_spec):
     if 'ftm_file' in fw_spec:

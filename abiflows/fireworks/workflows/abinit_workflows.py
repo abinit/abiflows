@@ -2,8 +2,6 @@
 """
 Generators of Firework workflows
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import logging
 import sys
 import abc
@@ -105,7 +103,7 @@ class AbstractFWWorkflow(Workflow):
             The spec with the _queueadapter parameters set.
         """
         if spec is None:
-                spec = {}
+            spec = {}
         spec = dict(spec)
 
         qadapter_spec = get_short_single_core_spec(master_mem_overhead=master_mem_overhead)
@@ -279,7 +277,7 @@ class AbstractFWWorkflow(Workflow):
     def add_metadata(self, structure=None, additional_metadata=None):
         if additional_metadata is None:
             additional_metadata = {}
-        metadata = dict(wf_type = self.__class__.__name__)
+        metadata = dict(wf_type=self.__class__.__name__)
         if structure:
             composition = structure.composition
             metadata['nsites'] = len(structure)
@@ -411,11 +409,11 @@ class ScfFWWorkflow(AbstractFWWorkflow):
         """
 
         if extra_abivars is None:
-                extra_abivars = {}
+            extra_abivars = {}
         if decorators is None:
-                decorators = []
+            decorators = []
         if spec is None:
-                spec = {}
+            spec = {}
         if initialization_info is None:
             initialization_info = {}
 
@@ -460,11 +458,11 @@ class ScfFWWorkflowSRC(AbstractFWWorkflow):
                      shift_mode="Monkhorst-Pack", extra_abivars=None, decorators=None, autoparal=False, spec=None,
                      initialization_info=None, pass_input=False):
         if extra_abivars is None:
-                extra_abivars = {}
+            extra_abivars = {}
         if decorators is None:
-                decorators = []
+            decorators = []
         if spec is None:
-                spec = {}
+            spec = {}
         if initialization_info is None:
             initialization_info = {}
 
@@ -548,7 +546,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         for fw_id, fw in wf.id_fw.items():
             if 'wf_task_index' in fw.spec and fw.spec['wf_task_index'][:8] == 'ioncell_':
                 try:
-                    this_ioncell =  int(fw.spec['wf_task_index'].split('_')[-1])
+                    this_ioncell = int(fw.spec['wf_task_index'].split('_')[-1])
                 except ValueError:
                     # skip if the index is not an int
                     continue
@@ -600,12 +598,14 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         assert wf.metadata['workflow_class'] == cls.workflow_class
         assert wf.metadata['workflow_module'] == cls.workflow_module
 
-        ioncell_fws = [fw for fw in wf.fws if fw.spec.get('wf_task_index', '').startswith('ioncell_') and not fw.spec.get('wf_task_index', '').endswith('autoparal')]
+        ioncell_fws = [fw for fw in wf.fws if fw.spec.get('wf_task_index', '').startswith('ioncell_')
+                       and not fw.spec.get('wf_task_index', '').endswith('autoparal')]
         ioncell_fws.sort(key=lambda l: int(l.spec.get('wf_task_index', '0').split('_')[-1]))
         last_ioncell_fw = ioncell_fws[-1]
         last_ioncell_launch = get_last_completed_launch(last_ioncell_fw)
 
-        ion_fws = [fw for fw in wf.fws if fw.spec.get('wf_task_index', '').startswith('ion_') and not fw.spec.get('wf_task_index', '').endswith('autoparal')]
+        ion_fws = [fw for fw in wf.fws if fw.spec.get('wf_task_index', '').startswith('ion_')
+                   and not fw.spec.get('wf_task_index', '').endswith('autoparal')]
         ion_fws.sort(key=lambda l: int(l.spec.get('wf_task_index', '0').split('_')[-1]))
         if ion_fws:
             first_fw = ion_fws[0]
@@ -638,7 +638,8 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         document.mp_id = initialization_info.get('mp_id', None)
         document.custom = initialization_info.get("custom", None)
 
-        document.abinit_input.pseudopotentials.set_pseudos_from_files_file(relax_task.files_file.path, len(structure.composition.elements))
+        document.abinit_input.pseudopotentials.set_pseudos_from_files_file(relax_task.files_file.path,
+                                                                           len(structure.composition.elements))
 
         document.time_report = get_time_report_for_wf(wf).as_dict()
 
@@ -689,15 +690,14 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         Creates an instance of RelaxFWWorkflow using the ion_ioncell_relax_input factory function. See the description
         of the factory for the definition of the arguments.
         """
-
         if extra_abivars is None:
-                extra_abivars = {}
+            extra_abivars = {}
         if decorators is None:
-                decorators = []
+            decorators = []
         if spec is None:
-                spec = {}
+            spec = {}
         if initialization_info is None:
-                initialization_info = {}
+            initialization_info = {}
         ion_ioncell_input = ion_ioncell_relax_input(structure=structure, pseudos=pseudos, kppa=kppa, nband=nband, ecut=ecut,
                                                     pawecutdg=pawecutdg, accuracy=accuracy, spin_mode=spin_mode,
                                                     smearing=smearing, charge=charge, scf_algorithm=scf_algorithm,
@@ -724,9 +724,9 @@ class RelaxFWWorkflowSRC(AbstractFWWorkflow):
 
     def __init__(self, ion_input, ioncell_input, spec=None, initialization_info=None, additional_controllers=None):
         if spec is None:
-                spec = {}
+            spec = {}
         if initialization_info is None:
-                initialization_info = {}
+            initialization_info = {}
 
         fws = []
         links_dict = {}
@@ -960,7 +960,6 @@ class NscfFWWorkflowSRC(AbstractFWWorkflow):
         fws.extend(scf_fws['fws'])
         links_dict_update(links_dict=links_dict, links_update=scf_fws['links_dict'])
 
-
         # Non self-consistent calculation
         nscf_helper = NscfTaskHelper()
         nscf_controllers = [AbinitController.from_helper(nscf_helper)]
@@ -1054,7 +1053,8 @@ class HybridOneShotFWWorkflow(AbstractFWWorkflow):
         if spec is None:
             spec = {}
         if initialization_info is None:
-                initialization_info = {}
+            initialization_info = {}
+
         scf_fact = ScfFactory(structure=structure, pseudos=pseudos, kppa=kppa, ecut=ecut, pawecutdg=pawecutdg,
                               nband=nband, accuracy=accuracy, spin_mode=spin_mode, smearing=smearing, charge=charge,
                               scf_algorithm=scf_algorithm, shift_mode=shift_mode, extra_abivars=extra_abivars,
@@ -1106,7 +1106,6 @@ class PhononFWWorkflow(AbstractFWWorkflow):
             start_task_index = 'autoparal'
 
         spec['wf_task_index'] = 'scf_' + str(start_task_index)
-
 
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
@@ -1443,12 +1442,9 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
 
         spec['wf_task_index'] = 'scf_' + str(start_task_index)
 
-
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
-
         # Generate the phononic part of the workflow
-
         # Since everything is being generated here factories should be used to generate the AbinitInput
         if isinstance(scf_inp, InputFactory):
             scf_inp = scf_inp.build_input()
@@ -1471,7 +1467,7 @@ class PhononFullFWWorkflow(PhononFWWorkflow):
 
         nscf_fws = []
         if nscf_inputs is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inputs, NscfWfqFWTask,
+            nscf_fws, nscf_fw_deps = self.get_fws(nscf_inputs, NscfWfqFWTask,
                                                  {previous_task_type: "DEN"}, spec)
 
         ph_fws = []
@@ -1691,7 +1687,6 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
         spec['wf_task_index'] = 'scf_' + str(start_task_index)
 
-
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
         self.ph_fws = []
@@ -1754,7 +1749,6 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
         self.wf = Workflow(total_list_fws, fws_deps,
                            metadata={'workflow_class': self.workflow_class, 'workflow_module': self.workflow_module})
-
 
     def get_fws(self, multi_inp, task_class, deps, spec):
         """
@@ -2101,7 +2095,7 @@ class DteFWWorkflow(AbstractFWWorkflow):
                 for i in dchidt:
                     dd = []
                     for j in i:
-                       dd.append(j.tolist())
+                        dd.append(j.tolist())
                     dchidt_list.append(dd)
                 document.abinit_output.dchidt = dchidt_list
 
@@ -2417,7 +2411,6 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
     workflow_class = 'PiezoElasticFWWorkflowSRC'
     workflow_module = 'abiflows.fireworks.workflows.abinit_workflows'
 
-
     def __init__(self, scf_inp_ibz, ddk_inp, rf_inp, spec=None, initialization_info=None,
                  ddk_split=False, rf_split=False, additional_controllers=None, additional_input_vars=None,
                  allow_parallel_perturbations=True, do_ddk=True, do_phonons=True):
@@ -2650,12 +2643,10 @@ class PiezoElasticFWWorkflowSRC(AbstractFWWorkflow):
         raise NotImplementedError('from factory method not yet implemented for piezoelasticworkflow')
 
 
-
 class DfptFWWorkflow(AbstractFWWorkflow):
     """
     Generator of a fireworks workflow for the calculation of various properties with DFPT.
     Parallelization over all the perturbations.
-
     N.B. Currently (version 8.8.3) anaddb does not support a DDB containing both 2nd order derivatives with qpoints
     different from gamma AND 3rd order derivatives. The calculations could be run, but the global DDB will not
     be directly usable as is in anaddb.
@@ -2686,13 +2677,11 @@ class DfptFWWorkflow(AbstractFWWorkflow):
         if dde_inp is not None and ddk_inp is None:
             raise ValueError("DDE calculations require the DDK")
 
-
         spec = spec or {}
         initialization_info = initialization_info or {}
         start_task_index = 1
 
         rf = self.get_reduced_formula(scf_inp)
-
         scf_task = ScfFWTask(scf_inp, is_autoparal=autoparal)
 
         spec = dict(spec)
@@ -2703,15 +2692,14 @@ class DfptFWWorkflow(AbstractFWWorkflow):
 
         spec['wf_task_index'] = 'scf_' + str(start_task_index)
 
-
         self.scf_fw = Firework(scf_task, spec=spec, name=rf+"_"+scf_task.task_type)
 
         previous_task_type = scf_task.task_type
 
         nscf_fws = []
         if nscf_inp is not None:
-            nscf_fws, nscf_fw_deps= self.get_fws(nscf_inp, NscfWfqFWTask,
-                                                 {previous_task_type: "DEN"}, spec)
+            nscf_fws, nscf_fw_deps = self.get_fws(nscf_inp, NscfWfqFWTask,
+                                                  {previous_task_type: "DEN"}, spec)
 
         self.has_gamma = False
 
@@ -2953,7 +2941,6 @@ class DfptFWWorkflow(AbstractFWWorkflow):
         if 'kppa' not in initialization_info:
             initialization_info['kppa'] = kppa
 
-
         scf_inp = scf_for_phonons(structure=structure, pseudos=pseudos, kppa=kppa, ecut=ecut, pawecutdg=pawecutdg,
                                   nband=nband, accuracy=accuracy, spin_mode=spin_mode, smearing=smearing,
                                   charge=charge, scf_algorithm=scf_algorithm, shift_mode=shift_mode)
@@ -3119,7 +3106,6 @@ class DfptFWWorkflow(AbstractFWWorkflow):
                     dte_index = current_index
                     dte_fw = fw
 
-
         scf_launch = get_last_completed_launch(scf_fw)
         with open(os.path.join(scf_launch.launch_dir, 'history.json'), "rt") as fh:
             scf_history = json.load(fh, cls=MontyDecoder)
@@ -3217,7 +3203,7 @@ class DfptFWWorkflow(AbstractFWWorkflow):
 
     def add_anaddb_dfpt_fw(self, structure, ph_ngqpt=None, ndivsm=20, nqsmall=15, qppa=None, line_density=None):
         """
-        Appends a Firework with a task for the calculation of various properties obtained from the  with anaddb.
+        Appends a Firework with a task for the calculation of various properties with anaddb.
 
         Notice that in the current abinit version, the presence of the third order derivatives is incompatible with
         the presence q-points different from gamma in the DDB and first order derivative. Anaddb calculation can

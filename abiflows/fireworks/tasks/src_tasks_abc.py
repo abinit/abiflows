@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import abc
 import copy
 import inspect
@@ -28,6 +26,7 @@ from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec, get
 RESTART_FROM_SCRATCH = ControllerNote.RESTART_FROM_SCRATCH
 RESET_RESTART = ControllerNote.RESET_RESTART
 SIMPLE_RESTART = ControllerNote.SIMPLE_RESTART
+
 
 class SRCTaskMixin(object):
 
@@ -364,7 +363,7 @@ class ControlTask(SRCTaskMixin, FireTaskBase):
         # even multiple tasks is not yet supported ... should it be ? or should we stay with only one task allways ?)
         # If it is modified, it should update the corresponding bit (setup_spec and/or run_spec and/or
         # setup_task and/or run_task)
-        initial_objects_info = self.get_initial_objects_info(setup_fw=self.setup_fw, run_fw= self.run_fw,
+        initial_objects_info = self.get_initial_objects_info(setup_fw=self.setup_fw, run_fw=self.run_fw,
                                                              src_directories=self.src_directories)
         qerr_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qerr')
         qout_filepath = os.path.join(self.run_fw.launches[-1].launch_dir, 'queue.qout')
@@ -677,7 +676,7 @@ class SRCCleanerOptions(MSONable):
             self._which_src_steps_to_clean = which_src_steps_to_clean
             self._which_src_steps_to_clean_pattern = 'single_N'
         elif (len(which_src_steps_to_clean) > 29 and which_src_steps_to_clean[:15] == 'all_before_the_' and
-                  which_src_steps_to_clean[-14:] == '_previous_ones'):
+              which_src_steps_to_clean[-14:] == '_previous_ones'):
             sp = which_src_steps_to_clean.split('_')
             if len(sp) != 6:
                 raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "all_before_the_", '
@@ -696,7 +695,7 @@ class SRCCleanerOptions(MSONable):
             self._which_src_steps_to_clean = which_src_steps_to_clean
             self._which_src_steps_to_clean_pattern = 'all_before_the_N_previous_ones'
         elif (len(which_src_steps_to_clean) > 33 and which_src_steps_to_clean[:19] == 'the_one_before_the_' and
-                  which_src_steps_to_clean[-14:] == '_previous_ones'):
+              which_src_steps_to_clean[-14:] == '_previous_ones'):
             sp = which_src_steps_to_clean.split('_')
             if len(sp) != 7:
                 raise ValueError('Argument "which_src_steps_to_clean" is "{}". It starts with "the_one_before_the_", '
@@ -949,7 +948,7 @@ class SRCTaskIndex(MSONable):
             try:
                 myindex = int(index)
                 self._index = myindex
-            except:
+            except Exception:
                 raise ValueError('Index in SRCTaskIndex should be an integer or a string '
                                  'that can be cast into an integer')
         else:
@@ -1020,7 +1019,6 @@ class SRCTaskIndex(MSONable):
                 '@module': self.__class__.__module__,
                 'task_type': self.task_type,
                 'index': self.index}
-
 
 
 def get_queue_adapter_update(qtk_queueadapter, corrections, qa_params=None):
@@ -1112,11 +1110,12 @@ class FWTime(MSONable):
         return cls(fw_name=name, fw_id=fw_id,
                    ncpus=ncpus, fwtime_secs=fwtime_secs, clustertime_secs=clustertime_secs)
 
+
 class SRCFWTime(FWTime):
     def __init__(self, fw_name, fw_id, ncpus, fwtime_secs, clustertime_secs=None,
                  src_type=None, task_type=None, task_index=None):
-        super(SRCFWTime, self).__init__(fw_name=fw_name, fw_id=fw_id, ncpus=ncpus,
-                                        fwtime_secs=fwtime_secs, clustertime_secs=clustertime_secs)
+        super().__init__(fw_name=fw_name, fw_id=fw_id, ncpus=ncpus,
+                         fwtime_secs=fwtime_secs, clustertime_secs=clustertime_secs)
         self.src_type = src_type
         self.task_type = task_type
         self.task_index = task_index

@@ -3,8 +3,6 @@
 List of mixins to provide standard interfaces with the result databases.
 Most of them should still be considered as examples.
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 from monty.dev import deprecated
 from mongoengine import *
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -148,7 +146,7 @@ class HubbardsField(DictField):
             self.error('Keys should be element symbols')
         if not all(isinstance(v, (float, int)) for v in value.values()):
             self.error('Values should be numbers')
-        super(DictField, self).validate(value)
+        super().validate(value)
 
 
 class HubbardMixin(object):

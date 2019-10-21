@@ -2,8 +2,6 @@
 """
 Controllers
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import copy
 import logging
 import os
@@ -29,6 +27,7 @@ from abiflows.core.mastermind_abc import PRIORITY_LOWEST
 
 logger = logging.getLogger(__name__)
 
+
 class AbinitController(Controller):
     """
     General handler for abinit's events.
@@ -50,7 +49,7 @@ class AbinitController(Controller):
             critical_events: List of events that trigger a restart due to unconverged calculation
             handlers: List of ErrorHandlers (pymatgen.io.abinit.events) used to handle specific events
         """
-        super(AbinitController, self).__init__()
+        super().__init__()
 
         critical_events = [] if critical_events is None else critical_events
         handlers = [] if handlers is None else handlers
@@ -145,8 +144,8 @@ class AbinitController(Controller):
                     note.state = ControllerNote.EVERYTHING_OK
                     note.is_valid = True
             elif report.errors:
-            # Abinit reported problems
-            # Check if the errors could be handled
+                # Abinit reported problems
+                # Check if the errors could be handled
                 logger.debug('Found errors in report')
                 # for error in report.errors:
                 #     logger.debug(str(error))
@@ -180,12 +179,12 @@ class AbinitController(Controller):
                     note.add_problem(err)
 
             else:
-            # Calculation not completed but no errors. No fix could be applied in this controller
+                # Calculation not completed but no errors. No fix could be applied in this controller
                 note.state = ControllerNote.ERROR_UNRECOVERABLE
                 note.add_problem('Abinit calculation not completed but no errors in report.')
 
         else:
-        # report does not exist. No fix could be applied in this controller
+            # report does not exist. No fix could be applied in this controller
             note.state = ControllerNote.NOTHING_FOUND
             note.add_problem('No Abinit report')
 
@@ -386,7 +385,7 @@ class WalltimeController(Controller, QueueControllerMixin):
             max_timelimit: Maximum timelimit (in seconds).
             timelimit_increase: Amount of time (in seconds) to increase the timelimit.
         """
-        super(WalltimeController, self).__init__()
+        super().__init__()
         self.max_timelimit = max_timelimit
         self.timelimit_increase = timelimit_increase
         self.priority = PRIORITY_VERY_LOW
@@ -485,8 +484,8 @@ class MemoryController(Controller, QueueControllerMixin):
 #                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):
 
     def __init__(self, max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
-                       max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
-                       memory_policy='physical_memory'):
+                 max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
+                 memory_policy='physical_memory'):
         """
         Initializes the handler with the directory where the job was run, the standard output and error files
         of the queue manager and the queue adapter used.
@@ -500,7 +499,7 @@ class MemoryController(Controller, QueueControllerMixin):
             memory_policy: Policy for the memory (some weird clusters sometimes use the virtual memory to stop jobs
                            that overcome some virtual memory limit)
         """
-        super(MemoryController, self).__init__()
+        super().__init__()
         self.max_mem_per_proc_mb = max_mem_per_proc_mb
         self.mem_per_proc_increase_mb = mem_per_proc_increase_mb
         self.max_master_mem_overhead_mb = max_master_mem_overhead_mb
@@ -631,7 +630,7 @@ class AbinitZenobeSlaveMemoryController(Controller, QueueControllerMixin):
 #                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):
 
     def __init__(self, max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
-                       memory_policy='physical_memory'):
+                 memory_policy='physical_memory'):
         """
         Initializes the handler with the directory where the job was run, the standard output and error files
         of the queue manager and the queue adapter used.
@@ -642,7 +641,7 @@ class AbinitZenobeSlaveMemoryController(Controller, QueueControllerMixin):
             memory_policy: Policy for the memory (some weird clusters sometimes use the virtual memory to stop jobs
                            that overcome some virtual memory limit)
         """
-        super(AbinitZenobeSlaveMemoryController, self).__init__()
+        super().__init__()
         self.max_mem_per_proc_mb = max_mem_per_proc_mb
         self.mem_per_proc_increase_mb = mem_per_proc_increase_mb
         self.memory_policy = memory_policy
@@ -753,7 +752,6 @@ class AbinitZenobeSlaveMemoryController(Controller, QueueControllerMixin):
         note.reset_restart()
         return note
 
-
     # def process(self, **kwargs):
     #     # Create the Controller Note
     #     note = ControllerNote(controller=self)
@@ -848,8 +846,8 @@ class UltimateMemoryController(Controller, QueueControllerMixin):
 #                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):
 
     def __init__(self, max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,
-                       max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
-                       memory_policy='physical_memory'):
+                 max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000,
+                 memory_policy='physical_memory'):
         """
         Initializes the handler with the directory where the job was run, the standard output and error files
         of the queue manager and the queue adapter used.
@@ -863,7 +861,7 @@ class UltimateMemoryController(Controller, QueueControllerMixin):
             memory_policy: Policy for the memory (some weird clusters sometimes use the virtual memory to stop jobs
                            that overcome some virtual memory limit)
         """
-        super(UltimateMemoryController, self).__init__()
+        super().__init__()
         self.max_mem_per_proc_mb = max_mem_per_proc_mb
         self.mem_per_proc_increase_mb = mem_per_proc_increase_mb
         self.max_master_mem_overhead_mb = max_master_mem_overhead_mb
@@ -954,7 +952,7 @@ class SimpleValidatorController(Controller):
     _controlled_item_types = [ControlledItemType.task_completed()]
 
     def __init__(self):
-        super(SimpleValidatorController, self).__init__()
+        super().__init__()
         self.priority = PRIORITY_LOWEST
 
     def as_dict(self):
@@ -993,7 +991,7 @@ class VaspXMLValidatorController(Controller):
     _controlled_item_types = [ControlledItemType.task_completed()]
 
     def __init__(self):
-        super(VaspXMLValidatorController, self).__init__()
+        super().__init__()
         self.priority = PRIORITY_LOWEST
 
     def as_dict(self):
@@ -1022,7 +1020,7 @@ class VaspXMLValidatorController(Controller):
         note.is_valid = True
         try:
             Vasprun(vasprun_xml_file)
-        except:
+        except Exception:
             note.state = ControllerNote.ERROR_NOFIX
             note.is_valid = False
         return note
@@ -1030,6 +1028,7 @@ class VaspXMLValidatorController(Controller):
     @property
     def validated(self):
         return True
+
 
 class VaspNEBValidatorController(Controller):
     """
@@ -1039,7 +1038,7 @@ class VaspNEBValidatorController(Controller):
     _controlled_item_types = [ControlledItemType.task_completed()]
 
     def __init__(self):
-        super(VaspNEBValidatorController, self).__init__()
+        super().__init__()
         self.priority = PRIORITY_LOWEST
 
     def as_dict(self):
@@ -1078,7 +1077,7 @@ class VaspNEBValidatorController(Controller):
                          kwargs['additional_vasp_wf_info']['terminal_end_run_dir'])
         try:
             NEBAnalysis.from_dir(run_dir, relaxation_dirs=terminal_dirs)
-        except:
+        except Exception:
             note.state = ControllerNote.ERROR_NOFIX
             note.is_valid = False
         return note
@@ -1102,7 +1101,7 @@ class VaspNEBValidatorController(Controller):
 #         Args:
 #             job_rundir: Directory where the job was run.
 #         """
-#         super(AbinitHandler, self).__init__()
+#         super().__init__()
 #         self.job_rundir = job_rundir
 #         self.critical_events = critical_events
 #
@@ -1205,7 +1204,7 @@ class VaspNEBValidatorController(Controller):
 #             max_timelimit: Maximum timelimit (in seconds) allowed by the resource manager for the queue.
 #             timelimit_increase: Amount of time (in seconds) to increase the timelimit.
 #         """
-#         super(WalltimeHandler, self).__init__()
+#         super().__init__()
 #         self.job_rundir = job_rundir
 #         self.qout_file = qout_file
 #         self.qerr_file = qerr_file
@@ -1362,7 +1361,7 @@ class VaspNEBValidatorController(Controller):
 #             master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process
 #                                              in megabytes.
 #         """
-#         super(MemoryHandler, self).__init__()
+#         super().__init__()
 #         self.job_rundir = job_rundir
 #         self.qout_file = qout_file
 #         self.qerr_file = qerr_file
@@ -1523,14 +1522,14 @@ class VaspNEBValidatorController(Controller):
 #             master_mem_overhead_increase_mb: Amount of memory to increase the overhead memory for the master process
 #                                              in megabytes.
 #         """
-#         super(UltimateMemoryHandler, self).__init__()
+#         super().__init__()
 #
 #     @property
 #     def handler_priority(self):
 #         return self.PRIORITY_LAST
 #
 #     def check(self):
-#         mem_check = super(UltimateMemoryHandler, self).check()
+#         mem_check = super().check()
 #         if mem_check:
 #             raise ValueError('This error should have been caught by a standard MemoryHandler ...')
 #         #TODO: Do we have some check that we can do here ?

@@ -6,8 +6,6 @@ This single module should provide all the common functionality for abiflows test
 in a single location, so that test scripts can just import it and work right away.
 This module heavily depends on the abipy.testing module/
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import os
 import numpy
 import subprocess
@@ -42,33 +40,33 @@ TESTDB_NAME = "abiflows_unittest"
 
 
 def has_mongodb(host='localhost', port=27017, name='mongodb_test', username=None, password=None):
-   try:
-       from pymongo import MongoClient
-       connection = MongoClient(host, port, j=True)
-       db = connection[name]
-       if username:
-           db.authenticate(username, password)
+    try:
+        from pymongo import MongoClient
+        connection = MongoClient(host, port, j=True)
+        db = connection[name]
+        if username:
+            db.authenticate(username, password)
 
-       return True
-   except:
-       return False
+        return True
+    except Exception:
+        return False
 
 
 def has_fireworks():
-   """True if fireworks is installed."""
-   try:
-       import fireworks
-       return True
-   except ImportError:
-       return False
+    """True if fireworks is installed."""
+    try:
+        import fireworks
+        return True
+    except ImportError:
+        return False
 
 
 class AbiflowsTest(AbipyTest):
     """Extends AbipyTest with methods specific for the testing of workflows"""
 
     def assertFwSerializable(self, obj):
-       assert '_fw_name' in obj.to_dict()
-       self.assertDictEqual(obj.to_dict(), obj.__class__.from_dict(obj.to_dict()).to_dict())
+        assert '_fw_name' in obj.to_dict()
+        self.assertDictEqual(obj.to_dict(), obj.__class__.from_dict(obj.to_dict()).to_dict())
 
     @classmethod
     def setup_fireworks(cls):
@@ -81,7 +79,7 @@ class AbiflowsTest(AbipyTest):
         try:
             cls.lp = LaunchPad(name=TESTDB_NAME, strm_lvl='ERROR')
             cls.lp.reset(password=None, require_password=False)
-        except:
+        except Exception:
             cls.lp = None
 
     @classmethod
@@ -102,7 +100,7 @@ class AbiflowsTest(AbipyTest):
             cls._connection = connect(db=TESTDB_NAME)
             cls._connection.drop_database(TESTDB_NAME)
             cls.db = get_db()
-        except:
+        except Exception:
             cls.db = None
             cls._connection = None
 
@@ -110,7 +108,6 @@ class AbiflowsTest(AbipyTest):
     def teardown_mongoengine(cls):
         if cls._connection:
             cls._connection.drop_database(TESTDB_NAME)
-
 
     def get_document_class_from_mixin(self, mixin_cls):
         """

@@ -1,7 +1,5 @@
 # coding: utf-8
 """Release data for the abiflows project."""
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 from collections import OrderedDict
 
 # Name of the package for release purposes.  This is the name which labels
@@ -52,9 +50,8 @@ url = "https://github.com/abinit/abiflows"
 download_url = "https://github.com/abinit/abiflows"
 platforms = ['Linux', 'darwin']
 keywords = ["ABINIT", "ab-initio", "density-function-theory", "first-principles", "electronic-structure", "pymatgen"]
-classifiers=[
-    "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.7",
+
+classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",

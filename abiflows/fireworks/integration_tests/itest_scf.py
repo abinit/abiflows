@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import pytest
 import os
 import glob
@@ -12,10 +10,10 @@ from abiflows.fireworks.utils.fw_utils import load_abitask, get_fw_by_task_index
 from abiflows.core.testing import AbiflowsIntegrationTest
 
 
-ABINIT_VERSION = "8.6.1"
+#ABINIT_VERSION = "8.6.1"
 
 # pytestmark = [pytest.mark.skipif(not has_abinit(ABINIT_VERSION), reason="Abinit version {} is not in PATH".format(ABINIT_VERSION)),
-#               pytest.mark.skipif(not has_fireworks(), reason="fireworks paackage is missing"),
+#               pytest.mark.skipif(not has_fireworks(), reason="fireworks package is missing"),
 #               pytest.mark.skipif(not has_mongodb(), reason="no connection to mongodb")]
 
 pytestmark = pytest.mark.usefixtures("cleandb")
@@ -49,7 +47,6 @@ class ItestScf(AbiflowsIntegrationTest):
 
             with task.open_gsr() as gsr:
                 assert gsr.energy == pytest.approx(-241.239839134, rel=0.05)
-
 
     def itest_scf_wf(self, lp, fworker, tmpdir, input_scf_si_low, use_autoparal):
         """
@@ -135,7 +132,6 @@ class ItestScf(AbiflowsIntegrationTest):
 
             with task.open_gsr() as gsr:
                 assert gsr.energy == pytest.approx(-241.239839133, rel=0.05)
-
 
     def itest_not_converged_fizzled(self, lp, fworker, tmpdir, input_scf_si_low):
         """

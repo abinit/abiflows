@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import copy
 import logging
 import os
@@ -76,7 +74,7 @@ class VaspSetupTask(VaspSRCMixin, SetupTask):
         self.ftm = self.get_fw_task_manager(fw_spec)
         if 'previous_src' in fw_spec:
             self.prev_outdir = Directory(fw_spec['previous_src']['src_directories']['run_dir'])
-        return super(VaspSetupTask, self).run_task(fw_spec)
+        return super().run_task(fw_spec)
 
     def setup_run_parameters(self, fw_spec, parameters=RUN_PARAMETERS):
         ftm = self.get_fw_task_manager(fw_spec=fw_spec)

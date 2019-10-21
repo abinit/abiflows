@@ -1,5 +1,3 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import json
 import os
 
@@ -64,6 +62,7 @@ class Cut3DInput(object):
             all_el_dens_paths.append(os.path.join(fhi_all_el_path), "0.{}-{}.8.density.AE")
 
         return cls.hirshfeld(density_file_path, all_el_dens_paths)
+
 
 def unprime_nband(nband, number_of_primes=10):
     allowed_nbands = []

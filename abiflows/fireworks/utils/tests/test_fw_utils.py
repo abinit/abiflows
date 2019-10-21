@@ -26,7 +26,7 @@ class TestFWTaskManager(AbiflowsTest):
 
     def test_abipy_manager_from_file(self):
         with open(os.path.join(test_dir, "fw_manager_ok.yaml"), "rt") as fh:
-            conf = yaml.load(fh)
+            conf = yaml.safe_load(fh)
         conf['fw_policy']['abipy_manager'] = os.path.join(test_dir, "manager_ok.yml")
         ftm = FWTaskManager(**conf)
 
@@ -83,7 +83,7 @@ class TestFunctions(AbiflowsTest):
         cls.setup_fireworks()
         ftm_path = os.path.join(test_dir, "fw_manager_ok.yaml")
         with open(ftm_path, "rt") as fh:
-            conf = yaml.load(fh)
+            conf = yaml.safe_load(fh)
         conf['fw_policy']['abipy_manager'] = os.path.join(test_dir, "manager_ok.yml")
         cls.ftm = FWTaskManager(**conf)
 

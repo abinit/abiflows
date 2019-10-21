@@ -1,10 +1,9 @@
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 from abiflows.database.mongoengine.mixins import MaterialMixin, DateMixin, DirectoryMixin, CustomFieldMixin
-from abiflows.database.mongoengine.abinit_mixins import AbinitPhononOutputMixin, AbinitBasicInputMixin, \
+from abiflows.database.mongoengine.abinit_mixins import AbinitBasicInputMixin, \
     AbinitGSOutputMixin, AbinitPhononOutputMixin, AbinitDftpOutputMixin
 from mongoengine import *
 from abiflows.core.models import AbiFileField, MSONField, AbiGzipFileField
+
 
 class RelaxAbinitInput(AbinitBasicInputMixin, EmbeddedDocument):
     """
@@ -26,9 +25,9 @@ class RelaxAbinitOutput(AbinitGSOutputMixin, EmbeddedDocument):
     .. inheritance-diagram:: RelaxAbinitOutput
     """
 
-    hist_files =  DictField(field=AbiFileField(abiext="HIST.nc", abiform="b", collection_name='relax_hist_fs'),
-                            help_text="Series of HIST files produced during the relaxation. Keys should provide the type"
-                                      " of relaxation (ion, ioncell) and the ordering", db_field='relax_hist_files_ids')
+    hist_files = DictField(field=AbiFileField(abiext="HIST.nc", abiform="b", collection_name='relax_hist_fs'),
+                           help_text="Series of HIST files produced during the relaxation. Keys should provide the type"
+                                     " of relaxation (ion, ioncell) and the ordering", db_field='relax_hist_files_ids')
     outfile_ioncell = AbiGzipFileField(abiext="abo", abiform="t", db_field='outfile_ioncell_id',
                                        collection_name='relax_outfile_fs')
 
@@ -78,7 +77,7 @@ class PhononAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
 
     gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
                           db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
-    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
+    gs_outfile = AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
                                  collection_name='phonon_gs_outfile_fs')
 
 
@@ -128,14 +127,14 @@ class DteAbinitOutput(AbinitDftpOutputMixin, EmbeddedDocument):
 
     gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
                           db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
-    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
-                                 collection_name='phonon_gs_outfile_fs')
+    gs_outfile = AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
+                                  collection_name='phonon_gs_outfile_fs')
     anaddb_nc = AbiFileField(abiext="anaddb.nc", abiform="b", db_field='anaddb_nc_id', collection_name='anaddb_nc_fs')
 
     epsinf = ListField(ListField(FloatField()), help_text="Macroscopic dielectric tensor")
     eps0 = ListField(ListField(FloatField()), help_text="Relaxed ion Macroscopic dielectric tensor")
-    dchide= ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
-    dchidt= ListField(ListField(ListField(ListField(FloatField()))),
+    dchide = ListField(ListField(ListField(FloatField())), help_text="Non-linear optical susceptibilities tensor")
+    dchidt = ListField(ListField(ListField(ListField(FloatField()))),
                       help_text="First-order change in the linear dielectric susceptibility")
 
 
@@ -188,7 +187,7 @@ class DfptAbinitOutput(AbinitPhononOutputMixin, EmbeddedDocument):
 
     gs_gsr = AbiFileField(abiext="GSR.nc", abiform="b", help_text="Gsr file produced by the Ground state calculation",
                           db_field='gs_gsr_id', collection_name='phonon_gs_gsr_fs')
-    gs_outfile= AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
+    gs_outfile = AbiGzipFileField(abiext="abo", abiform="t", db_field='gs_outfile_id',
                                  collection_name='phonon_gs_outfile_fs')
 
 

@@ -3,8 +3,6 @@
 Abstract base classes for controllers, monitors, and other possible tools/utils/objects used to manage, correct,
 monitor and check tasks, events, results, objects, ...
 """
-from __future__ import print_function, division, unicode_literals, absolute_import
-
 import abc
 import fnmatch
 import logging
@@ -217,10 +215,10 @@ class ControlledItemType(MSONable):
                 'item_type': self._item_type}
 
 
-
 @add_metaclass(abc.ABCMeta)
 class Monitor:
     pass
+
 
 @add_metaclass(abc.ABCMeta)
 #class ControlStep(MSONable):
@@ -351,7 +349,7 @@ class Cleaner(MSONable):
                                     shutil.rmtree(fp)
                                 deleted_files.append(fp)
                                 break
-                            except:
+                            except Exception:
                                 logger.warning("Couldn't delete {}: {}".format(fp, traceback.format_exc()))
         pass
 
@@ -381,6 +379,7 @@ class Manager(MSONable):
     @abc.abstractmethod
     def manage(self):
         pass
+
 
 # class ControllerStatement(MSONable):
 # class ControllerAccount(MSONable):
@@ -571,7 +570,7 @@ class ControlReport(MSONable):
         elif any([cn.state == ControllerNote.ERROR_UNRECOVERABLE for cn in self.controller_notes]):
             self.state = self.UNRECOVERABLE
         elif (len([cn for cn in self.controller_notes if cn.controller.can_validate]) and
-                  all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate])):
+              all([cn.is_valid for cn in self.controller_notes if cn.controller.can_validate])):
             self.state = self.FINALIZED
         else:
             # If no controller says it is recoverable/unrecoverable/valid/... then we set it to unrecoverable ?
