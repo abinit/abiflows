@@ -11,6 +11,7 @@ import datetime
 import json
 import numpy as np
 import abipy.abio.input_tags as atags
+import traceback
 
 from collections import defaultdict
 from abipy.abio.factories import HybridOneShotFromGsFactory, ScfFactory, IoncellRelaxFromGsFactory
@@ -119,8 +120,9 @@ class AbstractFWWorkflow(Workflow):
             db_data: A DatabaseData with the connection information to the database.
         """
 
-        self.append_fw(Firework([MongoEngineDBInsertionTask(db_data=db_data)],
-                                spec={'_add_launchpad_and_fw_id': True}), short_single_spec=True)
+        fw = Firework([MongoEngineDBInsertionTask(db_data=db_data)],
+                      spec={'_add_launchpad_and_fw_id': True}, name="DB_insertion")
+        self.append_fw(fw, short_single_spec=True)
 
     def add_final_cleanup(self, out_exts=None, additional_spec=None):
         """
@@ -142,7 +144,7 @@ class AbstractFWWorkflow(Workflow):
         spec['_priority'] = 100
         spec['_add_launchpad_and_fw_id'] = True
         cleanup_fw = Firework(FinalCleanUpTask(out_exts=out_exts), spec=spec,
-                              name=(self.wf.name+"_cleanup")[:15])
+                              name=("final_cleanup")[:15])
 
         append_fw_to_wf(cleanup_fw, self.wf)
 
@@ -301,10 +303,13 @@ class AbstractFWWorkflow(Workflow):
                 structure = input.structure
             elif 'structure' in input.kwargs:
                 structure = input.kwargs['structure']
-            else:
-                structure = input.args[0]
-        except Exception as e:
-            logger.warning("Couldn't get the structure from the input: {} {}".format(e.__class__.__name__, e.message))
+            elif isinstance(input, InputFactory):
+                try:
+                    structure = input.args[0]
+                except IndexError:
+                    structure = input.kwargs.get("structure")
+        except Exception:
+            logger.warning("Couldn't get the structure from the input: {}".format(traceback.format_exc()))
 
         return structure.composition.reduced_formula if structure else ""
 
@@ -514,11 +519,14 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         deps = {}
 
         if not skip_ion:
+            rf = self.get_reduced_formula(ion_input)
             spec['wf_task_index'] = 'ion_' + str(start_task_index)
             ion_task = RelaxFWTask(ion_input, is_autoparal=autoparal)
-            self.ion_fw = Firework(ion_task, spec=spec)
+            self.ion_fw = Firework(ion_task, spec=spec, name=rf + "_" + "relax_ion")
             deps = {ion_task.task_type: '@structure'}
             fws.append(self.ion_fw)
+        else:
+            rf = self.get_reduced_formula(ioncell_input)
 
         spec['wf_task_index'] = 'ioncell_' + str(start_task_index)
         if target_dilatmx:
@@ -527,7 +535,7 @@ class RelaxFWWorkflow(AbstractFWWorkflow):
         else:
             ioncell_task = RelaxFWTask(ioncell_input, is_autoparal=autoparal, deps=deps)
 
-        self.ioncell_fw = Firework(ioncell_task, spec=spec)
+        self.ioncell_fw = Firework(ioncell_task, spec=spec, name=rf + "_" + "relax_ioncell")
 
         fws.append(self.ioncell_fw)
 
@@ -1704,7 +1712,7 @@ class DteFWWorkflow(AbstractFWWorkflow):
 
         mrgddb_spec = dict(spec)
         mrgddb_spec['wf_task_index'] = 'mrgddb'
-        qadapter_spec = self.set_short_single_core_to_spec(mrgddb_spec)
+        self.set_short_single_core_to_spec(mrgddb_spec)
         mrgddb_spec['mpi_ncpus'] = 1
         num_ddbs_to_be_merged = len(self.ph_fws) + len(self.dde_fws) + len(self.dte_fws)
         self.mrgddb_fw = Firework(MergeDdbAbinitTask(num_ddbs=num_ddbs_to_be_merged, delete_source_ddbs=False),
