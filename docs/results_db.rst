@@ -39,5 +39,53 @@ In order to provide a common base for the standard keywords that are stored in t
 database and for the structure of the documents produced by the different workflows,
 the interaction with the output database in Abiflows is handled using
 `mongoengine <http://mongoengine.org/>`_. For this purpose a set of
-mongoengine `Document` objects are implemented in the
-:mod:`abiflows.database.mongoengine` module.
+mongoengine ``Document`` objects are implemented in the
+:mod:`abiflows.database.mongoengine.abinit_results` module.
+
+From a technical point of view, the results documents are obtained composing different
+mixins, each of which define a specific set of properties that are likely to be queried
+and that are usually shared by different kinds of workflows (e.g. the
+:class:`abiflows.database.mongoengine.mixins.MaterialMixin`). In this way the uniformity
+of the notation for common keywords is guaranteed across the different kind of outputs.
+
+The queries to the documents can be done using the standard mongoengine approach:
+
+.. code-block:: python
+
+    for result in RelaxResult.objects(nsites=5):
+        print(result.pretty_formula)
+
+where it is possible to query the properties in the ``Document`` object. See the
+`mongoengine user guide <http://docs.mongoengine.org/guide/index.html>`_ for more
+details.
+
+Database connection definition
+==============================
+
+The information required to connect to the database (e.g. address, username, ...)
+are stored in a specific object :class:`abiflows.database.mongoengine.utils.DatabaseData`
+so that it can be used to define where to store the results and to access, passing
+it to the task responsible to generate the document with the output of the workflow.
+
+In addition, since mongoengine uses the name of the class as default name for the collection
+where to store and retrieve the data, ``DatabaseData`` offers a shortcut for the
+`switch_collection <http://docs.mongoengine.org/guide/connecting.html#context-managers>`_
+method. You can thus use it to query the database, as shown in the :ref:`examples_wf_phonons`
+example:
+
+.. code-block:: python
+
+    db = DatabaseData(host='db_address', port=27017, collection='collection_name',
+                      database='db_name', username='user', password='pass')
+
+
+    with source_db.switch_collection(RelaxResult) as RelaxResult:
+        for result in RelaxResult.objects(nsites=5):
+            print(result.pretty_formula)
+
+
+.. note::
+
+    Even though it might be convenient to rely on the mongoengine documents to interact
+    with the results produced by Abiflows, this is by no means a strict requirement
+    and the database can be queried using the standard MongoDB connections and queries.

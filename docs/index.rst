@@ -33,8 +33,8 @@ AbiFlows is free to use. However, we also welcome your help to improve this libr
 Please report any bugs and issues at AbiFlows `Github page <https://github.com/abinit/abiflows>`_.
 
 
-Getting Started
-===============
+User Guide
+==========
 
 .. toctree::
    :maxdepth: 1
@@ -43,8 +43,16 @@ Getting Started
    setup
    workflows
    results_db
-   useful_links
+   failures
    changelog
+
+References
+==========
+
+.. toctree::
+   :maxdepth: 1
+
+   useful_links
    zzbiblio
 
 

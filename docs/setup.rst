@@ -157,6 +157,8 @@ the workflow. For backward compatibility reasons the file should be structured w
 Note that in some cases the values of these options can be overwritten by setting the value in the
 ``spec`` of a specific Firework.
 
+.. _setup_fw_manager_opt:
+
 fw.manager.yaml options
 -----------------------
 

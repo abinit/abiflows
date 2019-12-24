@@ -1,4 +1,4 @@
-.. _setup:
+.. _useful_links:
 
 ============
 Useful links
@@ -18,13 +18,13 @@ Dependencies
   * `Tutorials <https://docs.abinit.org/tutorial/>`_
 * Abipy:
 
-  * `Documentation <http://abinit.github.io/abipy>`_
+  * `Documentation <http://abinit.github.io/abipy>`__
 * Pymatgen:
 
-  * `Documentation <http://pymatgen.org>`_
+  * `Documentation <http://pymatgen.org>`__
 * Fireworks:
 
-  * `Documentation <https://materialsproject.github.io/fireworks>`_
+  * `Documentation <https://materialsproject.github.io/fireworks>`__
   * `Configurations for atomate <https://atomate.org/installation.html#configure-database-connections-and-computing-center-parameters>`_
   * `Slides with Fireworks overview <https://www.slideshare.net/anubhavster/fireworks-overview>`_
 

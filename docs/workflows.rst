@@ -209,6 +209,9 @@ the fireworks ``Workflow`` has this structure:
 The last line takes care of adding the ``Workflow`` in the fireworks database. In this case it will
 use the default ``LaunchPad`` defined in ``$HOME/.fireworks``.
 
+.. _examples_wf_phonons:
+
+
 Phonons
 -------
 
