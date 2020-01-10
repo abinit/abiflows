@@ -8,7 +8,8 @@ from pymatgen import MPRester
 
 # use the pseudo dojo table of pseudopotentials. These are good pseudopotentials. If you want to use
 # some other kind of pseudos you will need to provide explicitly the cutoff for the calculation
-pseudo_table = pseudo_dojo.OfficialDojoTable.from_djson_file(os.path.join(pseudo_dojo.dojotable_absdir("ONCVPSP-PBE-PDv0.4"), 'standard.djson'))
+pseudo_table = pseudo_dojo.OfficialDojoTable.from_djson_file(
+    os.path.join(pseudo_dojo.dojotable_absdir("ONCVPSP-PBE-PDv0.4"), 'standard.djson'))
 pseudo_path = pseudo_dojo.dojotable_absdir("ONCVPSP-PBE-PDv0.4")
 
 # connection data of the output MongoDB database
@@ -51,9 +52,9 @@ extra_abivars = dict(tolmxf=tolmxf, ionmov=2, chksymbreak=1, ntime=30, nstep=100
 # The OneSymmetric option will set a single shift that respects the symmetry of the crystal.
 # The target_dilatmx means that the dilatmx parameter will be automatically progressively
 # reduced and relaxation restarted until the desired value has been used.
-gen = RelaxFWWorkflow.from_factory(structure, pseudo_table, kppa=kppa, spin_mode="unpolarized", extra_abivars=extra_abivars, autoparal=True,
-                                   initialization_info=initialization_info, target_dilatmx=1.01, smearing=None,
-                                   shift_mode='OneSymmetric', ecut=5)
+gen = RelaxFWWorkflow.from_factory(structure, pseudo_table, kppa=kppa, spin_mode="unpolarized", extra_abivars=extra_abivars,
+                                   autoparal=True, initialization_info=initialization_info, target_dilatmx=1.01,
+                                   smearing=None, shift_mode='OneSymmetric', ecut=5)
 
 # add to the workflow a step that automatically adds the results to the database in the collection specified above.
 gen.add_mongoengine_db_insertion(db)
