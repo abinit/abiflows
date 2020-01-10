@@ -5,7 +5,8 @@ set -e  # exit on first error, print each command
 #abinit --build
 abicheck.py --with-flow
 
-pytest --cov-config=.coveragerc --cov=abiflows -v --doctest-modules abiflows --ignore=abiflows/fireworks/integration_tests
+pytest --cov-config=.coveragerc --cov=abiflows -v --doctest-modules abiflows --ignore=abiflows/fireworks/integration_tests \
+  --ignore=abiflows/fireworks/examples
 
 # This is to run the integration tests (append results)
 # integration_tests are excluded in setup.cfg
