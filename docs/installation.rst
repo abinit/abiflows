@@ -94,7 +94,3 @@ to the latest stable release.
 
 If you choose to share your developments please take some time to develop some unit tests of at least the
 basic functionalities of your code
-
----------------
-Troubleshooting
----------------

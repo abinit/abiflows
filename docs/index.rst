@@ -55,6 +55,26 @@ References
    useful_links
    zzbiblio
 
+Citing Abiflows
+===============
+
+If you use abiflows in your research, please consider citing the
+`following work <https://doi.org/10.1016/j.cpc.2019.107042>`_::
+
+    @article{key,
+     author = {Gonze, Xavier and Amadon, Bernard and Antonius, Gabriel and Arnardi, Frédéric and Baguet, Lucas and Beuken, Jean-Michel and Bieder, Jordan and Bottin, François and Bouchet, Johann and Bousquet, Eric and Brouwer, Nils and Bruneval, Fabien and Brunin, Guillaume and Cavignac, Théo and Charraud, Jean-Baptiste and Chen, Wei and Côté, Michel and Cottenier, Stefaan and Denier, Jules and Geneste, Grégory and Ghosez, Philippe and Giantomassi, Matteo and Gillet, Yannick and Gingras, Olivier and Hamann, Donald R. and Hautier, Geoffroy and He, Xu and Helbig, Nicole and Holzwarth, Natalie and Jia, Yongchao and Jollet, François and Lafargue-Dit-Hauret, William and Lejaeghere, Kurt and Marques, Miguel A.L. and Martin, Alexandre and Martins, Cyril and Miranda, Henrique P.C. and Naccarato, Francesco and Persson, Kristin and Petretto, Guido and Planes, Valentin and Pouillon, Yann and Prokhorenko, Sergei and Ricci, Fabio and Rignanese, Gian-Marco and Romero, Aldo H. and Schmitt, Michael Marcus and Torrent, Marc and van Setten, Michiel J. and Van Troeye, Benoit and Verstraete, Matthieu J. and Zérah, Gilles and Zwanziger, Josef W.},
+     doi = {10.1016/j.cpc.2019.107042},
+     pages = {107042},
+     source = {Crossref},
+     url = {http://dx.doi.org/10.1016/j.cpc.2019.107042},
+     volume = {248},
+     journal = {Computer Physics Communications},
+     publisher = {Elsevier BV},
+     title = {The Abinitproject: {Impact,} environment and recent developments},
+     issn = {0010-4655},
+     year = {2020},
+     month = mar,
+    }
 
 API
 ===
