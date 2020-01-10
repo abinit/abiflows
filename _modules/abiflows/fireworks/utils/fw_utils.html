@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.utils.fw_utils &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.fireworks.utils.fw_utils &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,15 +111,13 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.fireworks.utils.fw_utils</h1><div class="highlight"><pre>
 <span></span><span class="c1"># coding: utf-8</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Utilities for fireworks</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
@@ -134,7 +130,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
 <span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk.tasks</span> <span class="k">import</span> <span class="n">TaskManager</span><span class="p">,</span> <span class="n">ParalHints</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span> <span class="c1">#, Workflow</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.time_utils</span> <span class="k">import</span> <span class="n">TimeReport</span>
 
@@ -204,15 +200,15 @@
 
 
 <div class="viewcode-block" id="set_short_single_core_to_spec"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.set_short_single_core_to_spec">[docs]</a><span class="k">def</span> <span class="nf">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="p">{},</span> <span class="n">master_mem_overhead</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fw_manager</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 
-        <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">get_short_single_core_spec</span><span class="p">(</span><span class="n">master_mem_overhead</span><span class="o">=</span><span class="n">master_mem_overhead</span><span class="p">,</span> <span class="n">fw_manager</span><span class="o">=</span><span class="n">fw_manager</span><span class="p">)</span>
-        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qadapter_spec</span>
-        <span class="k">return</span> <span class="n">spec</span></div>
+    <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">get_short_single_core_spec</span><span class="p">(</span><span class="n">master_mem_overhead</span><span class="o">=</span><span class="n">master_mem_overhead</span><span class="p">,</span> <span class="n">fw_manager</span><span class="o">=</span><span class="n">fw_manager</span><span class="p">)</span>
+    <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qadapter_spec</span>
+    <span class="k">return</span> <span class="n">spec</span></div>
 
 
 <div class="viewcode-block" id="FWTaskManager"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.FWTaskManager">[docs]</a><span class="k">class</span> <span class="nc">FWTaskManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -278,7 +274,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">task_manager</span> <span class="o">=</span> <span class="n">TaskManager</span><span class="o">.</span><span class="n">from_user_config</span><span class="p">()</span>
-                <span class="k">except</span><span class="p">:</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t load the abipy task manager.&quot;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">task_manager</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -303,7 +299,7 @@
         <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
                 <span class="k">with</span> <span class="n">io</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-                    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+                    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading manager from </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
                 <span class="k">break</span>
 
@@ -313,7 +309,7 @@
     <span class="k">def</span> <span class="nf">from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Read the configuration parameters from the Yaml file filename.&quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-            <span class="n">d</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="FWTaskManager.has_task_manager"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.FWTaskManager.has_task_manager">[docs]</a>    <span class="k">def</span> <span class="nf">has_task_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -325,64 +321,66 @@
 
 <div class="viewcode-block" id="get_time_report_for_wf"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.get_time_report_for_wf">[docs]</a><span class="k">def</span> <span class="nf">get_time_report_for_wf</span><span class="p">(</span><span class="n">wf</span><span class="p">):</span>
 
-        <span class="n">total_run_time</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">total_cpu_time</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">contributed_cpu_time</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">total_run_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">total_cpu_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">contributed_cpu_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">worker</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">total_run_time</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">total_cpu_time</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">contributed_cpu_time</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">total_run_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">total_cpu_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">contributed_cpu_time_per_tag</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">worker</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">:</span>
-            <span class="c1"># skip not completed fws</span>
-            <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
-                <span class="k">continue</span>
+    <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">:</span>
+        <span class="c1"># skip not completed fws</span>
+        <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
 
-            <span class="n">launches</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">fw</span><span class="o">.</span><span class="n">launches</span>
-            <span class="n">completed_launch</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">launches</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">archived_launches</span> <span class="o">+</span> <span class="n">fw</span><span class="o">.</span><span class="n">launches</span>
+        <span class="n">completed_launch</span> <span class="o">=</span> <span class="kc">None</span>
 
-            <span class="c1">#take the last completed launch</span>
-            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
-                    <span class="n">completed_launch</span> <span class="o">=</span> <span class="n">l</span>
-                    <span class="k">break</span>
+        <span class="c1">#take the last completed launch</span>
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
+                <span class="n">completed_launch</span> <span class="o">=</span> <span class="n">l</span>
+                <span class="k">break</span>
 
-            <span class="c1"># assume all fw have runned on the same worker</span>
-            <span class="k">if</span> <span class="n">worker</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">worker</span> <span class="o">=</span> <span class="n">completed_launch</span><span class="o">.</span><span class="n">fworker</span><span class="o">.</span><span class="n">name</span>
+        <span class="c1"># assume all fw have runned on the same worker</span>
+        <span class="k">if</span> <span class="n">worker</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">worker</span> <span class="o">=</span> <span class="n">completed_launch</span><span class="o">.</span><span class="n">fworker</span><span class="o">.</span><span class="n">name</span>
 
-            <span class="n">run_time</span> <span class="o">=</span> <span class="n">completed_launch</span><span class="o">.</span><span class="n">runtime_secs</span>
-            <span class="n">total_run_time</span> <span class="o">+=</span> <span class="n">run_time</span>
+        <span class="n">run_time</span> <span class="o">=</span> <span class="n">completed_launch</span><span class="o">.</span><span class="n">runtime_secs</span>
+        <span class="n">total_run_time</span> <span class="o">+=</span> <span class="n">run_time</span>
 
-            <span class="k">if</span> <span class="s1">&#39;qtk_queueadapter&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
-                <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">num_cores</span>
-            <span class="k">elif</span> <span class="s1">&#39;mpi_ncpus&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
-                <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="s1">&#39;ntasks&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
-                <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;ntasks&#39;</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">ncpus</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;qtk_queueadapter&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+            <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">num_cores</span>
+        <span class="k">elif</span> <span class="s1">&#39;mpi_ncpus&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+            <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="s1">&#39;ntasks&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+            <span class="n">ncpus</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;ntasks&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ncpus</span> <span class="o">=</span> <span class="kc">None</span>
 
-            <span class="k">if</span> <span class="n">ncpus</span><span class="p">:</span>
-                <span class="n">cpu_time</span> <span class="o">=</span> <span class="n">run_time</span><span class="o">*</span><span class="n">ncpus</span>
-                <span class="n">total_cpu_time</span> <span class="o">+=</span> <span class="n">cpu_time</span>
-                <span class="n">contributed_cpu_time</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">cpu_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">ncpus</span><span class="p">:</span>
+            <span class="n">cpu_time</span> <span class="o">=</span> <span class="n">run_time</span><span class="o">*</span><span class="n">ncpus</span>
+            <span class="n">total_cpu_time</span> <span class="o">+=</span> <span class="n">cpu_time</span>
+            <span class="n">contributed_cpu_time</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cpu_time</span> <span class="o">=</span> <span class="kc">None</span>
 
-            <span class="n">wf_task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;Unclassified&#39;</span><span class="p">)</span>
+        <span class="n">wf_task_index</span> <span class="o">=</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;Unclassified&#39;</span><span class="p">)</span>
 
-            <span class="n">task_tag</span> <span class="o">=</span> <span class="n">wf_task_index</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">total_run_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_run_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">run_time</span>
-            <span class="k">if</span> <span class="n">cpu_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">total_cpu_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">cpu_time</span>
-                <span class="n">contributed_cpu_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">contributed_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">task_tag</span> <span class="o">=</span> <span class="n">wf_task_index</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">total_run_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_run_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">run_time</span>
+        <span class="k">if</span> <span class="n">cpu_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">total_cpu_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">cpu_time</span>
+            <span class="n">contributed_cpu_time_per_tag</span><span class="p">[</span><span class="n">task_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">contributed_cpu_time_per_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 
-        <span class="n">tr</span> <span class="o">=</span> <span class="n">TimeReport</span><span class="p">(</span><span class="n">total_run_time</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">),</span> <span class="n">total_cpu_time</span><span class="o">=</span><span class="n">total_cpu_time</span><span class="p">,</span> <span class="n">contributed_cpu_time</span><span class="o">=</span><span class="n">contributed_cpu_time</span><span class="p">,</span>
-                       <span class="n">total_run_time_per_tag</span><span class="o">=</span><span class="n">total_run_time_per_tag</span><span class="p">,</span> <span class="n">total_cpu_time_per_tag</span><span class="o">=</span><span class="n">total_cpu_time_per_tag</span><span class="p">,</span>
-                       <span class="n">contributed_cpu_time_per_tag</span><span class="o">=</span><span class="n">contributed_cpu_time_per_tag</span><span class="p">,</span> <span class="n">worker</span><span class="o">=</span><span class="n">worker</span><span class="p">)</span>
+    <span class="n">tr</span> <span class="o">=</span> <span class="n">TimeReport</span><span class="p">(</span><span class="n">total_run_time</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">wf</span><span class="o">.</span><span class="n">fws</span><span class="p">),</span> <span class="n">total_cpu_time</span><span class="o">=</span><span class="n">total_cpu_time</span><span class="p">,</span>
+                   <span class="n">contributed_cpu_time</span><span class="o">=</span><span class="n">contributed_cpu_time</span><span class="p">,</span>
+                   <span class="n">total_run_time_per_tag</span><span class="o">=</span><span class="n">total_run_time_per_tag</span><span class="p">,</span>
+                   <span class="n">total_cpu_time_per_tag</span><span class="o">=</span><span class="n">total_cpu_time_per_tag</span><span class="p">,</span>
+                   <span class="n">contributed_cpu_time_per_tag</span><span class="o">=</span><span class="n">contributed_cpu_time_per_tag</span><span class="p">,</span> <span class="n">worker</span><span class="o">=</span><span class="n">worker</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">tr</span></div>
+    <span class="k">return</span> <span class="n">tr</span></div>
 
 
 <div class="viewcode-block" id="links_dict_update"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.links_dict_update">[docs]</a><span class="k">def</span> <span class="nf">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="p">,</span> <span class="n">links_update</span><span class="p">):</span>
@@ -427,6 +425,7 @@
 
     <span class="k">return</span> <span class="kc">None</span></div>
 
+
 <div class="viewcode-block" id="get_fw_by_task_index"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.fw_utils.get_fw_by_task_index">[docs]</a><span class="k">def</span> <span class="nf">get_fw_by_task_index</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">task_tag</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a workflow object (with connection to the db) returns the wf corresponding to the task_type.</span>
@@ -440,9 +439,8 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        a fireworks Firework object. None if no match is found.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">task_index</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">task_index</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task_tag</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
 
     <span class="n">selected_fw</span> <span class="o">=</span> <span class="kc">None</span>
@@ -460,10 +458,10 @@
                 <span class="c1"># if no other indices has been found select that one</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">fw_ind</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fw_task_index</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-                    <span class="k">if</span>  <span class="n">fw_ind</span> <span class="o">&gt;</span> <span class="n">max_ind</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">fw_ind</span> <span class="o">&gt;</span> <span class="n">max_ind</span><span class="p">:</span>
                         <span class="n">selected_fw</span> <span class="o">=</span> <span class="n">fw</span>
                         <span class="n">max_ind</span> <span class="o">=</span> <span class="n">fw_ind</span>
-                <span class="k">except</span><span class="p">:</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">selected_fw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">selected_fw</span> <span class="o">=</span> <span class="n">fw</span>
 
@@ -497,7 +495,7 @@
         <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;FW.yaml&#39;</span><span class="p">,</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
-                    <span class="n">fw_dict</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+                    <span class="n">fw_dict</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Launchpad/fw_id not present in spec and No FW.json nor FW.yaml file present: &quot;</span>
                                    <span class="s2">&quot;impossible to determine fw_id&quot;</span><span class="p">)</span>
@@ -543,8 +541,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

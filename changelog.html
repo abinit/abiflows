@@ -2,40 +2,32 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Changelog &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>Changelog &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Bibliography" href="zzbiblio.html" />
-    <link rel="prev" title="Getting AbiFlows" href="installation.html" />
+    <link rel="next" title="Useful links" href="useful_links.html" />
+    <link rel="prev" title="Errors and failures" href="failures.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -48,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -64,9 +56,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="failures.html">Errors and failures</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -94,11 +92,11 @@
               
                 
   <li>
-    <a href="installation.html" title="Previous Chapter: Getting AbiFlows"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Getting AbiFlows</span>
+    <a href="failures.html" title="Previous Chapter: Errors and failures"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Errors and failures</span>
     </a>
   </li>
   <li>
-    <a href="zzbiblio.html" title="Next Chapter: Bibliography"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Bibliography &raquo;</span>
+    <a href="useful_links.html" title="Next Chapter: Useful links"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Useful links &raquo;</span>
     </a>
   </li>
               
@@ -130,15 +128,14 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="0.2.0">
-<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/abinit/abipy/tree/0.2.0">0.2.0</a> <span style="font-size: 75%;">2017-03-10</span></h2><ul class="simple">
-<li>[<span style="color: #40A056;">Feature</span>]<span>:</span><span> </span> This is the first official release</li>
-</ul>
-</div>
+<p>Release 0.2.0 &lt;2017-03-10&gt;</p>
+<blockquote>
+<div><p>This is the first official release</p>
+</div></blockquote>
 </div>
 
 
@@ -154,8 +151,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

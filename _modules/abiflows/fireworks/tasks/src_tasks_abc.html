@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.tasks.src_tasks_abc &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.fireworks.tasks.src_tasks_abc &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,12 +111,10 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.fireworks.tasks.src_tasks_abc</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
-<span class="kn">import</span> <span class="nn">abc</span>
+<span></span><span class="kn">import</span> <span class="nn">abc</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">json</span>
@@ -133,7 +129,7 @@
 <span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="k">import</span> <span class="n">explicit_serialize</span>
 <span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="k">import</span> <span class="n">serialize_fw</span>
 
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span><span class="p">,</span> <span class="n">MontyEncoder</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span> <span class="c1">#, MontyEncoder</span>
 <span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
 <span class="kn">from</span> <span class="nn">monty.serialization</span> <span class="k">import</span> <span class="n">loadfn</span>
 <span class="kn">from</span> <span class="nn">monty.subprocess</span> <span class="k">import</span> <span class="n">Command</span>
@@ -146,6 +142,7 @@
 <span class="n">RESTART_FROM_SCRATCH</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESTART_FROM_SCRATCH</span>
 <span class="n">RESET_RESTART</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESET_RESTART</span>
 <span class="n">SIMPLE_RESTART</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">SIMPLE_RESTART</span>
+
 
 <div class="viewcode-block" id="SRCTaskMixin"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskMixin">[docs]</a><span class="k">class</span> <span class="nc">SRCTaskMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
@@ -482,7 +479,7 @@
         <span class="c1"># even multiple tasks is not yet supported ... should it be ? or should we stay with only one task allways ?)</span>
         <span class="c1"># If it is modified, it should update the corresponding bit (setup_spec and/or run_spec and/or</span>
         <span class="c1"># setup_task and/or run_task)</span>
-        <span class="n">initial_objects_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_initial_objects_info</span><span class="p">(</span><span class="n">setup_fw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">setup_fw</span><span class="p">,</span> <span class="n">run_fw</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_fw</span><span class="p">,</span>
+        <span class="n">initial_objects_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_initial_objects_info</span><span class="p">(</span><span class="n">setup_fw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">setup_fw</span><span class="p">,</span> <span class="n">run_fw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_fw</span><span class="p">,</span>
                                                              <span class="n">src_directories</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">src_directories</span><span class="p">)</span>
         <span class="n">qerr_filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_fw</span><span class="o">.</span><span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">launch_dir</span><span class="p">,</span> <span class="s1">&#39;queue.qerr&#39;</span><span class="p">)</span>
         <span class="n">qout_filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_fw</span><span class="o">.</span><span class="n">launches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">launch_dir</span><span class="p">,</span> <span class="s1">&#39;queue.qout&#39;</span><span class="p">)</span>
@@ -795,7 +792,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_which_src_steps_to_clean</span> <span class="o">=</span> <span class="n">which_src_steps_to_clean</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_which_src_steps_to_clean_pattern</span> <span class="o">=</span> <span class="s1">&#39;single_N&#39;</span>
         <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">which_src_steps_to_clean</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">29</span> <span class="ow">and</span> <span class="n">which_src_steps_to_clean</span><span class="p">[:</span><span class="mi">15</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;all_before_the_&#39;</span> <span class="ow">and</span>
-                  <span class="n">which_src_steps_to_clean</span><span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;_previous_ones&#39;</span><span class="p">):</span>
+              <span class="n">which_src_steps_to_clean</span><span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;_previous_ones&#39;</span><span class="p">):</span>
             <span class="n">sp</span> <span class="o">=</span> <span class="n">which_src_steps_to_clean</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">6</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Argument &quot;which_src_steps_to_clean&quot; is &quot;</span><span class="si">{}</span><span class="s1">&quot;. It starts with &quot;all_before_the_&quot;, &#39;</span>
@@ -814,7 +811,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_which_src_steps_to_clean</span> <span class="o">=</span> <span class="n">which_src_steps_to_clean</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_which_src_steps_to_clean_pattern</span> <span class="o">=</span> <span class="s1">&#39;all_before_the_N_previous_ones&#39;</span>
         <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">which_src_steps_to_clean</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">33</span> <span class="ow">and</span> <span class="n">which_src_steps_to_clean</span><span class="p">[:</span><span class="mi">19</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;the_one_before_the_&#39;</span> <span class="ow">and</span>
-                  <span class="n">which_src_steps_to_clean</span><span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;_previous_ones&#39;</span><span class="p">):</span>
+              <span class="n">which_src_steps_to_clean</span><span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;_previous_ones&#39;</span><span class="p">):</span>
             <span class="n">sp</span> <span class="o">=</span> <span class="n">which_src_steps_to_clean</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">7</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Argument &quot;which_src_steps_to_clean&quot; is &quot;</span><span class="si">{}</span><span class="s1">&quot;. It starts with &quot;the_one_before_the_&quot;, &#39;</span>
@@ -1067,7 +1064,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">myindex</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">myindex</span>
-            <span class="k">except</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Index in SRCTaskIndex should be an integer or a string &#39;</span>
                                  <span class="s1">&#39;that can be cast into an integer&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1138,7 +1135,6 @@
                 <span class="s1">&#39;@module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
                 <span class="s1">&#39;task_type&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span>
                 <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">}</span></div></div>
-
 
 
 <div class="viewcode-block" id="get_queue_adapter_update"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.get_queue_adapter_update">[docs]</a><span class="k">def</span> <span class="nf">get_queue_adapter_update</span><span class="p">(</span><span class="n">qtk_queueadapter</span><span class="p">,</span> <span class="n">corrections</span><span class="p">,</span> <span class="n">qa_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1230,11 +1226,12 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">fw_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">fw_id</span><span class="o">=</span><span class="n">fw_id</span><span class="p">,</span>
                    <span class="n">ncpus</span><span class="o">=</span><span class="n">ncpus</span><span class="p">,</span> <span class="n">fwtime_secs</span><span class="o">=</span><span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="n">clustertime_secs</span><span class="p">)</span></div></div>
 
+
 <div class="viewcode-block" id="SRCFWTime"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.SRCFWTime">[docs]</a><span class="k">class</span> <span class="nc">SRCFWTime</span><span class="p">(</span><span class="n">FWTime</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="p">,</span> <span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">src_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">SRCFWTime</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fw_name</span><span class="o">=</span><span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="o">=</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="o">=</span><span class="n">ncpus</span><span class="p">,</span>
-                                        <span class="n">fwtime_secs</span><span class="o">=</span><span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="n">clustertime_secs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fw_name</span><span class="o">=</span><span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="o">=</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="o">=</span><span class="n">ncpus</span><span class="p">,</span>
+                         <span class="n">fwtime_secs</span><span class="o">=</span><span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="n">clustertime_secs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">src_type</span> <span class="o">=</span> <span class="n">src_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_type</span> <span class="o">=</span> <span class="n">task_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_index</span> <span class="o">=</span> <span class="n">task_index</span>
@@ -1273,8 +1270,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.workflows.abinit_workflows &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.fireworks.workflows.abinit_workflows &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,15 +111,13 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.fireworks.workflows.abinit_workflows</h1><div class="highlight"><pre>
 <span></span><span class="c1"># coding: utf-8</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Generators of Firework workflows</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">abc</span>
@@ -130,6 +126,8 @@
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">as</span> <span class="nn">atags</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">HybridOneShotFromGsFactory</span><span class="p">,</span> <span class="n">ScfFactory</span><span class="p">,</span> <span class="n">IoncellRelaxFromGsFactory</span>
@@ -138,7 +136,6 @@
 <span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">dfpt_from_gsinput</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span><span class="p">,</span> <span class="n">AnaddbInput</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.abivars_db</span> <span class="k">import</span> <span class="n">get_abinit_variables</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">abipy.dfpt.anaddbnc</span> <span class="k">import</span> <span class="n">AnaddbNcFile</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk.abiobjects</span> <span class="k">import</span> <span class="n">KSampling</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">,</span> <span class="n">FWorker</span>
@@ -160,7 +157,7 @@
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">NscfWfqFWTask</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.src_tasks_abc</span> <span class="k">import</span> <span class="n">createSRCFireworks</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="k">import</span> <span class="n">FinalCleanUpTask</span><span class="p">,</span> <span class="n">DatabaseInsertTask</span><span class="p">,</span> <span class="n">MongoEngineDBInsertionTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="k">import</span> <span class="n">createSRCFireworksOld</span>
+<span class="c1">#from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">append_fw_to_wf</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span><span class="p">,</span> <span class="n">links_dict_update</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">set_short_single_core_to_spec</span><span class="p">,</span> <span class="n">get_last_completed_launch</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_time_report_for_wf</span><span class="p">,</span> <span class="n">FWTaskManager</span>
@@ -223,7 +220,7 @@
 <span class="sd">            The spec with the _queueadapter parameters set.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 
         <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">get_short_single_core_spec</span><span class="p">(</span><span class="n">master_mem_overhead</span><span class="o">=</span><span class="n">master_mem_overhead</span><span class="p">)</span>
@@ -239,8 +236,9 @@
 <span class="sd">            db_data: A DatabaseData with the connection information to the database.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">append_fw</span><span class="p">(</span><span class="n">Firework</span><span class="p">([</span><span class="n">MongoEngineDBInsertionTask</span><span class="p">(</span><span class="n">db_data</span><span class="o">=</span><span class="n">db_data</span><span class="p">)],</span>
-                                <span class="n">spec</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_add_launchpad_and_fw_id&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}),</span> <span class="n">short_single_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="n">fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">([</span><span class="n">MongoEngineDBInsertionTask</span><span class="p">(</span><span class="n">db_data</span><span class="o">=</span><span class="n">db_data</span><span class="p">)],</span>
+                      <span class="n">spec</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_add_launchpad_and_fw_id&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;DB_insertion&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append_fw</span><span class="p">(</span><span class="n">fw</span><span class="p">,</span> <span class="n">short_single_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="AbstractFWWorkflow.add_final_cleanup"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow.add_final_cleanup">[docs]</a>    <span class="k">def</span> <span class="nf">add_final_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_exts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_spec</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -262,7 +260,7 @@
         <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;_priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span>
         <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;_add_launchpad_and_fw_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">cleanup_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">FinalCleanUpTask</span><span class="p">(</span><span class="n">out_exts</span><span class="o">=</span><span class="n">out_exts</span><span class="p">),</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
-                              <span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="o">.</span><span class="n">name</span><span class="o">+</span><span class="s2">&quot;_cleanup&quot;</span><span class="p">)[:</span><span class="mi">15</span><span class="p">])</span>
+                              <span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;final_cleanup&quot;</span><span class="p">)[:</span><span class="mi">15</span><span class="p">])</span>
 
         <span class="n">append_fw_to_wf</span><span class="p">(</span><span class="n">cleanup_fw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wf</span><span class="p">)</span></div>
 
@@ -397,7 +395,7 @@
 <div class="viewcode-block" id="AbstractFWWorkflow.add_metadata"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow.add_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">add_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">additional_metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">additional_metadata</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">wf_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">wf_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">structure</span><span class="p">:</span>
             <span class="n">composition</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">composition</span>
             <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;nsites&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
@@ -421,10 +419,13 @@
                 <span class="n">structure</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">structure</span>
             <span class="k">elif</span> <span class="s1">&#39;structure&#39;</span> <span class="ow">in</span> <span class="nb">input</span><span class="o">.</span><span class="n">kwargs</span><span class="p">:</span>
                 <span class="n">structure</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;structure&#39;</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">structure</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t get the structure from the input: </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">InputFactory</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">structure</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                    <span class="n">structure</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;structure&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t get the structure from the input: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()))</span>
 
         <span class="k">return</span> <span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">reduced_formula</span> <span class="k">if</span> <span class="n">structure</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span></div>
 
@@ -529,11 +530,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">extra_abivars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">extra_abivars</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">extra_abivars</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">decorators</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">decorators</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">decorators</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -578,11 +579,11 @@
                      <span class="n">shift_mode</span><span class="o">=</span><span class="s2">&quot;Monkhorst-Pack&quot;</span><span class="p">,</span> <span class="n">extra_abivars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decorators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pass_input</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">extra_abivars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">extra_abivars</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">extra_abivars</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">decorators</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">decorators</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">decorators</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -634,11 +635,14 @@
         <span class="n">deps</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_ion</span><span class="p">:</span>
+            <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reduced_formula</span><span class="p">(</span><span class="n">ion_input</span><span class="p">)</span>
             <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;ion_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_task_index</span><span class="p">)</span>
             <span class="n">ion_task</span> <span class="o">=</span> <span class="n">RelaxFWTask</span><span class="p">(</span><span class="n">ion_input</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ion_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">ion_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ion_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">ion_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">rf</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="s2">&quot;relax_ion&quot;</span><span class="p">)</span>
             <span class="n">deps</span> <span class="o">=</span> <span class="p">{</span><span class="n">ion_task</span><span class="o">.</span><span class="n">task_type</span><span class="p">:</span> <span class="s1">&#39;@structure&#39;</span><span class="p">}</span>
             <span class="n">fws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ion_fw</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reduced_formula</span><span class="p">(</span><span class="n">ioncell_input</span><span class="p">)</span>
 
         <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;ioncell_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_task_index</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">target_dilatmx</span><span class="p">:</span>
@@ -647,7 +651,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ioncell_task</span> <span class="o">=</span> <span class="n">RelaxFWTask</span><span class="p">(</span><span class="n">ioncell_input</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="n">deps</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">ioncell_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">ioncell_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ioncell_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">ioncell_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">rf</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="s2">&quot;relax_ioncell&quot;</span><span class="p">)</span>
 
         <span class="n">fws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ioncell_fw</span><span class="p">)</span>
 
@@ -666,7 +670,7 @@
         <span class="k">for</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">id_fw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="s1">&#39;wf_task_index&#39;</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span> <span class="ow">and</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">][:</span><span class="mi">8</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ioncell_&#39;</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">this_ioncell</span> <span class="o">=</span>  <span class="nb">int</span><span class="p">(</span><span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">this_ioncell</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                 <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
                     <span class="c1"># skip if the index is not an int</span>
                     <span class="k">continue</span>
@@ -718,12 +722,14 @@
         <span class="k">assert</span> <span class="n">wf</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;workflow_class&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">workflow_class</span>
         <span class="k">assert</span> <span class="n">wf</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;workflow_module&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">workflow_module</span>
 
-        <span class="n">ioncell_fws</span> <span class="o">=</span> <span class="p">[</span><span class="n">fw</span> <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span> <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ioncell_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;autoparal&#39;</span><span class="p">)]</span>
+        <span class="n">ioncell_fws</span> <span class="o">=</span> <span class="p">[</span><span class="n">fw</span> <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span> <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ioncell_&#39;</span><span class="p">)</span>
+                       <span class="ow">and</span> <span class="ow">not</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;autoparal&#39;</span><span class="p">)]</span>
         <span class="n">ioncell_fws</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
         <span class="n">last_ioncell_fw</span> <span class="o">=</span> <span class="n">ioncell_fws</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">last_ioncell_launch</span> <span class="o">=</span> <span class="n">get_last_completed_launch</span><span class="p">(</span><span class="n">last_ioncell_fw</span><span class="p">)</span>
 
-        <span class="n">ion_fws</span> <span class="o">=</span> <span class="p">[</span><span class="n">fw</span> <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span> <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ion_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;autoparal&#39;</span><span class="p">)]</span>
+        <span class="n">ion_fws</span> <span class="o">=</span> <span class="p">[</span><span class="n">fw</span> <span class="k">for</span> <span class="n">fw</span> <span class="ow">in</span> <span class="n">wf</span><span class="o">.</span><span class="n">fws</span> <span class="k">if</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ion_&#39;</span><span class="p">)</span>
+                   <span class="ow">and</span> <span class="ow">not</span> <span class="n">fw</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;autoparal&#39;</span><span class="p">)]</span>
         <span class="n">ion_fws</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
         <span class="k">if</span> <span class="n">ion_fws</span><span class="p">:</span>
             <span class="n">first_fw</span> <span class="o">=</span> <span class="n">ion_fws</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -756,7 +762,8 @@
         <span class="n">document</span><span class="o">.</span><span class="n">mp_id</span> <span class="o">=</span> <span class="n">initialization_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mp_id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">document</span><span class="o">.</span><span class="n">custom</span> <span class="o">=</span> <span class="n">initialization_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-        <span class="n">document</span><span class="o">.</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">pseudopotentials</span><span class="o">.</span><span class="n">set_pseudos_from_files_file</span><span class="p">(</span><span class="n">relax_task</span><span class="o">.</span><span class="n">files_file</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">elements</span><span class="p">))</span>
+        <span class="n">document</span><span class="o">.</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">pseudopotentials</span><span class="o">.</span><span class="n">set_pseudos_from_files_file</span><span class="p">(</span><span class="n">relax_task</span><span class="o">.</span><span class="n">files_file</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                                                                           <span class="nb">len</span><span class="p">(</span><span class="n">structure</span><span class="o">.</span><span class="n">composition</span><span class="o">.</span><span class="n">elements</span><span class="p">))</span>
 
         <span class="n">document</span><span class="o">.</span><span class="n">time_report</span> <span class="o">=</span> <span class="n">get_time_report_for_wf</span><span class="p">(</span><span class="n">wf</span><span class="p">)</span><span class="o">.</span><span class="n">as_dict</span><span class="p">()</span>
 
@@ -807,27 +814,31 @@
 <span class="sd">        Creates an instance of RelaxFWWorkflow using the ion_ioncell_relax_input factory function. See the description</span>
 <span class="sd">        of the factory for the definition of the arguments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="n">extra_abivars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">extra_abivars</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">extra_abivars</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">decorators</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">decorators</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">decorators</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">ion_input</span> <span class="o">=</span> <span class="n">ion_ioncell_relax_input</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">pseudos</span><span class="o">=</span><span class="n">pseudos</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="n">kppa</span><span class="p">,</span> <span class="n">nband</span><span class="o">=</span><span class="n">nband</span><span class="p">,</span> <span class="n">ecut</span><span class="o">=</span><span class="n">ecut</span><span class="p">,</span>
-                                            <span class="n">pawecutdg</span><span class="o">=</span><span class="n">pawecutdg</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">spin_mode</span><span class="o">=</span><span class="n">spin_mode</span><span class="p">,</span>
-                                            <span class="n">smearing</span><span class="o">=</span><span class="n">smearing</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="n">charge</span><span class="p">,</span> <span class="n">scf_algorithm</span><span class="o">=</span><span class="n">scf_algorithm</span><span class="p">,</span>
-                                            <span class="n">shift_mode</span><span class="o">=</span><span class="n">shift_mode</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ion_ioncell_input</span> <span class="o">=</span> <span class="n">ion_ioncell_relax_input</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">pseudos</span><span class="o">=</span><span class="n">pseudos</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="n">kppa</span><span class="p">,</span> <span class="n">nband</span><span class="o">=</span><span class="n">nband</span><span class="p">,</span> <span class="n">ecut</span><span class="o">=</span><span class="n">ecut</span><span class="p">,</span>
+                                                    <span class="n">pawecutdg</span><span class="o">=</span><span class="n">pawecutdg</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">spin_mode</span><span class="o">=</span><span class="n">spin_mode</span><span class="p">,</span>
+                                                    <span class="n">smearing</span><span class="o">=</span><span class="n">smearing</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="n">charge</span><span class="p">,</span> <span class="n">scf_algorithm</span><span class="o">=</span><span class="n">scf_algorithm</span><span class="p">,</span>
+                                                    <span class="n">shift_mode</span><span class="o">=</span><span class="n">shift_mode</span><span class="p">)</span>
 
-        <span class="n">ion_input</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="o">**</span><span class="n">extra_abivars</span><span class="p">)</span>
+        <span class="n">ion_ioncell_input</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="o">**</span><span class="n">extra_abivars</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">decorators</span><span class="p">:</span>
-            <span class="n">ion_input</span> <span class="o">=</span> <span class="n">d</span><span class="p">(</span><span class="n">ion_input</span><span class="p">)</span>
+            <span class="n">ion_ioncell_input</span> <span class="o">=</span> <span class="n">d</span><span class="p">(</span><span class="n">ion_ioncell_input</span><span class="p">)</span>
 
-        <span class="n">ioncell_fact</span> <span class="o">=</span> <span class="n">IoncellRelaxFromGsFactory</span><span class="p">(</span><span class="n">accuracy</span><span class="o">=</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">extra_abivars</span><span class="o">=</span><span class="n">extra_abivars</span><span class="p">,</span> <span class="n">decorators</span><span class="o">=</span><span class="n">decorators</span><span class="p">)</span>
+        <span class="n">ion_input</span> <span class="o">=</span> <span class="n">ion_ioncell_input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">skip_ion</span><span class="p">:</span>
+            <span class="n">ioncell_input</span> <span class="o">=</span> <span class="n">ion_ioncell_input</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ioncell_input</span> <span class="o">=</span> <span class="n">IoncellRelaxFromGsFactory</span><span class="p">(</span><span class="n">accuracy</span><span class="o">=</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">extra_abivars</span><span class="o">=</span><span class="n">extra_abivars</span><span class="p">,</span>
+                                                     <span class="n">decorators</span><span class="o">=</span><span class="n">decorators</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ion_input</span><span class="p">,</span> <span class="n">ioncell_fact</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="n">initialization_info</span><span class="p">,</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ion_input</span><span class="p">,</span> <span class="n">ioncell_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="n">initialization_info</span><span class="p">,</span>
                    <span class="n">target_dilatmx</span><span class="o">=</span><span class="n">target_dilatmx</span><span class="p">,</span><span class="n">skip_ion</span><span class="o">=</span><span class="n">skip_ion</span><span class="p">)</span></div></div>
 
 
@@ -837,9 +848,9 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ion_input</span><span class="p">,</span> <span class="n">ioncell_input</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_controllers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">fws</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">links_dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1073,7 +1084,6 @@
         <span class="n">fws</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">scf_fws</span><span class="p">[</span><span class="s1">&#39;fws&#39;</span><span class="p">])</span>
         <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">links_dict</span><span class="p">,</span> <span class="n">links_update</span><span class="o">=</span><span class="n">scf_fws</span><span class="p">[</span><span class="s1">&#39;links_dict&#39;</span><span class="p">])</span>
 
-
         <span class="c1"># Non self-consistent calculation</span>
         <span class="n">nscf_helper</span> <span class="o">=</span> <span class="n">NscfTaskHelper</span><span class="p">()</span>
         <span class="n">nscf_controllers</span> <span class="o">=</span> <span class="p">[</span><span class="n">AbinitController</span><span class="o">.</span><span class="n">from_helper</span><span class="p">(</span><span class="n">nscf_helper</span><span class="p">)]</span>
@@ -1167,7 +1177,8 @@
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">initialization_info</span> <span class="o">=</span> <span class="p">{}</span>
+
         <span class="n">scf_fact</span> <span class="o">=</span> <span class="n">ScfFactory</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">pseudos</span><span class="o">=</span><span class="n">pseudos</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="n">kppa</span><span class="p">,</span> <span class="n">ecut</span><span class="o">=</span><span class="n">ecut</span><span class="p">,</span> <span class="n">pawecutdg</span><span class="o">=</span><span class="n">pawecutdg</span><span class="p">,</span>
                               <span class="n">nband</span><span class="o">=</span><span class="n">nband</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">spin_mode</span><span class="o">=</span><span class="n">spin_mode</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="n">smearing</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="n">charge</span><span class="p">,</span>
                               <span class="n">scf_algorithm</span><span class="o">=</span><span class="n">scf_algorithm</span><span class="p">,</span> <span class="n">shift_mode</span><span class="o">=</span><span class="n">shift_mode</span><span class="p">,</span> <span class="n">extra_abivars</span><span class="o">=</span><span class="n">extra_abivars</span><span class="p">,</span>
@@ -1219,7 +1230,6 @@
             <span class="n">start_task_index</span> <span class="o">=</span> <span class="s1">&#39;autoparal&#39;</span>
 
         <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;scf_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_task_index</span><span class="p">)</span>
-
 
         <span class="bp">self</span><span class="o">.</span><span class="n">scf_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">scf_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">rf</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="n">scf_task</span><span class="o">.</span><span class="n">task_type</span><span class="p">)</span>
 
@@ -1556,12 +1566,9 @@
 
         <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;scf_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_task_index</span><span class="p">)</span>
 
-
         <span class="bp">self</span><span class="o">.</span><span class="n">scf_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">scf_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">rf</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="n">scf_task</span><span class="o">.</span><span class="n">task_type</span><span class="p">)</span>
 
-
         <span class="c1"># Generate the phononic part of the workflow</span>
-
         <span class="c1"># Since everything is being generated here factories should be used to generate the AbinitInput</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">,</span> <span class="n">InputFactory</span><span class="p">):</span>
             <span class="n">scf_inp</span> <span class="o">=</span> <span class="n">scf_inp</span><span class="o">.</span><span class="n">build_input</span><span class="p">()</span>
@@ -1573,18 +1580,18 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ph_inputs</span> <span class="o">=</span> <span class="n">phonon_factory</span>
 
-        <span class="n">ph_q_pert_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">PH_Q_PERT</span><span class="p">)</span>
-        <span class="n">ddk_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDK</span><span class="p">)</span>
-        <span class="n">dde_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDE</span><span class="p">)</span>
-        <span class="n">bec_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">BEC</span><span class="p">)</span>
+        <span class="n">ph_q_pert_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">PH_Q_PERT</span><span class="p">)</span>
+        <span class="n">ddk_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDK</span><span class="p">)</span>
+        <span class="n">dde_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDE</span><span class="p">)</span>
+        <span class="n">bec_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">BEC</span><span class="p">)</span>
 
-        <span class="n">nscf_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">NSCF</span><span class="p">)</span>
+        <span class="n">nscf_inputs</span> <span class="o">=</span> <span class="n">ph_inputs</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">NSCF</span><span class="p">)</span>
 
         <span class="n">previous_task_type</span> <span class="o">=</span> <span class="n">scf_task</span><span class="o">.</span><span class="n">task_type</span>
 
         <span class="n">nscf_fws</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">nscf_inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nscf_fws</span><span class="p">,</span> <span class="n">nscf_fw_deps</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">nscf_inputs</span><span class="p">,</span> <span class="n">NscfWfqFWTask</span><span class="p">,</span>
+            <span class="n">nscf_fws</span><span class="p">,</span> <span class="n">nscf_fw_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">nscf_inputs</span><span class="p">,</span> <span class="n">NscfWfqFWTask</span><span class="p">,</span>
                                                  <span class="p">{</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;DEN&quot;</span><span class="p">},</span> <span class="n">spec</span><span class="p">)</span>
 
         <span class="n">ph_fws</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1612,7 +1619,7 @@
         <span class="n">mrgddb_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;mrgddb&#39;</span>
         <span class="c1">#FIXME import here to avoid circular imports.</span>
-        <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_short_single_core_spec</span>
+        <span class="c1">#from abiflows.fireworks.utils.fw_utils import get_short_single_core_spec</span>
         <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">mrgddb_spec</span><span class="p">)</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="c1"># Set a higher priority to favour the end of the WF</span>
@@ -1804,7 +1811,6 @@
 
         <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;scf_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_task_index</span><span class="p">)</span>
 
-
         <span class="bp">self</span><span class="o">.</span><span class="n">scf_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">scf_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">rf</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="n">scf_task</span><span class="o">.</span><span class="n">task_type</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">ph_fws</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1822,7 +1828,7 @@
 
         <span class="n">mrgddb_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;mrgddb&#39;</span>
-        <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">mrgddb_spec</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">mrgddb_spec</span><span class="p">)</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">num_ddbs_to_be_merged</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ph_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dde_fws</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dte_fws</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mrgddb_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">MergeDdbAbinitTask</span><span class="p">(</span><span class="n">num_ddbs</span><span class="o">=</span><span class="n">num_ddbs_to_be_merged</span><span class="p">,</span> <span class="n">delete_source_ddbs</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
@@ -1867,7 +1873,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">wf</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span><span class="n">total_list_fws</span><span class="p">,</span> <span class="n">fws_deps</span><span class="p">,</span>
                            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;workflow_class&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_class</span><span class="p">,</span> <span class="s1">&#39;workflow_module&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_module</span><span class="p">})</span>
-
 
 <div class="viewcode-block" id="DteFWWorkflow.get_fws"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow.get_fws">[docs]</a>    <span class="k">def</span> <span class="nf">get_fws</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">multi_inp</span><span class="p">,</span> <span class="n">task_class</span><span class="p">,</span> <span class="n">deps</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1980,8 +1985,8 @@
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">decorators</span><span class="p">:</span>
             <span class="n">d</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
 
-        <span class="n">dte_wf</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDK</span><span class="p">),</span> <span class="n">dde_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDE</span><span class="p">),</span>
-                     <span class="n">dte_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DTE</span><span class="p">),</span> <span class="n">ph_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">PH_Q_PERT</span><span class="p">),</span> <span class="n">autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span>
+        <span class="n">dte_wf</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDK</span><span class="p">),</span> <span class="n">dde_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDE</span><span class="p">),</span>
+                     <span class="n">dte_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DTE</span><span class="p">),</span> <span class="n">ph_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">PH_Q_PERT</span><span class="p">),</span> <span class="n">autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span>
                      <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="n">initialization_info</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">dte_wf</span></div>
@@ -2048,8 +2053,8 @@
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">decorators</span><span class="p">:</span>
             <span class="n">d</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
 
-        <span class="n">dte_wf</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDK</span><span class="p">),</span> <span class="n">dde_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDE</span><span class="p">),</span>
-                     <span class="n">dte_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DTE</span><span class="p">),</span> <span class="n">ph_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">PH_Q_PERT</span><span class="p">),</span> <span class="n">autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span>
+        <span class="n">dte_wf</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDK</span><span class="p">),</span> <span class="n">dde_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDE</span><span class="p">),</span>
+                     <span class="n">dte_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DTE</span><span class="p">),</span> <span class="n">ph_inp</span><span class="o">=</span><span class="n">inp</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">PH_Q_PERT</span><span class="p">),</span> <span class="n">autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span>
                      <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="n">initialization_info</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">dte_wf</span></div>
@@ -2214,7 +2219,7 @@
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dchidt</span><span class="p">:</span>
                     <span class="n">dd</span> <span class="o">=</span> <span class="p">[]</span>
                     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
-                       <span class="n">dd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+                        <span class="n">dd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
                     <span class="n">dchidt_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
                 <span class="n">document</span><span class="o">.</span><span class="n">abinit_output</span><span class="o">.</span><span class="n">dchidt</span> <span class="o">=</span> <span class="n">dchidt_list</span>
 
@@ -2530,7 +2535,6 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;PiezoElasticFWWorkflowSRC&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp_ibz</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">rf_inp</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">ddk_split</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">rf_split</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">additional_controllers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_input_vars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">allow_parallel_perturbations</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">do_ddk</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">do_phonons</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -2763,12 +2767,10 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;from factory method not yet implemented for piezoelasticworkflow&#39;</span><span class="p">)</span></div></div>
 
 
-
 <div class="viewcode-block" id="DfptFWWorkflow"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow">[docs]</a><span class="k">class</span> <span class="nc">DfptFWWorkflow</span><span class="p">(</span><span class="n">AbstractFWWorkflow</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generator of a fireworks workflow for the calculation of various properties with DFPT.</span>
 <span class="sd">    Parallelization over all the perturbations.</span>
-
 <span class="sd">    N.B. Currently (version 8.8.3) anaddb does not support a DDB containing both 2nd order derivatives with qpoints</span>
 <span class="sd">    different from gamma AND 3rd order derivatives. The calculations could be run, but the global DDB will not</span>
 <span class="sd">    be directly usable as is in anaddb.</span>
@@ -2799,13 +2801,11 @@
         <span class="k">if</span> <span class="n">dde_inp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ddk_inp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;DDE calculations require the DDK&quot;</span><span class="p">)</span>
 
-
         <span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">initialization_info</span> <span class="o">=</span> <span class="n">initialization_info</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">start_task_index</span> <span class="o">=</span> <span class="mi">1</span>
 
         <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_reduced_formula</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">)</span>
-
         <span class="n">scf_task</span> <span class="o">=</span> <span class="n">ScfFWTask</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">)</span>
 
         <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
@@ -2816,15 +2816,14 @@
 
         <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;scf_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_task_index</span><span class="p">)</span>
 
-
         <span class="bp">self</span><span class="o">.</span><span class="n">scf_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">scf_task</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">rf</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="n">scf_task</span><span class="o">.</span><span class="n">task_type</span><span class="p">)</span>
 
         <span class="n">previous_task_type</span> <span class="o">=</span> <span class="n">scf_task</span><span class="o">.</span><span class="n">task_type</span>
 
         <span class="n">nscf_fws</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">nscf_inp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nscf_fws</span><span class="p">,</span> <span class="n">nscf_fw_deps</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">nscf_inp</span><span class="p">,</span> <span class="n">NscfWfqFWTask</span><span class="p">,</span>
-                                                 <span class="p">{</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;DEN&quot;</span><span class="p">},</span> <span class="n">spec</span><span class="p">)</span>
+            <span class="n">nscf_fws</span><span class="p">,</span> <span class="n">nscf_fw_deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fws</span><span class="p">(</span><span class="n">nscf_inp</span><span class="p">,</span> <span class="n">NscfWfqFWTask</span><span class="p">,</span>
+                                                  <span class="p">{</span><span class="n">previous_task_type</span><span class="p">:</span> <span class="s2">&quot;DEN&quot;</span><span class="p">},</span> <span class="n">spec</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">has_gamma</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -3066,7 +3065,6 @@
         <span class="k">if</span> <span class="s1">&#39;kppa&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">initialization_info</span><span class="p">:</span>
             <span class="n">initialization_info</span><span class="p">[</span><span class="s1">&#39;kppa&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kppa</span>
 
-
         <span class="n">scf_inp</span> <span class="o">=</span> <span class="n">scf_for_phonons</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">pseudos</span><span class="o">=</span><span class="n">pseudos</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="n">kppa</span><span class="p">,</span> <span class="n">ecut</span><span class="o">=</span><span class="n">ecut</span><span class="p">,</span> <span class="n">pawecutdg</span><span class="o">=</span><span class="n">pawecutdg</span><span class="p">,</span>
                                   <span class="n">nband</span><span class="o">=</span><span class="n">nband</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="n">accuracy</span><span class="p">,</span> <span class="n">spin_mode</span><span class="o">=</span><span class="n">spin_mode</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="n">smearing</span><span class="p">,</span>
                                   <span class="n">charge</span><span class="o">=</span><span class="n">charge</span><span class="p">,</span> <span class="n">scf_algorithm</span><span class="o">=</span><span class="n">scf_algorithm</span><span class="p">,</span> <span class="n">shift_mode</span><span class="o">=</span><span class="n">shift_mode</span><span class="p">)</span>
@@ -3146,12 +3144,12 @@
                                   <span class="n">wfq_tol</span><span class="o">=</span><span class="n">wfq_tol</span><span class="p">,</span> <span class="n">strain_tol</span><span class="o">=</span><span class="n">strain_tol</span><span class="p">,</span> <span class="n">skip_dte_permutations</span><span class="o">=</span><span class="n">skip_dte_permutations</span><span class="p">,</span>
                                   <span class="n">manager</span><span class="o">=</span><span class="n">manager</span><span class="p">)</span>
 
-        <span class="n">ph_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">PH_Q_PERT</span><span class="p">)</span>
-        <span class="n">nscf_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">NSCF</span><span class="p">)</span>
-        <span class="n">ddk_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDK</span><span class="p">)</span>
-        <span class="n">dde_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DDE</span><span class="p">)</span>
-        <span class="n">strain_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">STRAIN</span><span class="p">)</span>
-        <span class="n">dte_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">DTE</span><span class="p">)</span>
+        <span class="n">ph_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">PH_Q_PERT</span><span class="p">)</span>
+        <span class="n">nscf_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">NSCF</span><span class="p">)</span>
+        <span class="n">ddk_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDK</span><span class="p">)</span>
+        <span class="n">dde_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DDE</span><span class="p">)</span>
+        <span class="n">strain_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">STRAIN</span><span class="p">)</span>
+        <span class="n">dte_inp</span> <span class="o">=</span> <span class="n">multi</span><span class="o">.</span><span class="n">filter_by_tags</span><span class="p">(</span><span class="n">atags</span><span class="o">.</span><span class="n">DTE</span><span class="p">)</span>
 
         <span class="n">dfpt_wf</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">scf_inp</span><span class="p">,</span> <span class="n">ph_inp</span><span class="p">,</span> <span class="n">nscf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">dde_inp</span><span class="p">,</span> <span class="n">strain_inp</span><span class="p">,</span> <span class="n">dte_inp</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="n">autoparal</span><span class="p">,</span>
                       <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="n">initialization_info</span><span class="p">)</span>
@@ -3231,7 +3229,6 @@
                 <span class="k">if</span> <span class="n">current_index</span> <span class="o">&gt;</span> <span class="n">dte_index</span><span class="p">:</span>
                     <span class="n">dte_index</span> <span class="o">=</span> <span class="n">current_index</span>
                     <span class="n">dte_fw</span> <span class="o">=</span> <span class="n">fw</span>
-
 
         <span class="n">scf_launch</span> <span class="o">=</span> <span class="n">get_last_completed_launch</span><span class="p">(</span><span class="n">scf_fw</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">scf_launch</span><span class="o">.</span><span class="n">launch_dir</span><span class="p">,</span> <span class="s1">&#39;history.json&#39;</span><span class="p">),</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
@@ -3330,7 +3327,7 @@
 
 <div class="viewcode-block" id="DfptFWWorkflow.add_anaddb_dfpt_fw"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.add_anaddb_dfpt_fw">[docs]</a>    <span class="k">def</span> <span class="nf">add_anaddb_dfpt_fw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">ph_ngqpt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ndivsm</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">nqsmall</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">qppa</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">line_density</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Appends a Firework with a task for the calculation of various properties obtained from the  with anaddb.</span>
+<span class="sd">        Appends a Firework with a task for the calculation of various properties with anaddb.</span>
 
 <span class="sd">        Notice that in the current abinit version, the presence of the third order derivatives is incompatible with</span>
 <span class="sd">        the presence q-points different from gamma in the DDB and first order derivative. Anaddb calculation can</span>
@@ -3345,8 +3342,9 @@
 <span class="sd">                If gives the number of divisions for the smallest segment of the path.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">anaddb_input</span> <span class="o">=</span> <span class="n">AnaddbInput</span><span class="o">.</span><span class="n">dfpt</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">ngqpt</span><span class="o">=</span><span class="n">ph_ngqpt</span><span class="p">,</span> <span class="n">relaxed_ion</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">has_gamma</span><span class="p">,</span>
-                                        <span class="n">piezo</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strain_fws</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="n">dde</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dde_fws</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span>
-                                        <span class="n">strain</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strain_fws</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="n">dte</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dte_fws</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="n">stress_correction</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                        <span class="n">piezo</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strain_fws</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dde_fws</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                                        <span class="n">dde</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dde_fws</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strain_fws</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                                        <span class="n">dte</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dte_fws</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">stress_correction</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                                         <span class="n">nqsmall</span><span class="o">=</span><span class="n">nqsmall</span><span class="p">,</span> <span class="n">qppa</span><span class="o">=</span><span class="n">qppa</span><span class="p">,</span> <span class="n">ndivsm</span><span class="o">=</span><span class="n">ndivsm</span><span class="p">,</span> <span class="n">line_density</span><span class="o">=</span><span class="n">line_density</span><span class="p">,</span>
                                         <span class="n">q1shft</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">asr</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">chneut</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dipdip</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dos_method</span><span class="o">=</span><span class="s2">&quot;tetra&quot;</span><span class="p">)</span>
         <span class="n">anaddb_task</span> <span class="o">=</span> <span class="n">AnaDdbAbinitTask</span><span class="p">(</span><span class="n">anaddb_input</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">{</span><span class="n">MergeDdbAbinitTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">:</span> <span class="s2">&quot;DDB&quot;</span><span class="p">})</span>
@@ -3370,8 +3368,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

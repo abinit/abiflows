@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.core.models &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.core.models &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,23 +111,18 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.core.models</h1><div class="highlight"><pre>
 <span></span><span class="c1"># coding: utf-8</span>
 <span class="sd">&quot;&quot;&quot;Object-Document mapper&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">six</span>
-<span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">gzip</span>
 
 <span class="kn">from</span> <span class="nn">tempfile</span> <span class="k">import</span> <span class="n">mkstemp</span><span class="p">,</span> <span class="n">TemporaryFile</span><span class="p">,</span> <span class="n">NamedTemporaryFile</span>
 <span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
-<span class="kn">from</span> <span class="nn">monty.functools</span> <span class="k">import</span> <span class="n">lazy_property</span>
-<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="p">(</span><span class="n">FileField</span><span class="p">,</span> <span class="n">StringField</span><span class="p">,</span> <span class="n">IntField</span><span class="p">,</span> <span class="n">LongField</span><span class="p">,</span> <span class="n">ListField</span><span class="p">,</span> <span class="n">DictField</span><span class="p">,</span>
+        <span class="n">Document</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">,</span> <span class="n">EmbeddedDocumentField</span><span class="p">,</span> <span class="n">queryset_manager</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mongoengine.fields</span> <span class="k">import</span> <span class="n">GridFSProxy</span>
 <span class="kn">from</span> <span class="nn">mongoengine.base.datastructures</span> <span class="k">import</span> <span class="n">BaseDict</span>
 <span class="kn">from</span> <span class="nn">abipy</span> <span class="k">import</span> <span class="n">abilab</span>
@@ -161,7 +154,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">abiext</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;abiext&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">abiform</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;abiform&quot;</span><span class="p">)</span>
 
-        <span class="nb">super</span><span class="p">(</span><span class="n">AbiFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_monkey_patch_proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proxy</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -172,12 +165,12 @@
         <span class="k">return</span> <span class="n">proxy</span>
 
 <div class="viewcode-block" id="AbiFileField.get_proxy_obj"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiFileField.get_proxy_obj">[docs]</a>    <span class="k">def</span> <span class="nf">get_proxy_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">proxy</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AbiFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_proxy_obj</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_proxy_obj</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monkey_patch_proxy</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="AbiFileField.to_python"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiFileField.to_python">[docs]</a>    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">proxy</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AbiFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monkey_patch_proxy</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span></div></div>
 
 
@@ -198,8 +191,8 @@
             <span class="k">if</span> <span class="n">f</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">magic</span><span class="o">.</span><span class="n">from_buffer</span><span class="p">(</span><span class="n">file_obj</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">mime</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;application/gzip&quot;</span><span class="p">:</span>
                     <span class="n">file_obj</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GzipGridFSProxy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">file_obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                        
+                    <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">file_obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
             <span class="n">file_obj</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
@@ -216,7 +209,7 @@
             <span class="n">tmp_gz</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
             <span class="n">tmp_file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GzipGridFSProxy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">tmp_file</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">tmp_file</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GzipGridFSProxy.write"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.GzipGridFSProxy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Please use </span><span class="se">\&quot;</span><span class="s2">put</span><span class="se">\&quot;</span><span class="s2"> method instead&quot;</span><span class="p">)</span></div>
@@ -243,7 +236,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span> <span class="o">=</span> <span class="n">compresslevel</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">GzipFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AbiGzipFSProxy"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.AbiGzipFSProxy">[docs]</a><span class="k">class</span> <span class="nc">AbiGzipFSProxy</span><span class="p">(</span><span class="n">GzipGridFSProxy</span><span class="p">):</span>
@@ -276,9 +269,9 @@
     <span class="n">proxy_class</span> <span class="o">=</span> <span class="n">AbiGzipFSProxy</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiext</span><span class="p">,</span> <span class="n">abiform</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">abiext</span> <span class="o">=</span><span class="n">abiext</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abiext</span> <span class="o">=</span> <span class="n">abiext</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">abiform</span> <span class="o">=</span> <span class="n">abiform</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">AbiGzipFileField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">compresslevel</span><span class="o">=</span><span class="n">compresslevel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">compresslevel</span><span class="o">=</span><span class="n">compresslevel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MongoFiles"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.models.MongoFiles">[docs]</a><span class="k">class</span> <span class="nc">MongoFiles</span><span class="p">(</span><span class="n">EmbeddedDocument</span><span class="p">):</span>
@@ -341,7 +334,7 @@
     <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Descriptor for retrieving a value from a field in a document.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MSONField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">BaseDict</span><span class="p">):</span>
             <span class="n">value</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">MSONDict</span>
 
@@ -353,7 +346,7 @@
     <span class="c1">#    if isinstance(value, collections.Mapping) and &quot;@module&quot; in value:</span>
     <span class="c1">#        value = MontyDecoder().process_decoded(value)</span>
     <span class="c1">#    else:</span>
-    <span class="c1">#        value = super(MSONField, self).to_python(value)</span>
+    <span class="c1">#        value = super().to_python(value)</span>
 
     <span class="c1">#    print(&quot;to value:&quot;, type(value))</span>
     <span class="c1">#    return value</span>
@@ -454,7 +447,7 @@
     <span class="n">report</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">num_warnings</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of warnings&quot;</span><span class="p">)</span>
     <span class="n">num_errors</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of errors&quot;</span><span class="p">)</span>
-    <span class="n">num_comments</span> <span class="o">=</span>  <span class="n">IntField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of comments&quot;</span><span class="p">)</span>
+    <span class="n">num_comments</span> <span class="o">=</span> <span class="n">IntField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Number of comments&quot;</span><span class="p">)</span>
 
     <span class="c1">#: Total CPU time taken.</span>
     <span class="c1">#cpu_time = FloatField(required=True)</span>
@@ -525,7 +518,7 @@
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Dictionary-style field of super</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">MongoWork</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="c1"># Assume int or slice</span>
             <span class="k">try</span><span class="p">:</span>
@@ -566,7 +559,7 @@
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Dictionary-style field of super</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">MongoFlow</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="c1"># Assume int or slice</span>
             <span class="k">try</span><span class="p">:</span>
@@ -624,8 +617,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

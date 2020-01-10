@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.tasks.utility_tasks &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.fireworks.tasks.utility_tasks &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,15 +111,13 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.fireworks.tasks.utility_tasks</h1><div class="highlight"><pre>
 <span></span><span class="c1"># coding: utf-8</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Utility tasks for Fireworks.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
@@ -129,6 +125,7 @@
 <span class="kn">import</span> <span class="nn">traceback</span>
 <span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
 
 <span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">jsanitize</span>
 <span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
@@ -242,7 +239,7 @@
                         <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="n">fp</span><span class="p">):</span>
                             <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
                         <span class="n">deleted_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
-                    <span class="k">except</span><span class="p">:</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t delete </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()))</span>
 
         <span class="k">return</span> <span class="n">deleted_files</span></div>
@@ -429,7 +426,7 @@
     <span class="c1">#             qout_info = f.read()</span>
     <span class="c1">#</span>
     <span class="c1">#     if qerr_info or qout_info:</span>
-    <span class="c1">#         from pymatgen.io.abinit.scheduler_error_parsers import get_parser</span>
+    <span class="c1">#         from abipt.flowtkscheduler_error_parsers import get_parser</span>
     <span class="c1">#         qtk_qadapter = fizzled_fw.spec[&#39;qtk_queueadapter&#39;]</span>
     <span class="c1">#         qtype = qtk_qadapter.QTYPE</span>
     <span class="c1">#         scheduler_parser = get_parser(qtype, err_file=qerr_file,</span>
@@ -505,7 +502,7 @@
     <span class="n">optional_params</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;handlers&#39;</span><span class="p">,</span> <span class="s1">&#39;validators&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="c1">#super(CheckTask).__init__(self)</span>
+        <span class="c1">#super().__init__(self)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="n">handlers</span>
         <span class="c1"># Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -683,6 +680,7 @@
 <div class="viewcode-block" id="print_myself"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.utility_tasks.print_myself">[docs]</a><span class="k">def</span> <span class="nf">print_myself</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;myself&#39;</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="get_fw_task_manager"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.utility_tasks.get_fw_task_manager">[docs]</a><span class="k">def</span> <span class="nf">get_fw_task_manager</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">):</span>
     <span class="k">if</span> <span class="s1">&#39;ftm_file&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
         <span class="n">ftm</span> <span class="o">=</span> <span class="n">FWTaskManager</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;ftm_file&#39;</span><span class="p">])</span>
@@ -750,8 +748,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

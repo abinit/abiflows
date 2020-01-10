@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Setup &#8212; abiflows 0.5.dev documentation</title>
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Abinit Workflows" href="workflows.html" />
+    <link rel="prev" title="Getting AbiFlows" href="installation.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js "></script>
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="failures.html">Errors and failures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="useful_links.html">Useful links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Setup</a><ul>
+<li><a class="reference internal" href="#abinit">Abinit</a></li>
+<li><a class="reference internal" href="#abipy">Abipy</a></li>
+<li><a class="reference internal" href="#fireworks">Fireworks</a><ul>
+<li><a class="reference internal" href="#runtime-configurations">Runtime configurations</a></li>
+<li><a class="reference internal" href="#fireworks-offline-mode">Fireworks offline mode</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abiflows">Abiflows</a><ul>
+<li><a class="reference internal" href="#fw-manager-yaml-options">fw.manager.yaml options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pseudo-dojo">Pseudo dojo</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="installation.html" title="Previous Chapter: Getting AbiFlows"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Getting AbiFlows</span>
+    </a>
+  </li>
+  <li>
+    <a href="workflows.html" title="Next Chapter: Abinit Workflows"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Abinit Workflows &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/setup.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="body col-md-12 content" role="main">
+      
+  <div class="section" id="setup">
+<span id="id1"></span><h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h1>
+<p>The first step to be able to run workflows in abiflows is to properly install and configure
+all the software and modules that it depends on. Several configuration files should be
+prepared in this procedure, related to the different components that are required to run
+the workflows. You can either put these files in their respective default paths or create
+a single folder where to collect all these files and point the different modules to this
+folder, as explained in the next sections. The second option should be favoured especially
+if you are planning to run with different sets of configurations (e.g. different parallelization
+configurations, different databases, …). In the following we will refer to this generic
+configuration folder as <code class="docutils literal notranslate"><span class="pre">af_config</span></code>, but this is just an example and there is no reference
+to this specific name in Abiflows.</p>
+<div class="section" id="abinit">
+<h2>Abinit<a class="headerlink" href="#abinit" title="Permalink to this headline">¶</a></h2>
+<p>First of all you need a compiled version of <a class="reference external" href="https://www.abinit.org">Abinit</a>.
+Latest versions tend to have a larger support for the python code handling its
+inputs and outputs so you are encouraged to use the most recent production version
+available. In any case the version should not be older than version 8.4.</p>
+<p>When running on a cluster you will likely need to load modules relative or set some
+variables when running the DFT code. These configurations should be available
+at run time. If these are not automatically loaded (e.g. they are not in your
+<code class="docutils literal notranslate"><span class="pre">.bashrc</span></code> file), you will need to set it up from the fireworks configuration files.</p>
+</div>
+<div class="section" id="abipy">
+<h2>Abipy<a class="headerlink" href="#abipy" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://abinit.github.io/abipy/">Abipy</a> is used in abiflows to handle the input and outputs
+of Abinit, but is also a key tool to execute the small executables belonging to the Abinit suite,
+like <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code> or <code class="docutils literal notranslate"><span class="pre">anaddb</span></code>. In addition it provides the base for the automatic determination
+of the optimal parallelization configuration for the calculations. In order to do this
+Abipy needs to be properly configured. In particular this means that you need to prepare
+a <code class="docutils literal notranslate"><span class="pre">manager.yml</span></code> file according to the instructions given in the
+<a class="reference external" href="http://abinit.github.io/abipy/workflows/taskmanager.html">Abipy user guide</a>.
+If you are a standard Abipy user you can probably keep you <code class="docutils literal notranslate"><span class="pre">manager.yml</span></code> file as it
+is. Its default location is <code class="docutils literal notranslate"><span class="pre">$HOME/.abinit/abipy</span></code>, as in Abipy, but otherwise you can
+specify a different one for Abiflows, as explained below.</p>
+</div>
+<div class="section" id="fireworks">
+<h2>Fireworks<a class="headerlink" href="#fireworks" title="Permalink to this headline">¶</a></h2>
+<p>The next step is to configure Fireworks and its database.
+The main source of information for setting up Fireworks is its official documentation:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://materialsproject.github.io/fireworks/installation.html">https://materialsproject.github.io/fireworks/installation.html</a></p></li>
+<li><p><a class="reference external" href="https://materialsproject.github.io/fireworks/config_tutorial.html">https://materialsproject.github.io/fireworks/config_tutorial.html</a></p></li>
+<li><p><a class="reference external" href="https://materialsproject.github.io/fireworks/worker_tutorial.html">https://materialsproject.github.io/fireworks/worker_tutorial.html</a></p></li>
+</ul>
+<p>However another useful reference is the atomate installation instructions:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://atomate.org/installation.html#configure-database-connections-and-computing-center-parameters">https://atomate.org/installation.html#configure-database-connections-and-computing-center-parameters</a></p></li>
+</ul>
+<p>Here we provide a quick summary of the main steps that you need to perform and the specific
+configurations that you might want to set for Abiflows.</p>
+<p>Several files should be created to properly run fireworks. These are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FW_config.yaml</span></code>: contains general configurations and paths to the following files.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">my_launchpad.yaml</span></code>: details of the connection to the DB.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">my_fworker.yaml</span></code>: the definition of the <code class="docutils literal notranslate"><span class="pre">FireWorker</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">my_qadapter.yaml</span></code>: the definition of the parameters for the queue.</p></li>
+</ul>
+<p>By default fireworks will look for these configuration files in the <code class="docutils literal notranslate"><span class="pre">~/.fireworks</span></code>
+folder. In case you opt for using the specific configuration folder you can put all these
+files your <code class="docutils literal notranslate"><span class="pre">af_config</span></code> folder This should be explicitly indicated when using fireworks scripts through
+the command line options (<code class="docutils literal notranslate"><span class="pre">-c</span></code>, <code class="docutils literal notranslate"><span class="pre">-l</span></code>, <code class="docutils literal notranslate"><span class="pre">-q</span></code>, <code class="docutils literal notranslate"><span class="pre">-w</span></code>) or setting the environmental variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">FW_CONFIG_FILE</span><span class="o">=</span>/path/to/base_config/FW_config.yaml
+</pre></div>
+</div>
+<p>When needing a new set of configurations create a copy of <code class="docutils literal notranslate"><span class="pre">af_config</span></code> and modify the
+required parameters and all the paths to the new folder.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is important that the files are properly filled with paths to the actual configuration
+folder, so for the <code class="docutils literal notranslate"><span class="pre">rocket_launch</span></code> key in <code class="docutils literal notranslate"><span class="pre">my_qadapter.yaml</span></code> you will need to set
+the full path to <code class="docutils literal notranslate"><span class="pre">af_config</span></code> (or whichever name is used for the folder)</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">rocket_launch</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rlaunch -c /path/to/af_config rapidfire</span>
+</pre></div>
+</div>
+</div>
+<p>After setting up the fireworks files check that the connection with the database is working
+properly, running one of the <code class="docutils literal notranslate"><span class="pre">lpad</span></code> commands, for example</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad get_fws -d count
+</pre></div>
+</div>
+<p>If you everything is configured correctly you should get the number of fireworks in the database
+(<code class="docutils literal notranslate"><span class="pre">0</span></code> for an empty database). At this point you should initialize your database running</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad reset
+</pre></div>
+</div>
+<div class="section" id="runtime-configurations">
+<h3>Runtime configurations<a class="headerlink" href="#runtime-configurations" title="Permalink to this headline">¶</a></h3>
+<p>When needing to set some specific option in the job that will be executed you need to set this
+in the <code class="docutils literal notranslate"><span class="pre">my_qadapter.yaml</span></code> file, and in particular in the <code class="docutils literal notranslate"><span class="pre">pre_rocket</span></code> keyword. This should
+be a line of commands that will be executed before running the <code class="docutils literal notranslate"><span class="pre">rlaunch</span></code> command in the
+submission script. You should consider adding here everything that will be needed to execute
+the python code and to correctly run abinit. This is (a partial) list of things that might want
+to use the <code class="docutils literal notranslate"><span class="pre">pre_rocket</span></code> for:</p>
+<ul class="simple">
+<li><p>loading the python environment.</p></li>
+<li><p>loading the cluster modules needed to run Abinit.</p></li>
+<li><p>calling some configuration script to set up the parallelization environment.</p></li>
+<li><p>add the Abinit bin folder to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code>.</p></li>
+<li><p>set the <code class="docutils literal notranslate"><span class="pre">FW_CONFIG_FILE</span></code> environmental variable.</p></li>
+<li><p>set the <code class="docutils literal notranslate"><span class="pre">FW_TASK_MANAGER</span></code> environmental variable (see below).</p></li>
+</ul>
+</div>
+<div class="section" id="fireworks-offline-mode">
+<h3>Fireworks offline mode<a class="headerlink" href="#fireworks-offline-mode" title="Permalink to this headline">¶</a></h3>
+<p>Note that sometimes it might be convenient (or even necessary) to run the jobs on the cluster
+nodes in what is called <em>offline mode</em> in <a class="reference external" href="https://materialsproject.github.io/fireworks/offline_tutorial.html">Fireworks</a>.
+Not all the operations implemented in abiflows are compatible with this mode though.
+In particular the insertion in the database and the final cleanup of temporary files requires
+a connection to the Fireworks database to be executed. If you want/need to run in offline mode
+you have to make sure that the Fireworks containing these operations will run in standard mode,
+for example on the front-end of the cluster. This can be done by setting up two different
+workers (with their full set of configuration files, if needed). More details about how to do
+this can be found in the <a class="reference external" href="https://materialsproject.github.io/fireworks/controlworker.html#controlling-the-worker-that-executes-a-firework">Fireworks documentation</a>.</p>
+</div>
+</div>
+<div class="section" id="abiflows">
+<h2>Abiflows<a class="headerlink" href="#abiflows" title="Permalink to this headline">¶</a></h2>
+<p>Abiflows has only one configuration file, whose default name is <code class="docutils literal notranslate"><span class="pre">fw_manager.yaml</span></code> and whose
+default location is in the <code class="docutils literal notranslate"><span class="pre">$HOME/.abinit/abipy</span></code> folder. The easiest way to point to a different
+one is to set the <code class="docutils literal notranslate"><span class="pre">FW_TASK_MANAGER</span></code> environmental variable with the full path to the file.
+With the example of the <code class="docutils literal notranslate"><span class="pre">fw_config</span></code> folder you should run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">FW_TASK_MANAGER</span><span class="o">=</span>/path/to/base_config/fw_manager.yaml
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">fw_manager.yaml</span></code> is a yaml file where you can set some configurations for the execution of
+the workflow. For backward compatibility reasons the file should be structured with a main keyword,
+<cite>fw_policy</cite>, containing the different options that you might want to customize, i.e.:</p>
+<blockquote>
+<div><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">fw_policy</span><span class="p">:</span>
+    <span class="nt">abinit_cmd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">abinit</span>
+    <span class="nt">mrgddb_cmd</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mrgddb</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Note that in some cases the values of these options can be overwritten by setting the value in the
+<code class="docutils literal notranslate"><span class="pre">spec</span></code> of a specific Firework.</p>
+<div class="section" id="fw-manager-yaml-options">
+<span id="setup-fw-manager-opt"></span><h3>fw.manager.yaml options<a class="headerlink" href="#fw-manager-yaml-options" title="Permalink to this headline">¶</a></h3>
+<p>This is the list of options that can be currently set:</p>
+<p><strong>abipy_manager</strong>: (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>) the full path to the <code class="docutils literal notranslate"><span class="pre">manager.yml</span></code> file that contains the information
+of the Abipy task manager.</p>
+<p><strong>max_restarts</strong>: (default: <code class="docutils literal notranslate"><span class="pre">10</span></code>) the maximum number of restarts allowed for fixing errors or for
+not converged calculations.</p>
+<p><strong>autoparal</strong>: (default: <code class="docutils literal notranslate"><span class="pre">False</span></code>) whether to use the autoparal or not, if not explicitly set in the
+workflow at creation time.</p>
+<p><strong>abinit_cmd</strong>: (default: <code class="docutils literal notranslate"><span class="pre">abinit</span></code>) the full path to the abinit executable. If only <code class="docutils literal notranslate"><span class="pre">abinit</span></code> is
+used it is expected to be in the PATH.</p>
+<p><strong>mrgddb_cmd</strong>: (default: <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code>) the full path to the mrgddb executable. If only <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code> is
+used it is expected to be in the PATH.</p>
+<p><strong>anaddb_cmd</strong>: (default: <code class="docutils literal notranslate"><span class="pre">anaddb</span></code>) the full path to the anaddb executable. If only <code class="docutils literal notranslate"><span class="pre">anaddb</span></code> is
+used it is expected to be in the PATH.</p>
+<p><strong>cut3d_cmd</strong>: (default: <code class="docutils literal notranslate"><span class="pre">cut3d</span></code>) the full path to the cut3d executable. If only <code class="docutils literal notranslate"><span class="pre">cut3d</span></code> is
+used it is expected to be in the PATH.</p>
+<p><strong>mpirun_cmd</strong>: (default: <code class="docutils literal notranslate"><span class="pre">mpirun</span></code>) the command to be used for mpi parallelization.</p>
+<p><strong>short_job_timelimit</strong>: (default: <code class="docutils literal notranslate"><span class="pre">600</span></code>) the number of seconds used for generating the job in the queue
+for a <em>short</em> firework, e.g. the insertion in the database, the cleaunp, running <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code>.</p>
+<p><strong>recover_previous_job</strong>: (default: <code class="docutils literal notranslate"><span class="pre">True</span></code>) if True before running a Firework it will try to check if
+there is already a completed calculation in the folder and not execute it. This is useful when trying
+to recover a calculation that completed successfully but was not registered correctly (e.g. the DB
+was offline or a connection problem happened at the moment of completing the Firework).</p>
+<p><strong>walltime_command</strong>: (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>) a string containing a command that will return the remaining
+number of seconds in the queue job. Passed to the <code class="docutils literal notranslate"><span class="pre">--timelimit</span></code> in Abinit. If <code class="docutils literal notranslate"><span class="pre">None</span></code> or the command
+fails not time limit is set.</p>
+<p><strong>timelimit_buffer</strong>: (default: <code class="docutils literal notranslate"><span class="pre">120</span></code>) number of seconds given as additional buffer for the time limit with
+respect to what is extracted from <code class="docutils literal notranslate"><span class="pre">walltime_command</span></code>.</p>
+<p><strong>continue_unconverged_on_rerun</strong>: (default: True) if a job did not converge within the number of restarts
+specified in <code class="docutils literal notranslate"><span class="pre">max_restarts</span></code> the job ends in a <code class="docutils literal notranslate"><span class="pre">FIZZLED</span></code> state. If <code class="docutils literal notranslate"><span class="pre">continue_unconverged_on_rerun</span></code> is
+set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, when rerunning that Firework the calculation will start from the final configuration of
+the previous execution and will not start from scratch.</p>
+<p><strong>allow_local_restart</strong>: (default: <code class="docutils literal notranslate"><span class="pre">False</span></code>) if True instead of creating a detour when fixing an error or
+restarting an unconverged calculation it will continue in the same job.</p>
+<p><strong>rerun_same_dir</strong>: (default: <code class="docutils literal notranslate"><span class="pre">False</span></code>) if True, when a calculation did not converge or an error is
+fixed, the new Firework created to run will be launched in the same folder as the current one
+(similarly to what is done in Abipy).</p>
+<p><strong>copy_deps</strong>: (default: <code class="docutils literal notranslate"><span class="pre">False</span></code>) if True the abinit output files from previous steps, that are required
+for the current step, will be copied instead of being linked.</p>
+</div>
+</div>
+<div class="section" id="pseudo-dojo">
+<h2>Pseudo dojo<a class="headerlink" href="#pseudo-dojo" title="Permalink to this headline">¶</a></h2>
+<p>While there is no constraint on the pseudopotentials that can be used and they can be just
+given as list of strings with the paths to the pseudopotentials for each workflow, the best
+solution when running high-throughput calculations is to rely on table of pseudopotentials with hints
+for the values of the cutoff. In our case abipy provides full support for the pseudopotentials
+tables available in the the <a class="reference external" href="http://www.pseudo-dojo.org/">pseudo dojo</a>. Even though this is not a
+strict dependency you are thus also encouraged to install the <code class="docutils literal notranslate"><span class="pre">pseudo_dojo</span></code> module. For more details see the
+<a class="reference external" href="https://github.com/abinit/pseudo_dojo/">pseudo dojo github page</a>.</p>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

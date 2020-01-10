@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.tasks.vasp_tasks_src &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.fireworks.tasks.vasp_tasks_src &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,16 +111,12 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.fireworks.tasks.vasp_tasks_src</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
-<span class="kn">import</span> <span class="nn">copy</span>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">threading</span>
-<span class="kn">import</span> <span class="nn">subprocess</span>
 
 <span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.src_tasks_abc</span> <span class="k">import</span> <span class="n">SetupTask</span><span class="p">,</span> <span class="n">RunTask</span><span class="p">,</span> <span class="n">ControlTask</span>
@@ -130,15 +124,15 @@
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">FWTaskManager</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.src_tasks_abc</span> <span class="k">import</span> <span class="n">SRCTaskIndex</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">set_short_single_core_to_spec</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="k">import</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span><span class="p">,</span> <span class="n">VaspXMLValidatorController</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="k">import</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span> <span class="c1">#, VaspXMLValidatorController</span>
 <span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="k">import</span> <span class="n">VaspNEBValidatorController</span>
 <span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControlProcedure</span>
-<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.tasks</span> <span class="k">import</span> <span class="n">ParalHints</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.tasks</span> <span class="k">import</span> <span class="n">ParalHints</span>
 <span class="kn">from</span> <span class="nn">fireworks</span> <span class="k">import</span> <span class="n">explicit_serialize</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">FWAction</span>
 <span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">pmg_serialize</span>
-<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.utils</span> <span class="k">import</span> <span class="n">Directory</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">Directory</span>
 <span class="kn">from</span> <span class="nn">pymatgen.io.vasp</span> <span class="k">import</span> <span class="n">Vasprun</span>
 <span class="kn">from</span> <span class="nn">pymatgen.analysis.transition_state</span> <span class="k">import</span> <span class="n">NEBAnalysis</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_sets</span> <span class="k">import</span> <span class="n">MPNEBSet</span>
@@ -194,7 +188,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ftm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fw_task_manager</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;previous_src&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">prev_outdir</span> <span class="o">=</span> <span class="n">Directory</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;previous_src&#39;</span><span class="p">][</span><span class="s1">&#39;src_directories&#39;</span><span class="p">][</span><span class="s1">&#39;run_dir&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VaspSetupTask</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">run_task</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run_task</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="VaspSetupTask.setup_run_parameters"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.vasp_tasks_src.VaspSetupTask.setup_run_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">setup_run_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">RUN_PARAMETERS</span><span class="p">):</span>
         <span class="n">ftm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fw_task_manager</span><span class="p">(</span><span class="n">fw_spec</span><span class="o">=</span><span class="n">fw_spec</span><span class="p">)</span>
@@ -236,9 +230,9 @@
         <span class="c1"># Write input files</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">vasp_input_set</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_dir</span><span class="p">)</span></div></div>
 
+
 <div class="viewcode-block" id="VaspRunTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.vasp_tasks_src.VaspRunTask">[docs]</a><span class="nd">@explicit_serialize</span>
 <span class="k">class</span> <span class="nc">VaspRunTask</span><span class="p">(</span><span class="n">VaspSRCMixin</span><span class="p">,</span> <span class="n">RunTask</span><span class="p">):</span>
-
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">task_helper</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custodian_handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">task_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -265,7 +259,7 @@
         <span class="c1">#                  gamma_vasp_cmd=None, copy_magmom=False, auto_continue=False):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">vasp_cmd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;VASP_CMD&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unable to find vasp command&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;custodian_jobs&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
             <span class="n">jobs</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;custodian_jobs&#39;</span><span class="p">]</span>
@@ -313,7 +307,6 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="k">import</span> <span class="n">print_myself</span>
         <span class="n">print_myself</span><span class="p">()</span>
-
 
 <div class="viewcode-block" id="GenerateVacanciesRelaxationTask.run_task"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.vasp_tasks_src.GenerateVacanciesRelaxationTask.run_task">[docs]</a>    <span class="k">def</span> <span class="nf">run_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">):</span>
         <span class="k">pass</span></div>
@@ -495,7 +488,9 @@
 <span class="c1"># Helpers</span>
 <span class="c1">####################</span>
 
+
 <div class="viewcode-block" id="VaspTaskHelper"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.vasp_tasks_src.VaspTaskHelper">[docs]</a><span class="k">class</span> <span class="nc">VaspTaskHelper</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
+
     <span class="n">task_type</span> <span class="o">=</span> <span class="s1">&#39;vasp&#39;</span>
 
     <span class="n">CRITICAL_EVENTS</span> <span class="o">=</span> <span class="p">[]</span>
@@ -551,7 +546,7 @@
 <div class="viewcode-block" id="MPRelaxTaskHelper.get_final_structure"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.vasp_tasks_src.MPRelaxTaskHelper.get_final_structure">[docs]</a>    <span class="k">def</span> <span class="nf">get_final_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">vasprun</span> <span class="o">=</span> <span class="n">Vasprun</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">run_dir</span><span class="p">,</span> <span class="s1">&#39;vasprun.xml&#39;</span><span class="p">))</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Failed to get final structure ...&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">vasprun</span><span class="o">.</span><span class="n">final_structure</span></div></div>
 
@@ -606,6 +601,7 @@
 <span class="c1"># Other objects</span>
 <span class="c1">##############################</span>
 
+
 <div class="viewcode-block" id="RestartInfo"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.vasp_tasks_src.RestartInfo">[docs]</a><span class="k">class</span> <span class="nc">RestartInfo</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object that contains the information about the restart of a task.</span>
@@ -643,8 +639,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Errors and failures &#8212; abiflows 0.5.dev documentation</title>
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Results database" href="results_db.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js "></script>
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results_db.html">Results database</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Errors and failures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="useful_links.html">Useful links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Errors and failures</a><ul>
+<li><a class="reference internal" href="#error-handling">Error Handling</a></li>
+<li><a class="reference internal" href="#soft-failures">Soft failures</a></li>
+<li><a class="reference internal" href="#hard-failures">Hard failures</a><ul>
+<li><a class="reference internal" href="#database-issues">Database issues</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#inconsistent-fireworks">Inconsistent Fireworks</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="results_db.html" title="Previous Chapter: Results database"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Results database</span>
+    </a>
+  </li>
+  <li>
+    <a href="changelog.html" title="Next Chapter: Changelog"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Changelog &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/failures.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="body col-md-12 content" role="main">
+      
+  <div class="section" id="errors-and-failures">
+<h1>Errors and failures<a class="headerlink" href="#errors-and-failures" title="Permalink to this headline">¶</a></h1>
+<p>A key point for being able to run workflows in an high throughput regime is to have
+some automatic tool that deals with the most common errors that might show up during
+an DFT calculation, and this is indeed present in Abiflows. Such a system, however,
+cannot be expected to solve all the problems of various nature that may happen.
+So you should consider that, when running fireworks workflows, you can encounter two
+main kinds of failures. In the following we will distinguish the possible failures in
+<strong>soft and hard failures</strong>. We will call a failure <em>soft</em> if a firework
+is in the <code class="docutils literal notranslate"><span class="pre">FIZZLED</span></code> state. Conversely, we will identify a failure as <em>hard</em> if
+the job was killed by some external action leaving the firework in a <code class="docutils literal notranslate"><span class="pre">RUNNING</span></code>
+state as a <em>lost run</em>. A third kind of failure that can happen is the case of
+a <em>lost run</em> that is in an inconsistent state and needs to be adjusted.
+Here we will provide a guide about how to deal with the different kinds of failures.</p>
+<p>Before proceeding to the following section about error handling and dealing with failures
+specific to Abiflows you might want to review the basic
+<a class="reference external" href="https://materialsproject.github.io/fireworks/failures_tutorial.html">tutorial on failures</a>
+in the fireworks documentation.</p>
+<div class="section" id="error-handling">
+<h2>Error Handling<a class="headerlink" href="#error-handling" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned above Abiflows can try to solve some errors that might be encountered during
+a DFT calculation. The error messages produced by Abinit are encoded in a specific (YAML)
+format inside the output file, so these can be easily parsed and identified, without relying
+on different analysis of the textual messages.</p>
+<p>The default approach is that whenever an error is encountered, and thus Abinit stops,
+Abiflows will try to fix the problem and the default behaviour is to generate a <em>detour</em> that
+will continue the calculation with the required modifications. This can altered setting the
+<code class="docutils literal notranslate"><span class="pre">allow_local_restart</span></code> keyword to <code class="docutils literal notranslate"><span class="pre">True</span></code> in the <a class="reference internal" href="setup.html#setup-fw-manager-opt"><span class="std std-ref">fw.manager.yaml options</span></a>. The creation
+of a detour is usually preferable, since this may allow to accommodate for a change in the
+parallelization options in the restart (if autoparal is used) and to reduce the chances of
+hitting the maximum time required by a job on a cluster.</p>
+<p>The system will not try to fix an unlimted number of errors (or the same errors for an
+unlimited number of times). A maximum number of restarts for the same Firework is set
+to 10 by default and can be customized with the <code class="docutils literal notranslate"><span class="pre">max_restarts</span></code> keyword in the
+<code class="docutils literal notranslate"><span class="pre">fw_manager.yaml</span></code> configuration file.</p>
+<p>The error handling relies on the event handlers implemented in Abipy and shares the same
+functionalities as the workflows implemented there. If you encounter an error that is not
+handled and for which an error handler could be implemented, you can try to develop your
+own handler and include it in Abipy or try to get in touch with the Abipy developers.</p>
+</div>
+<div class="section" id="soft-failures">
+<h2>Soft failures<a class="headerlink" href="#soft-failures" title="Permalink to this headline">¶</a></h2>
+<p>When Abinit produces an error that is not handled, or the maximum number of restarts
+is reached, the Firework will be end up in a <code class="docutils literal notranslate"><span class="pre">FIZZLED</span></code> state. Technically this means
+that an exception was raised in the python code. This can thus come from Abiflows
+recognizing that it cannot fix the error, but can also happen due to partial failure
+of the system (e.g. a full disk will cause an I/O error but the system might still be
+able to update the state of the fireworks database) or even to some bug in the python
+code.</p>
+<p>If the failure originates from a temporary problem of the system, like a problem of
+one node that leads the calculation to crash, simply rerunning the Firework should solve
+the issue. For this you can use the standard fireworks commands, e.g.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad rerun_fws -i xxx
+</pre></div>
+</div>
+<p>If the Firework fizzled because the maximum number of restarts has been reached you
+can consider to inspect the calculation and decide if you want it to restart some more
+times, if you evaluate that there is a possibility to reach the end of the calculation.
+In this case you need to increase the number of restarts allowed in the <code class="docutils literal notranslate"><span class="pre">fw_manager.yaml</span></code>
+file and simply rerun the calculation.</p>
+<p>However, if the problem arose from an Abinit error that cannot be fixed, rerunning the
+Firework will simply lead to the same error. In this case you should probably consider
+the calculation as lost and either create a new workflow with different initial
+configurations or just discard the system. For an advanced user there might be an
+additional option. If you think that you can fix the problem by adjusting some
+abinit input variable you might consider updating the document in the <code class="docutils literal notranslate"><span class="pre">fireworks</span></code>
+collection of the fireworks database corresponding to the failed fireworks and modify
+the data corresponding to the <code class="docutils literal notranslate"><span class="pre">AbinitInput</span></code> object.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you decide to discard a calculation it might be convenient to delete
+the corresponding workflow from the fireworks database, so that it does
+not show up again when you look for <code class="docutils literal notranslate"><span class="pre">FIZZLED</span></code> fireworks. This can be
+achieved running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad delete_wflows -i xxx
+</pre></div>
+</div>
+<p>Using the fw_id of the failed firework. This will just delete the workflow
+from the database, but it is also possible to delete all the related
+folders from the file system using the <code class="docutils literal notranslate"><span class="pre">--ldirs</span></code> option. This is usually
+the best solution</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad delete_wflows -i xxx --ldirs
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="hard-failures">
+<h2>Hard failures<a class="headerlink" href="#hard-failures" title="Permalink to this headline">¶</a></h2>
+<p>When your job is killed by the queue manager, being it for some problem
+of the cluster or because your calculation exceeded the resources available in the
+job (e.g. memory or wall time) the Firework will remain in the <code class="docutils literal notranslate"><span class="pre">RUNNING</span></code> state.
+First of all you need to identify these <em>lost runs</em>. This can be done with the standard
+fireworks procedure with the command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad detect_lostruns
+</pre></div>
+</div>
+<p>This will provide a list of the ids of the <em>lost</em> fireworks (i.e. the fireworks
+that did not <em>ping</em> the database for a specified amount of time). If you are confident
+that all the lost jobs are due to a temporary problem or to a whim of the cluster you can
+just rerun all the lost Fireworks:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad detect_lostruns --rerun
+</pre></div>
+</div>
+<p>If instead you suspect that there might be a problem in some of your jobs, the correct
+way of proceeding will be to go to the launch directory of the job and inspect the
+files produced by the queue manager. These usually contain information about the reason
+of the failure and would probably explicitly mention if the error is coming from
+an exceeded memory or wall time. If that’s the case simply resubmitting your job will
+probably end up with the same outcome and you might want to be sure that your job has enough
+resources when you rerun it.</p>
+<p>For this you might consider creating a specific fireworker with additional resources
+and make the job run with that
+<a class="reference external" href="https://materialsproject.github.io/fireworks/controlworker.html#controlling-the-worker-that-executes-a-firework">fireworker</a>.
+Alternatively, you might want to set or change the <code class="docutils literal notranslate"><span class="pre">_queueadapter</span></code> keyword in the spec of
+the Firework, as is explained in the
+<code class="docutils literal notranslate"><span class="pre">specific</span> <span class="pre">section</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">fireworks</span> <span class="pre">manual</span> <span class="pre">&lt;https://materialsproject.github.io/fireworks/queue_tutorial_pt2.html&gt;`_.</span>
+<span class="pre">If</span> <span class="pre">the</span> <span class="pre">*autoparal*</span> <span class="pre">is</span> <span class="pre">enabled</span> <span class="pre">the</span> <span class="pre">``_queueadapter</span></code> will already be present and you will
+need to update the appropriate keywords to increase the resources that will be requested
+to the queue manager.</p>
+<div class="section" id="database-issues">
+<h3>Database issues<a class="headerlink" href="#database-issues" title="Permalink to this headline">¶</a></h3>
+<p>An additional problem that could leave your job as a lost run is when the database
+becomes temporarily not available, due to a failure of the database server or to an
+issue in the connection. In this case it might be that the calculation completed
+successfully, but it could not update the results in the database. If you end up
+in this situation the standard solution of simply rerunning the job is perfectly
+viable, but you will lose the computational time used for the first run. A better
+solution is to rerun the firework with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad rerun_fws -i xxx --task-level --previous-dir
+</pre></div>
+</div>
+<p>This will rerun the Firework and will make sure that it reruns in the same folder
+as the first run. At this point Abiflows will notice that there is a completed
+output in the folder and use that one instead of running Abinit again.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Remember that there should be a completed Abinit output file in the folder.
+Obviously a partial output cannot be recovered in any way. In addition
+consider that the new launch of the Firework will only last a few seconds and
+this is the time that will be registered in the fireworks (and in the results)
+database. Consider this point if you plan to keep statistics about your
+computations run time.</p>
+</div>
+</div>
+</div>
+<div class="section" id="inconsistent-fireworks">
+<h2>Inconsistent Fireworks<a class="headerlink" href="#inconsistent-fireworks" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned above, there is one particular case for which your jobs might
+be identified by the <code class="docutils literal notranslate"><span class="pre">lpad</span> <span class="pre">detect_lostruns</span></code> command, when there in an
+inconsistency between the state of the Firework and the state of the Launch.
+The output will look like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2019</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span><span class="mi">000</span> <span class="n">INFO</span> <span class="n">Detected</span> <span class="mi">0</span> <span class="n">lost</span> <span class="n">FWs</span><span class="p">:</span> <span class="p">[]</span>
+<span class="mi">2019</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span><span class="mi">000</span> <span class="n">INFO</span> <span class="n">Detected</span> <span class="mi">2</span> <span class="n">inconsistent</span> <span class="n">FWs</span><span class="p">:</span> <span class="p">[</span><span class="mi">123</span><span class="p">,</span><span class="mi">124</span><span class="p">]</span>
+<span class="n">You</span> <span class="n">can</span> <span class="n">fix</span> <span class="n">inconsistent</span> <span class="n">FWs</span> <span class="n">using</span> <span class="n">the</span> <span class="o">--</span><span class="n">refresh</span> <span class="n">argument</span> <span class="n">to</span> <span class="n">the</span> <span class="n">detect_lostruns</span> <span class="n">command</span>
+</pre></div>
+</div>
+<p>This may happen when fireworks has problems in refreshing the whole state of
+the Workflow and the dependencies of a Firework. A concrete example where this
+can show up is when there are workflows with a large number of Fireworks that
+all have a common child. This is the case for example for the <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code> step
+in a <a class="reference internal" href="workflows.html#dfpt-workflow"><span class="std std-ref">DFPT</span></a> workflow.</p>
+<p>This is only a small issue due to the particular configuration of the workflow
+and does not require the job to be rerun. To solve this you simply need to run
+the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lpad detect_lostruns --refresh
+</pre></div>
+</div>
+<p>Depending on the size of the workflow and on the number of inconsistent Fireworks,
+this may take a while, but is not a computationally intensive operation.</p>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

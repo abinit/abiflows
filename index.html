@@ -2,39 +2,31 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Getting Started &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>User Guide &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Overview" href="features.html" />
+    <link rel="next" title="Getting AbiFlows" href="installation.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -47,7 +39,7 @@
         </button>
         <a class="navbar-brand" href="#">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -63,9 +55,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -83,7 +81,9 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Getting Started</a></li>
+<li><a class="reference internal" href="#">User Guide</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+<li><a class="reference internal" href="#citing-abiflows">Citing Abiflows</a></li>
 <li><a class="reference internal" href="#api">API</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 <li><a class="reference internal" href="#license">License</a></li>
@@ -96,7 +96,7 @@
               
                 
   <li>
-    <a href="features.html" title="Next Chapter: Overview"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Overview &raquo;</span>
+    <a href="installation.html" title="Next Chapter: Getting AbiFlows"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Getting AbiFlows &raquo;</span>
     </a>
   </li>
               
@@ -128,30 +128,66 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
-  <table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Release:</th><td class="field-body">0.4</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Date:</th><td class="field-body">Sep 05, 2018</td>
-</tr>
-</tbody>
-</table>
-<a class="reference external image-reference" href="https://badge.fury.io/py/abiflows"><img alt="https://badge.fury.io/py/abiflows.svg" src="https://badge.fury.io/py/abiflows.svg" /></a>
+  <a class="reference external image-reference" href="https://badge.fury.io/py/abiflows"><img alt="https://badge.fury.io/py/abiflows.svg" src="https://badge.fury.io/py/abiflows.svg" /></a>
 <a class="reference external image-reference" href="https://travis-ci.org/abinit/abiflows"><img alt="https://travis-ci.org/abinit/abiflows.svg?branch=develop" src="https://travis-ci.org/abinit/abiflows.svg?branch=develop" /></a>
 <a class="reference external image-reference" href="https://coveralls.io/github/abinit/abiflows?branch=develop"><img alt="https://coveralls.io/repos/github/abinit/abiflows/badge.svg?branch=develop" src="https://coveralls.io/repos/github/abinit/abiflows/badge.svg?branch=develop" /></a>
-<img alt="https://img.shields.io/badge/license-GPL-blue.svg" src="https://img.shields.io/badge/license-GPL-blue.svg" /><div class="section" id="getting-started">
-<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<img alt="https://img.shields.io/badge/license-GPL-blue.svg" src="https://img.shields.io/badge/license-GPL-blue.svg" /><p>AbiFlows is a framework for Python &gt;= 3.6 that provides workflows to automate ab-initio calculations
+with Abinit based on the <a class="reference external" href="https://materialsproject.github.io/fireworks/">Fireworks</a> framework.
+The package is relies on external libraries, mainly <a class="reference external" href="http://abinit.github.io/abipy/">Abipy</a> and
+<a class="reference external" href="http://www.pymatgen.org">Pymatgen</a>, to handle the input generation and parse the output files.
+The package also offers a set of tools to store the outputs generated by the workflows in
+MongoDB documents and to easily retrieve them.</p>
+<p>Abiflows is meant mainly for running Abinit calculations in a high-throughput regime, when it
+is important to rely on a database both for handling the calculations and to store the results.
+While it provides a wide support for different types of  calculations, this necessarily comes at
+the price of some limitations on the configurations that one can set for Abinit. If you are
+interested in running just a small set of calculations, we suggest to consider using the
+<a class="reference external" href="http://abinit.github.io/abipy/flow_gallery/index.html">Abipy workflows</a> instead.</p>
+<p>AbiFlows is free to use. However, we also welcome your help to improve this library by making your own contributions.
+Please report any bugs and issues at AbiFlows <a class="reference external" href="https://github.com/abinit/abiflows">Github page</a>.</p>
+<div class="section" id="user-guide">
+<h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="references">
+<h1>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="zzbiblio.html">Bibliography</a></li>
 </ul>
+</div>
+</div>
+<div class="section" id="citing-abiflows">
+<h1>Citing Abiflows<a class="headerlink" href="#citing-abiflows" title="Permalink to this headline">¶</a></h1>
+<p>If you use abiflows in your research, please consider citing the
+<a class="reference external" href="https://doi.org/10.1016/j.cpc.2019.107042">following work</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">key</span><span class="p">,</span>
+ <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Gonze</span><span class="p">,</span> <span class="n">Xavier</span> <span class="ow">and</span> <span class="n">Amadon</span><span class="p">,</span> <span class="n">Bernard</span> <span class="ow">and</span> <span class="n">Antonius</span><span class="p">,</span> <span class="n">Gabriel</span> <span class="ow">and</span> <span class="n">Arnardi</span><span class="p">,</span> <span class="n">Frédéric</span> <span class="ow">and</span> <span class="n">Baguet</span><span class="p">,</span> <span class="n">Lucas</span> <span class="ow">and</span> <span class="n">Beuken</span><span class="p">,</span> <span class="n">Jean</span><span class="o">-</span><span class="n">Michel</span> <span class="ow">and</span> <span class="n">Bieder</span><span class="p">,</span> <span class="n">Jordan</span> <span class="ow">and</span> <span class="n">Bottin</span><span class="p">,</span> <span class="n">François</span> <span class="ow">and</span> <span class="n">Bouchet</span><span class="p">,</span> <span class="n">Johann</span> <span class="ow">and</span> <span class="n">Bousquet</span><span class="p">,</span> <span class="n">Eric</span> <span class="ow">and</span> <span class="n">Brouwer</span><span class="p">,</span> <span class="n">Nils</span> <span class="ow">and</span> <span class="n">Bruneval</span><span class="p">,</span> <span class="n">Fabien</span> <span class="ow">and</span> <span class="n">Brunin</span><span class="p">,</span> <span class="n">Guillaume</span> <span class="ow">and</span> <span class="n">Cavignac</span><span class="p">,</span> <span class="n">Théo</span> <span class="ow">and</span> <span class="n">Charraud</span><span class="p">,</span> <span class="n">Jean</span><span class="o">-</span><span class="n">Baptiste</span> <span class="ow">and</span> <span class="n">Chen</span><span class="p">,</span> <span class="n">Wei</span> <span class="ow">and</span> <span class="n">Côté</span><span class="p">,</span> <span class="n">Michel</span> <span class="ow">and</span> <span class="n">Cottenier</span><span class="p">,</span> <span class="n">Stefaan</span> <span class="ow">and</span> <span class="n">Denier</span><span class="p">,</span> <span class="n">Jules</span> <span class="ow">and</span> <span class="n">Geneste</span><span class="p">,</span> <span class="n">Grégory</span> <span class="ow">and</span> <span class="n">Ghosez</span><span class="p">,</span> <span class="n">Philippe</span> <span class="ow">and</span> <span class="n">Giantomassi</span><span class="p">,</span> <span class="n">Matteo</span> <span class="ow">and</span> <span class="n">Gillet</span><span class="p">,</span> <span class="n">Yannick</span> <span class="ow">and</span> <span class="n">Gingras</span><span class="p">,</span> <span class="n">Olivier</span> <span class="ow">and</span> <span class="n">Hamann</span><span class="p">,</span> <span class="n">Donald</span> <span class="n">R</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Hautier</span><span class="p">,</span> <span class="n">Geoffroy</span> <span class="ow">and</span> <span class="n">He</span><span class="p">,</span> <span class="n">Xu</span> <span class="ow">and</span> <span class="n">Helbig</span><span class="p">,</span> <span class="n">Nicole</span> <span class="ow">and</span> <span class="n">Holzwarth</span><span class="p">,</span> <span class="n">Natalie</span> <span class="ow">and</span> <span class="n">Jia</span><span class="p">,</span> <span class="n">Yongchao</span> <span class="ow">and</span> <span class="n">Jollet</span><span class="p">,</span> <span class="n">François</span> <span class="ow">and</span> <span class="n">Lafargue</span><span class="o">-</span><span class="n">Dit</span><span class="o">-</span><span class="n">Hauret</span><span class="p">,</span> <span class="n">William</span> <span class="ow">and</span> <span class="n">Lejaeghere</span><span class="p">,</span> <span class="n">Kurt</span> <span class="ow">and</span> <span class="n">Marques</span><span class="p">,</span> <span class="n">Miguel</span> <span class="n">A</span><span class="o">.</span><span class="n">L</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Martin</span><span class="p">,</span> <span class="n">Alexandre</span> <span class="ow">and</span> <span class="n">Martins</span><span class="p">,</span> <span class="n">Cyril</span> <span class="ow">and</span> <span class="n">Miranda</span><span class="p">,</span> <span class="n">Henrique</span> <span class="n">P</span><span class="o">.</span><span class="n">C</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Naccarato</span><span class="p">,</span> <span class="n">Francesco</span> <span class="ow">and</span> <span class="n">Persson</span><span class="p">,</span> <span class="n">Kristin</span> <span class="ow">and</span> <span class="n">Petretto</span><span class="p">,</span> <span class="n">Guido</span> <span class="ow">and</span> <span class="n">Planes</span><span class="p">,</span> <span class="n">Valentin</span> <span class="ow">and</span> <span class="n">Pouillon</span><span class="p">,</span> <span class="n">Yann</span> <span class="ow">and</span> <span class="n">Prokhorenko</span><span class="p">,</span> <span class="n">Sergei</span> <span class="ow">and</span> <span class="n">Ricci</span><span class="p">,</span> <span class="n">Fabio</span> <span class="ow">and</span> <span class="n">Rignanese</span><span class="p">,</span> <span class="n">Gian</span><span class="o">-</span><span class="n">Marco</span> <span class="ow">and</span> <span class="n">Romero</span><span class="p">,</span> <span class="n">Aldo</span> <span class="n">H</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Schmitt</span><span class="p">,</span> <span class="n">Michael</span> <span class="n">Marcus</span> <span class="ow">and</span> <span class="n">Torrent</span><span class="p">,</span> <span class="n">Marc</span> <span class="ow">and</span> <span class="n">van</span> <span class="n">Setten</span><span class="p">,</span> <span class="n">Michiel</span> <span class="n">J</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Van</span> <span class="n">Troeye</span><span class="p">,</span> <span class="n">Benoit</span> <span class="ow">and</span> <span class="n">Verstraete</span><span class="p">,</span> <span class="n">Matthieu</span> <span class="n">J</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Zérah</span><span class="p">,</span> <span class="n">Gilles</span> <span class="ow">and</span> <span class="n">Zwanziger</span><span class="p">,</span> <span class="n">Josef</span> <span class="n">W</span><span class="o">.</span><span class="p">},</span>
+ <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.1016</span><span class="o">/</span><span class="n">j</span><span class="o">.</span><span class="n">cpc</span><span class="o">.</span><span class="mf">2019.107042</span><span class="p">},</span>
+ <span class="n">pages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">107042</span><span class="p">},</span>
+ <span class="n">source</span> <span class="o">=</span> <span class="p">{</span><span class="n">Crossref</span><span class="p">},</span>
+ <span class="n">url</span> <span class="o">=</span> <span class="p">{</span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">dx</span><span class="o">.</span><span class="n">doi</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="mf">10.1016</span><span class="o">/</span><span class="n">j</span><span class="o">.</span><span class="n">cpc</span><span class="o">.</span><span class="mf">2019.107042</span><span class="p">},</span>
+ <span class="n">volume</span> <span class="o">=</span> <span class="p">{</span><span class="mi">248</span><span class="p">},</span>
+ <span class="n">journal</span> <span class="o">=</span> <span class="p">{</span><span class="n">Computer</span> <span class="n">Physics</span> <span class="n">Communications</span><span class="p">},</span>
+ <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">Elsevier</span> <span class="n">BV</span><span class="p">},</span>
+ <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">The</span> <span class="n">Abinitproject</span><span class="p">:</span> <span class="p">{</span><span class="n">Impact</span><span class="p">,}</span> <span class="n">environment</span> <span class="ow">and</span> <span class="n">recent</span> <span class="n">developments</span><span class="p">},</span>
+ <span class="n">issn</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0010</span><span class="o">-</span><span class="mi">4655</span><span class="p">},</span>
+ <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2020</span><span class="p">},</span>
+ <span class="n">month</span> <span class="o">=</span> <span class="n">mar</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="api">
@@ -165,9 +201,10 @@
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <blockquote>
-<div><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a>
+<div><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a>
 <a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a>
-<a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></div></blockquote>
+<a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p>
+</div></blockquote>
 </div>
 <div class="section" id="license">
 <h1>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h1>
@@ -196,8 +233,8 @@ If not, see <a class="reference external" href="http://www.gnu.org/licenses/">ht
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>mongoengine.fields &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>mongoengine.fields &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,22 +111,24 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for mongoengine.fields</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">decimal</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">itemgetter</span>
 
 <span class="kn">from</span> <span class="nn">bson</span> <span class="k">import</span> <span class="n">Binary</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">,</span> <span class="n">ObjectId</span><span class="p">,</span> <span class="n">SON</span>
 <span class="kn">import</span> <span class="nn">gridfs</span>
 <span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="kn">from</span> <span class="nn">pymongo</span> <span class="k">import</span> <span class="n">ReturnDocument</span>
 <span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">dateutil</span>
@@ -142,13 +142,19 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">Int64</span> <span class="o">=</span> <span class="nb">int</span>
 
+
 <span class="kn">from</span> <span class="nn">mongoengine.base</span> <span class="k">import</span> <span class="p">(</span><span class="n">BaseDocument</span><span class="p">,</span> <span class="n">BaseField</span><span class="p">,</span> <span class="n">ComplexBaseField</span><span class="p">,</span>
-                              <span class="n">GeoJsonBaseField</span><span class="p">,</span> <span class="n">ObjectIdField</span><span class="p">,</span> <span class="n">get_document</span><span class="p">)</span>
+                              <span class="n">GeoJsonBaseField</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">,</span> <span class="n">ObjectIdField</span><span class="p">,</span>
+                              <span class="n">get_document</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mongoengine.base.utils</span> <span class="k">import</span> <span class="n">LazyRegexCompiler</span>
+<span class="kn">from</span> <span class="nn">mongoengine.common</span> <span class="k">import</span> <span class="n">_import_class</span>
 <span class="kn">from</span> <span class="nn">mongoengine.connection</span> <span class="k">import</span> <span class="n">DEFAULT_CONNECTION_NAME</span><span class="p">,</span> <span class="n">get_db</span>
 <span class="kn">from</span> <span class="nn">mongoengine.document</span> <span class="k">import</span> <span class="n">Document</span><span class="p">,</span> <span class="n">EmbeddedDocument</span>
-<span class="kn">from</span> <span class="nn">mongoengine.errors</span> <span class="k">import</span> <span class="n">DoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">mongoengine.errors</span> <span class="k">import</span> <span class="n">DoesNotExist</span><span class="p">,</span> <span class="n">InvalidQueryError</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">mongoengine.python_support</span> <span class="k">import</span> <span class="n">StringIO</span>
-<span class="kn">from</span> <span class="nn">mongoengine.queryset</span> <span class="k">import</span> <span class="n">DO_NOTHING</span><span class="p">,</span> <span class="n">QuerySet</span>
+<span class="kn">from</span> <span class="nn">mongoengine.queryset</span> <span class="k">import</span> <span class="n">DO_NOTHING</span>
+<span class="kn">from</span> <span class="nn">mongoengine.queryset.base</span> <span class="k">import</span> <span class="n">BaseQuerySet</span>
+<span class="kn">from</span> <span class="nn">mongoengine.queryset.transform</span> <span class="k">import</span> <span class="n">STRING_OPERATORS</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">PIL</span> <span class="k">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageOps</span>
@@ -156,13 +162,20 @@
     <span class="n">Image</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">ImageOps</span> <span class="o">=</span> <span class="kc">None</span>
 
+<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+    <span class="c1"># Useless as long as 2to3 gets executed</span>
+    <span class="c1"># as it turns `long` into `int` blindly</span>
+    <span class="n">long</span> <span class="o">=</span> <span class="nb">int</span>
+
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s1">&#39;StringField&#39;</span><span class="p">,</span> <span class="s1">&#39;URLField&#39;</span><span class="p">,</span> <span class="s1">&#39;EmailField&#39;</span><span class="p">,</span> <span class="s1">&#39;IntField&#39;</span><span class="p">,</span> <span class="s1">&#39;LongField&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;FloatField&#39;</span><span class="p">,</span> <span class="s1">&#39;DecimalField&#39;</span><span class="p">,</span> <span class="s1">&#39;BooleanField&#39;</span><span class="p">,</span> <span class="s1">&#39;DateTimeField&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;FloatField&#39;</span><span class="p">,</span> <span class="s1">&#39;DecimalField&#39;</span><span class="p">,</span> <span class="s1">&#39;BooleanField&#39;</span><span class="p">,</span> <span class="s1">&#39;DateTimeField&#39;</span><span class="p">,</span> <span class="s1">&#39;DateField&#39;</span><span class="p">,</span>
     <span class="s1">&#39;ComplexDateTimeField&#39;</span><span class="p">,</span> <span class="s1">&#39;EmbeddedDocumentField&#39;</span><span class="p">,</span> <span class="s1">&#39;ObjectIdField&#39;</span><span class="p">,</span>
     <span class="s1">&#39;GenericEmbeddedDocumentField&#39;</span><span class="p">,</span> <span class="s1">&#39;DynamicField&#39;</span><span class="p">,</span> <span class="s1">&#39;ListField&#39;</span><span class="p">,</span>
     <span class="s1">&#39;SortedListField&#39;</span><span class="p">,</span> <span class="s1">&#39;EmbeddedDocumentListField&#39;</span><span class="p">,</span> <span class="s1">&#39;DictField&#39;</span><span class="p">,</span>
     <span class="s1">&#39;MapField&#39;</span><span class="p">,</span> <span class="s1">&#39;ReferenceField&#39;</span><span class="p">,</span> <span class="s1">&#39;CachedReferenceField&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LazyReferenceField&#39;</span><span class="p">,</span> <span class="s1">&#39;GenericLazyReferenceField&#39;</span><span class="p">,</span>
     <span class="s1">&#39;GenericReferenceField&#39;</span><span class="p">,</span> <span class="s1">&#39;BinaryField&#39;</span><span class="p">,</span> <span class="s1">&#39;GridFSError&#39;</span><span class="p">,</span> <span class="s1">&#39;GridFSProxy&#39;</span><span class="p">,</span>
     <span class="s1">&#39;FileField&#39;</span><span class="p">,</span> <span class="s1">&#39;ImageGridFsProxy&#39;</span><span class="p">,</span> <span class="s1">&#39;ImproperlyConfigured&#39;</span><span class="p">,</span> <span class="s1">&#39;ImageField&#39;</span><span class="p">,</span>
     <span class="s1">&#39;GeoPointField&#39;</span><span class="p">,</span> <span class="s1">&#39;PointField&#39;</span><span class="p">,</span> <span class="s1">&#39;LineStringField&#39;</span><span class="p">,</span> <span class="s1">&#39;PolygonField&#39;</span><span class="p">,</span>
@@ -211,11 +224,11 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">value</span>
 
-        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;startswith&#39;</span><span class="p">,</span> <span class="s1">&#39;endswith&#39;</span><span class="p">,</span> <span class="s1">&#39;contains&#39;</span><span class="p">,</span> <span class="s1">&#39;exact&#39;</span><span class="p">):</span>
-            <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">):</span>
-                <span class="n">flags</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span>
-                <span class="n">op</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">STRING_OPERATORS</span><span class="p">:</span>
+            <span class="n">case_insensitive</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+            <span class="n">op</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+
+            <span class="n">flags</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="k">if</span> <span class="n">case_insensitive</span> <span class="k">else</span> <span class="mi">0</span>
 
             <span class="n">regex</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span>
             <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;startswith&#39;</span><span class="p">:</span>
@@ -237,9 +250,9 @@
 <span class="sd">    .. versionadded:: 0.3</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_URL_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="n">_URL_REGEX</span> <span class="o">=</span> <span class="n">LazyRegexCompiler</span><span class="p">(</span>
         <span class="sa">r</span><span class="s1">&#39;^(?:[a-z0-9\.\-]*)://&#39;</span>  <span class="c1"># scheme is validated separately</span>
-        <span class="sa">r</span><span class="s1">&#39;(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}(?&lt;!-)\.?)|&#39;</span>  <span class="c1"># domain...</span>
+        <span class="sa">r</span><span class="s1">&#39;(?:(?:[A-Z0-9](?:[A-Z0-9-_]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}(?&lt;!-)\.?)|&#39;</span>  <span class="c1"># domain...</span>
         <span class="sa">r</span><span class="s1">&#39;localhost|&#39;</span>  <span class="c1"># localhost...</span>
         <span class="sa">r</span><span class="s1">&#39;\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|&#39;</span>  <span class="c1"># ...or ipv4</span>
         <span class="sa">r</span><span class="s1">&#39;\[?[A-F0-9]*:[A-F0-9:]+\]?)&#39;</span>  <span class="c1"># ...or ipv6</span>
@@ -247,8 +260,7 @@
         <span class="sa">r</span><span class="s1">&#39;(?:/?|[/?]\S+)$&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
     <span class="n">_URL_SCHEMES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;http&#39;</span><span class="p">,</span> <span class="s1">&#39;https&#39;</span><span class="p">,</span> <span class="s1">&#39;ftp&#39;</span><span class="p">,</span> <span class="s1">&#39;ftps&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verify_exists</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">url_regex</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schemes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">verify_exists</span> <span class="o">=</span> <span class="n">verify_exists</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url_regex</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schemes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">url_regex</span> <span class="o">=</span> <span class="n">url_regex</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_URL_REGEX</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">schemes</span> <span class="o">=</span> <span class="n">schemes</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_URL_SCHEMES</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">URLField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -258,12 +270,10 @@
         <span class="n">scheme</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;://&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schemes</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid scheme </span><span class="si">{}</span><span class="s1"> in URL: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
-            <span class="k">return</span>
 
         <span class="c1"># Then check full URL</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid URL: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
-            <span class="k">return</span>
 
 
 <span class="k">class</span> <span class="nc">EmailField</span><span class="p">(</span><span class="n">StringField</span><span class="p">):</span>
@@ -271,20 +281,104 @@
 
 <span class="sd">    .. versionadded:: 0.4</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">EMAIL_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-        <span class="c1"># dot-atom</span>
-        <span class="sa">r</span><span class="s2">&quot;(^[-!#$%&amp;&#39;*+/=?^_`</span><span class="si">{}</span><span class="s2">|~0-9A-Z]+(\.[-!#$%&amp;&#39;*+/=?^_`</span><span class="si">{}</span><span class="s2">|~0-9A-Z]+)*&quot;</span>
-        <span class="c1"># quoted-string</span>
-        <span class="sa">r</span><span class="s1">&#39;|^&quot;([\001-\010\013\014\016-\037!#-\[\]-\177]|</span><span class="se">\\</span><span class="s1">[\001-011\013\014\016-\177])*&quot;&#39;</span>
-        <span class="c1"># domain (max length of an ICAAN TLD is 22 characters)</span>
-        <span class="sa">r</span><span class="s1">&#39;)@(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}|[A-Z0-9-]{2,}(?&lt;!-))$&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span>
+    <span class="n">USER_REGEX</span> <span class="o">=</span> <span class="n">LazyRegexCompiler</span><span class="p">(</span>
+        <span class="c1"># `dot-atom` defined in RFC 5322 Section 3.2.3.</span>
+        <span class="sa">r</span><span class="s2">&quot;(^[-!#$%&amp;&#39;*+/=?^_`</span><span class="si">{}</span><span class="s2">|~0-9A-Z]+(\.[-!#$%&amp;&#39;*+/=?^_`</span><span class="si">{}</span><span class="s2">|~0-9A-Z]+)*\Z&quot;</span>
+        <span class="c1"># `quoted-string` defined in RFC 5322 Section 3.2.4.</span>
+        <span class="sa">r</span><span class="s1">&#39;|^&quot;([\001-\010\013\014\016-\037!#-\[\]-\177]|</span><span class="se">\\</span><span class="s1">[\001-\011\013\014\016-\177])*&quot;\Z)&#39;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span>
     <span class="p">)</span>
 
+    <span class="n">UTF8_USER_REGEX</span> <span class="o">=</span> <span class="n">LazyRegexCompiler</span><span class="p">(</span>
+        <span class="n">six</span><span class="o">.</span><span class="n">u</span><span class="p">(</span>
+            <span class="c1"># RFC 6531 Section 3.3 extends `atext` (used by dot-atom) to</span>
+            <span class="c1"># include `UTF8-non-ascii`.</span>
+            <span class="sa">r</span><span class="s2">&quot;(^[-!#$%&amp;&#39;*+/=?^_`</span><span class="si">{}</span><span class="s2">|~0-9A-Z\u0080-\U0010FFFF]+(\.[-!#$%&amp;&#39;*+/=?^_`</span><span class="si">{}</span><span class="s2">|~0-9A-Z\u0080-\U0010FFFF]+)*\Z&quot;</span>
+            <span class="c1"># `quoted-string`</span>
+            <span class="sa">r</span><span class="s1">&#39;|^&quot;([\001-\010\013\014\016-\037!#-\[\]-\177]|</span><span class="se">\\</span><span class="s1">[\001-\011\013\014\016-\177])*&quot;\Z)&#39;</span>
+        <span class="p">),</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span>
+    <span class="p">)</span>
+
+    <span class="n">DOMAIN_REGEX</span> <span class="o">=</span> <span class="n">LazyRegexCompiler</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s1">&#39;((?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+)(?:[A-Z0-9-]{2,63}(?&lt;!-))\Z&#39;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span>
+    <span class="p">)</span>
+
+    <span class="n">error_msg</span> <span class="o">=</span> <span class="s1">&#39;Invalid email address: </span><span class="si">%s</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_whitelist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_utf8_user</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">allow_ip_domain</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the EmailField.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            domain_whitelist (list) - list of otherwise invalid domain</span>
+<span class="sd">                                      names which you&#39;d like to support.</span>
+<span class="sd">            allow_utf8_user (bool) - if True, the user part of the email</span>
+<span class="sd">                                     address can contain UTF8 characters.</span>
+<span class="sd">                                     False by default.</span>
+<span class="sd">            allow_ip_domain (bool) - if True, the domain part of the email</span>
+<span class="sd">                                     can be a valid IPv4 or IPv6 address.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain_whitelist</span> <span class="o">=</span> <span class="n">domain_whitelist</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allow_utf8_user</span> <span class="o">=</span> <span class="n">allow_utf8_user</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allow_ip_domain</span> <span class="o">=</span> <span class="n">allow_ip_domain</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EmailField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate_user_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_part</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate the user part of the email address. Return True if</span>
+<span class="sd">        valid and False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_utf8_user</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">UTF8_USER_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">user_part</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">USER_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">user_part</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate_domain_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_part</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate the domain part of the email address. Return True if</span>
+<span class="sd">        valid and False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Skip domain validation if it&#39;s in the whitelist.</span>
+        <span class="k">if</span> <span class="n">domain_part</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_whitelist</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">DOMAIN_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">domain_part</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># Validate IPv4/IPv6, e.g. user@[192.168.0.1]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allow_ip_domain</span> <span class="ow">and</span>
+            <span class="n">domain_part</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;[&#39;</span> <span class="ow">and</span>
+            <span class="n">domain_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;]&#39;</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">addr_family</span> <span class="ow">in</span> <span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET6</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">socket</span><span class="o">.</span><span class="n">inet_pton</span><span class="p">(</span><span class="n">addr_family</span><span class="p">,</span> <span class="n">domain_part</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">,</span> <span class="ne">UnicodeEncodeError</span><span class="p">):</span>
+                    <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">EmailField</span><span class="o">.</span><span class="n">EMAIL_REGEX</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid email address: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">EmailField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;@&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_msg</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="n">user_part</span><span class="p">,</span> <span class="n">domain_part</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;@&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Validate the user part.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_user_part</span><span class="p">(</span><span class="n">user_part</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_msg</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># Validate the domain and, if invalid, see if it&#39;s IDN-encoded.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_domain_part</span><span class="p">(</span><span class="n">domain_part</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">domain_part</span> <span class="o">=</span> <span class="n">domain_part</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;idna&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">UnicodeError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_msg</span> <span class="o">%</span> <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;(domain failed IDN encoding)&quot;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_domain_part</span><span class="p">(</span><span class="n">domain_part</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_msg</span> <span class="o">%</span> <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;(domain validation failed)&quot;</span><span class="p">))</span>
 
 
 <span class="k">class</span> <span class="nc">IntField</span><span class="p">(</span><span class="n">BaseField</span><span class="p">):</span>
@@ -297,14 +391,14 @@
     <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
             <span class="k">pass</span>
         <span class="k">return</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> could not be converted to int&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span><span class="p">:</span>
@@ -330,7 +424,7 @@
     <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
             <span class="k">pass</span>
         <span class="k">return</span> <span class="n">value</span>
 
@@ -340,7 +434,7 @@
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> could not be converted to long&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span><span class="p">:</span>
@@ -394,7 +488,8 @@
 
 
 <span class="k">class</span> <span class="nc">DecimalField</span><span class="p">(</span><span class="n">BaseField</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Fixed-point decimal number field.</span>
+    <span class="sd">&quot;&quot;&quot;Fixed-point decimal number field. Stores the value as a float by default unless `force_string` is used.</span>
+<span class="sd">    If using floats, beware of Decimal to float conversion (potential precision loss)</span>
 
 <span class="sd">    .. versionchanged:: 0.8</span>
 <span class="sd">    .. versionadded:: 0.3</span>
@@ -405,7 +500,9 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param min_value: Validation rule for the minimum acceptable value.</span>
 <span class="sd">        :param max_value: Validation rule for the maximum acceptable value.</span>
-<span class="sd">        :param force_string: Store as a string.</span>
+<span class="sd">        :param force_string: Store the value as a string (instead of a float).</span>
+<span class="sd">         Be aware that this affects query sorting and operation like lte, gte (as string comparison is applied)</span>
+<span class="sd">         and some query operator won&#39;t work (e.g: inc, dec)</span>
 <span class="sd">        :param precision: Number of decimal places to store.</span>
 <span class="sd">        :param rounding: The rounding rule from the python decimal library:</span>
 
@@ -436,7 +533,7 @@
         <span class="c1"># Convert to string for python 2.6 before casting to Decimal</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">decimal</span><span class="o">.</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">decimal</span><span class="o">.</span><span class="n">InvalidOperation</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">decimal</span><span class="o">.</span><span class="n">InvalidOperation</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">value</span>
         <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span><span class="n">decimal</span><span class="o">.</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">&#39;.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">precision</span><span class="p">)),</span> <span class="n">rounding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rounding</span><span class="p">)</span>
 
@@ -453,7 +550,7 @@
                 <span class="n">value</span> <span class="o">=</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">decimal</span><span class="o">.</span><span class="n">Decimal</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">decimal</span><span class="o">.</span><span class="n">InvalidOperation</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Could not convert value to decimal: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">exc</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span><span class="p">:</span>
@@ -492,6 +589,8 @@
 <span class="sd">    installed you can utilise it to convert varying types of date formats into valid</span>
 <span class="sd">    python datetime objects.</span>
 
+<span class="sd">    Note: To default the field to the current datetime, use: DateTimeField(default=datetime.utcnow)</span>
+
 <span class="sd">    Note: Microseconds are rounded to the nearest millisecond.</span>
 <span class="sd">      Pre UTC microsecond support is effectively broken.</span>
 <span class="sd">      Use :class:`~mongoengine.fields.ComplexDateTimeField` if you</span>
@@ -516,11 +615,18 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="c1"># Attempt to parse a datetime:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_datetime</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_parse_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="c1"># Attempt to parse a datetime from a string</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
         <span class="k">if</span> <span class="n">dateutil</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">dateutil</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">OverflowError</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">None</span>
 
         <span class="c1"># split usecs, because they are not recognized by strptime.</span>
@@ -551,6 +657,22 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">DateTimeField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prepare_query_value</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
 
+<span class="k">class</span> <span class="nc">DateField</span><span class="p">(</span><span class="n">DateTimeField</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">to_mongo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">DateField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="c1"># drop hours, minutes, seconds</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">DateField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="c1"># convert datetime to date</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">day</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+
 <span class="k">class</span> <span class="nc">ComplexDateTimeField</span><span class="p">(</span><span class="n">StringField</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    ComplexDateTimeField handles microseconds exactly instead of rounding</span>
@@ -567,11 +689,15 @@
 <span class="sd">    The `,` as the separator can be easily modified by passing the `separator`</span>
 <span class="sd">    keyword when initializing the field.</span>
 
+<span class="sd">    Note: To default the field to the current datetime, use: DateTimeField(default=datetime.utcnow)</span>
+
 <span class="sd">    .. versionadded:: 0.5</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">separator</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">,</span> <span class="s1">&#39;day&#39;</span><span class="p">,</span> <span class="s1">&#39;hour&#39;</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">,</span> <span class="s1">&#39;second&#39;</span><span class="p">,</span> <span class="s1">&#39;microsecond&#39;</span><span class="p">]</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param separator: Allows to customize the separator used for storage (default ``,``)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">separator</span> <span class="o">=</span> <span class="n">separator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">separator</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;%Y&#39;</span><span class="p">,</span> <span class="s1">&#39;%m&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;%H&#39;</span><span class="p">,</span> <span class="s1">&#39;%M&#39;</span><span class="p">,</span> <span class="s1">&#39;%S&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">])</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ComplexDateTimeField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -598,20 +724,24 @@
 <span class="sd">        &gt;&gt;&gt; ComplexDateTimeField()._convert_from_string(a)</span>
 <span class="sd">        datetime.datetime(2011, 6, 8, 20, 26, 24, 92284)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)))</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
         <span class="n">data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ComplexDateTimeField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">null</span> <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="ow">or</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_from_string</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_from_datetime</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ComplexDateTimeField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__set__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ComplexDateTimeField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__set__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_from_datetime</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -640,9 +770,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span>
-            <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">)</span>
+        <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">or</span>
+            <span class="nb">issubclass</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid embedded document class provided to an &#39;</span>
                        <span class="s1">&#39;EmbeddedDocumentField&#39;</span><span class="p">)</span>
@@ -654,9 +785,17 @@
     <span class="k">def</span> <span class="nf">document_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">==</span> <span class="n">RECURSIVE_REFERENCE_CONSTANT</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner_document</span>
+                <span class="n">resolved_document_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner_document</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">=</span> <span class="n">get_document</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span><span class="p">)</span>
+                <span class="n">resolved_document_type</span> <span class="o">=</span> <span class="n">get_document</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">resolved_document_type</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">):</span>
+                <span class="c1"># Due to the late resolution of the document_type</span>
+                <span class="c1"># There is a chance that it won&#39;t be an EmbeddedDocument (#1661)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid embedded document class provided to an &#39;</span>
+                           <span class="s1">&#39;EmbeddedDocumentField&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">=</span> <span class="n">resolved_document_type</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span>
 
     <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -680,11 +819,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">clean</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">lookup_member</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">member_name</span><span class="p">)</span>
+        <span class="n">doc_and_subclasses</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">doc_type</span> <span class="ow">in</span> <span class="n">doc_and_subclasses</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">doc_type</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">member_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">field</span>
 
     <span class="k">def</span> <span class="nf">prepare_query_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">):</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_from_son</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_from_son</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InvalidQueryError</span><span class="p">(</span><span class="s2">&quot;Querying the embedded document &#39;</span><span class="si">%s</span><span class="s2">&#39; failed, due to an invalid query value&quot;</span> <span class="o">%</span>
+                                        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_class_name</span><span class="p">,))</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">EmbeddedDocumentField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prepare_query_value</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
@@ -711,16 +858,29 @@
         <span class="k">return</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">SON</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="s1">&#39;_cls&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">choice</span><span class="o">.</span><span class="n">_class_name</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid embedded document instance provided to an &#39;</span>
                        <span class="s1">&#39;GenericEmbeddedDocumentField&#39;</span><span class="p">)</span>
 
         <span class="n">value</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">clean</span><span class="o">=</span><span class="n">clean</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">lookup_member</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_name</span><span class="p">):</span>
+        <span class="n">document_choices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">document_choice</span> <span class="ow">in</span> <span class="n">document_choices</span><span class="p">:</span>
+            <span class="n">doc_and_subclasses</span> <span class="o">=</span> <span class="p">[</span><span class="n">document_choice</span><span class="p">]</span> <span class="o">+</span> <span class="n">document_choice</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">doc_type</span> <span class="ow">in</span> <span class="n">doc_and_subclasses</span><span class="p">:</span>
+                <span class="n">field</span> <span class="o">=</span> <span class="n">doc_type</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">member_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">field</span>
+
     <span class="k">def</span> <span class="nf">to_mongo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">,</span> <span class="n">use_db_field</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">document</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-
         <span class="n">data</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">use_db_field</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
         <span class="k">if</span> <span class="s1">&#39;_cls&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
             <span class="n">data</span><span class="p">[</span><span class="s1">&#39;_cls&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">_class_name</span>
@@ -759,12 +919,12 @@
             <span class="n">value</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">)}</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">use_db_field</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
 
         <span class="n">value</span> <span class="o">=</span> <span class="n">data</span>
         <span class="k">if</span> <span class="n">is_list</span><span class="p">:</span>  <span class="c1"># Convert back to a list</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))]</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">iteritems</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))]</span>
         <span class="k">return</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -804,10 +964,20 @@
         <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ListField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Document class being used rather than a document object</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">LazyReferenceField</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;LazyReferenceField&#39;</span><span class="p">)</span>
+        <span class="n">GenericLazyReferenceField</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;GenericLazyReferenceField&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="p">(</span><span class="n">LazyReferenceField</span><span class="p">,</span> <span class="n">GenericLazyReferenceField</span><span class="p">))</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">build_lazyref</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ListField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Make sure that a list of valid fields is being used.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">))</span> <span class="ow">or</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">BaseQuerySet</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Only lists and tuples may be used in a list field&#39;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ListField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
@@ -899,7 +1069,7 @@
 <span class="sd">    dictionary contains a dot or a dollar sign.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">k</span> <span class="ow">or</span> <span class="s1">&#39;$&#39;</span> <span class="ow">in</span> <span class="n">k</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key_has_dot_or_dollar</span><span class="p">(</span><span class="n">v</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">k</span> <span class="ow">or</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;$&#39;</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key_has_dot_or_dollar</span><span class="p">(</span><span class="n">v</span><span class="p">)):</span>
             <span class="k">return</span> <span class="kc">True</span>
 
 
@@ -914,12 +1084,10 @@
 <span class="sd">    .. versionchanged:: 0.5 - Can now handle complex / varying types of data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basecls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">field</span> <span class="o">=</span> <span class="n">field</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">basecls</span> <span class="o">=</span> <span class="n">basecls</span> <span class="ow">or</span> <span class="n">BaseField</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basecls</span><span class="p">,</span> <span class="n">BaseField</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;DictField only accepts dict values&#39;</span><span class="p">)</span>
+
         <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="p">{})</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">DictField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -934,11 +1102,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key_has_dot_or_dollar</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid dictionary key name - keys may not contain &quot;.&quot;&#39;</span>
-                       <span class="s1">&#39; or &quot;$&quot; characters&#39;</span><span class="p">)</span>
+                       <span class="s1">&#39; or startswith &quot;$&quot; characters&#39;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">DictField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">lookup_member</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">DictField</span><span class="p">(</span><span class="n">basecls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">basecls</span><span class="p">,</span> <span class="n">db_field</span><span class="o">=</span><span class="n">member_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DictField</span><span class="p">(</span><span class="n">db_field</span><span class="o">=</span><span class="n">member_name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">prepare_query_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="n">match_operators</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;contains&#39;</span><span class="p">,</span> <span class="s1">&#39;icontains&#39;</span><span class="p">,</span> <span class="s1">&#39;startswith&#39;</span><span class="p">,</span>
@@ -948,7 +1116,7 @@
         <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">match_operators</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">StringField</span><span class="p">()</span><span class="o">.</span><span class="n">prepare_query_value</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="s1">&#39;field&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="s1">&#39;field&#39;</span><span class="p">):</span>    <span class="c1"># Used for instance when using DictField(ListField(IntField()))</span>
             <span class="k">if</span> <span class="n">op</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;set&#39;</span><span class="p">,</span> <span class="s1">&#39;unset&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                 <span class="k">return</span> <span class="p">{</span>
                     <span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">prepare_query_value</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
@@ -968,6 +1136,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">BaseField</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Argument to MapField constructor must be a valid &#39;</span>
                        <span class="s1">&#39;field&#39;</span><span class="p">)</span>
@@ -977,6 +1146,15 @@
 <span class="k">class</span> <span class="nc">ReferenceField</span><span class="p">(</span><span class="n">BaseField</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A reference to a document that will be automatically dereferenced on</span>
 <span class="sd">    access (lazily).</span>
+
+<span class="sd">    Note this means you will get a database I/O access everytime you access</span>
+<span class="sd">    this field. This is necessary because the field returns a :class:`~mongoengine.Document`</span>
+<span class="sd">    which precise type can depend of the value of the `_cls` field present in the</span>
+<span class="sd">    document in database.</span>
+<span class="sd">    In short, using this type of field can lead to poor performances (especially</span>
+<span class="sd">    if you access this field only to retrieve it `pk` field which is already</span>
+<span class="sd">    known before dereference). To solve this you should consider using the</span>
+<span class="sd">    :class:`~mongoengine.fields.LazyReferenceField`.</span>
 
 <span class="sd">    Use the `reverse_delete_rule` to handle what should happen if the document</span>
 <span class="sd">    the field is referencing is deleted.  EmbeddedDocuments, DictFields and</span>
@@ -996,15 +1174,13 @@
 
 <span class="sd">    .. code-block:: python</span>
 
-<span class="sd">        class Bar(Document):</span>
-<span class="sd">            content = StringField()</span>
-<span class="sd">            foo = ReferenceField(&#39;Foo&#39;)</span>
+<span class="sd">        class Org(Document):</span>
+<span class="sd">            owner = ReferenceField(&#39;User&#39;)</span>
 
-<span class="sd">        Foo.register_delete_rule(Bar, &#39;foo&#39;, NULLIFY)</span>
+<span class="sd">        class User(Document):</span>
+<span class="sd">            org = ReferenceField(&#39;Org&#39;, reverse_delete_rule=CASCADE)</span>
 
-<span class="sd">    .. note ::</span>
-<span class="sd">        `reverse_delete_rule` does not trigger pre / post delete signals to be</span>
-<span class="sd">        triggered.</span>
+<span class="sd">        User.register_delete_rule(Org, &#39;owner&#39;, DENY)</span>
 
 <span class="sd">    .. versionchanged:: 0.5 added `reverse_delete_rule`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1022,6 +1198,7 @@
 <span class="sd">            A reference to an abstract document type is always stored as a</span>
 <span class="sd">            :class:`~pymongo.dbref.DBRef`, regardless of the value of `dbref`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span>
             <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span>
@@ -1051,9 +1228,9 @@
 
         <span class="c1"># Get value from document instance if available</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
+        <span class="n">auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
         <span class="c1"># Dereference DBRefs</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">auto_dereference</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;cls&#39;</span><span class="p">):</span>
                 <span class="c1"># Dereference using the class type specified in the reference</span>
                 <span class="bp">cls</span> <span class="o">=</span> <span class="n">get_document</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">cls</span><span class="p">)</span>
@@ -1076,6 +1253,8 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
             <span class="c1"># We need the id from the saved object to create the DBRef</span>
             <span class="n">id_</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">pk</span>
+
+            <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
             <span class="k">if</span> <span class="n">id_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;You can only reference documents once they have&#39;</span>
                            <span class="s1">&#39; been saved to the database&#39;</span><span class="p">)</span>
@@ -1115,20 +1294,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">)):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;A ReferenceField only accepts DBRef or documents&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">,</span> <span class="n">ObjectId</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;A ReferenceField only accepts DBRef, LazyReference, ObjectId or documents&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;You can only reference documents once they have been &#39;</span>
                        <span class="s1">&#39;saved to the database&#39;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;abstract&#39;</span><span class="p">)</span> <span class="ow">and</span> \
-                <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> is not an instance of abstract reference type </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_class_name</span><span class="p">)</span>
-            <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">lookup_member</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_name</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">member_name</span><span class="p">)</span>
@@ -1150,6 +1321,7 @@
         <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
 
+        <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span>
             <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span>
@@ -1209,9 +1381,10 @@
 
         <span class="c1"># Get value from document instance if available</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
+        <span class="n">auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
+
         <span class="c1"># Dereference DBRefs</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">auto_dereference</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">):</span>
             <span class="n">dereferenced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_get_db</span><span class="p">()</span><span class="o">.</span><span class="n">dereference</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">dereferenced</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">DoesNotExist</span><span class="p">(</span><span class="s1">&#39;Trying to dereference unknown document </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
@@ -1224,6 +1397,7 @@
         <span class="n">id_field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;id_field&#39;</span><span class="p">]</span>
         <span class="n">id_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="n">id_field_name</span><span class="p">]</span>
 
+        <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
             <span class="c1"># We need the id from the saved object to create the DBRef</span>
             <span class="n">id_</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">pk</span>
@@ -1232,7 +1406,6 @@
                            <span class="s1">&#39; been saved to the database&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Only accept a document object&#39;</span><span class="p">)</span>
-            <span class="c1"># TODO: should raise here or will fail next statement</span>
 
         <span class="n">value</span> <span class="o">=</span> <span class="n">SON</span><span class="p">((</span>
             <span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="n">id_field</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">id_</span><span class="p">)),</span>
@@ -1250,16 +1423,20 @@
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
+        <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;You can only reference documents once they have&#39;</span>
                            <span class="s1">&#39; been saved to the database&#39;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+            <span class="n">value_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+                <span class="n">value_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">field</span><span class="p">:</span> <span class="n">value</span><span class="p">[</span><span class="n">field</span><span class="p">]})</span>
+
+            <span class="k">return</span> <span class="n">value_dict</span>
 
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;A CachedReferenceField only accepts documents&#39;</span><span class="p">)</span>
 
@@ -1292,6 +1469,12 @@
     <span class="sd">&quot;&quot;&quot;A reference to *any* :class:`~mongoengine.document.Document` subclass</span>
 <span class="sd">    that will be automatically dereferenced on access (lazily).</span>
 
+<span class="sd">    Note this field works the same way as :class:`~mongoengine.document.ReferenceField`,</span>
+<span class="sd">    doing database I/O access the first time it is accessed (even if it&#39;s to access</span>
+<span class="sd">    it ``pk`` or ``id`` field).</span>
+<span class="sd">    To solve this you should consider using the</span>
+<span class="sd">    :class:`~mongoengine.fields.GenericLazyReferenceField`.</span>
+
 <span class="sd">    .. note ::</span>
 <span class="sd">        * Any documents used as a generic reference must be registered in the</span>
 <span class="sd">          document registry.  Importing the model will automatically register</span>
@@ -1314,6 +1497,8 @@
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choice</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">choice</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">choice</span><span class="o">.</span><span class="n">_class_name</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot;</span>
+                    <span class="c1"># method.</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid choices provided: must be a list of&#39;</span>
                                <span class="s1">&#39;Document subclasses and/or six.string_typess&#39;</span><span class="p">)</span>
 
@@ -1332,8 +1517,8 @@
 
         <span class="n">value</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">SON</span><span class="p">)):</span>
+        <span class="n">auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
+        <span class="k">if</span> <span class="n">auto_dereference</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">SON</span><span class="p">)):</span>
             <span class="n">dereferenced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dereference</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">dereferenced</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">DoesNotExist</span><span class="p">(</span><span class="s1">&#39;Trying to dereference unknown document </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
@@ -1377,6 +1562,7 @@
             <span class="c1"># We need the id from the saved object to create the DBRef</span>
             <span class="n">id_</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">id</span>
             <span class="k">if</span> <span class="n">id_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;You can only reference documents once they have&#39;</span>
                            <span class="s1">&#39; been saved to the database&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1414,13 +1600,19 @@
         <span class="k">return</span> <span class="n">Binary</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">binary_type</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">,</span> <span class="n">Binary</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">binary_type</span><span class="p">,</span> <span class="n">Binary</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;BinaryField only accepts instances of &#39;</span>
                        <span class="s1">&#39;(</span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1">, Binary)&#39;</span> <span class="o">%</span> <span class="p">(</span>
-                           <span class="n">six</span><span class="o">.</span><span class="n">binary_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+                           <span class="n">six</span><span class="o">.</span><span class="n">binary_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">Binary</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_bytes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_bytes</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Binary value is too long&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">prepare_query_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">BinaryField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prepare_query_value</span><span class="p">(</span>
+            <span class="n">op</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
 
 <span class="k">class</span> <span class="nc">GridFSError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -1465,6 +1657,8 @@
     <span class="k">def</span> <span class="nf">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_id</span><span class="p">)</span>
 
+    <span class="n">__nonzero__</span> <span class="o">=</span> <span class="fm">__bool__</span>  <span class="c1"># For Py2 support</span>
+
     <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">self_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span>
         <span class="n">self_dict</span><span class="p">[</span><span class="s1">&#39;_fs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1482,9 +1676,9 @@
         <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_id</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_id</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;(no file)&#39;</span>
-        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">gridout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">gridout</span><span class="p">,</span> <span class="s1">&#39;filename&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">gridout</span> <span class="k">else</span> <span class="s1">&#39;&lt;no file&gt;&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1"> (</span><span class="si">%s</span><span class="s1">)&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_id</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">GridFSProxy</span><span class="p">):</span>
@@ -1493,6 +1687,9 @@
                     <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_alias</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">db_alias</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">other</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">fs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1801,12 +1998,9 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A Image File storage field.</span>
 
-<span class="sd">    @size (width, height, force):</span>
-<span class="sd">        max size to store images, if larger will be automatically resized</span>
-<span class="sd">        ex: size=(800, 600, True)</span>
-
-<span class="sd">    @thumbnail (width, height, force):</span>
-<span class="sd">        size to generate a thumbnail</span>
+<span class="sd">    :param size: max size to store images, provided as (width, height, force)</span>
+<span class="sd">        if larger, it will be automatically resized (ex: size=(800, 600, True))</span>
+<span class="sd">    :param thumbnail_size: size to generate a thumbnail, provided as (width, height, force)</span>
 
 <span class="sd">    .. versionadded:: 0.6</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1877,8 +2071,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span> <span class="o">=</span> <span class="n">collection_name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">COLLECTION_NAME</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_alias</span> <span class="o">=</span> <span class="n">db_alias</span> <span class="ow">or</span> <span class="n">DEFAULT_CONNECTION_NAME</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sequence_name</span> <span class="o">=</span> <span class="n">sequence_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value_decorator</span> <span class="o">=</span> <span class="p">(</span><span class="n">callable</span><span class="p">(</span><span class="n">value_decorator</span><span class="p">)</span> <span class="ow">and</span>
-                                <span class="n">value_decorator</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALUE_DECORATOR</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_decorator</span> <span class="o">=</span> <span class="n">value_decorator</span> <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">value_decorator</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALUE_DECORATOR</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SequenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1888,10 +2081,12 @@
         <span class="n">sequence_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sequence_name</span><span class="p">()</span>
         <span class="n">sequence_id</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sequence_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">collection</span> <span class="o">=</span> <span class="n">get_db</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">db_alias</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">]</span>
-        <span class="n">counter</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">find_and_modify</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">sequence_id</span><span class="p">},</span>
-                                             <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;$inc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;next&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span>
-                                             <span class="n">new</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                             <span class="n">upsert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">counter</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">find_one_and_update</span><span class="p">(</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">sequence_id</span><span class="p">},</span>
+            <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;$inc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;next&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span>
+            <span class="n">return_document</span><span class="o">=</span><span class="n">ReturnDocument</span><span class="o">.</span><span class="n">AFTER</span><span class="p">,</span>
+            <span class="n">upsert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_decorator</span><span class="p">(</span><span class="n">counter</span><span class="p">[</span><span class="s1">&#39;next&#39;</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">set_next_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -1899,10 +2094,11 @@
         <span class="n">sequence_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sequence_name</span><span class="p">()</span>
         <span class="n">sequence_id</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sequence_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">collection</span> <span class="o">=</span> <span class="n">get_db</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">db_alias</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">]</span>
-        <span class="n">counter</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">find_and_modify</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_id&quot;</span><span class="p">:</span> <span class="n">sequence_id</span><span class="p">},</span>
-                                             <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;$set&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;next&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">}},</span>
-                                             <span class="n">new</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                             <span class="n">upsert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">find_one_and_update</span><span class="p">(</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_id&quot;</span><span class="p">:</span> <span class="n">sequence_id</span><span class="p">},</span>
+            <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;$set&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;next&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">}},</span>
+            <span class="n">return_document</span><span class="o">=</span><span class="n">ReturnDocument</span><span class="o">.</span><span class="n">AFTER</span><span class="p">,</span>
+            <span class="n">upsert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_decorator</span><span class="p">(</span><span class="n">counter</span><span class="p">[</span><span class="s1">&#39;next&#39;</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">get_next_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1987,7 +2183,7 @@
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
                     <span class="n">value</span> <span class="o">=</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">original_value</span>
         <span class="k">return</span> <span class="n">value</span>
 
@@ -2009,7 +2205,7 @@
                 <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Could not convert to UUID: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">exc</span><span class="p">)</span>
 
 
@@ -2167,6 +2363,204 @@
 <span class="sd">    .. versionadded:: 0.9</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_type</span> <span class="o">=</span> <span class="s1">&#39;MultiPolygon&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">LazyReferenceField</span><span class="p">(</span><span class="n">BaseField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A really lazy reference to a document.</span>
+<span class="sd">    Unlike the :class:`~mongoengine.fields.ReferenceField` it will</span>
+<span class="sd">    **not** be automatically (lazily) dereferenced on access.</span>
+<span class="sd">    Instead, access will return a :class:`~mongoengine.base.LazyReference` class</span>
+<span class="sd">    instance, allowing access to `pk` or manual dereference by using</span>
+<span class="sd">    ``fetch()`` method.</span>
+
+<span class="sd">    .. versionadded:: 0.15</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document_type</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dbref</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">reverse_delete_rule</span><span class="o">=</span><span class="n">DO_NOTHING</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialises the Reference Field.</span>
+
+<span class="sd">        :param dbref:  Store the reference as :class:`~pymongo.dbref.DBRef`</span>
+<span class="sd">          or as the :class:`~pymongo.objectid.ObjectId`.id .</span>
+<span class="sd">        :param reverse_delete_rule: Determines what to do when the referring</span>
+<span class="sd">          object is deleted</span>
+<span class="sd">        :param passthrough: When trying to access unknown fields, the</span>
+<span class="sd">          :class:`~mongoengine.base.datastructure.LazyReference` instance will</span>
+<span class="sd">          automatically call `fetch()` and try to retrive the field on the fetched</span>
+<span class="sd">          document. Note this only work getting field (not setting or deleting).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># XXX ValidationError raised outside of the &quot;validate&quot; method.</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">document_type</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Argument to LazyReferenceField constructor must be a &#39;</span>
+                       <span class="s1">&#39;document class or a string&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbref</span> <span class="o">=</span> <span class="n">dbref</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span> <span class="o">=</span> <span class="n">passthrough</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">=</span> <span class="n">document_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reverse_delete_rule</span> <span class="o">=</span> <span class="n">reverse_delete_rule</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">document_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">==</span> <span class="n">RECURSIVE_REFERENCE_CONSTANT</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner_document</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span> <span class="o">=</span> <span class="n">get_document</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type_obj</span>
+
+    <span class="k">def</span> <span class="nf">build_lazyref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">passthrough</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">LazyReference</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">LazyReference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">LazyReference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># value is the primary key of the referenced document</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">LazyReference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Descriptor to allow lazy dereferencing.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Document class being used rather than a document object</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_lazyref</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">LazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_mongo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">):</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">):</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">):</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># value is the primary key of the referenced document</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">id_field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;id_field&#39;</span><span class="p">]</span>
+        <span class="n">id_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="n">id_field_name</span><span class="p">]</span>
+        <span class="n">pk</span> <span class="o">=</span> <span class="n">id_field</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">pk</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dbref</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DBRef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_get_collection_name</span><span class="p">(),</span> <span class="n">pk</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pk</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">collection</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_get_collection_name</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Reference must be on a `</span><span class="si">%s</span><span class="s1">` document.&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">)</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">):</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">):</span>
+            <span class="c1"># TODO: check collection ?</span>
+            <span class="n">collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_get_collection_name</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">collection</span> <span class="o">!=</span> <span class="n">collection</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;DBRef on bad collection (must be on `</span><span class="si">%s</span><span class="s2">`)&quot;</span> <span class="o">%</span> <span class="n">collection</span><span class="p">)</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># value is the primary key of the referenced document</span>
+            <span class="n">id_field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;id_field&#39;</span><span class="p">]</span>
+            <span class="n">id_field</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">id_field_name</span><span class="p">)</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">id_field</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">pk</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;value should be `</span><span class="si">{0}</span><span class="s2">` document, LazyReference or DBRef on `</span><span class="si">{0}</span><span class="s2">` &quot;</span>
+                    <span class="s2">&quot;or `</span><span class="si">{0}</span><span class="s2">`&#39;s primary key (i.e. `</span><span class="si">{1}</span><span class="s2">`)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">id_field</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">pk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;You can only reference documents once they have been &#39;</span>
+                       <span class="s1">&#39;saved to the database&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">prepare_query_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">prepare_query_value</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">lookup_member</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">member_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">member_name</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">GenericLazyReferenceField</span><span class="p">(</span><span class="n">GenericReferenceField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A reference to *any* :class:`~mongoengine.document.Document` subclass.</span>
+<span class="sd">    Unlike the :class:`~mongoengine.fields.GenericReferenceField` it will</span>
+<span class="sd">    **not** be automatically (lazily) dereferenced on access.</span>
+<span class="sd">    Instead, access will return a :class:`~mongoengine.base.LazyReference` class</span>
+<span class="sd">    instance, allowing access to `pk` or manual dereference by using</span>
+<span class="sd">    ``fetch()`` method.</span>
+
+<span class="sd">    .. note ::</span>
+<span class="sd">        * Any documents used as a generic reference must be registered in the</span>
+<span class="sd">          document registry.  Importing the model will automatically register</span>
+<span class="sd">          it.</span>
+
+<span class="sd">        * You can use the choices param to limit the acceptable Document types</span>
+
+<span class="sd">    .. versionadded:: 0.15</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;passthrough&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GenericLazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate_choices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_class_name</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GenericLazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_validate_choices</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_lazyref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">passthrough</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">LazyReference</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">document_type</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">SON</span><span class="p">)):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">LazyReference</span><span class="p">(</span><span class="n">get_document</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="s1">&#39;_cls&#39;</span><span class="p">]),</span> <span class="n">value</span><span class="p">[</span><span class="s1">&#39;_ref&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">LazyReference</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">passthrough</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_lazyref</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GenericLazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;You can only reference documents once they have been&#39;</span>
+                       <span class="s1">&#39; saved to the database&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GenericLazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_mongo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">document</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">LazyReference</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">SON</span><span class="p">((</span>
+                <span class="p">(</span><span class="s1">&#39;_cls&#39;</span><span class="p">,</span> <span class="n">document</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_class_name</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;_ref&#39;</span><span class="p">,</span> <span class="n">DBRef</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">document_type</span><span class="o">.</span><span class="n">_get_collection_name</span><span class="p">(),</span> <span class="n">document</span><span class="o">.</span><span class="n">pk</span><span class="p">))</span>
+            <span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GenericLazyReferenceField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_mongo</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -2181,8 +2575,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

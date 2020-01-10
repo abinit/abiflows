@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Abinit Workflows &#8212; abiflows 0.5.dev documentation</title>
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Results database" href="results_db.html" />
+    <link rel="prev" title="Setup" href="setup.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js "></script>
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          abiflows</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="failures.html">Errors and failures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="useful_links.html">Useful links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="zzbiblio.html">Bibliography</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">abiflows</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Abinit Workflows</a><ul>
+<li><a class="reference internal" href="#general-philosophy">General philosophy</a></li>
+<li><a class="reference internal" href="#workflows-generators">Workflows generators</a><ul>
+<li><a class="reference internal" href="#instantiating-a-generator">Instantiating a generator</a></li>
+<li><a class="reference internal" href="#helper-methods">Helper methods</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples">Examples</a><ul>
+<li><a class="reference internal" href="#relax-structure">Relax structure</a></li>
+<li><a class="reference internal" href="#phonons">Phonons</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#workflows-list">Workflows list</a><ul>
+<li><a class="reference internal" href="#scf">SCF</a></li>
+<li><a class="reference internal" href="#scf-nscf">SCF + NSCF</a></li>
+<li><a class="reference internal" href="#generic-input">Generic input</a></li>
+<li><a class="reference internal" href="#relax">Relax</a></li>
+<li><a class="reference internal" href="#id1">Phonons</a></li>
+<li><a class="reference internal" href="#dte">DTE</a></li>
+<li><a class="reference internal" href="#dfpt">DFPT</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#limitations">Limitations</a><ul>
+<li><a class="reference internal" href="#pseudopotentials">Pseudopotentials</a></li>
+<li><a class="reference internal" href="#files-accessibility">Files accessibility</a></li>
+<li><a class="reference internal" href="#fireworks-offline-mode">Fireworks offline mode</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="setup.html" title="Previous Chapter: Setup"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Setup</span>
+    </a>
+  </li>
+  <li>
+    <a href="results_db.html" title="Next Chapter: Results database"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Results database &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/workflows.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="body col-md-12 content" role="main">
+      
+  <div class="section" id="abinit-workflows">
+<span id="workflows"></span><h1>Abinit Workflows<a class="headerlink" href="#abinit-workflows" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="general-philosophy">
+<h2>General philosophy<a class="headerlink" href="#general-philosophy" title="Permalink to this headline">¶</a></h2>
+<p>Abiflows provides a set of workflows generating objects that can be used to create
+Fireworks <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> objects that can be than inserted into the MongoDB database
+with the Fireworks <code class="docutils literal notranslate"><span class="pre">LaunchPad</span></code>.</p>
+<p>A Fireworks’ workflow is obtained composing different Fireworks and Firetasks.
+Abiflows has implemented all the logic necessary to interact at the lower level
+with Abinit, in order to generate input, read outputs and correct the errors.
+As a consequence, in general, the user should not be concerned to access the components
+objects and should rely on the higher level interface.</p>
+<p>The workflows implemented in Abiflows have been purposely kept as simple as possible,
+performing the minimal set of operations to calculate a specific property or a set of them.
+The philosophy adopted for the general procedure is that the procedure should be split
+in its components and different workflows should be generated to reach the final set
+of results. As an example, consider to start from an unrelaxed structure
+and aiming to obtain its electronic band structure. The standard procedure will require to first
+run a workflow to relax the structure. The output will be automatically stored in a
+MongoDB database and the relaxed structure can then be used as a starting point for
+a band structure workflow.</p>
+<p>This approach has been chosen because Abiflows has been designed to run Abinit calculations in
+the high-throughput regime. In general complicated workflow that try to different kinds
+of results running several calculation are more error prone and less likely to
+produce a final result. Dividing the procedure in smaller, logically independent chunks
+allows to obtain the results in more than one step, each one acting as a sort of checkpoint,
+since its output is stored in a results database. In the case of failure in the subsequent steps
+(the calculation of the electronic band structure in the previous example) a new workflow can be
+generated starting from the relaxed structure obtained in output from the relaxation workflow.</p>
+</div>
+<div class="section" id="workflows-generators">
+<h2>Workflows generators<a class="headerlink" href="#workflows-generators" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="instantiating-a-generator">
+<h3>Instantiating a generator<a class="headerlink" href="#instantiating-a-generator" title="Permalink to this headline">¶</a></h3>
+<p>In general the workflow generator in Abiflows takes as input one or more
+<code class="docutils literal notranslate"><span class="pre">AbinitInput</span></code> or <code class="docutils literal notranslate"><span class="pre">InputFactory</span></code> objects coming from Abipy. These will completely
+define the inputs used for Abinit in the calculation for the specific workflow that
+will be generated.</p>
+<p>In addition it usually accepts the following arguments:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">autoparal</span></code>: a boolean to decide if the parallelization should be decided
+automatically using the Abinit autoparal feature in combination with the
+Abipy task manager.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spec</span></code>: a dictionary that will be added to the <code class="docutils literal notranslate"><span class="pre">spec</span></code> of all the generated
+Fireworks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">initialization_info</span></code>: a dictionary with information about the workflow.
+This is added to the spec of the Fireworks in the workflow to ease the queries
+and some keywords will usually be stored in the final database document
+produced by the workflow. See the <a class="reference internal" href="results_db.html#results-db"><span class="std std-ref">Results database</span></a> section for more details.</p></li>
+</ul>
+<p>Once created, a workflow generator instance contains a fireworks <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> object
+as an attribute under the name <code class="docutils literal notranslate"><span class="pre">wf</span></code>. This can then be added to the fireworks database
+so that it can be executed.</p>
+<p>Creating an instance of a Workflow generator from the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method could
+be a choice if you would like to have the largest possible control on the inputs
+that will be used to run the calculations.</p>
+<p>A more direct approach is instead to use the <code class="docutils literal notranslate"><span class="pre">from_factory</span></code> classmethod to
+instantiate the object. This will make use of the factory functions implemented
+in the <code class="docutils literal notranslate"><span class="pre">abipy.abio.factories</span></code> module to automatically create all the required
+inputs for the workflow, based on a minimal set of parameters.</p>
+<p>As an example let us consider the <code class="docutils literal notranslate"><span class="pre">ScfFWWorkflow</span></code> object. The <code class="docutils literal notranslate"><span class="pre">from_factory</span></code>
+method reads like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">from_factory</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">pseudos</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ecut</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">pawecutdg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nband</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+                 <span class="n">spin_mode</span><span class="o">=</span><span class="s2">&quot;polarized&quot;</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="s2">&quot;fermi_dirac:0.1 eV&quot;</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scf_algorithm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">shift_mode</span><span class="o">=</span><span class="s2">&quot;Monkhorst-Pack&quot;</span><span class="p">,</span> <span class="n">extra_abivars</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">decorators</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">initialization_info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+</pre></div>
+</div>
+<p>As you can see, the main input that should be provided are a pymatgen <code class="docutils literal notranslate"><span class="pre">Structure</span></code>
+describing the system and a list of pseudopotentials. Other options like the number
+of k-points and the smearing can be defined through a set of meta parameters, while
+some others will directly set the values of some options in the Abinit input.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">extra_abivars</span></code> is a dictionary that can be used to set the value of any arbitry
+Abinit variable in all the inputs produced. In addition it allows to pass the other
+arguments mentioned above for the <code class="docutils literal notranslate"><span class="pre">__init__</span></code>.</p>
+<p>Similar methods can be found for the other workflows available, with additional arguments
+specific to the type of calculations that should be performed.</p>
+<p>In some cases, since some workflows might be expected to be the natural continuation
+of other gs calculation (e.g. a phonon calculation is usually following a relaxation
+of the structure) a <code class="docutils literal notranslate"><span class="pre">from_gs_input</span></code> classmethod can also be used to instantiate the
+workflow generator. With these method the user can directly use the input used for a
+previous ground state calculation as a starting point for the workflow, directly
+preserving all the options that were set in the previous step.</p>
+<p>Note that when using the <code class="docutils literal notranslate"><span class="pre">from_gs_input</span></code> method the same pseudopotentials will be
+used, so they have to be in the same path as they were during the execution of the
+previous workflow. In addition all the keyword relative to the relaxation and the
+parallelization will be discarded, as they are expected to be unsuitable for the
+workflow.</p>
+</div>
+<div class="section" id="helper-methods">
+<h3>Helper methods<a class="headerlink" href="#helper-methods" title="Permalink to this headline">¶</a></h3>
+<p>Additional methods are available to all the generators that help to further customize
+the workflow that is being generated. These can be found as methods of the <code class="docutils literal notranslate"><span class="pre">AbstractFWWorkflow</span></code>
+abstract base class from which all the generators inherit and here are a list of the
+more useful:</p>
+<p><strong>add_mongoengine_db_insertion</strong>: appends a Firework to the Workflow that will insert the
+results of the workflow in a MongoDB database.</p>
+<p><strong>add_final_cleanup</strong>: appends a Firework to the Workflow that will remove the selected
+files from all the folders in which the Abinit calculations have been executed.</p>
+<p><strong>add_to_db</strong>: given a <code class="docutils literal notranslate"><span class="pre">LaunchPad</span></code> insert the workflow in the fireworks database.</p>
+<p><strong>add_metadata</strong>: Adds metadata to the workflow in the fireworks database.</p>
+<p><strong>fix_fworker</strong>: sets a fireworker for all the Fireworks of the Workflow, so that even
+automatically generated detours will run in the same fireworker.</p>
+</div>
+</div>
+<div class="section" id="examples">
+<span id="examples-wf"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Here we describe the main parts of a python script that can be used to submit a relaxation
+and a phonon calculation. More complete and commented scripts can be found in the
+<code class="docutils literal notranslate"><span class="pre">abiflows.fireworks.examples</span></code> folder. You are encouraged to check those examples for
+more details.</p>
+<div class="section" id="relax-structure">
+<h3>Relax structure<a class="headerlink" href="#relax-structure" title="Permalink to this headline">¶</a></h3>
+<p>The following lines of code allow to create a Workflow for the relaxation of Si and add it
+to the fireworks database.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;Si.cif&quot;</span><span class="p">)</span>
+<span class="n">pseudo_djson</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pseudo_dojo</span><span class="o">.</span><span class="n">dojotable_absdir</span><span class="p">(</span><span class="s2">&quot;ONCVPSP-PBE-PDv0.4&quot;</span><span class="p">),</span> <span class="s1">&#39;standard.djson&#39;</span><span class="p">)</span>
+<span class="n">pseudo_table</span> <span class="o">=</span> <span class="n">pseudo_dojo</span><span class="o">.</span><span class="n">OfficialDojoTable</span><span class="o">.</span><span class="n">from_djson_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pseudo_djson</span><span class="p">))</span>
+
+<span class="n">gen</span> <span class="o">=</span> <span class="n">RelaxFWWorkflow</span><span class="o">.</span><span class="n">from_factory</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">pseudo_table</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">spin_mode</span><span class="o">=</span><span class="s2">&quot;unpolarized&quot;</span><span class="p">,</span>
+                                   <span class="n">autoparal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">target_dilatmx</span><span class="o">=</span><span class="mf">1.01</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                   <span class="n">shift_mode</span><span class="o">=</span><span class="s1">&#39;OneSymmetric&#39;</span><span class="p">)</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">DatabaseData</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;db_address&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">27017</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s1">&#39;collection_name&#39;</span><span class="p">,</span>
+                  <span class="n">database</span><span class="o">=</span><span class="s1">&#39;db_name&#39;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;pass&#39;</span><span class="p">)</span>
+
+<span class="n">gen</span><span class="o">.</span><span class="n">add_mongoengine_db_insertion</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="n">gen</span><span class="o">.</span><span class="n">add_final_cleanup</span><span class="p">([</span><span class="s2">&quot;WFK&quot;</span><span class="p">,</span> <span class="s2">&quot;1WF&quot;</span><span class="p">,</span> <span class="s2">&quot;DEN&quot;</span><span class="p">,</span> <span class="s2">&quot;WFQ&quot;</span><span class="p">,</span> <span class="s2">&quot;DDB&quot;</span><span class="p">])</span>
+
+<span class="n">gen</span><span class="o">.</span><span class="n">add_to_db</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>As a first step the essential information are gathered, i.e. the geometry of the system, in the
+form of a pymatgen <code class="docutils literal notranslate"><span class="pre">Structure</span></code> and the table of pseudopotentials. Note that the whole table
+of pseudopotentials with their hints about energy cutoff is imported here. The factory function
+will sort out which are the needed pseudopotentials automatically.</p>
+<p>From these inputs an instance of <code class="docutils literal notranslate"><span class="pre">RelaxFWWorkflow</span></code> is generated using  the <code class="docutils literal notranslate"><span class="pre">from_factory</span></code>
+classmethod, that allows to rely on the <code class="docutils literal notranslate"><span class="pre">abipy.abio.factories.ioncell_relax_from_gsinput</span></code>
+factory function.</p>
+<p>At this point the generator already contains an instance of a fireworks <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> with
+two Fireworks, one that will perform first a relaxation of the atomic positions alone and
+a second that will relax both the atomic positions and the cell size and shape:</p>
+<a class="reference internal image-reference" href="_images/relax_wf_only_relax.png"><img alt="relax diagram" class="align-center" src="_images/relax_wf_only_relax.png" style="width: 160px;" /></a>
+<p>The lines that come next define the connection to the database of the results and pass it to
+the <code class="docutils literal notranslate"><span class="pre">add_mongoengine_db_insertion</span></code> helper function so that an additional Firework is added
+to the workflow for the insertion of the results in the final database. More details can
+be found in the <a class="reference internal" href="results_db.html#results-db"><span class="std std-ref">Results database</span></a> section.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">add_mongoengine_db_insertion</span></code> is not called the workflow will not store the
+results in any database.</p>
+</div>
+<p>After that the <code class="docutils literal notranslate"><span class="pre">add_final_cleanup</span></code> to specify a list of extensions that will be used to
+determine which files need to be removed from all the folders of the workflow. At this point
+the fireworks <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> has this structure:</p>
+<a class="reference internal image-reference" href="_images/relax_wf_full.png"><img alt="relax diagram" class="align-center" src="_images/relax_wf_full.png" style="width: 160px;" /></a>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>At this point nothing has been added to the fireworks database. Only an instance of the object
+has been created and is stored inside the generator. If the script had stopped here no
+calculation would have been inserted in the fireworks database.</p>
+</div>
+<p>The last line takes care of adding the <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> in the fireworks database. In this case it will
+use the default <code class="docutils literal notranslate"><span class="pre">LaunchPad</span></code> defined in <code class="docutils literal notranslate"><span class="pre">$HOME/.fireworks</span></code>.</p>
+</div>
+<div class="section" id="phonons">
+<span id="examples-wf-phonons"></span><h3>Phonons<a class="headerlink" href="#phonons" title="Permalink to this headline">¶</a></h3>
+<p>Here we will consider the usual case of submitting a workflow to calculate the phonons following
+a relaxation, calculated with a workflow as in the previous section. The core part of a script
+to create such a workflow is as follows</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">source_db</span> <span class="o">=</span> <span class="n">DatabaseData</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;db_address&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">27017</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s1">&#39;collection_name&#39;</span><span class="p">,</span>
+                         <span class="n">database</span><span class="o">=</span><span class="s1">&#39;db_name&#39;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;pass&#39;</span><span class="p">)</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">DatabaseData</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;db_address&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">27017</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s1">&#39;collection_name_2&#39;</span><span class="p">,</span>
+                  <span class="n">database</span><span class="o">=</span><span class="s1">&#39;db_name&#39;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;pass&#39;</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">source_db</span><span class="o">.</span><span class="n">switch_collection</span><span class="p">(</span><span class="n">RelaxResult</span><span class="p">)</span> <span class="k">as</span> <span class="n">RelaxResult</span><span class="p">:</span>
+    <span class="n">relaxed</span> <span class="o">=</span> <span class="n">RelaxResult</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">mp_id</span><span class="o">=</span><span class="n">mp_id</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">relaxed</span><span class="o">.</span><span class="n">abinit_output</span><span class="o">.</span><span class="n">structure</span><span class="p">)</span>
+
+    <span class="n">ngkpt</span> <span class="o">=</span> <span class="n">relaxed</span><span class="o">.</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">ngkpt</span>
+
+    <span class="n">relax_input</span> <span class="o">=</span> <span class="n">relaxed</span><span class="o">.</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">last_input</span><span class="o">.</span><span class="n">to_mgobj</span><span class="p">()</span>
+
+<span class="n">gen</span> <span class="o">=</span> <span class="n">DfptFWWorkflow</span><span class="o">.</span><span class="n">from_gs_input</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">gs_input</span><span class="o">=</span><span class="n">relax_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                   <span class="n">do_ddk</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">do_dde</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ph_ngqpt</span><span class="o">=</span><span class="n">ngkpt</span><span class="p">,</span> <span class="n">do_strain</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="n">gen</span><span class="o">.</span><span class="n">add_mongoengine_db_insertion</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+<span class="n">gen</span><span class="o">.</span><span class="n">add_final_cleanup</span><span class="p">([</span><span class="s2">&quot;WFK&quot;</span><span class="p">,</span> <span class="s2">&quot;1WF&quot;</span><span class="p">,</span> <span class="s2">&quot;WFQ&quot;</span><span class="p">,</span> <span class="s2">&quot;1POT&quot;</span><span class="p">,</span> <span class="s2">&quot;1DEN&quot;</span><span class="p">])</span>
+
+<span class="n">gen</span><span class="o">.</span><span class="n">add_to_db</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In this case the source of all the information (structure, pseudopotentials and kinds of approximations)
+is the database containing the results of the relax workflow. The relevant data are thus retrieved
+from the database using a query with mongoengine (see the <a class="reference internal" href="results_db.html#results-db"><span class="std std-ref">Results database</span></a> section for more details).
+In particular the Abinit input used for the relaxation is retrieved in its JSON-serialized form
+and converted to an instance of the <cite>AbinitInput</cite> object.</p>
+<p>At this point the <code class="docutils literal notranslate"><span class="pre">from_gs_input</span></code> method from the <code class="docutils literal notranslate"><span class="pre">DfptFWWorkflow</span></code> is used to generate the
+phonon <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> based on the inputs provided from the relax calculation. The structure should
+be passed, since the input from the previous calculation contains the unrelaxed structure,
+while we of course are interested in the phonons for the relaxed one.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">DfptFWWorkflow</span></code> workflow generates uses the <code class="docutils literal notranslate"><span class="pre">abipy.abio.factories.dfpt_from_gsinput</span></code>
+factory function to generate all the required perturbations. To do this Abinit is called in the
+background to determine the minimal set of perturbations that need to be calculated. To do this
+Abinit should available through the task manager to Abipy. An instance of the <code class="docutils literal notranslate"><span class="pre">TaskManager</span></code>
+can be passed to the <code class="docutils literal notranslate"><span class="pre">from_gs_input</span></code> and <code class="docutils literal notranslate"><span class="pre">from_factory</span></code> methods, if needed.</p>
+</div>
+<p>The last steps are the same as in the previous example, except for the list of files that needs
+to be cleaned up.</p>
+</div>
+</div>
+<div class="section" id="workflows-list">
+<h2>Workflows list<a class="headerlink" href="#workflows-list" title="Permalink to this headline">¶</a></h2>
+<p>Here we present a list of the workflows available in Abiflows with a short description.</p>
+<div class="section" id="scf">
+<h3>SCF<a class="headerlink" href="#scf" title="Permalink to this headline">¶</a></h3>
+<p>Generator: <a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.ScfFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.ScfFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.ScfFWWorkflow</span></code></a>.</p>
+<p>A simple workflow composed by a single self-consistent calculation.</p>
+</div>
+<div class="section" id="scf-nscf">
+<h3>SCF + NSCF<a class="headerlink" href="#scf-nscf" title="Permalink to this headline">¶</a></h3>
+<p>Generator: <a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.NscfFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.NscfFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.NscfFWWorkflow</span></code></a>.</p>
+<p>A workflow composed by two Fireworks, the first performing a self-consistent calculation
+and the second a non-self-consistent one based on the density calculated in the first
+step.</p>
+</div>
+<div class="section" id="generic-input">
+<h3>Generic input<a class="headerlink" href="#generic-input" title="Permalink to this headline">¶</a></h3>
+<p>Generator: <a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.InputFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.InputFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.InputFWWorkflow</span></code></a>.</p>
+<p>A simple workflow composed by a single step that runs abinit with the specified <code class="docutils literal notranslate"><span class="pre">AbinitInput</span></code>
+object, that could contain an arbitrary input.</p>
+</div>
+<div class="section" id="relax">
+<h3>Relax<a class="headerlink" href="#relax" title="Permalink to this headline">¶</a></h3>
+<p>Generator: <a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.RelaxFWWorkflow</span></code></a>.</p>
+<p>A workflow to perform the geometry optimization of a structure. By default it will be
+composed by two steps: the first relaxes only the atomic positions and the second
+relaxes both the atomic position and the cell size and shape.</p>
+<p>The first step could be disabled and the workflow also allows to specify a final value
+for <code class="docutils literal notranslate"><span class="pre">dilatmx</span></code>. This will trigger the generation of additional steps in the workflow
+until the structure is relaxed with the specified value of <code class="docutils literal notranslate"><span class="pre">dilatmx</span></code>.</p>
+</div>
+<div class="section" id="id1">
+<h3>Phonons<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Generators: <a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow</span></code></a>,
+<a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.PhononFullFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.PhononFullFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.PhononFullFWWorkflow</span></code></a>.</p>
+<p>A workflow to perform the calculation of phonons on a list or on a regular grid of q-points.
+First a SCF calculation is performed to obtain the wave functions and then all the different
+perturbations are calculated. NSCF calculation to obtain the wave functions at K+Q (WFQ files)
+will be automatically generated, if needed. The results are finally collected in a single
+DDB file using <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code>.</p>
+<p>The workflow also allow to calculate the perturbations with respect to the electric field,
+that are required to obtain the correct LO-TO splitting at <span class="math notranslate nohighlight">\(\Gamma\)</span>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">PhononFWWorkflow</span></code> and <code class="docutils literal notranslate"><span class="pre">PhononFullFWWorkflow</span></code> differ only in the fact that the former
+generates the perturbations at run time, while the latter generates them when the workflow
+is generated.</p>
+<p>The phonons can also be also calculated using the <code class="docutils literal notranslate"><span class="pre">DfptFWWorkflow</span></code> (see the
+<a class="reference internal" href="#dfpt-workflow"><span class="std std-ref">DFPT</span></a> section). In the future <code class="docutils literal notranslate"><span class="pre">DfptFWWorkflow</span></code> may supersede
+the <code class="docutils literal notranslate"><span class="pre">PhononFWWorkflow</span></code> generator.</p>
+</div>
+<div class="section" id="dte">
+<h3>DTE<a class="headerlink" href="#dte" title="Permalink to this headline">¶</a></h3>
+<p>Generator: <a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.DteFWWorkflow</span></code></a>.</p>
+<p>Workflow that allows to calculate the third order derivatives with respect to electric field and
+atomic position in DFPT to obtain the non-linear optical susceptibilities of a material.</p>
+<p>First a SCF calculation is performed to obtain the wave functions and then all the different
+perturbations are calculated. These may include the derivatives with respect to the electric
+field and the phonons at <span class="math notranslate nohighlight">\(\Gamma\)</span>. With these is will use the N+1 theorem to calculate
+the third order derivatives. The results are finally collected in a single
+DDB file using <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code>.</p>
+<p>Note that Abinit has some limitations with respect to the approximations that can be used in this
+workflow. Check if this is compatible with those that you plan to use.</p>
+<p>The third order derivatives can also be also calculated using the <code class="docutils literal notranslate"><span class="pre">DfptFWWorkflow</span></code> (see the
+<a class="reference internal" href="#dfpt-workflow"><span class="std std-ref">DFPT</span></a> section). In the future <code class="docutils literal notranslate"><span class="pre">DfptFWWorkflow</span></code> may supersede
+the <code class="docutils literal notranslate"><span class="pre">DteFWWorkflow</span></code> generator.</p>
+</div>
+<div class="section" id="dfpt">
+<span id="dfpt-workflow"></span><h3>DFPT<a class="headerlink" href="#dfpt" title="Permalink to this headline">¶</a></h3>
+<p>Generator: <a class="reference internal" href="api/abiflows.fireworks.workflows.html#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow</span></code></a>.</p>
+<p>Workflow that allows to calculate most of the perturbations available in Abinit with DFPT.
+In particular these include:</p>
+<ul class="simple">
+<li><p>first order derivatives with respect to the atomic positions.</p></li>
+<li><p>first order derivatives with respect to the strain.</p></li>
+<li><p>first order derivatives with respect to the electric field.</p></li>
+<li><p>third order derivatives with respect to the atomic positions and electric field.</p></li>
+</ul>
+<p>From these it is possible to obtain the following quantities:</p>
+<ul class="simple">
+<li><p>phonons</p></li>
+<li><p>dielectric tensor</p></li>
+<li><p>elastic tensor</p></li>
+<li><p>piezoelectric tensor</p></li>
+<li><p>non-linear optical susceptibilities</p></li>
+</ul>
+<p>The workflow is organized as show in the following schematic figure:</p>
+<a class="reference internal image-reference" href="_images/dfpt_workflow.png"><img alt="DFPT diagram" class="align-center" src="_images/dfpt_workflow.png" style="width: 600px;" /></a>
+<p>First a SCF calculation is performed to obtain the wave functions and then all the different
+perturbations are calculated. NSCF calculation to obtain the wave functions at K+Q (WFQ files)
+will be automatically generated, if needed. The results are finally collected in a single
+DDB file using <code class="docutils literal notranslate"><span class="pre">mrgddb</span></code>.</p>
+</div>
+</div>
+<div class="section" id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
+<p>Having to deal with high-throughput calculations and to interact with a database to handle
+the calculations necessarily leads to some limitations of the options that can be implemented
+and the functionalities that can be exploited. Here we list a few limitations that you might
+encounter while using Abiflows.</p>
+<div class="section" id="pseudopotentials">
+<h3>Pseudopotentials<a class="headerlink" href="#pseudopotentials" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">AbinitInput</span></code> object needs to know the full path to the pseudopotential. So, in the
+current implementation, when creating a workflow and serializing it to store it into the
+fireworks database, the reference is the absolute path to the pseudopotential file.
+For this reason the pseudopotentials files should not be moved during the execution of a
+workflow. In addition, if you are running simulation from different clusters and
+using a common fireworks database the fetching of list of Fireworks with the commands
+like <code class="docutils literal notranslate"><span class="pre">lpad</span> <span class="pre">get_fws</span></code> may fail if the paths for the pseudopotentials are the same in
+the two clusters.</p>
+<p>While this does not present any problem for running workflow on several cluster at the
+same time, if possible, it is preferable to have the pseudopotential stored in the
+same absolute path across the different clusters.</p>
+</div>
+<div class="section" id="files-accessibility">
+<h3>Files accessibility<a class="headerlink" href="#files-accessibility" title="Permalink to this headline">¶</a></h3>
+<p>Another limitation related to the possibility of running workflows from a single fireworks
+database on different clusters is that, given their usually large size, we do not support
+in any way the copy of dependency files (e.g. wavefunctions, densities) from one cluster to another.</p>
+<p>This means that a workflow is expected to be executed on the same cluster, or at least on machines
+that have access to a shared file system. For this reason, if you are using multiple clusters
+without a common file system it is important to use the <code class="docutils literal notranslate"><span class="pre">fix_worker</span></code> helper method as
+shown in the <a class="reference internal" href="#examples-wf"><span class="std std-ref">Examples</span></a>. This will ensure that all the Fireworks are executed on the same
+worker.</p>
+</div>
+<div class="section" id="fireworks-offline-mode">
+<h3>Fireworks offline mode<a class="headerlink" href="#fireworks-offline-mode" title="Permalink to this headline">¶</a></h3>
+<p>The fireworks <a class="reference external" href="https://materialsproject.github.io/fireworks/offline_tutorial.html">offline mode</a>
+is not fully supported in Abiflows. In some tasks it is necessary to access to the fireworks
+database to get global information about the whole workflow.
+This is the case for example for the database insertion and the cleanup tasks.</p>
+<p>If you are forced to run in offline mode due to constraints in your cluster connectivity you have
+to make sure that at least the short jobs that run on one core are executed on a machine that can
+connect to the database, like the front end. This should not have a large impact since these are
+not jobs running DFT calculations.</p>
+<p>One way of achieving this is to create two <code class="docutils literal notranslate"><span class="pre">my_workers.yaml</span></code> files with specific queries, e.g.:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">worker_cluster</span>
+<span class="nt">category</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
+<span class="nt">params</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="nt">query</span><span class="p">:</span> <span class="s">&#39;{&quot;$or&quot;:</span><span class="nv"> </span><span class="s">[{&quot;spec._queueadapter.ntasks&quot;:</span><span class="nv"> </span><span class="s">{&quot;$exists&quot;:</span><span class="nv"> </span><span class="s">false}},</span><span class="nv"> </span><span class="s">{&quot;spec._queueadapter.ntasks&quot;:</span><span class="nv"> </span><span class="s">{&quot;$gt&quot;:</span><span class="nv"> </span><span class="s">1}}]}&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">worker_front_end</span>
+<span class="nt">category</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
+<span class="nt">params</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="nt">query</span><span class="p">:</span> <span class="s">&#39;{&quot;spec._queueadapter.ntasks&quot;:</span><span class="nv"> </span><span class="s">1}&#39;</span>
+</pre></div>
+</div>
+<p>Note that using the same name for the worker here is fine as well, since the two queries do not overlap.
+This might be necessary if you are using explicitly setting the name of the fworker for the all
+the fireworks of the workflow.</p>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2017, The Abinit group.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

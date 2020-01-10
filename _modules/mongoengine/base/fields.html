@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>mongoengine.base.fields &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>mongoengine.base.fields &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,7 +111,7 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for mongoengine.base.fields</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">operator</span>
@@ -123,13 +121,13 @@
 <span class="kn">from</span> <span class="nn">bson</span> <span class="k">import</span> <span class="n">DBRef</span><span class="p">,</span> <span class="n">ObjectId</span><span class="p">,</span> <span class="n">SON</span>
 <span class="kn">import</span> <span class="nn">pymongo</span>
 <span class="kn">import</span> <span class="nn">six</span>
+<span class="kn">from</span> <span class="nn">six</span> <span class="k">import</span> <span class="n">iteritems</span>
 
 <span class="kn">from</span> <span class="nn">mongoengine.base.common</span> <span class="k">import</span> <span class="n">UPDATE_OPERATORS</span>
 <span class="kn">from</span> <span class="nn">mongoengine.base.datastructures</span> <span class="k">import</span> <span class="p">(</span><span class="n">BaseDict</span><span class="p">,</span> <span class="n">BaseList</span><span class="p">,</span>
                                              <span class="n">EmbeddedDocumentList</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mongoengine.common</span> <span class="k">import</span> <span class="n">_import_class</span>
-<span class="kn">from</span> <span class="nn">mongoengine.errors</span> <span class="k">import</span> <span class="n">ValidationError</span>
-
+<span class="kn">from</span> <span class="nn">mongoengine.errors</span> <span class="k">import</span> <span class="n">DeprecatedError</span><span class="p">,</span> <span class="n">ValidationError</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;BaseField&#39;</span><span class="p">,</span> <span class="s1">&#39;ComplexBaseField&#39;</span><span class="p">,</span> <span class="s1">&#39;ObjectIdField&#39;</span><span class="p">,</span>
            <span class="s1">&#39;GeoJsonBaseField&#39;</span><span class="p">)</span>
@@ -159,7 +157,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param db_field: The database field to store this field in</span>
 <span class="sd">            (defaults to the name of the field)</span>
-<span class="sd">        :param name: Depreciated - use db_field</span>
+<span class="sd">        :param name: Deprecated - use db_field</span>
 <span class="sd">        :param required: If the field is required. Whether it has to have a</span>
 <span class="sd">            value or not. Defaults to False.</span>
 <span class="sd">        :param default: (optional) The default value for this field if no value</span>
@@ -170,10 +168,10 @@
 <span class="sd">            unique with.</span>
 <span class="sd">        :param primary_key: Mark this field as the primary key. Defaults to False.</span>
 <span class="sd">        :param validation: (optional) A callable to validate the value of the</span>
-<span class="sd">            field.  Generally this is deprecated in favour of the</span>
-<span class="sd">            `FIELD.validate` method</span>
+<span class="sd">            field.  The callable takes the value as parameter and should raise</span>
+<span class="sd">            a ValidationError if validation fails</span>
 <span class="sd">        :param choices: (optional) The valid choices</span>
-<span class="sd">        :param null: (optional) Is the field value can be null. If no and there is a default value</span>
+<span class="sd">        :param null: (optional) If the field value can be null. If no and there is a default value</span>
 <span class="sd">            then the default value is set</span>
 <span class="sd">        :param sparse: (optional) `sparse=True` combined with `unique=True` and `required=False`</span>
 <span class="sd">            means that uniqueness won&#39;t be enforced for `None` values</span>
@@ -198,6 +196,24 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">null</span> <span class="o">=</span> <span class="n">null</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sparse</span> <span class="o">=</span> <span class="n">sparse</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_owner_document</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Make sure db_field is a string (if it&#39;s explicitly defined).</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">db_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_field</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;db_field should be a string.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Make sure db_field doesn&#39;t contain any forbidden characters.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_field</span><span class="p">,</span> <span class="n">six</span><span class="o">.</span><span class="n">string_types</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_field</span> <span class="ow">or</span>
+            <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_field</span> <span class="ow">or</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">db_field</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;$&#39;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;field names cannot contain dots (&quot;.&quot;) or null characters &#39;</span>
+                <span class="s1">&#39;(&quot;</span><span class="se">\\</span><span class="s1">0&quot;), and they must not start with a dollar sign (&quot;$&quot;).&#39;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Detect and report conflicts between metadata and base properties.</span>
         <span class="n">conflicts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
@@ -228,11 +244,9 @@
         <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Descriptor for assigning a value to a field in a document.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="c1"># If setting to None and there is a default</span>
-        <span class="c1"># Then set the value to the default value</span>
+        <span class="sd">&quot;&quot;&quot;Descriptor for assigning a value to a field in a document.&quot;&quot;&quot;</span>
+        <span class="c1"># If setting to None and there is a default value provided for this</span>
+        <span class="c1"># field, then set the value to the default value.</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">null</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="kc">None</span>
@@ -243,12 +257,16 @@
 
         <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">_initialised</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span> <span class="ow">or</span>
-                        <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span><span class="p">):</span>
+                <span class="n">value_has_changed</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span> <span class="ow">or</span>
+                    <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">value</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">value_has_changed</span><span class="p">:</span>
                     <span class="n">instance</span><span class="o">.</span><span class="n">_mark_as_changed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="c1"># Values cant be compared eg: naive and tz datetimes</span>
-                <span class="c1"># So mark it as changed</span>
+                <span class="c1"># Some values can&#39;t be compared and throw an error when we</span>
+                <span class="c1"># attempt to do so (e.g. tz-naive and tz-aware datetimes).</span>
+                <span class="c1"># Mark the field as changed in such cases.</span>
                 <span class="n">instance</span><span class="o">.</span><span class="n">_mark_as_changed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
         <span class="n">EmbeddedDocument</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;EmbeddedDocument&#39;</span><span class="p">)</span>
@@ -258,6 +276,7 @@
             <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">):</span>
                     <span class="n">v</span><span class="o">.</span><span class="n">_instance</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
         <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">field_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -300,7 +319,8 @@
         <span class="n">EmbeddedDocument</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;EmbeddedDocument&#39;</span><span class="p">)</span>
 
         <span class="n">choice_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">choice_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">choice_list</span><span class="p">)),</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="c1"># next(iter) is useful for sets</span>
             <span class="n">choice_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">choice_list</span><span class="p">]</span>
 
         <span class="c1"># Choices which are other types of Documents</span>
@@ -312,8 +332,10 @@
                     <span class="p">)</span>
                 <span class="p">)</span>
         <span class="c1"># Choices which are types other than Documents</span>
-        <span class="k">elif</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">choice_list</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Value must be one of </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">(</span><span class="n">choice_list</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">choice_list</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Value must be one of </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">six</span><span class="o">.</span><span class="n">text_type</span><span class="p">(</span><span class="n">choice_list</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># Check the Choices Constraint</span>
@@ -323,10 +345,18 @@
         <span class="c1"># check validation argument</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">validation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">validation</span><span class="p">):</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">validation</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Value does not match custom validation method&#39;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># breaking change of 0.18</span>
+                    <span class="c1"># Get rid of True/False-type return for the validation method</span>
+                    <span class="c1"># in favor of having validation raising a ValidationError</span>
+                    <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validation</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">DeprecatedError</span><span class="p">(</span><span class="s1">&#39;validation argument for `</span><span class="si">%s</span><span class="s1">` must not return anything, &#39;</span>
+                                              <span class="s1">&#39;it should raise a ValidationError if validation fails&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;validation argument for &quot;</span><span class="si">%s</span><span class="s1">&quot; must be a &#39;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;validation argument for `&quot;</span><span class="si">%s</span><span class="s1">&quot;` must be a &#39;</span>
                                  <span class="s1">&#39;callable.&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -364,18 +394,25 @@
         <span class="n">ReferenceField</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;ReferenceField&#39;</span><span class="p">)</span>
         <span class="n">GenericReferenceField</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;GenericReferenceField&#39;</span><span class="p">)</span>
         <span class="n">EmbeddedDocumentListField</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;EmbeddedDocumentListField&#39;</span><span class="p">)</span>
-        <span class="n">dereference</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="ow">and</span>
+
+        <span class="n">auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
+
+        <span class="n">dereference</span> <span class="o">=</span> <span class="p">(</span><span class="n">auto_dereference</span> <span class="ow">and</span>
                        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span>
                                                          <span class="p">(</span><span class="n">GenericReferenceField</span><span class="p">,</span> <span class="n">ReferenceField</span><span class="p">))))</span>
 
         <span class="n">_dereference</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;DeReference&#39;</span><span class="p">)()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_auto_dereference</span>
-        <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">_initialised</span> <span class="ow">and</span> <span class="n">dereference</span> <span class="ow">and</span> <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_initialised</span> <span class="ow">and</span>
+                <span class="n">dereference</span> <span class="ow">and</span>
+                <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="s1">&#39;_dereferenced&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)):</span>
             <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dereference</span><span class="p">(</span>
                 <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">max_depth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
                 <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span>
             <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="s1">&#39;_dereferenced&#39;</span><span class="p">):</span>
+                <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_dereferenced</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ComplexBaseField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
 
@@ -391,7 +428,7 @@
             <span class="n">value</span> <span class="o">=</span> <span class="n">BaseDict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="n">instance</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_auto_dereference</span> <span class="ow">and</span> <span class="n">instance</span><span class="o">.</span><span class="n">_initialised</span> <span class="ow">and</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">auto_dereference</span> <span class="ow">and</span> <span class="n">instance</span><span class="o">.</span><span class="n">_initialised</span> <span class="ow">and</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">BaseList</span><span class="p">,</span> <span class="n">BaseDict</span><span class="p">))</span> <span class="ow">and</span>
                 <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">_dereferenced</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">_dereference</span><span class="p">(</span>
@@ -410,11 +447,16 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;to_python&#39;</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">to_python</span><span class="p">()</span>
 
+        <span class="n">BaseDocument</span> <span class="o">=</span> <span class="n">_import_class</span><span class="p">(</span><span class="s1">&#39;BaseDocument&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">BaseDocument</span><span class="p">):</span>
+            <span class="c1"># Something is wrong, return the value as it is</span>
+            <span class="k">return</span> <span class="n">value</span>
+
         <span class="n">is_list</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;items&#39;</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">is_list</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">)}</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="p">{</span><span class="n">idx</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">)}</span>
             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># Not iterable return the value</span>
                 <span class="k">return</span> <span class="n">value</span>
 
@@ -473,11 +515,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">:</span>
             <span class="n">value_dict</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">_to_mongo_safe_call</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">use_db_field</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">value_dict</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Document</span><span class="p">):</span>
                     <span class="c1"># We need the id from the saved object to create the DBRef</span>
                     <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -514,7 +556,7 @@
         <span class="n">errors</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;iteritems&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;items&#39;</span><span class="p">):</span>
-                <span class="n">sequence</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+                <span class="n">sequence</span> <span class="o">=</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">sequence</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">:</span>
@@ -599,7 +641,7 @@
     <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validate the GeoJson object based on its type.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;coordinates&#39;</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;coordinates&#39;</span><span class="p">}:</span>
                 <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> type must be &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span>
                                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">))</span>
@@ -750,8 +792,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

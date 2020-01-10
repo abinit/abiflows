@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.core.testing &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.core.testing &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,10 +111,11 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.core.testing</h1><div class="highlight"><pre>
 <span></span><span class="c1"># coding: utf-8</span>
+<span class="c1"># flake8: noqa</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Common test support for abiflows test scripts.</span>
 
@@ -124,22 +123,17 @@
 <span class="sd">in a single location, so that test scripts can just import it and work right away.</span>
 <span class="sd">This module heavily depends on the abipy.testing module/</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span>
-<span class="kn">import</span> <span class="nn">subprocess</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">glob</span>
-<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="c1">#import tempfile</span>
+<span class="c1">#import unittest</span>
 <span class="kn">import</span> <span class="nn">numpy.testing.utils</span> <span class="k">as</span> <span class="nn">nptu</span>
 
 <span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="n">connect</span><span class="p">,</span> <span class="n">Document</span>
-<span class="kn">from</span> <span class="nn">mongoengine.connection</span> <span class="k">import</span> <span class="n">get_db</span><span class="p">,</span> <span class="n">get_connection</span>
-<span class="kn">from</span> <span class="nn">monty.os.path</span> <span class="k">import</span> <span class="n">which</span>
-<span class="kn">from</span> <span class="nn">monty.string</span> <span class="k">import</span> <span class="n">is_string</span>
+<span class="kn">from</span> <span class="nn">mongoengine.connection</span> <span class="k">import</span> <span class="n">get_db</span> <span class="c1">#, get_connection</span>
+<span class="c1">#from monty.os.path import which</span>
+<span class="c1">#from monty.string import is_string</span>
 <span class="kn">from</span> <span class="nn">abipy.core.testing</span> <span class="k">import</span> <span class="n">AbipyTest</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
 <span class="kn">from</span> <span class="nn">fireworks.core.fworker</span> <span class="k">import</span> <span class="n">FWorker</span>
@@ -160,33 +154,33 @@
 
 
 <span class="k">def</span> <span class="nf">has_mongodb</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">27017</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mongodb_test&#39;</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-   <span class="k">try</span><span class="p">:</span>
-       <span class="kn">from</span> <span class="nn">pymongo</span> <span class="k">import</span> <span class="n">MongoClient</span>
-       <span class="n">connection</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">j</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-       <span class="n">db</span> <span class="o">=</span> <span class="n">connection</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-       <span class="k">if</span> <span class="n">username</span><span class="p">:</span>
-           <span class="n">db</span><span class="o">.</span><span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">pymongo</span> <span class="k">import</span> <span class="n">MongoClient</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">j</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">connection</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">username</span><span class="p">:</span>
+            <span class="n">db</span><span class="o">.</span><span class="n">authenticate</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
 
-       <span class="k">return</span> <span class="kc">True</span>
-   <span class="k">except</span><span class="p">:</span>
-       <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 
 <span class="k">def</span> <span class="nf">has_fireworks</span><span class="p">():</span>
-   <span class="sd">&quot;&quot;&quot;True if fireworks is installed.&quot;&quot;&quot;</span>
-   <span class="k">try</span><span class="p">:</span>
-       <span class="kn">import</span> <span class="nn">fireworks</span>
-       <span class="k">return</span> <span class="kc">True</span>
-   <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-       <span class="k">return</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;True if fireworks is installed.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">fireworks</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="AbiflowsTest"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.testing.AbiflowsTest">[docs]</a><span class="k">class</span> <span class="nc">AbiflowsTest</span><span class="p">(</span><span class="n">AbipyTest</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Extends AbipyTest with methods specific for the testing of workflows&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="AbiflowsTest.assertFwSerializable"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.testing.AbiflowsTest.assertFwSerializable">[docs]</a>    <span class="k">def</span> <span class="nf">assertFwSerializable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-       <span class="k">assert</span> <span class="s1">&#39;_fw_name&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-       <span class="bp">self</span><span class="o">.</span><span class="n">assertDictEqual</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span></div>
+        <span class="k">assert</span> <span class="s1">&#39;_fw_name&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertDictEqual</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="AbiflowsTest.setup_fireworks"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.testing.AbiflowsTest.setup_fireworks">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">setup_fireworks</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -199,7 +193,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">lp</span> <span class="o">=</span> <span class="n">LaunchPad</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">TESTDB_NAME</span><span class="p">,</span> <span class="n">strm_lvl</span><span class="o">=</span><span class="s1">&#39;ERROR&#39;</span><span class="p">)</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">lp</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">require_password</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">lp</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="AbiflowsTest.teardown_fireworks"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.testing.AbiflowsTest.teardown_fireworks">[docs]</a>    <span class="nd">@classmethod</span>
@@ -220,7 +214,7 @@
             <span class="bp">cls</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="n">connect</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">TESTDB_NAME</span><span class="p">)</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="n">TESTDB_NAME</span><span class="p">)</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="n">get_db</span><span class="p">()</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">db</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="kc">None</span></div>
 
@@ -228,7 +222,6 @@
     <span class="k">def</span> <span class="nf">teardown_mongoengine</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">drop_database</span><span class="p">(</span><span class="n">TESTDB_NAME</span><span class="p">)</span></div>
-
 
 <div class="viewcode-block" id="AbiflowsTest.get_document_class_from_mixin"><a class="viewcode-back" href="../../../api/abiflows.core.html#abiflows.core.testing.AbiflowsTest.get_document_class_from_mixin">[docs]</a>    <span class="k">def</span> <span class="nf">get_document_class_from_mixin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixin_cls</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -300,8 +293,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

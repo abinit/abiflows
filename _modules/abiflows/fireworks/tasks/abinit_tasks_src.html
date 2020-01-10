@@ -2,38 +2,30 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>abiflows.fireworks.tasks.abinit_tasks_src &#8212; abiflows 0.4 documentation</title>
+    <meta charset="utf-8" />
+    <title>abiflows.fireworks.tasks.abinit_tasks_src &#8212; abiflows 0.5.dev documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/my_style.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../../',
-        VERSION:     '0.4',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/my_style.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js "></script>
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -46,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.4</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -62,9 +54,15 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../features.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Getting AbiFlows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows.html">Abinit Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../results_db.html">Results database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../failures.html">Errors and failures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../useful_links.html">Useful links</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../zzbiblio.html">Bibliography</a></li>
 </ul>
 <ul>
@@ -113,12 +111,10 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.fireworks.tasks.abinit_tasks_src</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">absolute_import</span>
-
-<span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -128,19 +124,18 @@
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span><span class="p">,</span> <span class="n">MontyDecoder</span>
 <span class="kn">from</span> <span class="nn">monty.os.path</span> <span class="k">import</span> <span class="n">which</span>
 <span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">json_pretty_dump</span><span class="p">,</span> <span class="n">pmg_serialize</span>
-<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.utils</span> <span class="k">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span>
-<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.utils</span> <span class="k">import</span> <span class="n">irdvars_for_ext</span>
-<span class="kn">from</span> <span class="nn">pymatgen.io.abinit</span> <span class="k">import</span> <span class="n">events</span>
-<span class="kn">from</span> <span class="nn">pymatgen.io.abinit.qutils</span> <span class="k">import</span> <span class="n">time2slurm</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">irdvars_for_ext</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="k">import</span> <span class="n">events</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.qutils</span> <span class="k">import</span> <span class="n">time2slurm</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.events</span> <span class="k">import</span> <span class="n">EventsParser</span>
+
 <span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">InputFactory</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">PiezoElasticFromGsFactory</span>
 <span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span><span class="p">,</span> <span class="n">Cut3DInput</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">import</span> <span class="n">STRAIN</span><span class="p">,</span> <span class="n">GROUND_STATE</span><span class="p">,</span> <span class="n">NSCF</span><span class="p">,</span> <span class="n">BANDS</span><span class="p">,</span> <span class="n">PHONON</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.outputs</span> <span class="k">import</span> <span class="n">OutNcFile</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">import</span> <span class="n">STRAIN</span><span class="p">,</span> <span class="n">GROUND_STATE</span><span class="p">,</span> <span class="n">NSCF</span><span class="p">,</span> <span class="n">PHONON</span>
 <span class="kn">from</span> <span class="nn">abipy.electrons.gsr</span> <span class="k">import</span> <span class="n">GsrFile</span>
 <span class="kn">from</span> <span class="nn">abipy.electrons.charges</span> <span class="k">import</span> <span class="n">HirshfeldCharges</span>
 <span class="kn">from</span> <span class="nn">abipy.flowtk.netcdf</span> <span class="k">import</span> <span class="n">NetcdfReader</span><span class="p">,</span> <span class="n">NO_DEFAULT</span>
@@ -154,8 +149,7 @@
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.math_utils</span> <span class="k">import</span> <span class="n">divisors</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">MergeDdbAbinitTask</span>
 <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="k">import</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">,</span> <span class="n">STDERR_FILE_NAME</span><span class="p">,</span> \
-    <span class="n">LOG_FILE_NAME</span><span class="p">,</span> <span class="n">FILES_FILE_NAME</span><span class="p">,</span> <span class="n">OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">INPUT_FILE_NAME</span><span class="p">,</span> <span class="n">MPIABORTFILE</span><span class="p">,</span> <span class="n">DUMMY_FILENAME</span><span class="p">,</span> \
-    <span class="n">ELPHON_OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">DDK_FILES_FILE_NAME</span><span class="p">,</span> <span class="n">HISTORY_JSON</span>
+    <span class="n">LOG_FILE_NAME</span><span class="p">,</span> <span class="n">FILES_FILE_NAME</span><span class="p">,</span> <span class="n">OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">INPUT_FILE_NAME</span><span class="p">,</span> <span class="n">MPIABORTFILE</span>
 
 
 <span class="n">RESET_RESTART</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESET_RESTART</span>
@@ -163,6 +157,7 @@
 <span class="n">RESTART_FROM_SCRATCH</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESTART_FROM_SCRATCH</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="AbinitSRCMixin"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSRCMixin">[docs]</a><span class="k">class</span> <span class="nc">AbinitSRCMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
@@ -243,7 +238,7 @@
         <span class="k">if</span> <span class="s1">&#39;previous_src&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">prev_outdir</span> <span class="o">=</span> <span class="n">Directory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;previous_src&#39;</span><span class="p">][</span><span class="s1">&#39;src_directories&#39;</span><span class="p">][</span><span class="s1">&#39;run_dir&#39;</span><span class="p">],</span>
                                                       <span class="n">OUTDIR_NAME</span><span class="p">))</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">AbinitSetupTask</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">run_task</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run_task</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="AbinitSetupTask.setup_run_parameters"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSetupTask.setup_run_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">setup_run_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_spec</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">RUN_PARAMETERS</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">abiinput</span><span class="o">.</span><span class="n">remove_vars</span><span class="p">([</span><span class="s1">&#39;npkpt&#39;</span><span class="p">,</span> <span class="s1">&#39;npspinor&#39;</span><span class="p">,</span> <span class="s1">&#39;npband&#39;</span><span class="p">,</span> <span class="s1">&#39;npfft&#39;</span><span class="p">,</span> <span class="s1">&#39;bandpp&#39;</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -443,7 +438,6 @@
             <span class="n">ddk_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">link_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="n">source_dir</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">ddk_files</span></div>
-
 
 <div class="viewcode-block" id="AbinitSetupTask.resolve_deps_per_task_type"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.AbinitSetupTask.resolve_deps_per_task_type">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_deps_per_task_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">previous_tasks</span><span class="p">,</span> <span class="n">deps_list</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">previous_task</span> <span class="ow">in</span> <span class="n">previous_tasks</span><span class="p">:</span>
@@ -674,7 +668,6 @@
 <div class="viewcode-block" id="AbinitRunTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.AbinitRunTask">[docs]</a><span class="nd">@explicit_serialize</span>
 <span class="k">class</span> <span class="nc">AbinitRunTask</span><span class="p">(</span><span class="n">AbinitSRCMixin</span><span class="p">,</span> <span class="n">RunTask</span><span class="p">):</span>
 
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">task_helper</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">task_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">task_type</span> <span class="o">=</span> <span class="n">task_helper</span><span class="o">.</span><span class="n">task_type</span>
@@ -708,7 +701,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">returncode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span>
 
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s1">&#39;run.log&#39;</span><span class="p">):</span>
-            <span class="kn">from</span> <span class="nn">pymatgen.io.abinit.events</span> <span class="k">import</span> <span class="n">EventsParser</span>
             <span class="n">parser</span> <span class="o">=</span> <span class="n">EventsParser</span><span class="p">()</span>
             <span class="n">report</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s1">&#39;run.log&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">run_completed</span><span class="p">:</span>
@@ -876,7 +868,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">abiinput</span><span class="o">.</span><span class="n">set_vars</span><span class="p">(</span><span class="n">irdvars</span><span class="p">)</span></div></div>
 
 
-
 <div class="viewcode-block" id="NscfTaskHelper"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.NscfTaskHelper">[docs]</a><span class="k">class</span> <span class="nc">NscfTaskHelper</span><span class="p">(</span><span class="n">GsTaskHelper</span><span class="p">):</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;nscf&quot;</span>
 
@@ -934,8 +925,7 @@
 
     <span class="c1"># def prepare_restart(self):</span>
     <span class="c1">#     self.task.abiinput.set_structure(self.get_final_structure())</span>
-    <span class="c1">#</span>
-    <span class="c1">#     return super(RelaxTaskHelper, self).prepare_restart()</span>
+    <span class="c1">#     return super().prepare_restart()</span>
 
 <div class="viewcode-block" id="RelaxTaskHelper.restart"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.RelaxTaskHelper.restart">[docs]</a>    <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restart_info</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -997,12 +987,12 @@
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Will restart from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">restart_file</span><span class="p">)</span></div></div>
 
     <span class="c1"># def current_task_info(self, fw_spec):</span>
-    <span class="c1">#     d = super(RelaxTaskHelper, self).current_task_info(fw_spec)</span>
+    <span class="c1">#     d = super().current_task_info(fw_spec)</span>
     <span class="c1">#     d[&#39;structure&#39;] = self.get_final_structure()</span>
     <span class="c1">#     return d</span>
 
     <span class="c1"># def conclude_task(self, fw_spec):</span>
-    <span class="c1">#     update_spec, mod_spec, stored_data = super(RelaxFWTask, self).conclude_task(fw_spec)</span>
+    <span class="c1">#     update_spec, mod_spec, stored_data = super().conclude_task(fw_spec)</span>
     <span class="c1">#     update_spec[&#39;previous_run&#39;][&#39;structure&#39;] = self.get_final_structure()</span>
     <span class="c1">#     return update_spec, mod_spec, stored_data</span>
 
@@ -1074,7 +1064,7 @@
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">wf_files</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">path</span><span class="o">+</span><span class="s1">&#39;_DDK&#39;</span><span class="p">)</span>
 
-        <span class="nb">super</span><span class="p">(</span><span class="n">DdkTaskHelper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">conclude_task</span><span class="p">()</span></div></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">conclude_task</span><span class="p">()</span></div></div>
 
 
 <div class="viewcode-block" id="DdeTaskHelper"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.DdeTaskHelper">[docs]</a><span class="k">class</span> <span class="nc">DdeTaskHelper</span><span class="p">(</span><span class="n">DfptTaskHelper</span><span class="p">):</span>
@@ -1103,7 +1093,6 @@
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;cut3d&quot;</span>
 
     <span class="n">CUT3D_OPTIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;den_to_cube&#39;</span><span class="p">]</span>
-
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut3d_option</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut3d_input_file</span><span class="o">=</span><span class="s1">&#39;cut3d.in&#39;</span><span class="p">,</span>
                  <span class="n">cut3d_log_file</span><span class="o">=</span><span class="s1">&#39;cut3d.log&#39;</span><span class="p">,</span> <span class="n">cut3d_err_file</span><span class="o">=</span><span class="s1">&#39;cut3d.err&#39;</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1164,7 +1153,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">walltime_command</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
                                      <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span>
                 <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
@@ -1363,7 +1352,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">walltime_command</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
                                      <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span>
                 <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
@@ -1466,7 +1455,7 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">cut3d_input</span><span class="o">=</span><span class="n">cut3d_input</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="n">deps</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Cut3DAbinitTask.hirshfeld"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.Cut3DAbinitTask.hirshfeld">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">hirshfeld</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">deps</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_el_dens_paths</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fhi_all_el_path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">hirshfeld</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">deps</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_el_dens_paths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fhi_all_el_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">task_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">task_type</span> <span class="o">=</span> <span class="s1">&#39;cut3d-hirshfeld&#39;</span>
 
@@ -1517,12 +1506,10 @@
 <span class="k">class</span> <span class="nc">BaderTask</span><span class="p">(</span><span class="n">AbinitSRCMixin</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">):</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;bader&quot;</span>
 
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bader_log_file</span><span class="o">=</span><span class="s1">&#39;bader.log&#39;</span><span class="p">,</span> <span class="n">bader_err_file</span><span class="o">=</span><span class="s1">&#39;bader.err&#39;</span><span class="p">,</span> <span class="n">electrons</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        General constructor for Cut3D task.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">bader_log_file</span> <span class="o">=</span> <span class="n">bader_log_file</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bader_err_file</span> <span class="o">=</span> <span class="n">bader_err_file</span>
         <span class="k">if</span> <span class="n">electrons</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1547,7 +1534,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftm</span><span class="o">.</span><span class="n">fw_policy</span><span class="o">.</span><span class="n">walltime_command</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
                                      <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+                <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span>
                 <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
@@ -1655,7 +1642,6 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 
 
-
 <span class="c1">##############################</span>
 <span class="c1"># Generation tasks</span>
 <span class="c1">##############################</span>
@@ -1663,6 +1649,7 @@
 
 <div class="viewcode-block" id="GeneratePiezoElasticFlowFWSRCAbinitTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.GeneratePiezoElasticFlowFWSRCAbinitTask">[docs]</a><span class="nd">@explicit_serialize</span>
 <span class="k">class</span> <span class="nc">GeneratePiezoElasticFlowFWSRCAbinitTask</span><span class="p">(</span><span class="n">FireTaskBase</span><span class="p">):</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piezo_elastic_factory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">helper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">previous_scf_task_type</span><span class="o">=</span><span class="n">ScfTaskHelper</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span>
                  <span class="n">previous_ddk_task_type</span><span class="o">=</span><span class="n">DdkTaskHelper</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">control_procedure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">additional_controllers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1705,8 +1692,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">previous_scf_input</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InitializationError</span><span class="p">(</span><span class="s1">&#39;No input file available &#39;</span>
                                       <span class="s1">&#39;from task of type </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_scf_task_type</span><span class="p">))</span>
-        <span class="kn">from</span> <span class="nn">pymatgen.io.abinit</span> <span class="k">import</span> <span class="n">tasks</span>
         <span class="n">ftm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fw_task_manager</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span>
+        <span class="kn">from</span> <span class="nn">abipy.flowtkt</span> <span class="k">import</span> <span class="n">tasks</span>
         <span class="n">tasks</span><span class="o">.</span><span class="n">_USER_CONFIG_TASKMANAGER</span> <span class="o">=</span> <span class="n">ftm</span><span class="o">.</span><span class="n">task_manager</span>
 
         <span class="c1"># Get the strain RF inputs</span>
@@ -1724,7 +1711,7 @@
             <span class="n">new_spec</span><span class="p">[</span><span class="s1">&#39;initial_parameters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">initial_parameters</span>
 
         <span class="k">if</span> <span class="s1">&#39;_preserve_fworker&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
-            <span class="n">new_spec</span><span class="p">[</span><span class="s1">&#39;_preserve_fworker&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">new_spec</span><span class="p">[</span><span class="s1">&#39;_preserve_fworker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="s1">&#39;_fworker&#39;</span> <span class="ow">in</span> <span class="n">fw_spec</span><span class="p">:</span>
             <span class="n">new_spec</span><span class="p">[</span><span class="s1">&#39;_fworker&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fw_spec</span><span class="p">[</span><span class="s1">&#39;_fworker&#39;</span><span class="p">]</span>
 
@@ -1769,8 +1756,6 @@
                     <span class="n">links_dict_update</span><span class="p">(</span><span class="n">links_dict</span><span class="o">=</span><span class="n">fws_deps</span><span class="p">,</span> <span class="n">links_update</span><span class="o">=</span><span class="n">link_dict_update</span><span class="p">)</span>
                 <span class="n">prev_src_pert</span> <span class="o">=</span> <span class="n">rf_fws</span>
 
-
-
         <span class="c1"># Adding the MrgDdb Firework</span>
         <span class="n">mrgddb_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new_spec</span><span class="p">)</span>
         <span class="n">mrgddb_spec</span> <span class="o">=</span> <span class="n">set_short_single_core_to_spec</span><span class="p">(</span><span class="n">mrgddb_spec</span><span class="p">)</span>
@@ -1779,7 +1764,7 @@
         <span class="n">mrgddb_fw</span> <span class="o">=</span> <span class="n">Firework</span><span class="p">(</span><span class="n">MergeDdbAbinitTask</span><span class="p">(</span><span class="n">ddb_source_task_types</span><span class="o">=</span><span class="n">strain_task_types</span><span class="p">,</span>
                                                 <span class="n">num_ddbs</span><span class="o">=</span><span class="n">num_ddbs_to_be_merged</span><span class="p">,</span>
                                                 <span class="n">delete_source_ddbs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                                <span class="n">task_type</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mrgddb_task_type</span><span class="p">),</span>
+                                                <span class="n">task_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mrgddb_task_type</span><span class="p">),</span>
                              <span class="n">spec</span><span class="o">=</span><span class="n">mrgddb_spec</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mrgddb-strains&#39;</span><span class="p">)</span>
         <span class="n">total_list_fws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mrgddb_fw</span><span class="p">)</span>
         <span class="c1">#Adding the dependencies</span>
@@ -1820,11 +1805,10 @@
         <span class="k">return</span> <span class="n">ftm</span></div></div>
 
 
-
-
 <span class="c1">####################</span>
 <span class="c1"># Exceptions</span>
 <span class="c1">####################</span>
+
 
 <div class="viewcode-block" id="HelperError"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.HelperError">[docs]</a><span class="k">class</span> <span class="nc">HelperError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span></div>
@@ -1848,6 +1832,7 @@
 <span class="c1">##############################</span>
 <span class="c1"># Other objects</span>
 <span class="c1">##############################</span>
+
 
 <div class="viewcode-block" id="RestartInfo"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.RestartInfo">[docs]</a><span class="k">class</span> <span class="nc">RestartInfo</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -1874,13 +1859,11 @@
         <span class="k">return</span> <span class="n">Directory</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_dir</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">))</span></div>
 
 
-
 <span class="c1">#@deprecated(message=&quot;AbinitOutNcFile is deprecated, use abipy.abio.outputs.OutNcFile&quot;)</span>
 <span class="k">class</span> <span class="nc">_AbinitOutNcFile</span><span class="p">(</span><span class="n">NetcdfReader</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class representing the _OUT.nc file.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">def</span> <span class="nf">get_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">vars</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="c1"># TODO: add a check on the variable names ?</span>
         <span class="n">default</span> <span class="o">=</span> <span class="n">NO_DEFAULT</span> <span class="k">if</span> <span class="n">strict</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1902,8 +1885,8 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Sep 05, 2018.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.<br/>
+      Last updated on Jan 10, 2020.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>
