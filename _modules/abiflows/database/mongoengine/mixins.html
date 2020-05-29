@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.database.mongoengine.mixins &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.database.mongoengine.mixins &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -119,12 +119,12 @@
 <span class="sd">List of mixins to provide standard interfaces with the result databases.</span>
 <span class="sd">Most of them should still be considered as examples.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">monty.dev</span> <span class="k">import</span> <span class="n">deprecated</span>
-<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="p">(</span><span class="n">StringField</span><span class="p">,</span> <span class="n">DateTimeField</span><span class="p">,</span> <span class="n">BooleanField</span><span class="p">,</span> <span class="n">IntField</span><span class="p">,</span> <span class="n">FloatField</span><span class="p">,</span> <span class="n">ListField</span><span class="p">,</span> <span class="n">DictField</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">monty.dev</span> <span class="kn">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="kn">import</span> <span class="p">(</span><span class="n">StringField</span><span class="p">,</span> <span class="n">DateTimeField</span><span class="p">,</span> <span class="n">BooleanField</span><span class="p">,</span> <span class="n">IntField</span><span class="p">,</span> <span class="n">FloatField</span><span class="p">,</span> <span class="n">ListField</span><span class="p">,</span> <span class="n">DictField</span><span class="p">,</span>
         <span class="n">EmbeddedDocument</span><span class="p">,</span> <span class="n">EmbeddedDocumentField</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">pymatgen.symmetry.analyzer</span> <span class="k">import</span> <span class="n">SpacegroupAnalyzer</span>
-<span class="kn">from</span> <span class="nn">pymatgen.core.periodic_table</span> <span class="k">import</span> <span class="n">Element</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.models</span> <span class="k">import</span> <span class="n">MSONField</span> <span class="c1">#AbiFileField,</span>
+<span class="kn">from</span> <span class="nn">pymatgen.symmetry.analyzer</span> <span class="kn">import</span> <span class="n">SpacegroupAnalyzer</span>
+<span class="kn">from</span> <span class="nn">pymatgen.core.periodic_table</span> <span class="kn">import</span> <span class="n">Element</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.models</span> <span class="kn">import</span> <span class="n">MSONField</span> <span class="c1">#AbiFileField,</span>
 
 
 <div class="viewcode-block" id="CalculationMetadataMixin"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.mixins.CalculationMetadataMixin">[docs]</a><span class="k">class</span> <span class="nc">CalculationMetadataMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -298,7 +298,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1">#FIXME should the imports be moved to the top? Would it be better to not rely on external objects/functions?</span>
-        <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_last_completed_launch</span>
+        <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">get_last_completed_launch</span>
 
         <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -338,7 +338,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

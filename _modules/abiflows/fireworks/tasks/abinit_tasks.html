@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.tasks.abinit_tasks &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.tasks.abinit_tasks &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -131,34 +131,34 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">as</span> <span class="nn">atags</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span><span class="p">,</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyEncoder</span><span class="p">,</span> <span class="n">MontyDecoder</span><span class="p">,</span> <span class="n">MSONable</span>
-<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">json_pretty_dump</span><span class="p">,</span> <span class="n">pmg_serialize</span>
-<span class="kn">from</span> <span class="nn">pymatgen.analysis.elasticity</span> <span class="k">import</span> <span class="n">ElasticTensor</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="k">import</span> <span class="n">events</span><span class="p">,</span> <span class="n">tasks</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.netcdf</span> <span class="k">import</span> <span class="n">NetcdfReader</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">irdvars_for_ext</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.wrappers</span> <span class="k">import</span> <span class="n">Mrgddb</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.qutils</span> <span class="k">import</span> <span class="n">time2slurm</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.tasks</span> <span class="k">import</span> <span class="n">ParalHints</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">InputFactory</span> <span class="c1">#, PiezoElasticFromGsFactory</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span>
-<span class="kn">from</span> <span class="nn">abipy.core.mixins</span> <span class="k">import</span> <span class="n">Has_Structure</span>
-<span class="kn">from</span> <span class="nn">abipy.electrons.gsr</span> <span class="k">import</span> <span class="n">GsrFile</span>
-<span class="kn">from</span> <span class="nn">abipy.electrons.gw</span> <span class="k">import</span> <span class="n">SigresFile</span>
-<span class="kn">from</span> <span class="nn">abipy.dfpt.phonons</span> <span class="k">import</span> <span class="n">PhbstFile</span><span class="p">,</span> <span class="n">PhdosFile</span>
-<span class="kn">from</span> <span class="nn">abipy.dfpt.anaddbnc</span> <span class="k">import</span> <span class="n">AnaddbNcFile</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">,</span> <span class="n">FWAction</span><span class="p">,</span> <span class="n">Workflow</span>
-<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="k">import</span> <span class="n">explicit_serialize</span>
-<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="k">import</span> <span class="n">serialize_fw</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.task_history</span> <span class="k">import</span> <span class="n">TaskHistory</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span><span class="p">,</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MontyEncoder</span><span class="p">,</span> <span class="n">MontyDecoder</span><span class="p">,</span> <span class="n">MSONable</span>
+<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="kn">import</span> <span class="n">json_pretty_dump</span><span class="p">,</span> <span class="n">pmg_serialize</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.elasticity</span> <span class="kn">import</span> <span class="n">ElasticTensor</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="kn">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="kn">import</span> <span class="n">events</span><span class="p">,</span> <span class="n">tasks</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.netcdf</span> <span class="kn">import</span> <span class="n">NetcdfReader</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="kn">import</span> <span class="n">irdvars_for_ext</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.wrappers</span> <span class="kn">import</span> <span class="n">Mrgddb</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.qutils</span> <span class="kn">import</span> <span class="n">time2slurm</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.tasks</span> <span class="kn">import</span> <span class="n">ParalHints</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="kn">import</span> <span class="n">InputFactory</span> <span class="c1">#, PiezoElasticFromGsFactory</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="kn">import</span> <span class="n">AbinitInput</span>
+<span class="kn">from</span> <span class="nn">abipy.core.mixins</span> <span class="kn">import</span> <span class="n">Has_Structure</span>
+<span class="kn">from</span> <span class="nn">abipy.electrons.gsr</span> <span class="kn">import</span> <span class="n">GsrFile</span>
+<span class="kn">from</span> <span class="nn">abipy.electrons.gw</span> <span class="kn">import</span> <span class="n">SigresFile</span>
+<span class="kn">from</span> <span class="nn">abipy.dfpt.phonons</span> <span class="kn">import</span> <span class="n">PhbstFile</span><span class="p">,</span> <span class="n">PhdosFile</span>
+<span class="kn">from</span> <span class="nn">abipy.dfpt.anaddbnc</span> <span class="kn">import</span> <span class="n">AnaddbNcFile</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">,</span> <span class="n">FWAction</span><span class="p">,</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="kn">import</span> <span class="n">explicit_serialize</span>
+<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="kn">import</span> <span class="n">serialize_fw</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.task_history</span> <span class="kn">import</span> <span class="n">TaskHistory</span>
 <span class="c1">#from abiflows.fireworks.utils.fw_utils import links_dict_update</span>
 <span class="c1">#from abiflows.fireworks.utils.fw_utils import set_short_single_core_to_spec</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="k">import</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">,</span> <span class="n">STDERR_FILE_NAME</span><span class="p">,</span> \
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="kn">import</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">,</span> <span class="n">STDERR_FILE_NAME</span><span class="p">,</span> \
     <span class="n">LOG_FILE_NAME</span><span class="p">,</span> <span class="n">FILES_FILE_NAME</span><span class="p">,</span> <span class="n">OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">INPUT_FILE_NAME</span><span class="p">,</span> <span class="n">MPIABORTFILE</span><span class="p">,</span> <span class="n">DUMMY_FILENAME</span><span class="p">,</span> \
     <span class="n">ELPHON_OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">DDK_FILES_FILE_NAME</span><span class="p">,</span> <span class="n">HISTORY_JSON</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">FWTaskManager</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">FWTaskManager</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -454,7 +454,7 @@
     <span class="n">CRITICAL_EVENTS</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Basic __init__, subclasses are supposed to define the same input parameters,</span>
@@ -1896,7 +1896,7 @@
 <span class="sd">    .. inheritance-diagram:: DteTask</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">target_dilatmx</span><span class="o">=</span><span class="mf">1.01</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">handlers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1937,7 +1937,7 @@
 
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;mrgddb&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ddb_source_task_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delete_source_ddbs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_ddbs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ddb_source_task_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delete_source_ddbs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_ddbs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        ddb_source_task_type: list of task types that will be used as source for the DDB to be merged.</span>
 <span class="sd">        The default is [PhononTask.task_type, DdeTask.task_type, BecTask.task_type]</span>
@@ -2178,7 +2178,7 @@
 
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;anaddb&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anaddb_input</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anaddb_input</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -2572,7 +2572,7 @@
 
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;autoparal&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_autoparal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forward_spec</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">skip_spec_keys</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Note that the method still takes is_autoparal as input even if this is switched to True irrespectively of the</span>
@@ -2637,7 +2637,7 @@
 <span class="sd">    .. inheritance-diagram:: GeneratePhononFlowFWAbinitTask</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phonon_factory</span><span class="p">,</span> <span class="n">previous_task_type</span><span class="o">=</span><span class="n">ScfFWTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ddb_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phonon_factory</span><span class="p">,</span> <span class="n">previous_task_type</span><span class="o">=</span><span class="n">ScfFWTask</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_autoparal</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ddb_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">handlers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">phonon_factory</span> <span class="o">=</span> <span class="n">phonon_factory</span>
@@ -2777,7 +2777,7 @@
         <span class="n">mrgddb_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">new_spec</span><span class="p">)</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;wf_task_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;mrgddb&#39;</span>
         <span class="c1">#FIXME import here to avoid circular imports.</span>
-        <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_short_single_core_spec</span>
+        <span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">get_short_single_core_spec</span>
         <span class="n">qadapter_spec</span> <span class="o">=</span> <span class="n">get_short_single_core_spec</span><span class="p">(</span><span class="n">ftm</span><span class="p">)</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">mrgddb_spec</span><span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qadapter_spec</span>
@@ -2933,7 +2933,7 @@
 <span class="sd">    Base class for the errors in abiflows</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
 
@@ -2950,7 +2950,7 @@
 
     <span class="n">ERROR_CODE</span> <span class="o">=</span> <span class="n">ErrorCode</span><span class="o">.</span><span class="n">ERROR</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        If the task has a report all the information will be extracted from it, otherwise the arguments will be used.</span>
 
@@ -3022,7 +3022,7 @@
 
     <span class="n">ERROR_CODE</span> <span class="o">=</span> <span class="n">ErrorCode</span><span class="o">.</span><span class="n">UNCONVERGED</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">abiinput</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        If the task has a report all the information will be extracted from it, otherwise the arguments will be used.</span>
@@ -3120,7 +3120,7 @@
 <span class="sd">    Object that contains the information about the restart of a task.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">previous_dir</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_restarts</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">previous_dir</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_restarts</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">previous_dir</span> <span class="o">=</span> <span class="n">previous_dir</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span> <span class="o">=</span> <span class="n">reset</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_restarts</span> <span class="o">=</span> <span class="n">num_restarts</span>
@@ -3153,7 +3153,7 @@
 <div class="viewcode-block" id="ElasticComplianceTensor"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor">[docs]</a><span class="k">class</span> <span class="nc">ElasticComplianceTensor</span><span class="p">(</span><span class="n">Has_Structure</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;This object is used to store the elastic and compliance tensors.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elastic_tensor</span><span class="p">,</span> <span class="n">compliance_tensor</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">additional_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elastic_tensor</span><span class="p">,</span> <span class="n">compliance_tensor</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">additional_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Args:</span>
@@ -3171,7 +3171,7 @@
         <span class="sd">&quot;&quot;&quot;|Structure| object.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span>
 
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
 
 <div class="viewcode-block" id="ElasticComplianceTensor.from_ec_nc_file"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.from_ec_nc_file">[docs]</a>    <span class="nd">@classmethod</span>
@@ -3251,7 +3251,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

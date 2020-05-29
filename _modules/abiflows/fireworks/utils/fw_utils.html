@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.utils.fw_utils &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.utils.fw_utils &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -127,12 +127,12 @@
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">io</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.tasks</span> <span class="k">import</span> <span class="n">TaskManager</span><span class="p">,</span> <span class="n">ParalHints</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span> <span class="c1">#, Workflow</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.time_utils</span> <span class="k">import</span> <span class="n">TimeReport</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.tasks</span> <span class="kn">import</span> <span class="n">TaskManager</span><span class="p">,</span> <span class="n">ParalHints</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Firework</span> <span class="c1">#, Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="kn">import</span> <span class="n">LaunchPad</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.time_utils</span> <span class="kn">import</span> <span class="n">TimeReport</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -246,7 +246,7 @@
                               <span class="n">abipy_manager</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">FWPolicy</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;FWPolicy&quot;</span><span class="p">,</span> <span class="n">fw_policy_defaults</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="n">fw_policy</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;fw_policy&#39;</span><span class="p">,</span> <span class="p">{})</span>
@@ -414,7 +414,7 @@
 <span class="sd">    last completed launch. If no abinit related firetasks are found or the task has no completed launch returns None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">AnaDdbAbinitTask</span><span class="p">,</span> <span class="n">MergeDdbAbinitTask</span>
+    <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="kn">import</span> <span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">AnaDdbAbinitTask</span><span class="p">,</span> <span class="n">MergeDdbAbinitTask</span>
 
     <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">fw</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="p">(</span><span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">AnaDdbAbinitTask</span><span class="p">,</span> <span class="n">MergeDdbAbinitTask</span><span class="p">)):</span>
@@ -541,7 +541,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

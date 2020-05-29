@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.workflows package &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.workflows package &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -286,7 +286,7 @@ MongoEngineDBInsertionTask.</p>
 <dd><p>Gets the reduced formula of the structure used in the workflow.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>input</strong> – An <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object or a <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.structure.Structure</span></code></a></p>
+<dd class="field-odd"><p><strong>input</strong> – An <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object or a <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.structure.Structure</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -317,7 +317,7 @@ file ~/.fireworks/my_fworker.yaml)</p>
 <dt id="abiflows.fireworks.workflows.abinit_workflows.InputFWWorkflow">
 <em class="property">class </em><code class="sig-prename descclassname">abiflows.fireworks.workflows.abinit_workflows.</code><code class="sig-name descname">InputFWWorkflow</code><span class="sig-paren">(</span><em class="sig-param">abiinput</em>, <em class="sig-param">task_type=&lt;class 'abiflows.fireworks.tasks.abinit_tasks.AbiFireTask'&gt;</em>, <em class="sig-param">autoparal=False</em>, <em class="sig-param">spec=None</em>, <em class="sig-param">initialization_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#InputFWWorkflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.InputFWWorkflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow" title="abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow"><code class="xref py py-class docutils literal notranslate"><span class="pre">abiflows.fireworks.workflows.abinit_workflows.AbstractFWWorkflow</span></code></a></p>
-<p>Generator of a fireworks workflow with a single abinit task based on a generic <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a>.</p>
+<p>Generator of a fireworks workflow with a single abinit task based on a generic <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a>.</p>
 </dd></dl>
 
 <dl class="class">
@@ -521,7 +521,7 @@ The manager can be a TaskManager or a FWTaskManager.</p>
 <dl class="method">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow.from_gs_input">
 <em class="property">classmethod </em><code class="sig-name descname">from_gs_input</code><span class="sig-paren">(</span><em class="sig-param">gs_input</em>, <em class="sig-param">structure=None</em>, <em class="sig-param">ph_ngqpt=None</em>, <em class="sig-param">qpoints=None</em>, <em class="sig-param">qppa=None</em>, <em class="sig-param">with_ddk=True</em>, <em class="sig-param">with_dde=True</em>, <em class="sig-param">with_bec=False</em>, <em class="sig-param">scf_tol=None</em>, <em class="sig-param">ph_tol=None</em>, <em class="sig-param">ddk_tol=None</em>, <em class="sig-param">dde_tol=None</em>, <em class="sig-param">wfq_tol=None</em>, <em class="sig-param">qpoints_to_skip=None</em>, <em class="sig-param">extra_abivars=None</em>, <em class="sig-param">decorators=None</em>, <em class="sig-param">autoparal=False</em>, <em class="sig-param">spec=None</em>, <em class="sig-param">initialization_info=None</em>, <em class="sig-param">manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#PhononFWWorkflow.from_gs_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.PhononFWWorkflow.from_gs_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an instance of PhononFWWorkflow using a custom <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> for a ground state calculation and the
+<dd><p>Creates an instance of PhononFWWorkflow using a custom <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> for a ground state calculation and the
 phonons_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
 default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
 See the description of the phonons_from_gsinput factory for the definition of the arguments.
@@ -588,7 +588,7 @@ Subclass of PhononFWWorkflow but the Fireworks with phonon perturbations will be
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
+<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
 <li><p><strong>task_class</strong> – class of the tasks that should be generated</p></li>
 <li><p><strong>deps</strong> – dict with the dependencies already set for this type of task</p></li>
 <li><p><strong>spec</strong> – spec for the new Fireworks that will be created</p></li>
@@ -677,7 +677,7 @@ Parallelization over all the perturbations. The phonon perturbations are optiona
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
+<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
 <li><p><strong>task_class</strong> – class of the tasks that should be generated</p></li>
 <li><p><strong>deps</strong> – dict with the dependencies already set for this type of task</p></li>
 <li><p><strong>spec</strong> – spec for the new Fireworks that will be created</p></li>
@@ -861,7 +861,7 @@ be directly usable as is in anaddb.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
+<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
 <li><p><strong>task_class</strong> – class of the tasks that should be generated</p></li>
 <li><p><strong>deps</strong> – dict with the dependencies already set for this type of task</p></li>
 <li><p><strong>spec</strong> – spec for the new Fireworks that will be created</p></li>
@@ -935,7 +935,7 @@ The manager can be a TaskManager or a FWTaskManager.</p>
 <dl class="method">
 <dt id="abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.from_gs_input">
 <em class="property">classmethod </em><code class="sig-name descname">from_gs_input</code><span class="sig-paren">(</span><em class="sig-param">gs_input</em>, <em class="sig-param">structure=None</em>, <em class="sig-param">ph_ngqpt=None</em>, <em class="sig-param">qpoints=None</em>, <em class="sig-param">qppa=None</em>, <em class="sig-param">do_ddk=True</em>, <em class="sig-param">do_dde=True</em>, <em class="sig-param">do_strain=True</em>, <em class="sig-param">do_dte=False</em>, <em class="sig-param">scf_tol=None</em>, <em class="sig-param">ph_tol=None</em>, <em class="sig-param">ddk_tol=None</em>, <em class="sig-param">dde_tol=None</em>, <em class="sig-param">wfq_tol=None</em>, <em class="sig-param">strain_tol=None</em>, <em class="sig-param">skip_dte_permutations=False</em>, <em class="sig-param">extra_abivars=None</em>, <em class="sig-param">decorators=None</em>, <em class="sig-param">autoparal=False</em>, <em class="sig-param">spec=None</em>, <em class="sig-param">initialization_info=None</em>, <em class="sig-param">manager=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/workflows/abinit_workflows.html#DfptFWWorkflow.from_gs_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.workflows.abinit_workflows.DfptFWWorkflow.from_gs_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an instance of DfptFWWorkflow using a custom <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> for a ground state calculation and the
+<dd><p>Creates an instance of DfptFWWorkflow using a custom <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> for a ground state calculation and the
 dfpt_from_gsinput factory function. Tolerances for the scf will be set accordingly to scf_tol (with
 default 1e-22) and keys relative to relaxation and parallelization will be removed from gs_input.
 See the description of the dfpt_from_gsinput factory for the definition of the arguments.
@@ -1098,7 +1098,7 @@ If gives the number of divisions for the smallest segment of the path.</p></li>
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.tasks.abinit_common &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.tasks.abinit_common &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -117,8 +117,8 @@
 <span></span><span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">ceil</span>
-<span class="kn">from</span> <span class="nn">monty.dev</span> <span class="k">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">from</span> <span class="nn">monty.dev</span> <span class="kn">import</span> <span class="n">deprecated</span>
 <span class="kn">import</span> <span class="nn">abipy.abio.inputs</span> <span class="k">as</span> <span class="nn">abinit_inputs</span>
 
 <span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;waroquiers&#39;</span>
@@ -145,7 +145,7 @@
 <span class="nd">@deprecated</span><span class="p">(</span><span class="n">abinit_inputs</span><span class="o">.</span><span class="n">Cut3DInput</span><span class="p">,</span> <span class="s2">&quot;Switch to the new version defined in abipy&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">Cut3DInput</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut3d_input</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut3d_input</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cut3d_input</span> <span class="o">=</span> <span class="n">cut3d_input</span>
 
     <span class="k">def</span> <span class="nf">write_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
@@ -210,7 +210,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.workflows.vasp_workflows &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.workflows.vasp_workflows &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -123,20 +123,20 @@
 <span class="kn">import</span> <span class="nn">abc</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="k">import</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span><span class="p">,</span> <span class="n">VaspXMLValidatorController</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControlProcedure</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">append_fw_to_wf</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span><span class="p">,</span> <span class="n">links_dict_update</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="k">import</span> <span class="n">createVaspSRCFireworks</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="k">import</span> <span class="n">MPRelaxTaskHelper</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="k">import</span> <span class="n">GenerateNEBRelaxationTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_sets</span> <span class="k">import</span> <span class="n">MPNEBSet</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="k">import</span> <span class="n">DatabaseInsertTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">set_short_single_core_to_spec</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="kn">import</span> <span class="n">LaunchPad</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="kn">import</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span><span class="p">,</span> <span class="n">VaspXMLValidatorController</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">ControlProcedure</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">append_fw_to_wf</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span><span class="p">,</span> <span class="n">links_dict_update</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="kn">import</span> <span class="n">createVaspSRCFireworks</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="kn">import</span> <span class="n">MPRelaxTaskHelper</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_tasks_src</span> <span class="kn">import</span> <span class="n">GenerateNEBRelaxationTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.vasp_sets</span> <span class="kn">import</span> <span class="n">MPNEBSet</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="kn">import</span> <span class="n">DatabaseInsertTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">set_short_single_core_to_spec</span>
 
-<span class="kn">from</span> <span class="nn">pymatgen.io.vasp.sets</span> <span class="k">import</span> <span class="n">MPRelaxSet</span>
-<span class="kn">from</span> <span class="nn">pymatgen.analysis.transition_state</span> <span class="k">import</span> <span class="n">NEBAnalysis</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.vasp.sets</span> <span class="kn">import</span> <span class="n">MPRelaxSet</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.transition_state</span> <span class="kn">import</span> <span class="n">NEBAnalysis</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">))</span>
@@ -203,7 +203,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;MPRelaxFWWorkflowSRC&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.vasp_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vasp_input_set</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vasp_input_set</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
         <span class="c1"># Initializes fws list and links_dict</span>
         <span class="n">fws</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">links_dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -271,7 +271,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;MPNEBRelaxFWWorkflowSRC&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.vasp_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neb_vasp_input_set</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">neb_terminals</span><span class="p">,</span> <span class="n">relax_terminals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_insert</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_nebs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neb_vasp_input_set</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">neb_terminals</span><span class="p">,</span> <span class="n">relax_terminals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_insert</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_nebs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
                  <span class="n">relax_vasp_input_set</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_neb_structures</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">climbing_image</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="n">user_incar_settings</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NPAR&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;ISIF&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;SIGMA&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s1">&#39;ISMEAR&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">n_nebs</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -464,7 +464,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

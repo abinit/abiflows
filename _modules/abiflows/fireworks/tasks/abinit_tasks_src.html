@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.tasks.abinit_tasks_src &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.tasks.abinit_tasks_src &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -124,31 +124,31 @@
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span><span class="p">,</span> <span class="n">MontyDecoder</span>
-<span class="kn">from</span> <span class="nn">monty.os.path</span> <span class="k">import</span> <span class="n">which</span>
-<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">json_pretty_dump</span><span class="p">,</span> <span class="n">pmg_serialize</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">irdvars_for_ext</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="k">import</span> <span class="n">events</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.qutils</span> <span class="k">import</span> <span class="n">time2slurm</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.events</span> <span class="k">import</span> <span class="n">EventsParser</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MSONable</span><span class="p">,</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">monty.os.path</span> <span class="kn">import</span> <span class="n">which</span>
+<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="kn">import</span> <span class="n">json_pretty_dump</span><span class="p">,</span> <span class="n">pmg_serialize</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="kn">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">irdvars_for_ext</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="kn">import</span> <span class="n">events</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.qutils</span> <span class="kn">import</span> <span class="n">time2slurm</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.events</span> <span class="kn">import</span> <span class="n">EventsParser</span>
 
-<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">InputFactory</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">PiezoElasticFromGsFactory</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span><span class="p">,</span> <span class="n">Cut3DInput</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">import</span> <span class="n">STRAIN</span><span class="p">,</span> <span class="n">GROUND_STATE</span><span class="p">,</span> <span class="n">NSCF</span><span class="p">,</span> <span class="n">PHONON</span>
-<span class="kn">from</span> <span class="nn">abipy.electrons.gsr</span> <span class="k">import</span> <span class="n">GsrFile</span>
-<span class="kn">from</span> <span class="nn">abipy.electrons.charges</span> <span class="k">import</span> <span class="n">HirshfeldCharges</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.netcdf</span> <span class="k">import</span> <span class="n">NetcdfReader</span><span class="p">,</span> <span class="n">NO_DEFAULT</span>
-<span class="kn">from</span> <span class="nn">fireworks</span> <span class="k">import</span> <span class="n">explicit_serialize</span>
-<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="k">import</span> <span class="n">serialize_fw</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">,</span> <span class="n">FWAction</span><span class="p">,</span> <span class="n">Workflow</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.src_tasks_abc</span> <span class="k">import</span> <span class="n">SetupTask</span><span class="p">,</span> <span class="n">RunTask</span><span class="p">,</span> <span class="n">ControlTask</span><span class="p">,</span> <span class="n">SetupError</span><span class="p">,</span> <span class="n">createSRCFireworks</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControllerNote</span><span class="p">,</span> <span class="n">ControlProcedure</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="k">import</span> <span class="n">AbinitController</span><span class="p">,</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">FWTaskManager</span><span class="p">,</span> <span class="n">links_dict_update</span><span class="p">,</span> <span class="n">set_short_single_core_to_spec</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.math_utils</span> <span class="k">import</span> <span class="n">divisors</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">MergeDdbAbinitTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="k">import</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">,</span> <span class="n">STDERR_FILE_NAME</span><span class="p">,</span> \
+<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="kn">import</span> <span class="n">InputFactory</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="kn">import</span> <span class="n">PiezoElasticFromGsFactory</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="kn">import</span> <span class="n">AbinitInput</span><span class="p">,</span> <span class="n">Cut3DInput</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.input_tags</span> <span class="kn">import</span> <span class="n">STRAIN</span><span class="p">,</span> <span class="n">GROUND_STATE</span><span class="p">,</span> <span class="n">NSCF</span><span class="p">,</span> <span class="n">PHONON</span>
+<span class="kn">from</span> <span class="nn">abipy.electrons.gsr</span> <span class="kn">import</span> <span class="n">GsrFile</span>
+<span class="kn">from</span> <span class="nn">abipy.electrons.charges</span> <span class="kn">import</span> <span class="n">HirshfeldCharges</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.netcdf</span> <span class="kn">import</span> <span class="n">NetcdfReader</span><span class="p">,</span> <span class="n">NO_DEFAULT</span>
+<span class="kn">from</span> <span class="nn">fireworks</span> <span class="kn">import</span> <span class="n">explicit_serialize</span>
+<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="kn">import</span> <span class="n">serialize_fw</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">,</span> <span class="n">FWAction</span><span class="p">,</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.src_tasks_abc</span> <span class="kn">import</span> <span class="n">SetupTask</span><span class="p">,</span> <span class="n">RunTask</span><span class="p">,</span> <span class="n">ControlTask</span><span class="p">,</span> <span class="n">SetupError</span><span class="p">,</span> <span class="n">createSRCFireworks</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">ControllerNote</span><span class="p">,</span> <span class="n">ControlProcedure</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="kn">import</span> <span class="n">AbinitController</span><span class="p">,</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">FWTaskManager</span><span class="p">,</span> <span class="n">links_dict_update</span><span class="p">,</span> <span class="n">set_short_single_core_to_spec</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.math_utils</span> <span class="kn">import</span> <span class="n">divisors</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="kn">import</span> <span class="n">MergeDdbAbinitTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="kn">import</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span><span class="p">,</span> <span class="n">STDERR_FILE_NAME</span><span class="p">,</span> \
     <span class="n">LOG_FILE_NAME</span><span class="p">,</span> <span class="n">FILES_FILE_NAME</span><span class="p">,</span> <span class="n">OUTPUT_FILE_NAME</span><span class="p">,</span> <span class="n">INPUT_FILE_NAME</span><span class="p">,</span> <span class="n">MPIABORTFILE</span>
 
 
@@ -207,7 +207,7 @@
 
     <span class="n">RUN_PARAMETERS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">,</span> <span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_helper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pass_input</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_helper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pass_input</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">task_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">task_type</span> <span class="o">=</span> <span class="n">task_helper</span><span class="o">.</span><span class="n">task_type</span>
         <span class="n">SetupTask</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="n">deps</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="n">restart_info</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">)</span>
@@ -668,7 +668,7 @@
 <div class="viewcode-block" id="AbinitRunTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.AbinitRunTask">[docs]</a><span class="nd">@explicit_serialize</span>
 <span class="k">class</span> <span class="nc">AbinitRunTask</span><span class="p">(</span><span class="n">AbinitSRCMixin</span><span class="p">,</span> <span class="n">RunTask</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">task_helper</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">task_helper</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">task_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">task_type</span> <span class="o">=</span> <span class="n">task_helper</span><span class="o">.</span><span class="n">task_type</span>
         <span class="n">RunTask</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="o">=</span><span class="n">control_procedure</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">)</span>
@@ -723,7 +723,7 @@
 <div class="viewcode-block" id="AbinitControlTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.AbinitControlTask">[docs]</a><span class="nd">@explicit_serialize</span>
 <span class="k">class</span> <span class="nc">AbinitControlTask</span><span class="p">(</span><span class="n">AbinitSRCMixin</span><span class="p">,</span> <span class="n">ControlTask</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">src_cleaning</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_helper</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">src_cleaning</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_helper</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">ControlTask</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="o">=</span><span class="n">control_procedure</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="n">manager</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="n">max_restarts</span><span class="p">,</span>
                              <span class="n">src_cleaning</span><span class="o">=</span><span class="n">src_cleaning</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_helper</span> <span class="o">=</span> <span class="n">task_helper</span>
@@ -775,7 +775,7 @@
 
     <span class="n">CRITICAL_EVENTS</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="AbinitTaskHelper.set_task"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.AbinitTaskHelper.set_task">[docs]</a>    <span class="k">def</span> <span class="nf">set_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
@@ -829,7 +829,7 @@
             <span class="k">raise</span> <span class="n">HelperError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="c1"># Open the GSR file.</span>
-        <span class="kn">from</span> <span class="nn">abipy.electrons.gsr</span> <span class="k">import</span> <span class="n">GsrFile</span>
+        <span class="kn">from</span> <span class="nn">abipy.electrons.gsr</span> <span class="kn">import</span> <span class="n">GsrFile</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">GsrFile</span><span class="p">(</span><span class="n">gsr_path</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -1094,7 +1094,7 @@
 
     <span class="n">CUT3D_OPTIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;den_to_cube&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut3d_option</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut3d_input_file</span><span class="o">=</span><span class="s1">&#39;cut3d.in&#39;</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut3d_option</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut3d_input_file</span><span class="o">=</span><span class="s1">&#39;cut3d.in&#39;</span><span class="p">,</span>
                  <span class="n">cut3d_log_file</span><span class="o">=</span><span class="s1">&#39;cut3d.log&#39;</span><span class="p">,</span> <span class="n">cut3d_err_file</span><span class="o">=</span><span class="s1">&#39;cut3d.err&#39;</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        General constructor for Cut3D task.</span>
@@ -1240,7 +1240,7 @@
 
         <span class="n">cube_filename</span> <span class="o">=</span> <span class="s1">&#39;density.cube&#39;</span>
         <span class="c1"># TODO: make this more general ?</span>
-        <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="k">import</span> <span class="n">Cut3DInput</span>
+        <span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="kn">import</span> <span class="n">Cut3DInput</span>
         <span class="n">cut3d_input</span> <span class="o">=</span> <span class="n">Cut3DInput</span><span class="o">.</span><span class="n">den_to_cube</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">[</span><span class="s1">&#39;density&#39;</span><span class="p">],</span> <span class="n">cube_filename</span><span class="o">=</span><span class="n">cube_filename</span><span class="p">)</span>
         <span class="n">cut3d_input</span><span class="o">.</span><span class="n">write_input</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cut3d_input_file</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_cut3d</span><span class="p">()</span>
@@ -1285,7 +1285,7 @@
 <span class="k">class</span> <span class="nc">Cut3DAbinitTask</span><span class="p">(</span><span class="n">AbinitSRCMixin</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">):</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;cut3d&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut3d_input</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cut3d_input</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        General constructor for Cut3D task.</span>
 <span class="sd">        Structure needed for Hirshfeld</span>
@@ -1506,7 +1506,7 @@
 <span class="k">class</span> <span class="nc">BaderTask</span><span class="p">(</span><span class="n">AbinitSRCMixin</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">):</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s2">&quot;bader&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bader_log_file</span><span class="o">=</span><span class="s1">&#39;bader.log&#39;</span><span class="p">,</span> <span class="n">bader_err_file</span><span class="o">=</span><span class="s1">&#39;bader.err&#39;</span><span class="p">,</span> <span class="n">electrons</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bader_log_file</span><span class="o">=</span><span class="s1">&#39;bader.log&#39;</span><span class="p">,</span> <span class="n">bader_err_file</span><span class="o">=</span><span class="s1">&#39;bader.err&#39;</span><span class="p">,</span> <span class="n">electrons</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        General constructor for Cut3D task.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1650,7 +1650,7 @@
 <div class="viewcode-block" id="GeneratePiezoElasticFlowFWSRCAbinitTask"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.abinit_tasks_src.GeneratePiezoElasticFlowFWSRCAbinitTask">[docs]</a><span class="nd">@explicit_serialize</span>
 <span class="k">class</span> <span class="nc">GeneratePiezoElasticFlowFWSRCAbinitTask</span><span class="p">(</span><span class="n">FireTaskBase</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piezo_elastic_factory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">helper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">previous_scf_task_type</span><span class="o">=</span><span class="n">ScfTaskHelper</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piezo_elastic_factory</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">helper</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">previous_scf_task_type</span><span class="o">=</span><span class="n">ScfTaskHelper</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span>
                  <span class="n">previous_ddk_task_type</span><span class="o">=</span><span class="n">DdkTaskHelper</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="n">control_procedure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">additional_controllers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">mrgddb_task_type</span><span class="o">=</span><span class="s1">&#39;mrgddb-strains&#39;</span><span class="p">,</span>
@@ -1693,7 +1693,7 @@
             <span class="k">raise</span> <span class="n">InitializationError</span><span class="p">(</span><span class="s1">&#39;No input file available &#39;</span>
                                       <span class="s1">&#39;from task of type </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_scf_task_type</span><span class="p">))</span>
         <span class="n">ftm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fw_task_manager</span><span class="p">(</span><span class="n">fw_spec</span><span class="p">)</span>
-        <span class="kn">from</span> <span class="nn">abipy.flowtkt</span> <span class="k">import</span> <span class="n">tasks</span>
+        <span class="kn">from</span> <span class="nn">abipy.flowtkt</span> <span class="kn">import</span> <span class="n">tasks</span>
         <span class="n">tasks</span><span class="o">.</span><span class="n">_USER_CONFIG_TASKMANAGER</span> <span class="o">=</span> <span class="n">ftm</span><span class="o">.</span><span class="n">task_manager</span>
 
         <span class="c1"># Get the strain RF inputs</span>
@@ -1838,7 +1838,7 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object that contains the information about the restart of a task.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">previous_dir</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">previous_dir</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">previous_dir</span> <span class="o">=</span> <span class="n">previous_dir</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span> <span class="o">=</span> <span class="n">reset</span>
 
@@ -1885,7 +1885,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

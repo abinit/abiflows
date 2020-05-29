@@ -52,7 +52,7 @@ The main source of information for setting up Fireworks is its official document
 * `<https://materialsproject.github.io/fireworks/config_tutorial.html>`_
 * `<https://materialsproject.github.io/fireworks/worker_tutorial.html>`_
 
-However another useful reference is the atomate installation instructions:
+Another useful reference is the atomate installation instructions:
 
 * `<https://atomate.org/installation.html#configure-database-connections-and-computing-center-parameters>`_
 
@@ -67,8 +67,8 @@ Several files should be created to properly run fireworks. These are:
 * ``my_qadapter.yaml``: the definition of the parameters for the queue.
 
 By default fireworks will look for these configuration files in the ``~/.fireworks``
-folder. In case you opt for using the specific configuration folder you can put all these
-files your ``af_config`` folder This should be explicitly indicated when using fireworks scripts through
+folder. In case you opt for a specific configuration folder, you can put all these
+files in your ``af_config`` folder This should be explicitly indicated when using fireworks scripts through
 the command line options (``-c``, ``-l``, ``-q``, ``-w``) or setting the environmental variable:
 
 .. code-block:: bash
@@ -88,15 +88,15 @@ required parameters and all the paths to the new folder.
 
         rocket_launch: rlaunch -c /path/to/af_config rapidfire
 
-After setting up the fireworks files check that the connection with the database is working
-properly, running one of the ``lpad`` commands, for example
+After setting up the fireworks files, check that the connection with the database is working
+properly by running one of the ``lpad`` commands, for example
 
 .. code-block:: bash
 
     lpad get_fws -d count
 
-If you everything is configured correctly you should get the number of fireworks in the database
-(``0`` for an empty database). At this point you should initialize your database running
+If everything is configured correctly, you should get the number of fireworks in the database
+(``0`` for an empty database). At this point you should initialize your database by running
 
 .. code-block:: bash
 

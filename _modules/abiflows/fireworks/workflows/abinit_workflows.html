@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.workflows.abinit_workflows &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.workflows.abinit_workflows &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -129,40 +129,40 @@
 <span class="kn">import</span> <span class="nn">abipy.abio.input_tags</span> <span class="k">as</span> <span class="nn">atags</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">HybridOneShotFromGsFactory</span><span class="p">,</span> <span class="n">ScfFactory</span><span class="p">,</span> <span class="n">IoncellRelaxFromGsFactory</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">PhononsFromGsFactory</span><span class="p">,</span> <span class="n">ScfForPhononsFactory</span><span class="p">,</span> <span class="n">InputFactory</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">ion_ioncell_relax_input</span><span class="p">,</span> <span class="n">scf_input</span><span class="p">,</span> <span class="n">dte_from_gsinput</span><span class="p">,</span> <span class="n">scf_for_phonons</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="k">import</span> <span class="n">dfpt_from_gsinput</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span><span class="p">,</span> <span class="n">AnaddbInput</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.abivars_db</span> <span class="k">import</span> <span class="n">get_abinit_variables</span>
-<span class="kn">from</span> <span class="nn">abipy.dfpt.anaddbnc</span> <span class="k">import</span> <span class="n">AnaddbNcFile</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.abiobjects</span> <span class="k">import</span> <span class="n">KSampling</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">,</span> <span class="n">FWorker</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="kn">import</span> <span class="n">HybridOneShotFromGsFactory</span><span class="p">,</span> <span class="n">ScfFactory</span><span class="p">,</span> <span class="n">IoncellRelaxFromGsFactory</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="kn">import</span> <span class="n">PhononsFromGsFactory</span><span class="p">,</span> <span class="n">ScfForPhononsFactory</span><span class="p">,</span> <span class="n">InputFactory</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="kn">import</span> <span class="n">ion_ioncell_relax_input</span><span class="p">,</span> <span class="n">scf_input</span><span class="p">,</span> <span class="n">dte_from_gsinput</span><span class="p">,</span> <span class="n">scf_for_phonons</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.factories</span> <span class="kn">import</span> <span class="n">dfpt_from_gsinput</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="kn">import</span> <span class="n">AbinitInput</span><span class="p">,</span> <span class="n">AnaddbInput</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.abivars_db</span> <span class="kn">import</span> <span class="n">get_abinit_variables</span>
+<span class="kn">from</span> <span class="nn">abipy.dfpt.anaddbnc</span> <span class="kn">import</span> <span class="n">AnaddbNcFile</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.abiobjects</span> <span class="kn">import</span> <span class="n">KSampling</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">Workflow</span><span class="p">,</span> <span class="n">FWorker</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="kn">import</span> <span class="n">LaunchPad</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MontyDecoder</span>
 
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControlProcedure</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="k">import</span> <span class="n">AbinitController</span><span class="p">,</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">ScfFWTask</span><span class="p">,</span> <span class="n">RelaxFWTask</span><span class="p">,</span> <span class="n">NscfFWTask</span><span class="p">,</span> <span class="n">PhononTask</span><span class="p">,</span> <span class="n">BecTask</span><span class="p">,</span> <span class="n">DteTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="k">import</span> <span class="n">AbinitSetupTask</span><span class="p">,</span> <span class="n">AbinitRunTask</span><span class="p">,</span> <span class="n">AbinitControlTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="k">import</span> <span class="n">ScfTaskHelper</span><span class="p">,</span> <span class="n">NscfTaskHelper</span><span class="p">,</span> <span class="n">DdkTaskHelper</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="k">import</span> <span class="n">RelaxTaskHelper</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="k">import</span> <span class="n">GeneratePiezoElasticFlowFWSRCAbinitTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="k">import</span> <span class="n">Cut3DAbinitTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="k">import</span> <span class="n">BaderTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">HybridFWTask</span><span class="p">,</span> <span class="n">RelaxDilatmxFWTask</span><span class="p">,</span> <span class="n">GeneratePhononFlowFWAbinitTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">AutoparalTask</span><span class="p">,</span> <span class="n">DdeTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">AnaDdbAbinitTask</span><span class="p">,</span> <span class="n">StrainPertTask</span><span class="p">,</span> <span class="n">DdkTask</span><span class="p">,</span> <span class="n">MergeDdbAbinitTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="k">import</span> <span class="n">NscfWfqFWTask</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.src_tasks_abc</span> <span class="k">import</span> <span class="n">createSRCFireworks</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="k">import</span> <span class="n">FinalCleanUpTask</span><span class="p">,</span> <span class="n">DatabaseInsertTask</span><span class="p">,</span> <span class="n">MongoEngineDBInsertionTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">ControlProcedure</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.controllers</span> <span class="kn">import</span> <span class="n">AbinitController</span><span class="p">,</span> <span class="n">WalltimeController</span><span class="p">,</span> <span class="n">MemoryController</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="kn">import</span> <span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">ScfFWTask</span><span class="p">,</span> <span class="n">RelaxFWTask</span><span class="p">,</span> <span class="n">NscfFWTask</span><span class="p">,</span> <span class="n">PhononTask</span><span class="p">,</span> <span class="n">BecTask</span><span class="p">,</span> <span class="n">DteTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="kn">import</span> <span class="n">AbinitSetupTask</span><span class="p">,</span> <span class="n">AbinitRunTask</span><span class="p">,</span> <span class="n">AbinitControlTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="kn">import</span> <span class="n">ScfTaskHelper</span><span class="p">,</span> <span class="n">NscfTaskHelper</span><span class="p">,</span> <span class="n">DdkTaskHelper</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="kn">import</span> <span class="n">RelaxTaskHelper</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="kn">import</span> <span class="n">GeneratePiezoElasticFlowFWSRCAbinitTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="kn">import</span> <span class="n">Cut3DAbinitTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks_src</span> <span class="kn">import</span> <span class="n">BaderTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="kn">import</span> <span class="n">HybridFWTask</span><span class="p">,</span> <span class="n">RelaxDilatmxFWTask</span><span class="p">,</span> <span class="n">GeneratePhononFlowFWAbinitTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="kn">import</span> <span class="n">AutoparalTask</span><span class="p">,</span> <span class="n">DdeTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="kn">import</span> <span class="n">AnaDdbAbinitTask</span><span class="p">,</span> <span class="n">StrainPertTask</span><span class="p">,</span> <span class="n">DdkTask</span><span class="p">,</span> <span class="n">MergeDdbAbinitTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_tasks</span> <span class="kn">import</span> <span class="n">NscfWfqFWTask</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.src_tasks_abc</span> <span class="kn">import</span> <span class="n">createSRCFireworks</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.utility_tasks</span> <span class="kn">import</span> <span class="n">FinalCleanUpTask</span><span class="p">,</span> <span class="n">DatabaseInsertTask</span><span class="p">,</span> <span class="n">MongoEngineDBInsertionTask</span>
 <span class="c1">#from abiflows.fireworks.tasks.utility_tasks import createSRCFireworksOld</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">append_fw_to_wf</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span><span class="p">,</span> <span class="n">links_dict_update</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">set_short_single_core_to_spec</span><span class="p">,</span> <span class="n">get_last_completed_launch</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">get_time_report_for_wf</span><span class="p">,</span> <span class="n">FWTaskManager</span>
-<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.abinit_results</span> <span class="k">import</span> <span class="n">RelaxResult</span><span class="p">,</span> <span class="n">PhononResult</span><span class="p">,</span> <span class="n">DteResult</span><span class="p">,</span> <span class="n">DfptResult</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.task_history</span> <span class="k">import</span> <span class="n">TaskEvent</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">append_fw_to_wf</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span><span class="p">,</span> <span class="n">links_dict_update</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">set_short_single_core_to_spec</span><span class="p">,</span> <span class="n">get_last_completed_launch</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">get_time_report_for_wf</span><span class="p">,</span> <span class="n">FWTaskManager</span>
+<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.abinit_results</span> <span class="kn">import</span> <span class="n">RelaxResult</span><span class="p">,</span> <span class="n">PhononResult</span><span class="p">,</span> <span class="n">DteResult</span><span class="p">,</span> <span class="n">DfptResult</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.task_history</span> <span class="kn">import</span> <span class="n">TaskEvent</span>
 
 
 <span class="c1"># logging.basicConfig()</span>
@@ -461,7 +461,7 @@
 <span class="sd">    Generator of a fireworks workflow with a single abinit task based on a generic |AbinitInput|.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="n">AbiFireTask</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            abiinput: an |AbinitInput| object</span>
@@ -492,7 +492,7 @@
 <span class="sd">    Generator of a fireworks workflow with a single abinit task performing a SCF calculation</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            abiinput: an |AbinitInput| object for a SCF calculation.</span>
@@ -553,7 +553,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;ScfFWWorkflowSRC&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pass_input</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">abiinput</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pass_input</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -606,7 +606,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;RelaxFWWorkflow&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ion_input</span><span class="p">,</span> <span class="n">ioncell_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ion_input</span><span class="p">,</span> <span class="n">ioncell_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">target_dilatmx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skip_ion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -846,7 +846,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;RelaxFWWorkflowSRC&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ion_input</span><span class="p">,</span> <span class="n">ioncell_input</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_controllers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ion_input</span><span class="p">,</span> <span class="n">ioncell_input</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_controllers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1014,7 +1014,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;NscfFWWorkflow&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_input</span><span class="p">,</span> <span class="n">nscf_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_input</span><span class="p">,</span> <span class="n">nscf_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            scf_input: an AbinitInput for the SCF calculation.</span>
@@ -1053,7 +1053,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;NscfFWWorkflowSRC&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_input</span><span class="p">,</span> <span class="n">nscf_input</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_input</span><span class="p">,</span> <span class="n">nscf_input</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1129,7 +1129,7 @@
 <span class="sd">    Generator of a fireworks workflow that performs a SCF calculation with hybrid functional based on GW.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">hybrid_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">hybrid_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            scf_input: an AbinitInput for the SCF calculation.</span>
@@ -1203,7 +1203,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;PhononFWWorkflow&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">phonon_factory</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">phonon_factory</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            scf_inp: an |AbinitInput| object for the SCF calculation.</span>
@@ -1540,7 +1540,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;PhononFullFWWorkflow&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">phonon_factory</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">phonon_factory</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            scf_inp: an |AbinitInput| for the SCF calculation.</span>
@@ -1778,7 +1778,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;DteFWWorkflow&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">dde_inp</span><span class="p">,</span> <span class="n">dte_inp</span><span class="p">,</span> <span class="n">ph_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">dde_inp</span><span class="p">,</span> <span class="n">dte_inp</span><span class="p">,</span> <span class="n">ph_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -2241,7 +2241,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;PiezoElasticFWWorkflow&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">rf_inp</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">rf_inp</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">initialization_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -2535,7 +2535,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;PiezoElasticFWWorkflowSRC&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp_ibz</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">rf_inp</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp_ibz</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="p">,</span> <span class="n">rf_inp</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">ddk_split</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">rf_split</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">additional_controllers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">additional_input_vars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">allow_parallel_perturbations</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">do_ddk</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">do_phonons</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -2779,7 +2779,7 @@
     <span class="n">workflow_class</span> <span class="o">=</span> <span class="s1">&#39;DfptFWWorkflow&#39;</span>
     <span class="n">workflow_module</span> <span class="o">=</span> <span class="s1">&#39;abiflows.fireworks.workflows.abinit_workflows&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">ph_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nscf_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dde_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strain_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dte_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scf_inp</span><span class="p">,</span> <span class="n">ph_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nscf_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ddk_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dde_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strain_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dte_inp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -3368,7 +3368,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

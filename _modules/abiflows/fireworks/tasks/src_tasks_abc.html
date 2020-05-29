@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.tasks.src_tasks_abc &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.tasks.src_tasks_abc &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -121,23 +121,23 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">six</span>
 
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">FireTaskBase</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">FWAction</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Workflow</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
-<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="k">import</span> <span class="n">explicit_serialize</span>
-<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="k">import</span> <span class="n">serialize_fw</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">FireTaskBase</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">FWAction</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Firework</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="kn">import</span> <span class="n">LaunchPad</span>
+<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="kn">import</span> <span class="n">explicit_serialize</span>
+<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="kn">import</span> <span class="n">serialize_fw</span>
 
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span> <span class="c1">#, MontyEncoder</span>
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
-<span class="kn">from</span> <span class="nn">monty.serialization</span> <span class="k">import</span> <span class="n">loadfn</span>
-<span class="kn">from</span> <span class="nn">monty.subprocess</span> <span class="k">import</span> <span class="n">Command</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MontyDecoder</span> <span class="c1">#, MontyEncoder</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MSONable</span>
+<span class="kn">from</span> <span class="nn">monty.serialization</span> <span class="kn">import</span> <span class="n">loadfn</span>
+<span class="kn">from</span> <span class="nn">monty.subprocess</span> <span class="kn">import</span> <span class="n">Command</span>
 
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControlProcedure</span><span class="p">,</span> <span class="n">ControlledItemType</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControllerNote</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">Cleaner</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">set_short_single_core_to_spec</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">ControlProcedure</span><span class="p">,</span> <span class="n">ControlledItemType</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">ControllerNote</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">Cleaner</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">set_short_single_core_to_spec</span><span class="p">,</span> <span class="n">get_short_single_core_spec</span>
 
 <span class="n">RESTART_FROM_SCRATCH</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESTART_FROM_SCRATCH</span>
 <span class="n">RESET_RESTART</span> <span class="o">=</span> <span class="n">ControllerNote</span><span class="o">.</span><span class="n">RESET_RESTART</span>
@@ -209,7 +209,7 @@
 
     <span class="n">RUN_PARAMETERS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_queueadapter&#39;</span><span class="p">,</span> <span class="s1">&#39;mpi_ncpus&#39;</span><span class="p">,</span> <span class="s1">&#39;qtk_queueadapter&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restart_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="c1"># TODO: if at some point, this is not enough (as for the ddk, or for the structure, or for anything else,</span>
         <span class="c1">#       we could thing of an object ?</span>
@@ -346,7 +346,7 @@
     <span class="n">src_type</span> <span class="o">=</span> <span class="s1">&#39;run&#39;</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_control_procedure</span><span class="p">(</span><span class="n">control_procedure</span><span class="o">=</span><span class="n">control_procedure</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">task_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">task_type</span> <span class="o">=</span> <span class="n">task_type</span>
@@ -401,7 +401,7 @@
 
     <span class="n">task_type</span> <span class="o">=</span> <span class="s1">&#39;script&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_str</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_str</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">):</span>
         <span class="n">RunTask</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="o">=</span><span class="n">control_procedure</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">script_str</span> <span class="o">=</span> <span class="n">script_str</span>
 
@@ -433,7 +433,7 @@
 <span class="k">class</span> <span class="nc">ControlTask</span><span class="p">(</span><span class="n">SRCTaskMixin</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">):</span>
     <span class="n">src_type</span> <span class="o">=</span> <span class="s1">&#39;control&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">src_cleaning</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">control_procedure</span><span class="p">,</span> <span class="n">manager</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">src_cleaning</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">control_procedure</span> <span class="o">=</span> <span class="n">control_procedure</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_restarts</span> <span class="o">=</span> <span class="n">max_restarts</span>
@@ -723,7 +723,7 @@
     <span class="n">WHEN_TO_CLEAN</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;EACH_STEP&#39;</span><span class="p">,</span> <span class="s1">&#39;LAST_STEP&#39;</span><span class="p">,</span> <span class="s1">&#39;EACH_STEP_EXCEPT_LAST&#39;</span><span class="p">]</span>
     <span class="n">CURRENT_SRC_STATES_ALLOWED</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;RECOVERABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;UNRECOVERABLE&#39;</span><span class="p">,</span> <span class="s1">&#39;MAXRESTARTS&#39;</span><span class="p">,</span> <span class="s1">&#39;FINALIZED&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">when_to_clean</span><span class="p">,</span> <span class="n">current_src_states_allowed</span><span class="p">,</span> <span class="n">which_src_steps_to_clean</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">when_to_clean</span><span class="p">,</span> <span class="n">current_src_states_allowed</span><span class="p">,</span> <span class="n">which_src_steps_to_clean</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">when_to_clean</span> <span class="o">=</span> <span class="n">when_to_clean</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_src_states_allowed</span> <span class="o">=</span> <span class="n">current_src_states_allowed</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">which_src_steps_to_clean</span> <span class="o">=</span> <span class="n">which_src_steps_to_clean</span>
@@ -892,7 +892,7 @@
     <span class="c1"># CLEANING_TYPES = [&#39;ALL&#39;, &#39;ALL_EXCEPT_LAST&#39;, &#39;LAST&#39;]</span>
     <span class="n">SRC_TYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;setup&#39;</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="s1">&#39;control&#39;</span><span class="p">,</span> <span class="s1">&#39;src_root&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cleaners</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src_type</span><span class="o">=</span><span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="n">cleaner_options</span><span class="o">=</span><span class="n">SRCCleanerOptions</span><span class="o">.</span><span class="n">clean_all</span><span class="p">()):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cleaners</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src_type</span><span class="o">=</span><span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="n">cleaner_options</span><span class="o">=</span><span class="n">SRCCleanerOptions</span><span class="o">.</span><span class="n">clean_all</span><span class="p">()):</span>
         <span class="k">if</span> <span class="n">cleaners</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cleaners</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">else</span><span class="p">:</span>
@@ -964,7 +964,7 @@
 
 <div class="viewcode-block" id="SRCCleaning"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.SRCCleaning">[docs]</a><span class="k">class</span> <span class="nc">SRCCleaning</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_cleaners</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_cleaners</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">src_cleaners</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">src_cleaners</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1038,7 +1038,7 @@
 
     <span class="n">ALLOWED_CHARS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_task_type</span><span class="p">(</span><span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
 
@@ -1074,12 +1074,12 @@
 <div class="viewcode-block" id="SRCTaskIndex.increase_index"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.SRCTaskIndex.increase_index">[docs]</a>    <span class="k">def</span> <span class="nf">increase_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
-    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The __add__ method in SRCTaskIndex should be an integer&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="n">other</span>
 
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">task_type</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)])</span>
 
     <span class="nd">@property</span>
@@ -1184,7 +1184,7 @@
 
 
 <div class="viewcode-block" id="FWTime"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.FWTime">[docs]</a><span class="k">class</span> <span class="nc">FWTime</span><span class="p">(</span><span class="n">MSONable</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="p">,</span> <span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="p">,</span> <span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fw_name</span> <span class="o">=</span> <span class="n">fw_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fw_id</span> <span class="o">=</span> <span class="n">fw_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ncpus</span> <span class="o">=</span> <span class="n">ncpus</span>
@@ -1228,7 +1228,7 @@
 
 
 <div class="viewcode-block" id="SRCFWTime"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.tasks.html#abiflows.fireworks.tasks.src_tasks_abc.SRCFWTime">[docs]</a><span class="k">class</span> <span class="nc">SRCFWTime</span><span class="p">(</span><span class="n">FWTime</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="p">,</span> <span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="p">,</span> <span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">src_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fw_name</span><span class="o">=</span><span class="n">fw_name</span><span class="p">,</span> <span class="n">fw_id</span><span class="o">=</span><span class="n">fw_id</span><span class="p">,</span> <span class="n">ncpus</span><span class="o">=</span><span class="n">ncpus</span><span class="p">,</span>
                          <span class="n">fwtime_secs</span><span class="o">=</span><span class="n">fwtime_secs</span><span class="p">,</span> <span class="n">clustertime_secs</span><span class="o">=</span><span class="n">clustertime_secs</span><span class="p">)</span>
@@ -1270,7 +1270,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

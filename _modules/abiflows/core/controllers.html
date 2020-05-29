@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.core.controllers &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.core.controllers &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -122,23 +122,23 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
-<span class="kn">from</span> <span class="nn">pymatgen.io.vasp.outputs</span> <span class="k">import</span> <span class="n">Vasprun</span>
-<span class="kn">from</span> <span class="nn">pymatgen.analysis.transition_state</span> <span class="k">import</span> <span class="n">NEBAnalysis</span>
-<span class="kn">from</span> <span class="nn">pymatgen.core.structure</span> <span class="k">import</span> <span class="n">Structure</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="k">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="k">import</span> <span class="n">events</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.scheduler_error_parsers</span> <span class="k">import</span> <span class="p">(</span><span class="n">MemoryCancelError</span><span class="p">,</span> <span class="n">MasterProcessMemoryCancelError</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.vasp.outputs</span> <span class="kn">import</span> <span class="n">Vasprun</span>
+<span class="kn">from</span> <span class="nn">pymatgen.analysis.transition_state</span> <span class="kn">import</span> <span class="n">NEBAnalysis</span>
+<span class="kn">from</span> <span class="nn">pymatgen.core.structure</span> <span class="kn">import</span> <span class="n">Structure</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.utils</span> <span class="kn">import</span> <span class="n">Directory</span><span class="p">,</span> <span class="n">File</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk</span> <span class="kn">import</span> <span class="n">events</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.scheduler_error_parsers</span> <span class="kn">import</span> <span class="p">(</span><span class="n">MemoryCancelError</span><span class="p">,</span> <span class="n">MasterProcessMemoryCancelError</span><span class="p">,</span>
     <span class="n">SlaveProcessMemoryCancelError</span><span class="p">,</span> <span class="n">TimeCancelError</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="k">import</span> <span class="n">AbinitInput</span>
+<span class="kn">from</span> <span class="nn">abipy.abio.inputs</span> <span class="kn">import</span> <span class="n">AbinitInput</span>
 
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">Action</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">Controller</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControllerNote</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">ControlledItemType</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">PRIORITY_HIGH</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">PRIORITY_VERY_LOW</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="k">import</span> <span class="n">PRIORITY_LOWEST</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">Action</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">ControllerNote</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">ControlledItemType</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">PRIORITY_HIGH</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">PRIORITY_VERY_LOW</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.mastermind_abc</span> <span class="kn">import</span> <span class="n">PRIORITY_LOWEST</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -157,7 +157,7 @@
     <span class="c1">#_controlled_item_types = [ControlledItemType.task_completed(), ControlledItemType.task_failed()]</span>
     <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">critical_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">critical_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the controller with the critical events that trigger the restart and a list of ErrorHandlers</span>
 
@@ -469,7 +469,7 @@
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">qout_filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">qout_info</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">qerr_info</span> <span class="ow">or</span> <span class="n">qout_info</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">get_parser</span>
+            <span class="kn">from</span> <span class="nn">pymatgen.io.abinit.scheduler_error_parsers</span> <span class="kn">import</span> <span class="n">get_parser</span>
             <span class="n">qtype</span> <span class="o">=</span> <span class="n">queue_adapter</span><span class="o">.</span><span class="n">QTYPE</span>
             <span class="n">scheduler_parser</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">(</span><span class="n">qtype</span><span class="p">,</span> <span class="n">err_file</span><span class="o">=</span><span class="n">qerr_filepath</span><span class="p">,</span>
                                           <span class="n">out_file</span><span class="o">=</span><span class="n">qout_filepath</span><span class="p">)</span>
@@ -492,7 +492,7 @@
     <span class="n">is_handler</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_failed</span><span class="p">()]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_timelimit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timelimit_increase</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_timelimit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timelimit_increase</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
 <span class="sd">        of the queue manager and the queue adapter used.</span>
@@ -599,7 +599,7 @@
 <span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
 <span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                  <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                  <span class="n">memory_policy</span><span class="o">=</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -745,7 +745,7 @@
 <span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
 <span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                  <span class="n">memory_policy</span><span class="o">=</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
@@ -961,7 +961,7 @@
 <span class="c1">#                  max_mem_per_proc_mb=8000, mem_per_proc_increase_mb=1000,</span>
 <span class="c1">#                  max_master_mem_overhead_mb=8000, master_mem_overhead_increase_mb=1000):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                  <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                  <span class="n">memory_policy</span><span class="o">=</span><span class="s1">&#39;physical_memory&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1067,7 +1067,7 @@
     <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_LOWEST</span>
 
@@ -1106,7 +1106,7 @@
     <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_LOWEST</span>
 
@@ -1153,7 +1153,7 @@
     <span class="n">can_validate</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">_controlled_item_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlledItemType</span><span class="o">.</span><span class="n">task_completed</span><span class="p">()]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">PRIORITY_LOWEST</span>
 
@@ -1684,7 +1684,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

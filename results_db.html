@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Results database &#8212; abiflows 0.5.dev documentation</title>
+    <title>Results database &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -177,7 +177,7 @@ and that are usually shared by different kinds of workflows (e.g. the
 of the notation for common keywords is guaranteed across the different kind of outputs.</p>
 <p>The queries to the documents can be done using the standard mongoengine approach:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">RelaxResult</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">nsites</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">pretty_formula</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">pretty_formula</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>where it is possible to query the properties in the <code class="docutils literal notranslate"><span class="pre">Document</span></code> object. See the
@@ -201,7 +201,7 @@ example:</p>
 
 <span class="k">with</span> <span class="n">source_db</span><span class="o">.</span><span class="n">switch_collection</span><span class="p">(</span><span class="n">RelaxResult</span><span class="p">)</span> <span class="k">as</span> <span class="n">RelaxResult</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">RelaxResult</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">nsites</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">pretty_formula</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">pretty_formula</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -226,7 +226,7 @@ and the database can be queried using the standard MongoDB connections and queri
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

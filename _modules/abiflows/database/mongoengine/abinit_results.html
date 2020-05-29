@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.database.mongoengine.abinit_results &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.database.mongoengine.abinit_results &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -114,12 +114,12 @@
     <div class="body col-md-12 content" role="main">
       
   <h1>Source code for abiflows.database.mongoengine.abinit_results</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="p">(</span><span class="n">StringField</span><span class="p">,</span> <span class="n">BooleanField</span><span class="p">,</span> <span class="n">IntField</span><span class="p">,</span> <span class="n">FloatField</span><span class="p">,</span> <span class="n">ListField</span><span class="p">,</span> <span class="n">DictField</span><span class="p">,</span>
+<span></span><span class="kn">from</span> <span class="nn">mongoengine</span> <span class="kn">import</span> <span class="p">(</span><span class="n">StringField</span><span class="p">,</span> <span class="n">BooleanField</span><span class="p">,</span> <span class="n">IntField</span><span class="p">,</span> <span class="n">FloatField</span><span class="p">,</span> <span class="n">ListField</span><span class="p">,</span> <span class="n">DictField</span><span class="p">,</span>
         <span class="n">Document</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">,</span> <span class="n">EmbeddedDocumentField</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.mixins</span> <span class="k">import</span> <span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">CustomFieldMixin</span>
-<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.abinit_mixins</span> <span class="k">import</span> <span class="p">(</span><span class="n">AbinitBasicInputMixin</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.mixins</span> <span class="kn">import</span> <span class="n">MaterialMixin</span><span class="p">,</span> <span class="n">DateMixin</span><span class="p">,</span> <span class="n">DirectoryMixin</span><span class="p">,</span> <span class="n">CustomFieldMixin</span>
+<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.abinit_mixins</span> <span class="kn">import</span> <span class="p">(</span><span class="n">AbinitBasicInputMixin</span><span class="p">,</span>
     <span class="n">AbinitGSOutputMixin</span><span class="p">,</span> <span class="n">AbinitPhononOutputMixin</span><span class="p">,</span> <span class="n">AbinitDftpOutputMixin</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">abiflows.core.models</span> <span class="k">import</span> <span class="n">AbiFileField</span><span class="p">,</span> <span class="n">MSONField</span><span class="p">,</span> <span class="n">AbiGzipFileField</span>
+<span class="kn">from</span> <span class="nn">abiflows.core.models</span> <span class="kn">import</span> <span class="n">AbiFileField</span><span class="p">,</span> <span class="n">MSONField</span><span class="p">,</span> <span class="n">AbiGzipFileField</span>
 
 
 <div class="viewcode-block" id="RelaxAbinitInput"><a class="viewcode-back" href="../../../../api/abiflows.database.mongoengine.html#abiflows.database.mongoengine.abinit_results.RelaxAbinitInput">[docs]</a><span class="k">class</span> <span class="nc">RelaxAbinitInput</span><span class="p">(</span><span class="n">AbinitBasicInputMixin</span><span class="p">,</span> <span class="n">EmbeddedDocument</span><span class="p">):</span>
@@ -344,7 +344,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

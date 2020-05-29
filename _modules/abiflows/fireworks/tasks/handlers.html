@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.tasks.handlers &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.tasks.handlers &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -121,11 +121,11 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.custodian_utils</span> <span class="k">import</span> <span class="n">SRCErrorHandler</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.scheduler_error_parsers</span> <span class="k">import</span> <span class="p">(</span><span class="n">MemoryCancelError</span><span class="p">,</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.custodian_utils</span> <span class="kn">import</span> <span class="n">SRCErrorHandler</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.scheduler_error_parsers</span> <span class="kn">import</span> <span class="p">(</span><span class="n">MemoryCancelError</span><span class="p">,</span>
         <span class="n">MasterProcessMemoryCancelError</span><span class="p">,</span> <span class="n">SlaveProcessMemoryCancelError</span><span class="p">,</span> <span class="n">TimeCancelError</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.qadapters</span> <span class="k">import</span> <span class="n">QueueAdapter</span>
-<span class="kn">from</span> <span class="nn">abipy.flowtk.scheduler_error_parsers</span> <span class="k">import</span> <span class="n">get_parser</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.qadapters</span> <span class="kn">import</span> <span class="n">QueueAdapter</span>
+<span class="kn">from</span> <span class="nn">abipy.flowtk.scheduler_error_parsers</span> <span class="kn">import</span> <span class="n">get_parser</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -136,7 +136,7 @@
 <span class="sd">    General handler for abinit&#39;s critical events handlers.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">critical_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">critical_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the handler with the directory where the job was run.</span>
 
@@ -232,7 +232,7 @@
 <span class="sd">    Handler for walltime infringements of the resource manager.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">max_timelimit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timelimit_increase</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the handler with the directory where the job was run, the standard output and error files</span>
@@ -384,7 +384,7 @@
 <span class="sd">    overhead of the master process.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                  <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -544,7 +544,7 @@
 <span class="sd">    Handler for infringements of the resource manager. If no memory error is found,</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_rundir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">qout_file</span><span class="o">=</span><span class="s1">&#39;queue.qout&#39;</span><span class="p">,</span> <span class="n">qerr_file</span><span class="o">=</span><span class="s1">&#39;queue.qerr&#39;</span><span class="p">,</span> <span class="n">queue_adapter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">max_mem_per_proc_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">mem_per_proc_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
                  <span class="n">max_master_mem_overhead_mb</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">master_mem_overhead_increase_mb</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -608,7 +608,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

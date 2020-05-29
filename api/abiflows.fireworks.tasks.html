@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.tasks package &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.tasks package &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -610,7 +610,7 @@ Useful in case of reset during a restart.</p>
 <dt id="abiflows.fireworks.tasks.abinit_tasks.GsFWTask.open_gsr">
 <code class="sig-name descname">open_gsr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#GsFWTask.open_gsr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.GsFWTask.open_gsr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Open the <a class="reference external" href="https://nbviewer.jupyter.org/github/abinit/abitutorials/blob/master/abitutorials/gsr.ipynb">GSR.nc</a> file located in the in self.outdir.
-Returns <a class="reference external" href="http://abinit.github.io/abipy/api/electrons_api.html#abipy.electrons.gsr.GsrFile" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.electrons.gsr.GsrFile</span></code></a> object, raise a PostProcessError exception if file could not be found or file is not readable.</p>
+Returns <a class="reference external" href="http://abinit.github.io/abipy/api/electrons_api.html#abipy.electrons.gsr.GsrFile" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.electrons.gsr.GsrFile</span></code></a> object, raise a PostProcessError exception if file could not be found or file is not readable.</p>
 </dd></dl>
 
 </dd></dl>
@@ -818,7 +818,7 @@ be specified as depends on the specific iteration.</p>
 <dt id="abiflows.fireworks.tasks.abinit_tasks.HybridFWTask.open_sigres">
 <code class="sig-name descname">open_sigres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#HybridFWTask.open_sigres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.HybridFWTask.open_sigres" title="Permalink to this definition">¶</a></dt>
 <dd><p>Open the <a class="reference external" href="https://nbviewer.jupyter.org/github/abinit/abitutorials/blob/master/abitutorials/sigres.ipynb">SIGRES.nc</a> file located in the in self.outdir.
-Returns <a class="reference external" href="http://abinit.github.io/abipy/api/electrons_api.html#abipy.electrons.gw.SigresFile" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.electrons.gw.SigresFile</span></code></a> object, None if file could not be found or file is not readable.</p>
+Returns <a class="reference external" href="http://abinit.github.io/abipy/api/electrons_api.html#abipy.electrons.gw.SigresFile" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.electrons.gw.SigresFile</span></code></a> object, None if file could not be found or file is not readable.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1241,14 +1241,14 @@ these multiple resources.</p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phbst">
 <code class="sig-name descname">open_phbst</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#AnaDdbAbinitTask.open_phbst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phbst" title="Permalink to this definition">¶</a></dt>
-<dd><p>Open PHBST file produced by Anaddb and returns <a class="reference external" href="http://abinit.github.io/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhbstFile" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.dfpt.phonons.PhbstFile</span></code></a> object.
+<dd><p>Open PHBST file produced by Anaddb and returns <a class="reference external" href="http://abinit.github.io/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhbstFile" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.dfpt.phonons.PhbstFile</span></code></a> object.
 Raise a PostProcessError exception if file could not be found or file is not readable.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phdos">
 <code class="sig-name descname">open_phdos</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#AnaDdbAbinitTask.open_phdos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.AnaDdbAbinitTask.open_phdos" title="Permalink to this definition">¶</a></dt>
-<dd><p>Open PHDOS file produced by Anaddb and returns <a class="reference external" href="http://abinit.github.io/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhdosFile" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.dfpt.phonons.PhdosFile</span></code></a> object.
+<dd><p>Open PHDOS file produced by Anaddb and returns <a class="reference external" href="http://abinit.github.io/abipy/api/dfpt_api.html#abipy.dfpt.phonons.PhdosFile" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.dfpt.phonons.PhdosFile</span></code></a> object.
 Raise a PostProcessError exception if file could not be found or file is not readable.</p>
 </dd></dl>
 
@@ -1302,7 +1302,7 @@ Raise a PostProcessError exception if file could not be found or file is not rea
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
+<li><p><strong>multi_inp</strong> – <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.MultiDataset" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.MultiDataset</span></code></a> with the inputs that should be run</p></li>
 <li><p><strong>task_class</strong> – class of the tasks that should be generated</p></li>
 <li><p><strong>deps</strong> – dict with the dependencies already set for this type of task</p></li>
 <li><p><strong>new_spec</strong> – spec for the new Fireworks that will be created</p></li>
@@ -1575,12 +1575,12 @@ of restarts.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor">
 <em class="property">class </em><code class="sig-prename descclassname">abiflows.fireworks.tasks.abinit_tasks.</code><code class="sig-name descname">ElasticComplianceTensor</code><span class="sig-paren">(</span><em class="sig-param">elastic_tensor</em>, <em class="sig-param">compliance_tensor</em>, <em class="sig-param">structure</em>, <em class="sig-param">additional_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/abinit_tasks.html#ElasticComplianceTensor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.mixins.Has_Structure" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.mixins.Has_Structure</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.mixins.Has_Structure" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.mixins.Has_Structure</span></code></a></p>
 <p>This object is used to store the elastic and compliance tensors.</p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.structure">
 <em class="property">property </em><code class="sig-name descname">structure</code><a class="headerlink" href="#abiflows.fireworks.tasks.abinit_tasks.ElasticComplianceTensor.structure" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.structure.Structure</span></code></a> object.</p>
+<dd><p><a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.structure.Structure</span></code></a> object.</p>
 </dd></dl>
 
 <dl class="method">
@@ -3664,7 +3664,7 @@ these multiple resources.</p>
 <dl class="class">
 <dt id="abiflows.fireworks.tasks.vasp_sets.MPNEBSet">
 <em class="property">class </em><code class="sig-prename descclassname">abiflows.fireworks.tasks.vasp_sets.</code><code class="sig-name descname">MPNEBSet</code><span class="sig-paren">(</span><em class="sig-param">structures</em>, <em class="sig-param">unset_encut=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/fireworks/tasks/vasp_sets.html#MPNEBSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_sets.MPNEBSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://pymatgen.org/pymatgen.io.vasp.sets.html#pymatgen.io.vasp.sets.MPRelaxSet" title="(in pymatgen v2019.12.22)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pymatgen.io.vasp.sets.MPRelaxSet</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://pymatgen.org/pymatgen.io.vasp.sets.html#pymatgen.io.vasp.sets.MPRelaxSet" title="(in pymatgen v2020.4.29)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pymatgen.io.vasp.sets.MPRelaxSet</span></code></a></p>
 <dl class="method">
 <dt id="abiflows.fireworks.tasks.vasp_sets.MPNEBSet.poscar">
 <em class="property">property </em><code class="sig-name descname">poscar</code><a class="headerlink" href="#abiflows.fireworks.tasks.vasp_sets.MPNEBSet.poscar" title="Permalink to this definition">¶</a></dt>
@@ -4115,7 +4115,7 @@ these multiple resources.</p>
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

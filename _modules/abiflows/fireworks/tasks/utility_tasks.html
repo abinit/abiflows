@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.tasks.utility_tasks &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.tasks.utility_tasks &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -127,17 +127,17 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">jsanitize</span>
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MontyDecoder</span>
-<span class="kn">from</span> <span class="nn">custodian.ansible.interpreter</span> <span class="k">import</span> <span class="n">Modder</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="k">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">,</span> <span class="n">FWAction</span><span class="p">,</span> <span class="n">Workflow</span>
-<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="k">import</span> <span class="n">LaunchPad</span>
-<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="k">import</span> <span class="n">explicit_serialize</span>
-<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="k">import</span> <span class="n">serialize_fw</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="k">import</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.custodian_utils</span> <span class="k">import</span> <span class="n">SRCErrorHandler</span>
-<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="k">import</span> <span class="n">set_short_single_core_to_spec</span><span class="p">,</span> <span class="n">FWTaskManager</span><span class="p">,</span> <span class="n">get_lp_and_fw_id_from_task</span>
-<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.utils</span> <span class="k">import</span> <span class="n">DatabaseData</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">jsanitize</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MontyDecoder</span>
+<span class="kn">from</span> <span class="nn">custodian.ansible.interpreter</span> <span class="kn">import</span> <span class="n">Modder</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.firework</span> <span class="kn">import</span> <span class="n">Firework</span><span class="p">,</span> <span class="n">FireTaskBase</span><span class="p">,</span> <span class="n">FWAction</span><span class="p">,</span> <span class="n">Workflow</span>
+<span class="kn">from</span> <span class="nn">fireworks.core.launchpad</span> <span class="kn">import</span> <span class="n">LaunchPad</span>
+<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_utilities</span> <span class="kn">import</span> <span class="n">explicit_serialize</span>
+<span class="kn">from</span> <span class="nn">fireworks.utilities.fw_serializers</span> <span class="kn">import</span> <span class="n">serialize_fw</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.tasks.abinit_common</span> <span class="kn">import</span> <span class="n">TMPDIR_NAME</span><span class="p">,</span> <span class="n">OUTDIR_NAME</span><span class="p">,</span> <span class="n">INDIR_NAME</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.custodian_utils</span> <span class="kn">import</span> <span class="n">SRCErrorHandler</span>
+<span class="kn">from</span> <span class="nn">abiflows.fireworks.utils.fw_utils</span> <span class="kn">import</span> <span class="n">set_short_single_core_to_spec</span><span class="p">,</span> <span class="n">FWTaskManager</span><span class="p">,</span> <span class="n">get_lp_and_fw_id_from_task</span>
+<span class="kn">from</span> <span class="nn">abiflows.database.mongoengine.utils</span> <span class="kn">import</span> <span class="n">DatabaseData</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -201,7 +201,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s1">&#39;finalclnup&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_exts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_exts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            out_exts: list of extensions. can be a list or a single string with extensions separated by a &quot;,&quot;.</span>
@@ -268,7 +268,7 @@
 <span class="k">class</span> <span class="nc">DatabaseInsertTask</span><span class="p">(</span><span class="n">FireTaskBase</span><span class="p">):</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s1">&#39;dbinsert&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">insertion_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">insertion_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">insertion_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">insertion_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="s1">&#39;get_final_structure_and_history&#39;</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">insertion_data</span> <span class="o">=</span> <span class="n">insertion_data</span>
@@ -325,7 +325,7 @@
 <span class="sd">    The database is defined according to a DatabaseData.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_data</span><span class="p">,</span> <span class="n">object_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_data</span><span class="p">,</span> <span class="n">object_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_data</span> <span class="o">=</span> <span class="n">db_data</span>
         <span class="c1">#TODO allow for updates based on object_id. A bit tricky as one need to know the class of the Document</span>
         <span class="c1"># before calling get_results. (add object_id to dict methods)</span>
@@ -363,7 +363,7 @@
 <span class="k">class</span> <span class="nc">CheckMemoryTask</span><span class="p">(</span><span class="n">FireTaskBase</span><span class="p">):</span>
     <span class="n">task_type</span> <span class="o">=</span> <span class="s1">&#39;checkmem&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_increase_megabytes</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">max_memory_megabytes</span><span class="o">=</span><span class="mi">7600</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_increase_megabytes</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">max_memory_megabytes</span><span class="o">=</span><span class="mi">7600</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">memory_increase_megabytes</span> <span class="o">=</span> <span class="n">memory_increase_megabytes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_memory_megabytes</span> <span class="o">=</span> <span class="n">max_memory_megabytes</span>
 
@@ -501,7 +501,7 @@
 
     <span class="n">optional_params</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;handlers&#39;</span><span class="p">,</span> <span class="s1">&#39;validators&#39;</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
         <span class="c1">#super().__init__(self)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="n">handlers</span>
         <span class="c1"># Check that there is only one FIRST and one LAST handler (PRIORITY_FIRST and PRIORITY_LAST)</span>
@@ -748,7 +748,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.database.mongoengine package &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.database.mongoengine package &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -225,10 +225,10 @@ of the field to be used as a list in the database.</p>
 <dl class="method">
 <dt id="abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData.set_pseudos_from_abinit_input">
 <code class="sig-name descname">set_pseudos_from_abinit_input</code><span class="sig-paren">(</span><em class="sig-param">abinit_input</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_mixins.html#AbinitPseudoData.set_pseudos_from_abinit_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_mixins.AbinitPseudoData.set_pseudos_from_abinit_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the fields of the document using an <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object.</p>
+<dd><p>Sets the fields of the document using an <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>abinit_input</strong> – An <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</p>
+<dd class="field-odd"><p><strong>abinit_input</strong> – An <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</p>
 </dd>
 </dl>
 </dd></dl>
@@ -321,7 +321,7 @@ Only valid values are subclasses of <code class="xref py py-class docutils liter
 <dl class="method">
 <dt id="abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin.set_abinit_basic_from_abinit_input">
 <code class="sig-name descname">set_abinit_basic_from_abinit_input</code><span class="sig-paren">(</span><em class="sig-param">abinit_input</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abiflows/database/mongoengine/abinit_mixins.html#AbinitBasicInputMixin.set_abinit_basic_from_abinit_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#abiflows.database.mongoengine.abinit_mixins.AbinitBasicInputMixin.set_abinit_basic_from_abinit_input" title="Permalink to this definition">¶</a></dt>
-<dd><p>sets the fields of the object from an <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</p>
+<dd><p>sets the fields of the object from an <a class="reference external" href="http://abinit.github.io/abipy/api/abio_api.html#abipy.abio.inputs.AbinitInput" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.abio.inputs.AbinitInput</span></code></a> object</p>
 </dd></dl>
 
 </dd></dl>
@@ -1446,7 +1446,7 @@ of the field to be used as a list in the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structure</strong> – A <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.7.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.structure.Structure</span></code></a></p></li>
+<li><p><strong>structure</strong> – A <a class="reference external" href="http://abinit.github.io/abipy/api/core_api.html#abipy.core.structure.Structure" title="(in abipy v0.8.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abipy.core.structure.Structure</span></code></a></p></li>
 <li><p><strong>space_group</strong> – if True sets the spacegroup fields using <a class="reference external" href="https://atztogo.github.io/spglib/">spglib</a>.</p></li>
 <li><p><strong>symprec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – Tolerance for symmetry finding.</p></li>
 <li><p><strong>angle_tolerance</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – Angle tolerance for symmetry finding.</p></li>
@@ -1710,7 +1710,7 @@ Wraps mongoengine’s connect and switch_collection functions.</p>
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

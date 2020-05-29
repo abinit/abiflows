@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>abiflows.fireworks.utils.time_utils &#8212; abiflows 0.5.dev documentation</title>
+    <title>abiflows.fireworks.utils.time_utils &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="../../../../index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -116,8 +116,8 @@
   <h1>Source code for abiflows.fireworks.utils.time_utils</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">prettytable</span> <span class="k">as</span> <span class="nn">pt</span>
 
-<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="k">import</span> <span class="n">pmg_serialize</span>
-<span class="kn">from</span> <span class="nn">monty.json</span> <span class="k">import</span> <span class="n">MSONable</span>
+<span class="kn">from</span> <span class="nn">pymatgen.util.serialization</span> <span class="kn">import</span> <span class="n">pmg_serialize</span>
+<span class="kn">from</span> <span class="nn">monty.json</span> <span class="kn">import</span> <span class="n">MSONable</span>
 
 
 <div class="viewcode-block" id="seconds_to_hms"><a class="viewcode-back" href="../../../../api/abiflows.fireworks.utils.html#abiflows.fireworks.utils.time_utils.seconds_to_hms">[docs]</a><span class="k">def</span> <span class="nf">seconds_to_hms</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
@@ -144,7 +144,7 @@
 <span class="sd">    Includes both the time required for the calculations as well as the cpu time consumed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total_run_time</span><span class="p">,</span> <span class="n">n_fws</span><span class="p">,</span> <span class="n">total_cpu_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contributed_cpu_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_run_time_per_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total_run_time</span><span class="p">,</span> <span class="n">n_fws</span><span class="p">,</span> <span class="n">total_cpu_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contributed_cpu_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_run_time_per_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">total_cpu_time_per_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contributed_cpu_time_per_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">worker</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">total_run_time</span> <span class="o">=</span> <span class="n">total_run_time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_fws</span> <span class="o">=</span> <span class="n">n_fws</span>
@@ -172,7 +172,7 @@
         <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;@class&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">worker</span><span class="p">:</span>
             <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Worker: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">worker</span><span class="p">)</span>
@@ -211,7 +211,7 @@
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

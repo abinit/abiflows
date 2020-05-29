@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Abinit Workflows &#8212; abiflows 0.5.dev documentation</title>
+    <title>Abinit Workflows &#8212; abiflows 0.6 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           abiflows</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.5.dev</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.6</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -164,27 +164,27 @@
 <div class="section" id="general-philosophy">
 <h2>General philosophy<a class="headerlink" href="#general-philosophy" title="Permalink to this headline">¶</a></h2>
 <p>Abiflows provides a set of workflows generating objects that can be used to create
-Fireworks <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> objects that can be than inserted into the MongoDB database
+Fireworks <code class="docutils literal notranslate"><span class="pre">Workflows</span></code> that can be than inserted into the MongoDB database
 with the Fireworks <code class="docutils literal notranslate"><span class="pre">LaunchPad</span></code>.</p>
-<p>A Fireworks’ workflow is obtained composing different Fireworks and Firetasks.
-Abiflows has implemented all the logic necessary to interact at the lower level
-with Abinit, in order to generate input, read outputs and correct the errors.
+<p>A Fireworks workflow is obtained by composing different Fireworks and Firetasks.
+Abiflows implements all the logic necessary to interact at the low level
+with Abinit, in order to generate inputs, read outputs and correct runtime errors.
 As a consequence, in general, the user should not be concerned to access the components
 objects and should rely on the higher level interface.</p>
 <p>The workflows implemented in Abiflows have been purposely kept as simple as possible,
-performing the minimal set of operations to calculate a specific property or a set of them.
+performing the minimal set of operations required to calculate a specific property or a set of them.
 The philosophy adopted for the general procedure is that the procedure should be split
 in its components and different workflows should be generated to reach the final set
 of results. As an example, consider to start from an unrelaxed structure
 and aiming to obtain its electronic band structure. The standard procedure will require to first
 run a workflow to relax the structure. The output will be automatically stored in a
-MongoDB database and the relaxed structure can then be used as a starting point for
+MongoDB database so that the relaxed structure can then be used as a starting point for
 a band structure workflow.</p>
 <p>This approach has been chosen because Abiflows has been designed to run Abinit calculations in
-the high-throughput regime. In general complicated workflow that try to different kinds
-of results running several calculation are more error prone and less likely to
-produce a final result. Dividing the procedure in smaller, logically independent chunks
-allows to obtain the results in more than one step, each one acting as a sort of checkpoint,
+the high-throughput regime. In general complicated workflows that try to produce different kinds
+of results by running several different calculations are more error prone and less likely to
+produce a final result. Splitting the procedure into smaller, logically independent chunks
+allows one to obtain the results in more than one step, each one acting as a sort of checkpoint,
 since its output is stored in a results database. In the case of failure in the subsequent steps
 (the calculation of the electronic band structure in the previous example) a new workflow can be
 generated starting from the relaxed structure obtained in output from the relaxation workflow.</p>
@@ -194,10 +194,10 @@ generated starting from the relaxed structure obtained in output from the relaxa
 <div class="section" id="instantiating-a-generator">
 <h3>Instantiating a generator<a class="headerlink" href="#instantiating-a-generator" title="Permalink to this headline">¶</a></h3>
 <p>In general the workflow generator in Abiflows takes as input one or more
-<code class="docutils literal notranslate"><span class="pre">AbinitInput</span></code> or <code class="docutils literal notranslate"><span class="pre">InputFactory</span></code> objects coming from Abipy. These will completely
+<code class="docutils literal notranslate"><span class="pre">AbinitInput</span></code> or <code class="docutils literal notranslate"><span class="pre">InputFactory</span></code> objects coming from Abipy. These objects will completely
 define the inputs used for Abinit in the calculation for the specific workflow that
 will be generated.</p>
-<p>In addition it usually accepts the following arguments:</p>
+<p>In addition, it usually accepts the following arguments:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">autoparal</span></code>: a boolean to decide if the parallelization should be decided
 automatically using the Abinit autoparal feature in combination with the
@@ -209,7 +209,7 @@ This is added to the spec of the Fireworks in the workflow to ease the queries
 and some keywords will usually be stored in the final database document
 produced by the workflow. See the <a class="reference internal" href="results_db.html#results-db"><span class="std std-ref">Results database</span></a> section for more details.</p></li>
 </ul>
-<p>Once created, a workflow generator instance contains a fireworks <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> object
+<p>Once created, a workflow generator contains a fireworks <code class="docutils literal notranslate"><span class="pre">Workflow</span></code> object
 as an attribute under the name <code class="docutils literal notranslate"><span class="pre">wf</span></code>. This can then be added to the fireworks database
 so that it can be executed.</p>
 <p>Creating an instance of a Workflow generator from the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> method could
@@ -222,17 +222,17 @@ inputs for the workflow, based on a minimal set of parameters.</p>
 <p>As an example let us consider the <code class="docutils literal notranslate"><span class="pre">ScfFWWorkflow</span></code> object. The <code class="docutils literal notranslate"><span class="pre">from_factory</span></code>
 method reads like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">from_factory</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">pseudos</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ecut</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">pawecutdg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nband</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
-                 <span class="n">spin_mode</span><span class="o">=</span><span class="s2">&quot;polarized&quot;</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="s2">&quot;fermi_dirac:0.1 eV&quot;</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scf_algorithm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">shift_mode</span><span class="o">=</span><span class="s2">&quot;Monkhorst-Pack&quot;</span><span class="p">,</span> <span class="n">extra_abivars</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">decorators</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">initialization_info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">from_factory</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">pseudos</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ecut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pawecutdg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nband</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+                 <span class="n">spin_mode</span><span class="o">=</span><span class="s2">&quot;polarized&quot;</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="s2">&quot;fermi_dirac:0.1 eV&quot;</span><span class="p">,</span> <span class="n">charge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scf_algorithm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">shift_mode</span><span class="o">=</span><span class="s2">&quot;Monkhorst-Pack&quot;</span><span class="p">,</span> <span class="n">extra_abivars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decorators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">initialization_info</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 </pre></div>
 </div>
 <p>As you can see, the main input that should be provided are a pymatgen <code class="docutils literal notranslate"><span class="pre">Structure</span></code>
 describing the system and a list of pseudopotentials. Other options like the number
 of k-points and the smearing can be defined through a set of meta parameters, while
 some others will directly set the values of some options in the Abinit input.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">extra_abivars</span></code> is a dictionary that can be used to set the value of any arbitry
+<p>The <code class="docutils literal notranslate"><span class="pre">extra_abivars</span></code> is a dictionary that can be used to set the value of any arbitrary
 Abinit variable in all the inputs produced. In addition it allows to pass the other
 arguments mentioned above for the <code class="docutils literal notranslate"><span class="pre">__init__</span></code>.</p>
 <p>Similar methods can be found for the other workflows available, with additional arguments
@@ -277,10 +277,10 @@ more details.</p>
 to the fireworks database.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;Si.cif&quot;</span><span class="p">)</span>
 <span class="n">pseudo_djson</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pseudo_dojo</span><span class="o">.</span><span class="n">dojotable_absdir</span><span class="p">(</span><span class="s2">&quot;ONCVPSP-PBE-PDv0.4&quot;</span><span class="p">),</span> <span class="s1">&#39;standard.djson&#39;</span><span class="p">)</span>
-<span class="n">pseudo_table</span> <span class="o">=</span> <span class="n">pseudo_dojo</span><span class="o">.</span><span class="n">OfficialDojoTable</span><span class="o">.</span><span class="n">from_djson_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pseudo_djson</span><span class="p">))</span>
+<span class="n">pseudo_table</span> <span class="o">=</span> <span class="n">pseudo_dojo</span><span class="o">.</span><span class="n">OfficialDojoTable</span><span class="o">.</span><span class="n">from_djson_file</span><span class="p">(</span><span class="n">pseudo_djson</span><span class="p">)</span>
 
 <span class="n">gen</span> <span class="o">=</span> <span class="n">RelaxFWWorkflow</span><span class="o">.</span><span class="n">from_factory</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">pseudo_table</span><span class="p">,</span> <span class="n">kppa</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="n">spin_mode</span><span class="o">=</span><span class="s2">&quot;unpolarized&quot;</span><span class="p">,</span>
-                                   <span class="n">autoparal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">target_dilatmx</span><span class="o">=</span><span class="mf">1.01</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                   <span class="n">autoparal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_dilatmx</span><span class="o">=</span><span class="mf">1.01</span><span class="p">,</span> <span class="n">smearing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                                    <span class="n">shift_mode</span><span class="o">=</span><span class="s1">&#39;OneSymmetric&#39;</span><span class="p">)</span>
 
 <span class="n">db</span> <span class="o">=</span> <span class="n">DatabaseData</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;db_address&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">27017</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s1">&#39;collection_name&#39;</span><span class="p">,</span>
@@ -344,8 +344,8 @@ to create such a workflow is as follows</p>
 
     <span class="n">relax_input</span> <span class="o">=</span> <span class="n">relaxed</span><span class="o">.</span><span class="n">abinit_input</span><span class="o">.</span><span class="n">last_input</span><span class="o">.</span><span class="n">to_mgobj</span><span class="p">()</span>
 
-<span class="n">gen</span> <span class="o">=</span> <span class="n">DfptFWWorkflow</span><span class="o">.</span><span class="n">from_gs_input</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">gs_input</span><span class="o">=</span><span class="n">relax_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                                   <span class="n">do_ddk</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">do_dde</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ph_ngqpt</span><span class="o">=</span><span class="n">ngkpt</span><span class="p">,</span> <span class="n">do_strain</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">gen</span> <span class="o">=</span> <span class="n">DfptFWWorkflow</span><span class="o">.</span><span class="n">from_gs_input</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">gs_input</span><span class="o">=</span><span class="n">relax_input</span><span class="p">,</span> <span class="n">autoparal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                   <span class="n">do_ddk</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">do_dde</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ph_ngqpt</span><span class="o">=</span><span class="n">ngkpt</span><span class="p">,</span> <span class="n">do_strain</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="n">gen</span><span class="o">.</span><span class="n">add_mongoengine_db_insertion</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
 <span class="n">gen</span><span class="o">.</span><span class="n">add_final_cleanup</span><span class="p">([</span><span class="s2">&quot;WFK&quot;</span><span class="p">,</span> <span class="s2">&quot;1WF&quot;</span><span class="p">,</span> <span class="s2">&quot;WFQ&quot;</span><span class="p">,</span> <span class="s2">&quot;1POT&quot;</span><span class="p">,</span> <span class="s2">&quot;1DEN&quot;</span><span class="p">])</span>
@@ -540,7 +540,7 @@ the fireworks of the workflow.</p>
     </p>
     <p>
         &copy; Copyright 2017, The Abinit group.<br/>
-      Last updated on Jan 10, 2020.<br/>
+      Last updated on May 29, 2020.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
