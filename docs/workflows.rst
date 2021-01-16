@@ -8,30 +8,30 @@ General philosophy
 ==================
 
 Abiflows provides a set of workflows generating objects that can be used to create
-Fireworks ``Workflow`` objects that can be than inserted into the MongoDB database
+Fireworks ``Workflows`` that can be than inserted into the MongoDB database
 with the Fireworks ``LaunchPad``.
 
-A Fireworks' workflow is obtained composing different Fireworks and Firetasks.
-Abiflows has implemented all the logic necessary to interact at the lower level
-with Abinit, in order to generate input, read outputs and correct the errors.
+A Fireworks workflow is obtained by composing different Fireworks and Firetasks.
+Abiflows implements all the logic necessary to interact at the low level
+with Abinit, in order to generate inputs, read outputs and correct runtime errors.
 As a consequence, in general, the user should not be concerned to access the components
 objects and should rely on the higher level interface.
 
 The workflows implemented in Abiflows have been purposely kept as simple as possible,
-performing the minimal set of operations to calculate a specific property or a set of them.
+performing the minimal set of operations required to calculate a specific property or a set of them.
 The philosophy adopted for the general procedure is that the procedure should be split
 in its components and different workflows should be generated to reach the final set
 of results. As an example, consider to start from an unrelaxed structure
 and aiming to obtain its electronic band structure. The standard procedure will require to first
 run a workflow to relax the structure. The output will be automatically stored in a
-MongoDB database and the relaxed structure can then be used as a starting point for
+MongoDB database so that the relaxed structure can then be used as a starting point for
 a band structure workflow.
 
 This approach has been chosen because Abiflows has been designed to run Abinit calculations in
-the high-throughput regime. In general complicated workflow that try to different kinds
-of results running several calculation are more error prone and less likely to
-produce a final result. Dividing the procedure in smaller, logically independent chunks
-allows to obtain the results in more than one step, each one acting as a sort of checkpoint,
+the high-throughput regime. In general complicated workflows that try to produce different kinds
+of results by running several different calculations are more error prone and less likely to
+produce a final result. Splitting the procedure into smaller, logically independent chunks
+allows one to obtain the results in more than one step, each one acting as a sort of checkpoint,
 since its output is stored in a results database. In the case of failure in the subsequent steps
 (the calculation of the electronic band structure in the previous example) a new workflow can be
 generated starting from the relaxed structure obtained in output from the relaxation workflow.
@@ -43,11 +43,11 @@ Instantiating a generator
 -------------------------
 
 In general the workflow generator in Abiflows takes as input one or more
-``AbinitInput`` or ``InputFactory`` objects coming from Abipy. These will completely
+``AbinitInput`` or ``InputFactory`` objects coming from Abipy. These objects will completely
 define the inputs used for Abinit in the calculation for the specific workflow that
 will be generated.
 
-In addition it usually accepts the following arguments:
+In addition, it usually accepts the following arguments:
 
 * ``autoparal``: a boolean to decide if the parallelization should be decided
   automatically using the Abinit autoparal feature in combination with the
@@ -59,7 +59,7 @@ In addition it usually accepts the following arguments:
   and some keywords will usually be stored in the final database document
   produced by the workflow. See the :ref:`results_db` section for more details.
 
-Once created, a workflow generator instance contains a fireworks ``Workflow`` object
+Once created, a workflow generator contains a fireworks ``Workflow`` object
 as an attribute under the name ``wf``. This can then be added to the fireworks database
 so that it can be executed.
 
@@ -88,7 +88,7 @@ describing the system and a list of pseudopotentials. Other options like the num
 of k-points and the smearing can be defined through a set of meta parameters, while
 some others will directly set the values of some options in the Abinit input.
 
-The ``extra_abivars`` is a dictionary that can be used to set the value of any arbitry
+The ``extra_abivars`` is a dictionary that can be used to set the value of any arbitrary
 Abinit variable in all the inputs produced. In addition it allows to pass the other
 arguments mentioned above for the ``__init__``.
 
@@ -149,7 +149,7 @@ to the fireworks database.
 
     structure = Structure.from_file("Si.cif")
     pseudo_djson = os.path.join(pseudo_dojo.dojotable_absdir("ONCVPSP-PBE-PDv0.4"), 'standard.djson')
-    pseudo_table = pseudo_dojo.OfficialDojoTable.from_djson_file(os.path.join(pseudo_djson))
+    pseudo_table = pseudo_dojo.OfficialDojoTable.from_djson_file(pseudo_djson)
 
     gen = RelaxFWWorkflow.from_factory(structure, pseudo_table, kppa=1500, spin_mode="unpolarized",
                                        autoparal=True, target_dilatmx=1.01, smearing=None,
