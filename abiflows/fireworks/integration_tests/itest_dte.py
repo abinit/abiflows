@@ -96,7 +96,7 @@ class ItestDte(AbiflowsIntegrationTest):
             with ana_task.open_anaddbnc() as ananc:
                 assert float(ananc.dchide[0,0,2]) == pytest.approx(-1.69328765210, rel=0.15)
 
-    def itest_dte_skip_permutations(self, lp, fworker, tmpdir, input_scf_phonon_gan_low):
+    def itest_dte_no_phonons(self, lp, fworker, tmpdir, input_scf_phonon_gan_low):
         """
         Simple test of DteFWWorkflow without phonons.
         """

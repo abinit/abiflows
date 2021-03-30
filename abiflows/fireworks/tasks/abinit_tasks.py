@@ -536,9 +536,6 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
             stdoutdata, stderrdata = self.process.communicate()
             self.returncode = self.process.returncode
 
-        # initialize returncode to avoid missing references in case of exception in the other thread
-        self.returncode = None
-
         thread = threading.Thread(target=abinit_process)
         # the amount of time left plus a buffer of 2 minutes
         timeout = (self.walltime - (time.time() - self.start_time) - 120) if self.walltime else None
@@ -945,6 +942,9 @@ class AbiFireTask(BasicAbinitTaskMixin, FireTaskBase):
         self.indir.makedirs()
         self.outdir.makedirs()
         self.tmpdir.makedirs()
+
+        # initialize returncode to avoid missing references in case of exception in the other thread
+        self.returncode = None
 
         # check if there is a rerun of the FW with info on the exception.
         # if that's the case use the restart information stored there to continue the calculation
@@ -2367,8 +2367,9 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         try:
             return self._phbst_path
         except AttributeError:
-            path = os.path.join(self.workdir, "run.abo_PHBST.nc")
-            if path: self._phbst_path = path
+            path = self.rundir.has_abiext("PHBST.nc")
+            if path:
+                self._phbst_path = path
             return path
 
     @property
@@ -2378,8 +2379,9 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         try:
             return self._phdos_path
         except AttributeError:
-            path = os.path.join(self.workdir, "run.abo_PHDOS.nc")
-            if path: self._phdos_path = path
+            path = self.rundir.has_abiext("PHDOS.nc")
+            if path:
+                self._phdos_path = path
             return path
 
     @property
@@ -2389,8 +2391,9 @@ class AnaDdbAbinitTask(BasicAbinitTaskMixin, FireTaskBase):
         try:
             return self._anaddbnc_path
         except AttributeError:
-            path = os.path.join(self.workdir, "anaddb.nc")
-            if path: self._anaddbnc_path = path
+            path = self.rundir.has_abiext("anaddb.nc")
+            if path:
+                self._anaddbnc_path = path
             return path
 
     def open_phbst(self):

@@ -89,8 +89,10 @@ def inputs_relax_si_low():
     structure.apply_strain(-0.005)
     structure.translate_sites(0, [0.001, -0.003, 0.005])
     structure.translate_sites(1, [0.007, 0.006, -0.005])
-    return ion_ioncell_relax_input(structure, pseudos, kppa=100, ecut=4, spin_mode="unpolarized",
-                                   accuracy="low", smearing=None).split_datasets()
+    relax_in = ion_ioncell_relax_input(structure, pseudos, kppa=100, ecut=4, spin_mode="unpolarized",
+                                       accuracy="low", smearing=None)
+    relax_in.set_vars(chksymtnons=0)
+    return relax_in.split_datasets()
 
 
 @pytest.fixture(scope="function")
