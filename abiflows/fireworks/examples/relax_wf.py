@@ -3,7 +3,7 @@ import os
 import pseudo_dojo
 from abiflows.fireworks.workflows.abinit_workflows import RelaxFWWorkflow
 from abiflows.database.mongoengine.utils import DatabaseData
-from pymatgen import MPRester
+from pymatgen.ext.matproj import MPRester
 
 # use the pseudo dojo table of pseudopotentials. These are good pseudopotentials. If you want to use
 # some other kind of pseudos you will need to provide explicitly the cutoff for the calculation
