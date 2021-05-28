@@ -2955,7 +2955,7 @@ class DfptFWWorkflow(AbstractFWWorkflow):
 
         return cls.from_gs_input(scf_inp, ph_ngqpt=ph_ngqpt, qpoints=qpoints, qppa=qppa, do_ddk=do_ddk, do_dde=do_dde,
                                  do_strain=do_strain, do_dte=do_dte, scf_tol=scf_tol, ph_tol=ph_tol, ddk_tol=ddk_tol,
-                                 dde_tol=dde_tol, strain_tol=strain_tol, skip_dte_permutations=skip_dte_permutations,
+                                 dde_tol=dde_tol, wfq_tol=wfq_tol, strain_tol=strain_tol, skip_dte_permutations=skip_dte_permutations,
                                  extra_abivars=extra_abivars, decorators=decorators, autoparal=autoparal, spec=spec,
                                  initialization_info=initialization_info, manager=manager)
 
