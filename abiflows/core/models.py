@@ -21,7 +21,7 @@ class AbiGridFSProxy(GridFSProxy):
         """Dump the gridfs data to a temporary file and use ``abiopen`` to open the file."""
         _, filepath = mkstemp(suffix='.' + self.abiext, text=self.abiform == "t")
 
-        with open(filepath , "w" + self.abiform) as fh:
+        with open(filepath , "wb") as fh:
             fh.write(self.read())
 
         return abilab.abiopen(filepath)
